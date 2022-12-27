@@ -770,7 +770,7 @@ c
 !>  ## Calculate the inverse Prandtl number
 !!  For an unstable PBL, the Prandtl number is calculated according to Hong and Pan (1996) \cite hong_and_pan_1996, equation 10, whereas for a stable boundary layer, the Prandtl number is simply \f$Pr = \frac{\phi_h}{\phi_m}\f$.
       do i = 1, im
-        if(ublflg(i)) then
+        if(pblflg(i)) then
           tem = phih(i)/phim(i)+cfac*vk*sfcfrac
         else
           tem = phih(i)/phim(i)
