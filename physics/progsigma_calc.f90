@@ -180,9 +180,9 @@
             if(cnvflg(i))then
                DEN=MIN(termC(i)+termB(i),1.E8)
                cvg=termD(i)*delt
-               ZZ=MAX(0.0,SIGN(1.0,termA(i)))            &
-                    *MAX(0.0,SIGN(1.0,termB(i)))         &
-                    *MAX(0.0,SIGN(1.0,termC(i)-epsilon))
+               ZZ=MAX(0.0,SIGN(1.0_kind_phys,termA(i)))         &
+                 *MAX(0.0,SIGN(1.0_kind_phys,termB(i)))         &
+                 *MAX(0.0,SIGN(1.0_kind_phys,termC(i)-epsilon))
                cvg=MAX(0.0,cvg)
                sigmab(i)=(ZZ*(termA(i)+cvg))/(DEN+(1.0-ZZ))
                if(sigmab(i)>0.)then

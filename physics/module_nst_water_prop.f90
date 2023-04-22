@@ -514,8 +514,8 @@ subroutine solar_time_from_julian(jday,xlon,soltim)
   !
   fjd=jday-floor(jday)
   fjd=jday
-  xhr=floor(fjd*24.0)-sign(12.0,fjd-0.5)
-  xmin=nint(fjd*1440.0)-(xhr+sign(12.0,fjd-0.5))*60
+  xhr=floor(fjd*24.0)-sign(12.0_kind_phys,fjd-0.5)
+  xmin=nint(fjd*1440.0)-(xhr+sign(12.0_kind_phys,fjd-0.5))*60
   xsec=0
   intime=xhr+xmin/60.0+xsec/3600.0+24.0
   soltim=mod(xlon/15.0+intime,24.0)*3600.0

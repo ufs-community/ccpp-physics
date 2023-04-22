@@ -364,8 +364,8 @@ contains
     vmr_co2 = gas_vmr(:,:,1)
 
     ! Compute volume mixing-ratios for ozone (mmr) and specific-humidity.
-    vmr_h2o = merge((q_lay/(1-q_lay))*amdw, 0., q_lay  .ne. 1.)
-    vmr_o3  = merge(o3_lay*amdo3,           0., o3_lay .gt. 0.)
+    vmr_h2o = merge((q_lay/(1-q_lay))*amdw, 0.0_kind_phys, q_lay  .ne. 1.)
+    vmr_o3  = merge(o3_lay*amdo3,           0.0_kind_phys, o3_lay .gt. 0.)
 
     ! #######################################################################################
     ! Radiation time step (output) (Is this really needed?) (Used by some diagnostics)
