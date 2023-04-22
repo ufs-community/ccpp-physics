@@ -64,28 +64,28 @@
       real(kind=kind_phys), parameter  :: hps =7000., rhp2 = .5/hps
       real(kind=kind_phys), parameter  :: cxmin=0.5, cxmin2=cxmin*cxmin
 
-      real  :: akx(nworo),  cxoro(nworo), akx2(nworo)
-      real  :: aspkx(nworo), c2f2(nworo) , cdf2(nworo)
-      real  :: tau_sp(nworo,levs+1), wkdis(nworo, levs+1)
-      real  :: tau_kx(nworo),taub_kx(nworo)
-      real, dimension(nworo, levs+1)  :: wrms, akzw
+      real(kind_phys)  :: akx(nworo),  cxoro(nworo), akx2(nworo)
+      real(kind_phys)  :: aspkx(nworo), c2f2(nworo) , cdf2(nworo)
+      real(kind_phys)  :: tau_sp(nworo,levs+1), wkdis(nworo, levs+1)
+      real(kind_phys)  :: tau_kx(nworo),taub_kx(nworo)
+      real(kind_phys), dimension(nworo, levs+1)  :: wrms, akzw
 
-      real  :: tauz(levs+1), rms_wind(levs+1)
-      real  :: wave_act(nworo,levs+1)
+      real(kind_phys)  :: tauz(levs+1), rms_wind(levs+1)
+      real(kind_phys)  :: wave_act(nworo,levs+1)
 
-      real  :: kxw, kzw, kzw2, kzw3, kzi, dzmet, rhoint
-      real  ::  rayf, kturb
-      real  ::  uz, bv, bv2,kxsp, fcor2, cf2
+      real(kind_phys)  :: kxw, kzw, kzw2, kzw3, kzi, dzmet, rhoint
+      real(kind_phys)  ::  rayf, kturb
+      real(kind_phys)  ::  uz, bv, bv2,kxsp, fcor2, cf2
 
-      real  ::  fdis
-      real  ::  wfdm, wfdt, wfim, wfit
-      real  ::  betadis, betam, betat, kds, cx, rhofac
-      real  ::  etwk, etws, tauk, cx2sat
-      real  ::  cdf1, tau_norm
+      real(kind_phys)  ::  fdis
+      real(kind_phys)  ::  wfdm, wfdt, wfim, wfit
+      real(kind_phys)  ::  betadis, betam, betat, kds, cx, rhofac
+      real(kind_phys)  ::  etwk, etws, tauk, cx2sat
+      real(kind_phys)  ::  cdf1, tau_norm
 !
 ! mean flow
 !
-      real, dimension(levs+1) :: uzi,rhoi,ktur, kalp, dzi
+      real(kind_phys), dimension(levs+1) :: uzi,rhoi,ktur, kalp, dzi
 
       integer :: nw, nzi, ksrc
       taud (:, :) = 0.0 ; pkdis(:,:) = 0.0 ; taup (:,:) = 0.0
@@ -286,29 +286,31 @@
       subroutine oro_meanflow_v0(nz, nzi, u1, v1, t1, pint, pmid,
      &           delp, rho, bn2, uzi, rhoi, ktur, kalp, dzi, xn, yn)
 
+      use machine, only: kind_phys
       use ugwp_common_v0 ,  only : grav, rgrav, rdi,  velmin, dw2min
       implicit none
 
       integer :: nz, nzi
-      real, dimension(nz  ) ::  u1,  v1, t1, delp, rho, pmid
-      real, dimension(nz  ) ::  bn2  ! define at the interfaces
-      real, dimension(nz+1) ::  pint
-      real                  ::  xn, yn
+      real(kind_phys), dimension(nz  ) ::  u1,  v1, t1, delp, rho, pmid
+      real(kind_phys), dimension(nz  ) ::  bn2  ! define at the interfaces
+      real(kind_phys), dimension(nz+1) ::  pint
+      real(kind_phys)                  ::  xn, yn
 ! output
  
-      real, dimension(nz+1) ::  dzi,  uzi, rhoi, ktur, kalp
+      real(kind_phys), dimension(nz+1) ::  dzi,  uzi, rhoi, ktur, kalp
 
 ! locals
       integer :: i, j, k
-      real :: ui, vi, ti, uz, vz, shr2, rdz, kamp
-      real :: zgrow, zmet, rdpm, ritur, kmol, w1
+      real(kind_phys) :: ui, vi, ti, uz, vz, shr2, rdz, kamp
+      real(kind_phys) :: zgrow, zmet, rdpm, ritur, kmol, w1
 ! paremeters
-      real, parameter :: hps = 7000., rpspa = 1.e-5
-      real, parameter :: rhps=1.0/hps
-      real, parameter :: h4= 0.25/hps
-      real, parameter :: rimin = 1.0/8.0, kedmin = 0.01
-      real, parameter :: lturb = 30. ,    uturb = 150.0
-      real, parameter :: lsc2 = lturb*lturb,usc2 = uturb*uturb
+      real(kind_phys), parameter :: hps = 7000., rpspa = 1.e-5
+      real(kind_phys), parameter :: rhps=1.0/hps
+      real(kind_phys), parameter :: h4= 0.25/hps
+      real(kind_phys), parameter :: rimin = 1.0/8.0, kedmin = 0.01
+      real(kind_phys), parameter :: lturb = 30. ,    uturb = 150.0
+      real(kind_phys), parameter :: lsc2 = lturb*lturb
+      real(kind_phys), parameter :: usc2 = uturb*uturb
       kalp(1:nzi) = 2.e-7        ! radiative damping
 
       do k=2, nz
@@ -323,7 +325,7 @@
         uz      = u1(k)-u1(k-1)
         vz      = v1(k)-v1(k-1)
         shr2    = rdz*rdz*(max(uz*uz+vz*vz, dw2min))
-        zmet    = -hps*alog(pint(k)*rpspa)
+        zmet    = -hps*log(pint(k)*rpspa)
         zgrow   = exp(zmet*h4)
         kmol    =  2.e-5*exp(zmet*rhps)+kedmin
         ritur   = max(bn2(k)/shr2, rimin)

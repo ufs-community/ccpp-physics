@@ -3295,17 +3295,18 @@
 !
       INTEGER, INTENT(IN):: kts, kte
       LOGICAL, INTENT(IN):: modify_qvapor
-      REAL, DIMENSION(kts:kte), INTENT(INOUT):: qv, qc, qi, cldfra
-      REAL, DIMENSION(kts:kte), INTENT(IN):: p, t, dz, qs
-      REAL, INTENT(IN):: gridkm, XLAND, max_relh
+      REAL(kind_phys), DIMENSION(kts:kte), INTENT(INOUT):: qv, qc, qi
+      REAL(kind_phys), DIMENSION(kts:kte), INTENT(INOUT):: cldfra
+      REAL(kind_phys), DIMENSION(kts:kte), INTENT(IN):: p, t, dz, qs
+      REAL(kind_phys), INTENT(IN):: gridkm, XLAND, max_relh
       LOGICAL, INTENT(IN):: debug_flag
 
 !..Local vars.
-      REAL:: RH_00L, RH_00O, RH_00
-      REAL:: entrmnt=0.5
+      REAL(kind_phys):: RH_00L, RH_00O, RH_00
+      REAL(kind_phys):: entrmnt=0.5
       INTEGER:: k
-      REAL:: TC, qvsi, qvsw, RHUM, delz, var_temp
-      REAL, DIMENSION(kts:kte):: qvs, rh, rhoa
+      REAL(kind_phys):: TC, qvsi, qvsw, RHUM, delz, var_temp
+      REAL(kind_phys), DIMENSION(kts:kte):: qvs, rh, rhoa
       integer:: ndebug = 0
 
       character*512 dbg_msg
@@ -3437,13 +3438,16 @@
 !
       INTEGER, INTENT(IN):: kts, kte
       LOGICAL, INTENT(IN):: debugfl
-      REAL, INTENT(IN):: entrmnt
-      REAL, DIMENSION(kts:kte), INTENT(IN):: qs1d,qvs1d,T1d,P1d,Dz1d
-      REAL, DIMENSION(kts:kte), INTENT(INOUT):: cfr1d, qc1d, qi1d
+      REAL(kind_phys), INTENT(IN):: entrmnt
+      REAL(kind_phys), DIMENSION(kts:kte), INTENT(IN):: qs1d,qvs1d
+      REAL(kind_phys), DIMENSION(kts:kte), INTENT(IN):: T1d,P1d,Dz1d
+      REAL(kind_phys), DIMENSION(kts:kte), INTENT(INOUT):: cfr1d
+      REAL(kind_phys), DIMENSION(kts:kte), INTENT(INOUT):: qc1d
+      REAL(kind_phys), DIMENSION(kts:kte), INTENT(INOUT):: qi1d
 
 !..Local vars.
-      REAL, DIMENSION(kts:kte):: theta
-      REAL:: theta1, theta2, delz
+      REAL(kind_phys), DIMENSION(kts:kte):: theta
+      REAL(kind_phys):: theta1, theta2, delz
       INTEGER:: k, k2, k_tropo, k_m12C, k_cldb, k_cldt, kbot, k_p200
       LOGICAL:: in_cloud
       character*512 dbg_msg
@@ -3593,10 +3597,14 @@
       IMPLICIT NONE
 !
       INTEGER, INTENT(IN):: k1,k2, kts,kte
-      REAL, INTENT(IN):: entr
-      REAL, DIMENSION(kts:kte), INTENT(IN):: cfr, qs, qvs, T, dz
-      REAL, DIMENSION(kts:kte), INTENT(INOUT):: qi
-      REAL:: iwc, max_iwc, tdz, this_iwc, this_dz
+      REAL(kind_phys), INTENT(IN):: entr
+      REAL(kind_phys), DIMENSION(kts:kte), INTENT(IN):: cfr
+      REAL(kind_phys), DIMENSION(kts:kte), INTENT(IN):: qs
+      REAL(kind_phys), DIMENSION(kts:kte), INTENT(IN):: qvs
+      REAL(kind_phys), DIMENSION(kts:kte), INTENT(IN):: T
+      REAL(kind_phys), DIMENSION(kts:kte), INTENT(IN):: dz
+      REAL(kind_phys), DIMENSION(kts:kte), INTENT(INOUT):: qi
+      REAL(kind_phys):: iwc, max_iwc, tdz, this_iwc, this_dz
       INTEGER:: k
 
       tdz = 0.
@@ -3635,10 +3643,10 @@
       IMPLICIT NONE
 !
       INTEGER, INTENT(IN):: k1,k2, kts,kte
-      REAL, INTENT(IN):: entr
-      REAL, DIMENSION(kts:kte), INTENT(IN):: cfr, qvs, T, dz
-      REAL, DIMENSION(kts:kte), INTENT(INOUT):: qc
-      REAL:: lwc, max_lwc, tdz, this_lwc, this_dz
+      REAL(kind_phys), INTENT(IN):: entr
+      REAL(kind_phys), DIMENSION(kts:kte), INTENT(IN):: cfr, qvs, T, dz
+      REAL(kind_phys), DIMENSION(kts:kte), INTENT(INOUT):: qc
+      REAL(kind_phys):: lwc, max_lwc, tdz, this_lwc, this_dz
       INTEGER:: k
 
       tdz = 0.
@@ -3679,9 +3687,9 @@
       IMPLICIT NONE
 !
       INTEGER, INTENT(IN):: kts,kte
-      REAL, DIMENSION(kts:kte), INTENT(IN):: cfr, Rho, dz
-      REAL, DIMENSION(kts:kte), INTENT(INOUT):: qc, qi
-      REAL:: lwp, iwp, xfac
+      REAL(kind_phys), DIMENSION(kts:kte), INTENT(IN):: cfr, Rho, dz
+      REAL(kind_phys), DIMENSION(kts:kte), INTENT(INOUT):: qc, qi
+      REAL(kind_phys):: lwp, iwp, xfac
       INTEGER:: k
 
       lwp = 0.

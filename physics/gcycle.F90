@@ -223,7 +223,7 @@ contains
       if (.not. exists) then
         write(6,*) 'gcycle:: namelist file: ',trim(fn_nml),' does not exist'
         errflg = 1
-        errmsg = 'ERROR(gcycle): namelist file: ',trim(fn_nml),' does not exist.'
+        errmsg = 'ERROR(gcycle): namelist file: ' // trim(fn_nml) // ' does not exist.'
         return
       else
         open (unit=nlunit, file=trim(fn_nml), action='READ', status='OLD', iostat=ios)

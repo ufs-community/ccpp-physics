@@ -200,7 +200,7 @@ module mp_thompson
                else
                  h_01 = 0.8*cos(hgt(i,1)*0.001 - 1.0)
                endif
-               niCCN3 = -1.0*ALOG(naCCN1/naCCN0)/h_01
+               niCCN3 = -1.0*LOG(naCCN1/naCCN0)/h_01
                nwfa(i,1) = naCCN1+naCCN0*exp(-((hgt(i,2)-hgt(i,1))/1000.)*niCCN3)
                z1 = hgt(i,2)-hgt(i,1)
                nwfa2d(i) = nwfa(i,1) * 0.000196 * (50./z1)
@@ -243,7 +243,7 @@ module mp_thompson
                else
                   h_01 = 0.8*cos(hgt(i,1)*0.001 - 1.0)
                endif
-               niIN3 = -1.0*ALOG(naIN1/naIN0)/h_01
+               niIN3 = -1.0*LOG(naIN1/naIN0)/h_01
                nifa(i,1) = naIN1+naIN0*exp(-((hgt(i,2)-hgt(i,1))/1000.)*niIN3)
                nifa2d(i) = 0.
                do k = 2, nlev
@@ -375,7 +375,7 @@ module mp_thompson
          real(kind_phys),           intent(in   ) :: dtp
          logical,                   intent(in   ) :: first_time_step
          integer,                   intent(in   ) :: istep, nsteps
-         real,                      intent(in   ) :: dt_inner
+         real(kind_phys),           intent(in   ) :: dt_inner
          ! Precip/rain/snow/graupel fall amounts and fraction of frozen precip
          real(kind_phys),           intent(inout) :: prcp(:)
          real(kind_phys),           intent(inout) :: rain(:)

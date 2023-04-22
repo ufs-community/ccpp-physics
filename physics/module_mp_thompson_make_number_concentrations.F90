@@ -4,6 +4,7 @@
 !>\ingroup aathompson
 module module_mp_thompson_make_number_concentrations
 
+      use machine, only: kind_phys
       use physcons, only: PI => con_pi
 
       implicit none
@@ -30,14 +31,12 @@ module module_mp_thompson_make_number_concentrations
 !! as a function of Temperature from -94C to 0C.  Taken from WRF RRTMG
 !! radiation code where it is attributed to Jon Egill Kristjansson
 !! and coauthors.
-      elemental real function make_IceNumber (Q_ice, temp)
+      elemental real(kind_phys) function make_IceNumber (Q_ice, temp)
 
-      !IMPLICIT NONE
-      REAL, PARAMETER:: Ice_density = 890.0
-      !REAL, PARAMETER:: PI = 3.1415926536
-      real, intent(in):: Q_ice, temp
+      real(kind_phys), parameter:: Ice_density = 890.0
+      real(kind_phys), intent(in):: Q_ice, temp
       integer idx_rei
-      real corr, reice, deice
+      real(kind_phys) corr, reice, deice
       double precision lambda
 
 !+---+-----------------------------------------------------------------+ 
@@ -65,7 +64,7 @@ module module_mp_thompson_make_number_concentrations
       !   124.954, 130.630, 136.457, 142.446, 148.608, 154.956,          &
       !   161.503, 168.262, 175.248, 182.473, 189.952, 197.699,          &
       !   205.728, 214.055, 222.694, 231.661, 240.971, 250.639/
-      real, dimension(95), parameter:: retab = (/                       &
+      real(kind_phys), dimension(95), parameter:: retab = (/            &
          5.92779, 6.26422, 6.61973, 6.99539, 7.39234,                   &
          7.81177, 8.25496, 8.72323, 9.21800, 9.74075, 10.2930,          &
          10.8765, 11.4929, 12.1440, 12.8317, 13.5581, 14.2319,          &
@@ -130,18 +129,15 @@ module module_mp_thompson_make_number_concentrations
 
 !>\ingroup aathompson
 !!
-      elemental real function make_DropletNumber (Q_cloud, qnwfa)
+      elemental real(kind_phys) function make_DropletNumber (Q_cloud, qnwfa)
 
-      !IMPLICIT NONE
+      real(kind_phys), intent(in):: Q_cloud, qnwfa
 
-      real, intent(in):: Q_cloud, qnwfa
-
-      !real, parameter:: PI = 3.1415926536
-      real, parameter:: am_r = PI*1000./6.
-      real, dimension(15), parameter:: g_ratio = (/24,60,120,210,336,   &
+      real(kind_phys), parameter:: am_r = PI*1000./6.
+      real(kind_phys), dimension(15), parameter:: g_ratio = (/24,60,120,210,336,   &
      &                504,720,990,1320,1716,2184,2730,3360,4080,4896/)
       double precision:: lambda, qnc
-      real:: q_nwfa, x1, xDc
+      real(kind_phys):: q_nwfa, x1, xDc
       integer:: nu_c
 
       if (Q_cloud == 0) then
@@ -169,14 +165,11 @@ module module_mp_thompson_make_number_concentrations
 
 !>\ingroup aathompson
 !!
-      elemental real function make_RainNumber (Q_rain, temp)
+      elemental real(kind_phys) function make_RainNumber (Q_rain, temp)
 
-      IMPLICIT NONE
-
-      real, intent(in):: Q_rain, temp
+      real(kind_phys), intent(in):: Q_rain, temp
       double precision:: lambda, N0, qnr
-      !real, parameter:: PI = 3.1415926536
-      real, parameter:: am_r = PI*1000./6.
+      real(kind_phys), parameter:: am_r = PI*1000./6.
 
       if (Q_rain == 0) then
          make_RainNumber = 0

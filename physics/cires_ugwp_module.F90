@@ -2,6 +2,8 @@
 
 module  cires_ugwpv0_module
 
+    use machine, only: kind_phys
+
 !
 !   driver is called after pbl & before chem-parameterizations
 !
@@ -12,17 +14,17 @@ module  cires_ugwpv0_module
     logical            :: do_physb_gwsrcs = .false.        ! control for physics-based GW-sources
     logical            :: do_rfdamp       = .false.        ! control for Rayleigh friction inside ugwp_driver
 
-    real, parameter    :: arad=6370.e3
-    real, parameter    :: pi = atan(1.0)
-    real, parameter    :: pi2 = 2.*pi
-    real, parameter    :: hps   = 7000.
-    real, parameter    :: hpskm = hps/1000.
+    real(kind_phys), parameter    :: arad=6370.e3
+    real(kind_phys), parameter    :: pi = atan(1.0)
+    real(kind_phys), parameter    :: pi2 = 2.*pi
+    real(kind_phys), parameter    :: hps   = 7000.
+    real(kind_phys), parameter    :: hpskm = hps/1000.
 !
-    real               :: kxw = 6.28e-3/100.               ! single horizontal wavenumber of ugwp schemes
-    real, parameter    :: ricrit = 0.25
-    real, parameter    :: frcrit = 0.50
-    real, parameter    :: linsat = 1.00
-    real, parameter    :: linsat2 = linsat*linsat
+    real(kind_phys)               :: kxw = 6.28e-3/100.    ! single horizontal wavenumber of ugwp schemes
+    real(kind_phys), parameter    :: ricrit = 0.25
+    real(kind_phys), parameter    :: frcrit = 0.50
+    real(kind_phys), parameter    :: linsat = 1.00
+    real(kind_phys), parameter    :: linsat2 = linsat*linsat
 !
 
     integer               :: knob_ugwp_solver=1            ! 1, 2, 3, 4 - (linsat, ifs_2010, ad_gfdl, dsp_dis)
@@ -30,7 +32,7 @@ module  cires_ugwpv0_module
     integer, dimension(4) :: knob_ugwp_wvspec              !  number of waves for- (oro, fronts, conv, imbf-owp]
     integer, dimension(4) :: knob_ugwp_azdir               !   number of wave azimuths for- (oro, fronts, conv, imbf-owp]
     integer, dimension(4) :: knob_ugwp_stoch               !  1 - deterministic ; 0 - stochastic
-    real,    dimension(4) :: knob_ugwp_effac               !  efficiency factors for- (oro, fronts, conv, imbf-owp]
+    real(kind_phys), dimension(4) :: knob_ugwp_effac       !  efficiency factors for- (oro, fronts, conv, imbf-owp]
 
     integer               :: knob_ugwp_doaxyz=1            ! 1 -gwdrag
     integer               :: knob_ugwp_doheat=1            ! 1 -gwheat
@@ -42,7 +44,7 @@ module  cires_ugwpv0_module
 
     integer  :: ugwp_src
     integer  :: ugwp_nws
-    real     :: ugwp_effac
+    real(kind_phys) :: ugwp_effac
 
 !
     data knob_ugwp_source / 1,0, 1, 0 /                    !  oro-conv-fjet-okw-taub_lat:      1-active 0-off
@@ -73,27 +75,27 @@ module  cires_ugwpv0_module
 ! allocatable arrays, initilized during "cires_ugwp_init" &
 !                     released   during "cires_ugwp_finalize"
 !
-   real, allocatable :: kvg(:), ktg(:), krad(:), kion(:)
-   real, allocatable :: zkm(:), pmb(:)
-   real, allocatable :: rfdis(:), rfdist(:)
+   real(kind_phys), allocatable :: kvg(:), ktg(:), krad(:), kion(:)
+   real(kind_phys), allocatable :: zkm(:), pmb(:)
+   real(kind_phys), allocatable :: rfdis(:), rfdist(:)
    integer           :: levs_rf
-   real              :: pa_rf, tau_rf
+   real(kind_phys)              :: pa_rf, tau_rf
 !
 ! limiters
 !
-   real, parameter ::  max_kdis = 400.              ! 400 m2/s
-   real, parameter ::  max_axyz = 400.e-5           ! 400 m/s/day
-   real, parameter ::  max_eps =  max_kdis*4.e-7    ! ~16   K/day
+   real(kind_phys), parameter ::  max_kdis = 400.              ! 400 m2/s
+   real(kind_phys), parameter ::  max_axyz = 400.e-5           ! 400 m/s/day
+   real(kind_phys), parameter ::  max_eps =  max_kdis*4.e-7    ! ~16   K/day
 !
 !======================================================================
-   real, parameter :: F_coriol=1                    ! Coriolis effects
-   real, parameter :: F_nonhyd=1                    ! Nonhydrostatic waves
-   real, parameter :: F_kds   =0                    ! Eddy mixing due to GW-unstable below
-   real, parameter :: iPr_ktgw =1./3., iPr_spgw=iPr_ktgw 
-   real, parameter :: iPr_turb =1./3., iPr_mol =1.95
-   real, parameter :: rhp1=1./hps, rhp2=0.5*rhp1, rhp4 = rhp2*rhp2
-   real, parameter :: khp =  0.287*rhp1             ! R/Cp/Hp
-   real, parameter :: cd_ulim = 1.0                 ! critical level precision or Lz ~ 0 ~dz of model
+   real(kind_phys), parameter :: F_coriol=1                    ! Coriolis effects
+   real(kind_phys), parameter :: F_nonhyd=1                    ! Nonhydrostatic waves
+   real(kind_phys), parameter :: F_kds   =0                    ! Eddy mixing due to GW-unstable below
+   real(kind_phys), parameter :: iPr_ktgw =1./3., iPr_spgw=iPr_ktgw 
+   real(kind_phys), parameter :: iPr_turb =1./3., iPr_mol =1.95
+   real(kind_phys), parameter :: rhp1=1./hps, rhp2=0.5*rhp1, rhp4 = rhp2*rhp2
+   real(kind_phys), parameter :: khp =  0.287*rhp1             ! R/Cp/Hp
+   real(kind_phys), parameter :: cd_ulim = 1.0                 ! critical level precision or Lz ~ 0 ~dz of model
 
    contains
 !
@@ -122,14 +124,14 @@ module  cires_ugwpv0_module
     integer,              intent (in) :: lonr
     integer,              intent (in) :: levs
     integer,              intent (in) :: latr
-    real,                 intent (in) :: ak(levs+1), bk(levs+1), pref
-    real,                 intent (in) :: dtp
-    real,                 intent (in) :: cdmvgwd(2), cgwf(2)             ! "scaling" controls for "old" GFS-GW schemes
-    real,                 intent (in) :: pa_rf_in, tau_rf_in
+    real(kind_phys),      intent (in) :: ak(levs+1), bk(levs+1), pref
+    real(kind_phys),      intent (in) :: dtp
+    real(kind_phys),      intent (in) :: cdmvgwd(2), cgwf(2)             ! "scaling" controls for "old" GFS-GW schemes
+    real(kind_phys),      intent (in) :: pa_rf_in, tau_rf_in
 
     integer :: ios
     logical :: exists
-    real    :: dxsg
+    real(kind_phys)    :: dxsg
     integer :: k
 
 #ifdef INTERNAL_FILE_NML
@@ -175,7 +177,7 @@ module  cires_ugwpv0_module
 !
     do k=1, levs
        pmb(k) = 1.e0*(ak(k) + pref*bk(k))    ! Pa -unit  Pref = 1.e5
-       zkm(k) = -hpskm*alog(pmb(k)/pref)
+       zkm(k) = -hpskm*log(pmb(k)/pref)
     enddo
 !
 ! Part-1 :init_global_gwdis

@@ -35,32 +35,33 @@
 !===================================================
 !> Initialization of wave dissipation and RFriction
      subroutine init_global_gwdis_v0(levs, zkm, pmb, kvg, ktg, krad, kion)
+     use machine, only: kind_phys
      implicit none
 
-     integer                              :: levs
-     real, intent(in)                     :: zkm(levs), pmb(levs)
-     real, intent(out), dimension(levs+1) :: kvg, ktg, krad, kion
+     integer                                         :: levs
+     real(kind_phys), intent(in)                     :: zkm(levs), pmb(levs)
+     real(kind_phys), intent(out), dimension(levs+1) :: kvg, ktg, krad, kion
 !
 !locals + data
 !
      integer :: k
-     real, parameter :: vusurf  = 2.e-5
-     real, parameter :: musurf  = vusurf/1.95
-     real, parameter :: hpmol   = 8.5
+     real(kind_phys), parameter :: vusurf  = 2.e-5
+     real(kind_phys), parameter :: musurf  = vusurf/1.95
+     real(kind_phys), parameter :: hpmol   = 8.5
 !
-     real, parameter :: kzmin   =  0.1
-     real, parameter :: kturbo  = 100.
-     real, parameter :: zturbo  = 130.
-     real, parameter :: zturw   = 30.
-     real, parameter :: inv_pra = 3.  !kt/kv =inv_pr
+     real(kind_phys), parameter :: kzmin   =  0.1
+     real(kind_phys), parameter :: kturbo  = 100.
+     real(kind_phys), parameter :: zturbo  = 130.
+     real(kind_phys), parameter :: zturw   = 30.
+     real(kind_phys), parameter :: inv_pra = 3.  !kt/kv =inv_pr
 !
-     real, parameter :: alpha  = 1./86400./15.
+     real(kind_phys), parameter :: alpha  = 1./86400./15.
 !     
-     real, parameter :: kdrag  = 1./86400./10.
-     real, parameter :: zdrag  = 100.
-     real, parameter :: zgrow  = 50.
+     real(kind_phys), parameter :: kdrag  = 1./86400./10.
+     real(kind_phys), parameter :: zdrag  = 100.
+     real(kind_phys), parameter :: zgrow  = 50.
 !
-     real ::    vumol, mumol, keddy, ion_drag
+     real(kind_phys) ::    vumol, mumol, keddy, ion_drag
 !
      do k=1, levs
       vumol    = vusurf*exp(-zkm(k)/hpmol)
@@ -97,6 +98,7 @@
 !=========================================================================
      module ugwpv0_oro_init
 
+     use machine, only: kind_phys
      use ugwp_common_v0, only : bnv2min, grav, grcp, fv, grav, cpd, grcp, pi
 
      implicit none
@@ -107,68 +109,68 @@
 !
       character(len=8)  ::  strver  = 'gfs_2018'
       character(len=8)  ::  strbase = 'gfs_2018'
-      real, parameter   ::  rimin=-10., ric=0.25
+      real(kind_phys), parameter   ::  rimin=-10., ric=0.25
 
 !
-      real, parameter :: efmin=0.5,    efmax=10.0
-      real, parameter :: hpmax=2400.0, hpmin=25.0
-      real, parameter :: sigma_std=1./100., gamm_std=1.0
+      real(kind_phys), parameter :: efmin=0.5,    efmax=10.0
+      real(kind_phys), parameter :: hpmax=2400.0, hpmin=25.0
+      real(kind_phys), parameter :: sigma_std=1./100., gamm_std=1.0
 
-      real, parameter :: frmax=10., frc =1.0, frmin =0.01
+      real(kind_phys), parameter :: frmax=10., frc =1.0, frmin =0.01
 !
 
-       real, parameter :: ce=0.8,   ceofrc=ce/frc, cg=0.5
-       real, parameter :: gmax=1.0, veleps=1.0, factop=0.5
+       real(kind_phys), parameter :: ce=0.8,   ceofrc=ce/frc, cg=0.5
+       real(kind_phys), parameter :: gmax=1.0, veleps=1.0, factop=0.5
 !
-       real, parameter :: rlolev=50000.0
+       real(kind_phys), parameter :: rlolev=50000.0
 !
-       real,      parameter :: hncrit=9000.   ! max value in meters for elvmax
+       real(kind_phys), parameter :: hncrit=9000.   ! max value in meters for elvmax
  
 !  hncrit set to 8000m and sigfac added to enhance elvmax mtn hgt
 
-       real,      parameter :: sigfac=4.0     ! mb3a expt test for elvmax factor
-       real,      parameter :: hminmt=50.     ! min mtn height (*j*)
-       real,      parameter :: minwnd=1.0     ! min wind component (*j*)
-       real,      parameter :: dpmin=5000.0   ! minimum thickness of the reference layer in pa
+       real(kind_phys), parameter :: sigfac=4.0     ! mb3a expt test for elvmax factor
+       real(kind_phys), parameter :: hminmt=50.     ! min mtn height (*j*)
+       real(kind_phys), parameter :: minwnd=1.0     ! min wind component (*j*)
+       real(kind_phys), parameter :: dpmin=5000.0   ! minimum thickness of the reference layer in pa
  
-       real,      parameter ::   kxoro=6.28e-3/200.    !
-       real,      parameter ::   coro = 0.0
+       real(kind_phys), parameter ::   kxoro=6.28e-3/200.    !
+       real(kind_phys), parameter ::   coro = 0.0
        integer,   parameter ::   nridge=2
  
-      real    ::  cdmb                      ! scale factors for mtb
-      real    ::  cleff                     ! scale factors for orogw
+      real(kind_phys) ::  cdmb              ! scale factors for mtb
+      real(kind_phys) ::  cleff             ! scale factors for orogw
       integer ::  nworo                     ! number of waves
       integer ::  nazoro                    ! number of azimuths
       integer ::  nstoro                    ! flag for stochastic launch above SG-peak
 
       integer, parameter ::  mdir = 8
-      real,    parameter ::  fdir=.5*mdir/pi
+      real(kind_phys),    parameter ::  fdir=.5*mdir/pi
 
       integer nwdir(mdir)
       data nwdir/6,7,5,8,2,3,1,4/
       save nwdir
 
-     real,    parameter   ::   odmin = 0.1, odmax = 10.0
+      real(kind_phys), parameter ::   odmin = 0.1, odmax = 10.0
 !------------------------------------------------------------------------------
 !    small-scale orography parameters  for TOFD of Beljaars et al., 2004, QJRMS
 !------------------------------------------------------------------------------
 
-     integer, parameter  :: n_tofd = 2                      ! depth of SSO for TOFD compared with Zpbl
-     real, parameter     :: const_tofd = 0.0759             ! alpha*beta*Cmd*Ccorr*2.109 = 12.*1.*0.005*0.6*2.109 = 0.0759
-     real, parameter     :: ze_tofd    = 1500.0             ! BJ's z-decay in meters
-     real, parameter     :: a12_tofd   = 0.0002662*0.005363 ! BJ's k-spect const for sigf2 * a1*a2*exp(-[z/zdec]**1.5]
-     real, parameter     :: ztop_tofd  = 10.*ze_tofd        ! no TOFD > this height too higher 15 km
+      integer, parameter  :: n_tofd = 2                      ! depth of SSO for TOFD compared with Zpbl
+      real(kind_phys), parameter :: const_tofd = 0.0759             ! alpha*beta*Cmd*Ccorr*2.109 = 12.*1.*0.005*0.6*2.109 = 0.0759
+      real(kind_phys), parameter :: ze_tofd    = 1500.0             ! BJ's z-decay in meters
+      real(kind_phys), parameter :: a12_tofd   = 0.0002662*0.005363 ! BJ's k-spect const for sigf2 * a1*a2*exp(-[z/zdec]**1.5]
+      real(kind_phys), parameter :: ztop_tofd  = 10.*ze_tofd        ! no TOFD > this height too higher 15 km
 !------------------------------------------------------------------------------
 !
-      real, parameter :: fcrit_sm  = 0.7, fcrit_sm2  = fcrit_sm * fcrit_sm
-      real, parameter :: fcrit_gfs = 0.7
-      real, parameter :: fcrit_mtb = 0.7
+      real(kind_phys), parameter :: fcrit_sm  = 0.7, fcrit_sm2  = fcrit_sm * fcrit_sm
+      real(kind_phys), parameter :: fcrit_gfs = 0.7
+      real(kind_phys), parameter :: fcrit_mtb = 0.7
 
-      real,  parameter :: lzmax   = 18.e3                      ! 18 km
-      real,  parameter :: mkzmin  = 6.28/lzmax
-      real,  parameter :: mkz2min = mkzmin*mkzmin
-      real,  parameter :: zbr_pi  = (3.0/2.0)*pi
-      real,  parameter :: zbr_ifs = 0.5*pi
+      real(kind_phys), parameter :: lzmax   = 18.e3                      ! 18 km
+      real(kind_phys), parameter :: mkzmin  = 6.28/lzmax
+      real(kind_phys), parameter :: mkz2min = mkzmin*mkzmin
+      real(kind_phys), parameter :: zbr_pi  = (3.0/2.0)*pi
+      real(kind_phys), parameter :: zbr_ifs = 0.5*pi
 
       contains
 !
@@ -178,17 +180,17 @@
 !
       integer :: nwaves, nazdir, nstoch
       integer :: lonr
-      real    :: cdmbgwd(2)   ! scaling factors for MTb (1) & (2) for cleff = cleff  * cdmbgwd(2)
+      real(kind_phys)    :: cdmbgwd(2)   ! scaling factors for MTb (1) & (2) for cleff = cleff  * cdmbgwd(2)
                               ! high res-n "larger" MTB and "less-active" cleff in GFS-2018   
-      real    :: cdmbX
-      real    :: kxw
-      real    :: effac        ! it is analog of cdmbgwd(2) for GWs, off for now
+      real(kind_phys)    :: cdmbX
+      real(kind_phys)    :: kxw
+      real(kind_phys)    :: effac        ! it is analog of cdmbgwd(2) for GWs, off for now
 !-----------------------------! GFS-setup for cdmb & cleff
 ! cdmb =  4.0 * (192.0/IMX)  
 ! cleff = 0.5E-5 / SQRT(IMX/192.0)  = 0.5E-5*SQRT(192./IMX)
 !
-      real, parameter :: lonr_refmb =  4.0 * 192.0
-      real, parameter :: lonr_refgw =  192.0
+      real(kind_phys), parameter :: lonr_refmb =  4.0 * 192.0
+      real(kind_phys), parameter :: lonr_refgw =  192.0
 
 ! copy  to "ugwp_oro_init"  =>  nwaves, nazdir, nstoch
  
@@ -226,11 +228,12 @@
 !===============================
 
   module ugwpv0_lsatdis_init
+      use machine, only: kind_phys
      implicit none
 
       integer  :: nwav, nazd
       integer  :: nst
-      real     :: eff
+      real(kind_phys)     :: eff
       integer, parameter  :: incdim = 4, iazdim = 4
 !
      contains
@@ -242,9 +245,9 @@
      integer  :: me, master
      integer  :: nwaves, nazdir
      integer  :: nstoch
-     real     :: effac
+     real(kind_phys)     :: effac
      logical  :: do_physb
-     real     :: kxw
+     real(kind_phys)     :: kxw
 !
 !locals: define azimuths and Ch(nwaves) - domain when physics-based soureces
 !                                          are not actibve
@@ -272,50 +275,51 @@
 !
   module ugwpv0_wmsdis_init
  
+    use machine, only: kind_phys
     use ugwp_common_v0, only :   pi, pi2
     implicit none
 
-      real,     parameter   :: maxdudt = 250.e-5
+      real(kind_phys),     parameter   :: maxdudt = 250.e-5
 
-      real,     parameter   :: hpscale= 7000., rhp2   =  0.5/hpscale
-      real,     parameter   :: omega2 = 2.*6.28/86400
-      real,     parameter   :: gptwo=2.0
+      real(kind_phys),     parameter   :: hpscale= 7000., rhp2   =  0.5/hpscale
+      real(kind_phys),     parameter   :: omega2 = 2.*6.28/86400
+      real(kind_phys),     parameter   :: gptwo=2.0
 
-      real,     parameter   :: dked_min =0.01
-      real,     parameter   :: gssec = (6.28/30.)**2        ! max-value for bn2
-      real,     parameter   :: bv2min = (6.28/60./120.)**2  ! min-value for bn2  7.6(-7)  2 hrs
-      real,     parameter   :: minvel = 0.5
+      real(kind_phys),     parameter   :: dked_min =0.01
+      real(kind_phys),     parameter   :: gssec = (6.28/30.)**2        ! max-value for bn2
+      real(kind_phys),     parameter   :: bv2min = (6.28/60./120.)**2  ! min-value for bn2  7.6(-7)  2 hrs
+      real(kind_phys),     parameter   :: minvel = 0.5
  
 !
 ! make parameter list that will be passed to SOLVER
 !
 
-      real, parameter       :: v_kxw  = 6.28e-3/200.
-      real, parameter       :: v_kxw2 = v_kxw*v_kxw
-      real, parameter       :: tamp_mpa = 30.e-3
-      real, parameter       :: zfluxglob= 3.75e-3
+      real(kind_phys), parameter       :: v_kxw  = 6.28e-3/200.
+      real(kind_phys), parameter       :: v_kxw2 = v_kxw*v_kxw
+      real(kind_phys), parameter       :: tamp_mpa = 30.e-3
+      real(kind_phys), parameter       :: zfluxglob= 3.75e-3
 
-      real ,     parameter  :: nslope=1        ! the GW sprctral slope at small-m
+      real(kind_phys) ,     parameter  :: nslope=1        ! the GW sprctral slope at small-m
  
       integer  , parameter  :: iazidim=4       ! number of azimuths
       integer  , parameter  :: incdim=25       ! number of discrete cx - spectral elements in launch spectrum
-      real ,     parameter  :: ucrit2=0.5
+      real(kind_phys) ,     parameter  :: ucrit2=0.5
  
-      real ,     parameter  :: zcimin = ucrit2
-      real ,     parameter  :: zcimax = 125.0
-      real ,     parameter  :: zgam   =   0.25
-      real ,     parameter  :: zms_l  = 2000.0, zms = pi2 / zms_l, zmsi = 1.0 / zms
+      real(kind_phys) ,     parameter  :: zcimin = ucrit2
+      real(kind_phys) ,     parameter  :: zcimax = 125.0
+      real(kind_phys) ,     parameter  :: zgam   =   0.25
+      real(kind_phys) ,     parameter  :: zms_l  = 2000.0, zms = pi2 / zms_l, zmsi = 1.0 / zms
 
       integer               :: ilaunch
-      real                  :: gw_eff
+      real(kind_phys)                  :: gw_eff
  
 !===========================================================================
       integer  :: nwav, nazd, nst
-      real     :: eff
+      real(kind_phys)     :: eff
  
-      real                :: zaz_fct
-      real, allocatable   :: zci(:), zci4(:), zci3(:),zci2(:), zdci(:)
-      real, allocatable   :: zcosang(:), zsinang(:)
+      real(kind_phys)                :: zaz_fct
+      real(kind_phys), allocatable   :: zci(:), zci4(:), zci3(:),zci2(:), zdci(:)
+      real(kind_phys), allocatable   :: zcosang(:), zsinang(:)
       contains
 !============================================================================
      subroutine initsolv_wmsdis_v0(me, master,  nwaves, nazdir, nstoch, effac, do_physb, kxw)
@@ -327,15 +331,15 @@
 !
 !
      integer  :: me, master, nwaves, nazdir, nstoch
-     real     :: effac, kxw
+     real(kind_phys)     :: effac, kxw
      logical  :: do_physb
 !
 !locals
 !
       integer :: inc, jk, jl, iazi
 !
-      real :: zang, zang1, znorm
-      real :: zx1, zx2, ztx, zdx, zxran, zxmin, zxmax, zx, zpexp
+      real(kind_phys) :: zang, zang1, znorm
+      real(kind_phys) :: zx1, zx2, ztx, zdx, zxran, zxmin, zxmax, zx, zpexp
 
      if( nwaves == 0) then
 !

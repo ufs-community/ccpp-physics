@@ -138,9 +138,9 @@ contains
     ! fxp: fraction of the solar radiation absorbed by the ocean at depth z (w/m^2)
     !
     implicit none
-    real,intent(in):: z
-    real,intent(out):: fxp
-    real, dimension(9), parameter :: f=(/0.237,0.36,0.179,0.087,0.08,0.0246,0.025,0.007,0.0004/) &
+    real(kind_phys),intent(in):: z
+    real(kind_phys),intent(out):: fxp
+    real(kind_phys), dimension(9), parameter :: f=(/0.237,0.36,0.179,0.087,0.08,0.0246,0.025,0.007,0.0004/) &
                                 ,gamma=(/34.8,2.27,3.15e-2,5.48e-3,8.32e-4,1.26e-4,3.13e-4,7.82e-5,1.44e-5/)
     !
     if(z>0) then
@@ -171,9 +171,9 @@ contains
     ! fxp: fraction of the solar radiation absorbed by the ocean at depth z (w/m^2)
     !
     implicit none
-    real,intent(in):: z
-    real,intent(out):: aw
-    real, dimension(9), parameter :: f=(/0.237,0.36,0.179,0.087,0.08,0.0246,0.025,0.007,0.0004/) &
+    real(kind_phys),intent(in):: z
+    real(kind_phys),intent(out):: aw
+    real(kind_phys), dimension(9), parameter :: f=(/0.237,0.36,0.179,0.087,0.08,0.0246,0.025,0.007,0.0004/) &
                                 ,gamma=(/34.8,2.27,3.15e-2,5.48e-3,8.32e-4,1.26e-4,3.13e-4,7.82e-5,1.44e-5/)
     !
     if(z>0) then

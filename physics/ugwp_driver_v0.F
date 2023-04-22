@@ -961,98 +961,101 @@
       integer, intent(in) :: klev             ! vertical level
       integer, intent(in) :: klon             ! horiz tiles
 
-      real,    intent(in) :: dtime            ! model time step
-      real,    intent(in) :: vm1(klon,klev)   ! meridional wind
-      real,    intent(in) :: um1(klon,klev)   ! zonal wind
-      real,    intent(in) :: qm1(klon,klev)   ! spec. humidity
-      real,    intent(in) :: tm1(klon,klev)   ! kin temperature 
+      real(kind_phys),    intent(in) :: dtime            ! model time step
+      real(kind_phys),    intent(in) :: vm1(klon,klev)   ! meridional wind
+      real(kind_phys),    intent(in) :: um1(klon,klev)   ! zonal wind
+      real(kind_phys),    intent(in) :: qm1(klon,klev)   ! spec. humidity
+      real(kind_phys),    intent(in) :: tm1(klon,klev)   ! kin temperature 
 
-      real,    intent(in) :: prsl(klon,klev)  ! mid-layer pressure
-      real,    intent(in) :: philg(klon,klev) ! m2/s2-phil => meters !!!!!       phil =philg/grav
-      real,    intent(in) :: prsi(klon,klev+1)! prsi interface pressure
-      real,    intent(in) :: xlatd(klon)      ! lat was in radians, now with xlat_d in degrees
-      real,    intent(in) :: sinlat(klon)
-      real,    intent(in) :: coslat(klon)
-      real,    intent(in) :: tau_ngw(klon)
+      real(kind_phys),    intent(in) :: prsl(klon,klev)  ! mid-layer pressure
+      real(kind_phys),    intent(in) :: philg(klon,klev) ! m2/s2-phil => meters !!!!!       phil =philg/grav
+      real(kind_phys),    intent(in) :: prsi(klon,klev+1)! prsi interface pressure
+      real(kind_phys),    intent(in) :: xlatd(klon)      ! lat was in radians, now with xlat_d in degrees
+      real(kind_phys),    intent(in) :: sinlat(klon)
+      real(kind_phys),    intent(in) :: coslat(klon)
+      real(kind_phys),    intent(in) :: tau_ngw(klon)
 
       integer, intent(in) :: mpi_id, master, kdt
 !
 !
 ! out-gw effects
 !
-      real, intent(out) :: pdudt(klon,klev)     ! zonal momentum tendency
-      real, intent(out) :: pdvdt(klon,klev)     ! meridional momentum tendency
-      real, intent(out) :: pdtdt(klon,klev)     ! gw-heating (u*ax+v*ay)/cp
-      real, intent(out) :: dked(klon,klev)      ! gw-eddy diffusion
-      real, parameter   :: minvel = 0.5_kp      !
-      real, parameter   :: epsln  = 1.0e-12_kp  !
-      real, parameter   :: zero   = 0.0_kp, one = 1.0_kp, half = 0.5_kp
+      real(kind_phys), intent(out) :: pdudt(klon,klev)     ! zonal momentum tendency
+      real(kind_phys), intent(out) :: pdvdt(klon,klev)     ! meridional momentum tendency
+      real(kind_phys), intent(out) :: pdtdt(klon,klev)     ! gw-heating (u*ax+v*ay)/cp
+      real(kind_phys), intent(out) :: dked(klon,klev)      ! gw-eddy diffusion
+      real(kind_phys), parameter   :: minvel = 0.5_kind_phys
+      real(kind_phys), parameter   :: epsln  = 1.0e-12_kind_phys
+      real(kind_phys), parameter   :: zero   = 0.0_kind_phys
+      real(kind_phys), parameter   :: one    = 1.0_kind_phys
+      real(kind_phys), parameter   :: half   = 0.5_kind_phys
 
 !vay-2018
 
-      real              :: taux(klon,klev+1)    ! EW component of vertical momentum flux (pa)
-      real              :: tauy(klon,klev+1)    ! NS component of vertical momentum flux (pa)
-      real              :: phil(klon,klev)      ! gphil/grav
+      real(kind_phys)              :: taux(klon,klev+1)    ! EW component of vertical momentum flux (pa)
+      real(kind_phys)              :: tauy(klon,klev+1)    ! NS component of vertical momentum flux (pa)
+      real(kind_phys)              :: phil(klon,klev)      ! gphil/grav
 !
 ! local ===============================================================================================
 !
 
-!      real  :: zthm1(klon,klev)                       ! temperature interface levels
-       real  :: zthm1                                  ! 1.0 / temperature interface levels
-       real  :: zbvfhm1(klon,ilaunch:klev)             ! interface BV-frequency 
-       real  :: zbn2(klon,ilaunch:klev)                ! interface BV-frequency
-       real  :: zrhohm1(klon,ilaunch:klev)             ! interface density 
-       real  :: zuhm1(klon,ilaunch:klev)               ! interface zonal wind
-       real  :: zvhm1(klon,ilaunch:klev)               ! meridional wind
-       real  :: v_zmet(klon,ilaunch:klev)
-       real  :: vueff(klon,ilaunch:klev)
-       real  :: zbvfl(klon)                            ! BV at launch level
-       real  :: c2f2(klon)
+!      real(kind_phys)  :: zthm1(klon,klev)                       ! temperature interface levels
+       real(kind_phys)  :: zthm1                                  ! 1.0 / temperature interface levels
+       real(kind_phys)  :: zbvfhm1(klon,ilaunch:klev)             ! interface BV-frequency 
+       real(kind_phys)  :: zbn2(klon,ilaunch:klev)                ! interface BV-frequency
+       real(kind_phys)  :: zrhohm1(klon,ilaunch:klev)             ! interface density 
+       real(kind_phys)  :: zuhm1(klon,ilaunch:klev)               ! interface zonal wind
+       real(kind_phys)  :: zvhm1(klon,ilaunch:klev)               ! meridional wind
+       real(kind_phys)  :: v_zmet(klon,ilaunch:klev)
+       real(kind_phys)  :: vueff(klon,ilaunch:klev)
+       real(kind_phys)  :: zbvfl(klon)                            ! BV at launch level
+       real(kind_phys)  :: c2f2(klon)
 
 !23456
-       real  :: zul(klon,nazd)                ! velocity in azimuthal direction at launch level
-       real  :: zci_min(klon,nazd)
-!      real  :: zcrt(klon,klev,nazd)          ! not used - do we need it?  Moorthi
-       real  :: zact(klon, nwav, nazd)        ! if =1 then critical level encountered => c-u
-!      real  :: zacc(klon, nwav, nazd)        ! not used!
+       real(kind_phys)  :: zul(klon,nazd)                ! velocity in azimuthal direction at launch level
+       real(kind_phys)  :: zci_min(klon,nazd)
+!      real(kind_phys)  :: zcrt(klon,klev,nazd)          ! not used - do we need it?  Moorthi
+       real(kind_phys)  :: zact(klon, nwav, nazd)        ! if =1 then critical level encountered => c-u
+!      real(kind_phys)  :: zacc(klon, nwav, nazd)        ! not used!
 !
-       real  :: zpu(klon,klev,  nazd)         ! momentum flux
-!      real  :: zdfl(klon,klev, nazd)
-       real  :: zfct(klon,klev)
-       real  :: zfnorm(klon)                  ! normalisation factor
+       real(kind_phys)  :: zpu(klon,klev,  nazd)         ! momentum flux
+!      real(kind_phys)  :: zdfl(klon,klev, nazd)
+       real(kind_phys)  :: zfct(klon,klev)
+       real(kind_phys)  :: zfnorm(klon)                  ! normalisation factor
 
-       real  ::  zfluxlaun(klon)
-       real  ::  zui(klon, klev,nazd)
+       real(kind_phys)  ::  zfluxlaun(klon)
+       real(kind_phys)  ::  zui(klon, klev,nazd)
 !
-       real  :: zdfdz_v(klon,klev, nazd)   ! axj = -df*rho/dz       directional momentum depositiom
-       real  :: zflux(klon, nwav, nazd)   ! momentum flux at each level   stored as ( ix, mode, iazdim)
+       real(kind_phys)  :: zdfdz_v(klon,klev, nazd)   ! axj = -df*rho/dz       directional momentum depositiom
+       real(kind_phys)  :: zflux(klon, nwav, nazd)   ! momentum flux at each level   stored as ( ix, mode, iazdim)
 
-       real  :: zflux_z (klon, nwav,klev)    !momentum flux at each azimuth stored as ( ix, mode, klev)
+       real(kind_phys)  :: zflux_z (klon, nwav,klev)    !momentum flux at each azimuth stored as ( ix, mode, klev)
 !
-       real  :: vm_zflx_mode, vc_zflx_mode
-       real  :: kzw2, kzw3, kdsat, cdf2, cdf1, wdop2
+       real(kind_phys)  :: vm_zflx_mode, vc_zflx_mode
+       real(kind_phys)  :: kzw2, kzw3, kdsat, cdf2, cdf1, wdop2
 
-!      real  :: zang, znorm, zang1, ztx
-       real  :: zu, zcin, zcpeak, zcin4, zbvfl4
-       real  :: zcin2, zbvfl2, zcin3, zbvfl3, zcinc
-       real  :: zatmp, zfluxs, zdep, zfluxsq, zulm, zdft, ze1, ze2
+!      real(kind_phys)  :: zang, znorm, zang1, ztx
+       real(kind_phys)  :: zu, zcin, zcpeak, zcin4, zbvfl4
+       real(kind_phys)  :: zcin2, zbvfl2, zcin3, zbvfl3, zcinc
+       real(kind_phys)  :: zatmp, zfluxs, zdep, zfluxsq, zulm, zdft
+       real(kind_phys)  :: ze1, ze2
 
 !
-       real  :: zdelp,zrgpts
-       real  :: zthstd,zrhostd,zbvfstd
-       real  :: tvc1,  tvm1, tem1, tem2, tem3
-       real  :: zhook_handle
-       real  :: delpi(klon,ilaunch:klev)
+       real(kind_phys)  :: zdelp,zrgpts
+       real(kind_phys)  :: zthstd,zrhostd,zbvfstd
+       real(kind_phys)  :: tvc1,  tvm1, tem1, tem2, tem3
+       real(kind_phys)  :: zhook_handle
+       real(kind_phys)  :: delpi(klon,ilaunch:klev)
 
 
-!      real  :: rcpd, grav2cpd
-       real, parameter ::  rcpdl    = cpd/grav     ! 1/[g/cp]  == cp/g
+!      real(kind_phys)  :: rcpd, grav2cpd
+       real(kind_phys), parameter ::  rcpdl    = cpd/grav     ! 1/[g/cp]  == cp/g
      &,                    grav2cpd = grav/rcpdl   ! g*(g/cp)= g^2/cp
      &,                    cpdi     = one/cpd
 
-       real :: expdis, fdis
-!      real :: fmode, expdis, fdis
-       real :: v_kzi, v_kzw, v_cdp, v_wdp, sc, tx1
+       real(kind_phys) :: expdis, fdis
+!      real(kind_phys) :: fmode, expdis, fdis
+       real(kind_phys) :: v_kzi, v_kzw, v_cdp, v_wdp, sc, tx1
 
        integer :: j, k, inc, jk, jl, iazi
 !

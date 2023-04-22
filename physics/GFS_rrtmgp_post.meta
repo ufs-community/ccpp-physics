@@ -2,6 +2,7 @@
   name = GFS_rrtmgp_post
   type = scheme
   dependencies = iounitdef.f,machine.F,radiation_aerosols.f,radlw_param.f,radiation_tools.F90,rte-rrtmgp/extensions/mo_heating_rates.F90
+  dependencies = rte-rrtmgp/rrtmgp/mo_rrtmgp_constants.F90
 
 ########################################################################
 [ccpp-arg-table]

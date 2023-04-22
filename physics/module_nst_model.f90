@@ -753,7 +753,7 @@ subroutine convdepth(kdt,timestep,i0,q,sss,sep,rho,alpha,beta,xt,xs,xz,d_conv)
   
 ! ze = a2*d_sfs             ! not used!
 
-  l = int_epn(0.0,d_sfs,0.0,d_sfs,2)
+  l = int_epn(0.0_kind_phys,d_sfs,0.0_kind_phys,d_sfs,2)
 
 ! t_sfs = xt/l
 ! xz = (xt+xt) / t_sfs

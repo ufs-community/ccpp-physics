@@ -2,6 +2,7 @@
 !!
 
       module cires_ugwp_triggers
+      use machine, only: kind_phys
       contains
 !
 
@@ -11,8 +12,8 @@
 !=================
       implicit none
       integer :: im     
-      real    :: tau_amp, xlatdeg(im), tau_gw(im)
-      real    :: latdeg, flat_gw, tem
+      real(kind_phys) :: tau_amp, xlatdeg(im), tau_gw(im)
+      real(kind_phys) :: latdeg, flat_gw, tem
       integer :: i
       
 !
@@ -44,11 +45,11 @@
 !=================
       implicit none
       integer :: im     
-      real  :: xlatdeg(im)          
-      real  :: tau_gw(im)
-      real  :: latdeg
-      real, parameter  :: tau_amp = 100.e-3
-      real             :: trop_gw,  flat_gw 
+      real(kind_phys) :: xlatdeg(im)          
+      real(kind_phys) :: tau_gw(im)
+      real(kind_phys) :: latdeg
+      real(kind_phys), parameter  :: tau_amp = 100.e-3
+      real(kind_phys) :: trop_gw,  flat_gw 
       integer :: i
 !
 ! if-lat
@@ -81,9 +82,9 @@
       use ugwp_common_v0 , only : pi2
       implicit none
       integer :: naz
-      real, dimension(naz) :: xaz,  yaz
+      real(kind_phys), dimension(naz) :: xaz,  yaz
       integer :: idir
-      real    :: phic, drad
+      real(kind_phys) :: phic, drad
       drad  = pi2/float(naz)
       if (naz.ne.4) then     
         do idir =1, naz
