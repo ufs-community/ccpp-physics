@@ -39,6 +39,7 @@ module gfdl_cloud_microphys_mod
     ! use fms_mod, only: write_version_number, open_namelist_file, &
     ! check_nml_error, file_exist, close_file
 
+   use machine, only: kind_phys
    use module_mp_radar
 
    implicit none
@@ -51,98 +52,98 @@ module gfdl_cloud_microphys_mod
 !   public qsmith_init, qsmith, es2_table1d, es3_table1d, esw_table1d
 !   public setup_con, wet_bulb
 
-   real :: missing_value = - 1.e10
+   real(kind_phys) :: missing_value = - 1.e10
 
    logical :: module_is_initialized = .false.
    logical :: qsmith_tables_initialized = .false.
 
    character (len = 17) :: mod_name = 'gfdl_cloud_microphys'
 
-   real, parameter :: n0r = 8.0e6, n0s = 3.0e6, n0g = 4.0e6
-   real, parameter :: rhos = 0.1e3, rhog = 0.4e3
-   real,                 parameter :: grav = 9.80665       !< gfs: acceleration due to gravity
-   real,                 parameter :: rdgas = 287.05       !< gfs: gas constant for dry air
-   real,                 parameter :: rvgas = 461.50       !< gfs: gas constant for water vapor
-   real,                 parameter :: cp_air = 1004.6      !< gfs: heat capacity of dry air at constant pressure
-   real,                 parameter :: hlv = 2.5e6          !< gfs: latent heat of evaporation
-   real,                 parameter :: hlf = 3.3358e5       !< gfs: latent heat of fusion
-   real,                 parameter :: pi = 3.1415926535897931 !< gfs: ratio of circle circumference to diameter
+   real(kind_phys), parameter :: n0r = 8.0e6, n0s = 3.0e6, n0g = 4.0e6
+   real(kind_phys), parameter :: rhos = 0.1e3, rhog = 0.4e3
+   real(kind_phys),                 parameter :: grav = 9.80665       !< gfs: acceleration due to gravity
+   real(kind_phys),                 parameter :: rdgas = 287.05       !< gfs: gas constant for dry air
+   real(kind_phys),                 parameter :: rvgas = 461.50       !< gfs: gas constant for water vapor
+   real(kind_phys),                 parameter :: cp_air = 1004.6      !< gfs: heat capacity of dry air at constant pressure
+   real(kind_phys),                 parameter :: hlv = 2.5e6          !< gfs: latent heat of evaporation
+   real(kind_phys),                 parameter :: hlf = 3.3358e5       !< gfs: latent heat of fusion
+   real(kind_phys),                 parameter :: pi = 3.1415926535897931 !< gfs: ratio of circle circumference to diameter
 
-   ! real, parameter :: rdgas = 287.04                     !< gfdl: gas constant for dry air
+   ! real(kind_phys), parameter :: rdgas = 287.04                     !< gfdl: gas constant for dry air
 
-   ! real, parameter :: cp_air = rdgas * 7. / 2.           ! 1004.675, heat capacity of dry air at constant pressure
-   real, parameter :: cp_vap = 4.0 * rvgas                 !< 1846.0, heat capacity of water vapore at constnat pressure
-   ! real, parameter :: cv_air = 717.56                    ! satoh value
-   real, parameter :: cv_air = cp_air - rdgas              !< 717.55, heat capacity of dry air at constant volume
-   ! real, parameter :: cv_vap = 1410.0                    ! emanuel value
-   real, parameter :: cv_vap = 3.0 * rvgas                 !< 1384.5, heat capacity of water vapor at constant volume
+   ! real(kind_phys), parameter :: cp_air = rdgas * 7. / 2.           ! 1004.675, heat capacity of dry air at constant pressure
+   real(kind_phys), parameter :: cp_vap = 4.0 * rvgas                 !< 1846.0, heat capacity of water vapore at constnat pressure
+   ! real(kind_phys), parameter :: cv_air = 717.56                    ! satoh value
+   real(kind_phys), parameter :: cv_air = cp_air - rdgas              !< 717.55, heat capacity of dry air at constant volume
+   ! real(kind_phys), parameter :: cv_vap = 1410.0                    ! emanuel value
+   real(kind_phys), parameter :: cv_vap = 3.0 * rvgas                 !< 1384.5, heat capacity of water vapor at constant volume
 
    ! the following two are from emanuel's book "atmospheric convection"
-   ! real, parameter :: c_ice = 2106.0                     ! heat capacity of ice at 0 deg c: c = c_ice + 7.3 * (t - tice)
-   ! real, parameter :: c_liq = 4190.0                     ! heat capacity of water at 0 deg c
+   ! real(kind_phys), parameter :: c_ice = 2106.0                     ! heat capacity of ice at 0 deg c: c = c_ice + 7.3 * (t - tice)
+   ! real(kind_phys), parameter :: c_liq = 4190.0                     ! heat capacity of water at 0 deg c
 
-   real, parameter :: c_ice = 1972.0                       !< gfdl: heat capacity of ice at - 15 deg c
-   real, parameter :: c_liq = 4185.5                       !< gfdl: heat capacity of water at 15 deg c
-   ! real, parameter :: c_liq = 4218.0                     ! ifs: heat capacity of liquid at 0 deg c
+   real(kind_phys), parameter :: c_ice = 1972.0                       !< gfdl: heat capacity of ice at - 15 deg c
+   real(kind_phys), parameter :: c_liq = 4185.5                       !< gfdl: heat capacity of water at 15 deg c
+   ! real(kind_phys), parameter :: c_liq = 4218.0                     ! ifs: heat capacity of liquid at 0 deg c
 
-   real, parameter :: eps = rdgas / rvgas                  !< 0.6219934995
-   real, parameter :: zvir = rvgas / rdgas - 1.            !< 0.6077338443
+   real(kind_phys), parameter :: eps = rdgas / rvgas                  !< 0.6219934995
+   real(kind_phys), parameter :: zvir = rvgas / rdgas - 1.            !< 0.6077338443
 
-   real, parameter :: t_ice = 273.16                       !< freezing temperature
-   real, parameter :: table_ice = 273.16                   !< freezing point for qs table
+   real(kind_phys), parameter :: t_ice = 273.16                       !< freezing temperature
+   real(kind_phys), parameter :: table_ice = 273.16                   !< freezing point for qs table
 
-   ! real, parameter :: e00 = 610.71                       ! gfdl: saturation vapor pressure at 0 deg c
-   real, parameter :: e00 = 611.21                         !< ifs: saturation vapor pressure at 0 deg c
+   ! real(kind_phys), parameter :: e00 = 610.71                       ! gfdl: saturation vapor pressure at 0 deg c
+   real(kind_phys), parameter :: e00 = 611.21                         !< ifs: saturation vapor pressure at 0 deg c
 
-   real, parameter :: dc_vap = cp_vap - c_liq              !< - 2339.5, isobaric heating / cooling
-   real, parameter :: dc_ice = c_liq - c_ice               !< 2213.5, isobaric heating / colling
+   real(kind_phys), parameter :: dc_vap = cp_vap - c_liq              !< - 2339.5, isobaric heating / cooling
+   real(kind_phys), parameter :: dc_ice = c_liq - c_ice               !< 2213.5, isobaric heating / colling
 
-   real, parameter :: hlv0 = hlv                           !< gfs: evaporation latent heat coefficient at 0 deg c
-   ! real, parameter :: hlv0 = 2.501e6                     ! emanuel appendix - 2
-   real, parameter :: hlf0 = hlf                           !< gfs: fussion latent heat coefficient at 0 deg c
-   ! real, parameter :: hlf0 = 3.337e5                     ! emanuel
+   real(kind_phys), parameter :: hlv0 = hlv                           !< gfs: evaporation latent heat coefficient at 0 deg c
+   ! real(kind_phys), parameter :: hlv0 = 2.501e6                     ! emanuel appendix - 2
+   real(kind_phys), parameter :: hlf0 = hlf                           !< gfs: fussion latent heat coefficient at 0 deg c
+   ! real(kind_phys), parameter :: hlf0 = 3.337e5                     ! emanuel
 
-   real, parameter :: lv0 = hlv0 - dc_vap * t_ice          !< 3.13905782e6, evaporation latent heat coefficient at 0 deg k
-   real, parameter :: li00 = hlf0 - dc_ice * t_ice         !< - 2.7105966e5, fusion latent heat coefficient at 0 deg k
+   real(kind_phys), parameter :: lv0 = hlv0 - dc_vap * t_ice          !< 3.13905782e6, evaporation latent heat coefficient at 0 deg k
+   real(kind_phys), parameter :: li00 = hlf0 - dc_ice * t_ice         !< - 2.7105966e5, fusion latent heat coefficient at 0 deg k
 
-   real, parameter :: d2ice = dc_vap + dc_ice              !< - 126, isobaric heating/cooling
-   real, parameter :: li2 = lv0 + li00                     !< 2.86799816e6, sublimation latent heat coefficient at 0 deg k
+   real(kind_phys), parameter :: d2ice = dc_vap + dc_ice              !< - 126, isobaric heating/cooling
+   real(kind_phys), parameter :: li2 = lv0 + li00                     !< 2.86799816e6, sublimation latent heat coefficient at 0 deg k
 
-   real, parameter :: qrmin = 1.e-8                        !< min value for rain
-   real, parameter :: qvmin = 1.e-20                       !< min value for water vapor (treated as zero)
-   real, parameter :: qcmin = 1.e-12                       !< min value for cloud condensates
+   real(kind_phys), parameter :: qrmin = 1.e-8                        !< min value for rain
+   real(kind_phys), parameter :: qvmin = 1.e-20                       !< min value for water vapor (treated as zero)
+   real(kind_phys), parameter :: qcmin = 1.e-12                       !< min value for cloud condensates
 
-   real, parameter :: vr_min = 1.e-3                       !< min fall speed for rain
-   real, parameter :: vf_min = 1.e-5                       !< min fall speed for cloud ice, snow, graupel
+   real(kind_phys), parameter :: vr_min = 1.e-3                       !< min fall speed for rain
+   real(kind_phys), parameter :: vf_min = 1.e-5                       !< min fall speed for cloud ice, snow, graupel
 
-   real, parameter :: dz_min = 1.e-2                       !< use for correcting flipped height
+   real(kind_phys), parameter :: dz_min = 1.e-2                       !< use for correcting flipped height
 
-   real, parameter :: sfcrho = 1.2                         !< surface air density
-   real, parameter :: rhor = 1.e3                          !< density of rain water, lin83
+   real(kind_phys), parameter :: sfcrho = 1.2                         !< surface air density
+   real(kind_phys), parameter :: rhor = 1.e3                          !< density of rain water, lin83
     ! intercept parameters
 
-   real, parameter :: rnzr = 8.0e6 ! lin83
-   real, parameter :: rnzs = 3.0e6 ! lin83
-   real, parameter :: rnzg = 4.0e6 ! rh84
-   real, parameter :: rnzh = 4.0e4 ! lin83 --- lmh 29 sep 17
+   real(kind_phys), parameter :: rnzr = 8.0e6 ! lin83
+   real(kind_phys), parameter :: rnzs = 3.0e6 ! lin83
+   real(kind_phys), parameter :: rnzg = 4.0e6 ! rh84
+   real(kind_phys), parameter :: rnzh = 4.0e4 ! lin83 --- lmh 29 sep 17
 
     ! density parameters
 
-   real, parameter :: rhoh = 0.917e3 ! lin83 --- lmh 29 sep 17
+   real(kind_phys), parameter :: rhoh = 0.917e3 ! lin83 --- lmh 29 sep 17
 
    public rhor, rhos, rhog, rhoh, rnzr, rnzs, rnzg, rnzh
-   real :: cracs, csacr, cgacr, cgacs, csacw, craci, csaci, cgacw, cgaci, cracw !< constants for accretions
-   real :: acco (3, 4)                                     !< constants for accretions
-   real :: cssub (5), cgsub (5), crevp (5), cgfr (2), csmlt (5), cgmlt (5)
+   real(kind_phys) :: cracs, csacr, cgacr, cgacs, csacw, craci, csaci, cgacw, cgaci, cracw !< constants for accretions
+   real(kind_phys) :: acco (3, 4)                                     !< constants for accretions
+   real(kind_phys) :: cssub (5), cgsub (5), crevp (5), cgfr (2), csmlt (5), cgmlt (5)
 
-   real :: es0, ces0
-   real :: pie, rgrav, fac_rc
-   real :: c_air, c_vap
+   real(kind_phys) :: es0, ces0
+   real(kind_phys) :: pie, rgrav, fac_rc
+   real(kind_phys) :: c_air, c_vap
 
-   real :: lati, latv, lats, lat2, lcp, icp, tcp           !< used in Bigg mechanism and wet bulk
+   real(kind_phys) :: lati, latv, lats, lat2, lcp, icp, tcp           !< used in Bigg mechanism and wet bulk
 
-   real :: d0_vap                                          !< the same as dc_vap, except that cp_vap can be cp_vap or cv_vap
-   real :: lv00                                            !< the same as lv0, except that cp_vap can be cp_vap or cv_vap
+   real(kind_phys) :: d0_vap                                          !< the same as dc_vap, except that cp_vap can be cp_vap or cv_vap
+   real(kind_phys) :: lv00                                            !< the same as lv0, except that cp_vap can be cp_vap or cv_vap
 
    ! cloud microphysics switchers
 
@@ -162,19 +163,19 @@ module gfdl_cloud_microphys_mod
     logical :: do_setup = .true. !< setup constants and parameters
    logical :: p_nonhydro = .false.                         !< perform hydrosatic adjustment on air density
 
-   real, allocatable :: table (:), table2 (:), table3 (:), tablew (:)
-   real, allocatable :: des (:), des2 (:), des3 (:), desw (:)
+   real(kind_phys), allocatable :: table (:), table2 (:), table3 (:), tablew (:)
+   real(kind_phys), allocatable :: des (:), des2 (:), des3 (:), desw (:)
 
     logical :: tables_are_initialized = .false.
 
    ! logical :: master
    ! integer :: id_rh, id_vtr, id_vts, id_vtg, id_vti, id_rain, id_snow, id_graupel, &
    ! id_ice, id_prec, id_cond, id_var, id_droplets
-   real, parameter :: dt_fr = 8.                           !< homogeneous freezing of all cloud water at t_wfr - dt_fr
+   real(kind_phys), parameter :: dt_fr = 8.                           !< homogeneous freezing of all cloud water at t_wfr - dt_fr
    ! minimum temperature water can exist (moore & molinero nov. 2011, nature)
    ! dt_fr can be considered as the error bar
 
-   real :: p_min = 100.                                    !< minimum pressure (pascal) for mp to operate
+   real(kind_phys) :: p_min = 100.                                    !< minimum pressure (pascal) for mp to operate
 
    ! slj, the following parameters are for cloud - resolving resolution: 1 - 5 km
 
@@ -187,43 +188,43 @@ module gfdl_cloud_microphys_mod
    ! namelist parameters
    ! -----------------------------------------------------------------------
 
-   real :: cld_min = 0.05                                  !< minimum cloud fraction
-   real :: tice = 273.16                                   !< set tice = 165. to trun off ice - phase phys (kessler emulator)
+   real(kind_phys) :: cld_min = 0.05                                  !< minimum cloud fraction
+   real(kind_phys) :: tice = 273.16                                   !< set tice = 165. to trun off ice - phase phys (kessler emulator)
 
-   real :: t_min = 178.                                    !< min temp to freeze - dry all water vapor
-   real :: t_sub = 184.                                    !< min temp for sublimation of cloud ice
-   real :: mp_time = 150.                                  !< maximum micro - physics time step (sec)
+   real(kind_phys) :: t_min = 178.                                    !< min temp to freeze - dry all water vapor
+   real(kind_phys) :: t_sub = 184.                                    !< min temp for sublimation of cloud ice
+   real(kind_phys) :: mp_time = 150.                                  !< maximum micro - physics time step (sec)
 
    ! relative humidity increment
 
-   real :: rh_inc = 0.25                                   !< rh increment for complete evaporation of cloud water and cloud ice
-   real :: rh_inr = 0.25                                   !< rh increment for minimum evaporation of rain
-   real :: rh_ins = 0.25                                   !< rh increment for sublimation of snow
+   real(kind_phys) :: rh_inc = 0.25                                   !< rh increment for complete evaporation of cloud water and cloud ice
+   real(kind_phys) :: rh_inr = 0.25                                   !< rh increment for minimum evaporation of rain
+   real(kind_phys) :: rh_ins = 0.25                                   !< rh increment for sublimation of snow
 
    ! conversion time scale
 
-   real :: tau_r2g = 900.                                  !< rain freezing during fast_sat
-   real :: tau_smlt = 900.                                 !< snow melting
-   real :: tau_g2r = 600.                                  !< graupel melting to rain
-   real :: tau_imlt = 600.                                 !< cloud ice melting
-   real :: tau_i2s = 1000.                                 !< cloud ice to snow auto-conversion
-   real :: tau_l2r = 900.                                  !< cloud water to rain auto-conversion
-   real :: tau_v2l = 150.                                  !< water vapor to cloud water (condensation)
-   real :: tau_l2v = 300.                                  !< cloud water to water vapor (evaporation)
-   real :: tau_g2v = 900.                                  !< graupel sublimation
-   real :: tau_v2g = 21600.                                !< graupel deposition -- make it a slow process
+   real(kind_phys) :: tau_r2g = 900.                                  !< rain freezing during fast_sat
+   real(kind_phys) :: tau_smlt = 900.                                 !< snow melting
+   real(kind_phys) :: tau_g2r = 600.                                  !< graupel melting to rain
+   real(kind_phys) :: tau_imlt = 600.                                 !< cloud ice melting
+   real(kind_phys) :: tau_i2s = 1000.                                 !< cloud ice to snow auto-conversion
+   real(kind_phys) :: tau_l2r = 900.                                  !< cloud water to rain auto-conversion
+   real(kind_phys) :: tau_v2l = 150.                                  !< water vapor to cloud water (condensation)
+   real(kind_phys) :: tau_l2v = 300.                                  !< cloud water to water vapor (evaporation)
+   real(kind_phys) :: tau_g2v = 900.                                  !< graupel sublimation
+   real(kind_phys) :: tau_v2g = 21600.                                !< graupel deposition -- make it a slow process
 
    ! horizontal subgrid variability
 
-   real :: dw_land = 0.20                                  !< base value for subgrid deviation / variability over land
-   real :: dw_ocean = 0.10                                 !< base value for ocean
+   real(kind_phys) :: dw_land = 0.20                                  !< base value for subgrid deviation / variability over land
+   real(kind_phys) :: dw_ocean = 0.10                                 !< base value for ocean
 
    ! prescribed ccn
 
-   real :: ccn_o = 90.                                     !< ccn over ocean (cm^ - 3)
-   real :: ccn_l = 270.                                    !< ccn over land (cm^ - 3)
+   real(kind_phys) :: ccn_o = 90.                                     !< ccn over ocean (cm^ - 3)
+   real(kind_phys) :: ccn_l = 270.                                    !< ccn over land (cm^ - 3)
 
-   real :: rthresh = 10.0e-6                               !< critical cloud drop radius (micro m)
+   real(kind_phys) :: rthresh = 10.0e-6                               !< critical cloud drop radius (micro m)
 
    ! -----------------------------------------------------------------------
    ! wrf / wsm6 scheme: qi_gen = 4.92e-11 * (1.e3 * exp (0.1 * tmp)) ** 1.33
@@ -233,39 +234,39 @@ module gfdl_cloud_microphys_mod
    ! wrf / wsm6 ice initiation scheme; qi_crt = qi_gen * min (qi_lim, 0.1 * tmp) / den
    ! -----------------------------------------------------------------------
 
-   real :: sat_adj0 = 0.90                                 !< adjustment factor (0: no, 1: full) during fast_sat_adj
+   real(kind_phys) :: sat_adj0 = 0.90                                 !< adjustment factor (0: no, 1: full) during fast_sat_adj
 
-   real :: qc_crt = 5.0e-8                                 !< mini condensate mixing ratio to allow partial cloudiness
+   real(kind_phys) :: qc_crt = 5.0e-8                                 !< mini condensate mixing ratio to allow partial cloudiness
 
-   real :: qi_lim = 1.                                     !< cloud ice limiter to prevent large ice build up
+   real(kind_phys) :: qi_lim = 1.                                     !< cloud ice limiter to prevent large ice build up
 
-   real :: ql_mlt = 2.0e-3                                 !< max value of cloud water allowed from melted cloud ice
-   real :: qs_mlt = 1.0e-6                                 !< max cloud water due to snow melt
+   real(kind_phys) :: ql_mlt = 2.0e-3                                 !< max value of cloud water allowed from melted cloud ice
+   real(kind_phys) :: qs_mlt = 1.0e-6                                 !< max cloud water due to snow melt
 
-   real :: ql_gen = 1.0e-3                                 !< max cloud water generation during remapping step if fast_sat_adj = .t.
-   real :: qi_gen = 1.82e-6                                !< max cloud ice generation during remapping step
+   real(kind_phys) :: ql_gen = 1.0e-3                                 !< max cloud water generation during remapping step if fast_sat_adj = .t.
+   real(kind_phys) :: qi_gen = 1.82e-6                                !< max cloud ice generation during remapping step
 
    ! cloud condensate upper bounds: "safety valves" for ql & qi
 
-   real :: ql0_max = 2.0e-3                                !< max cloud water value (auto converted to rain)
-   real :: qi0_max = 1.0e-4                                !< max cloud ice value (by other sources)
+   real(kind_phys) :: ql0_max = 2.0e-3                                !< max cloud water value (auto converted to rain)
+   real(kind_phys) :: qi0_max = 1.0e-4                                !< max cloud ice value (by other sources)
 
-   real :: qi0_crt = 1.0e-4                                !< cloud ice to snow autoconversion threshold (was 1.e-4);
+   real(kind_phys) :: qi0_crt = 1.0e-4                                !< cloud ice to snow autoconversion threshold (was 1.e-4);
                                                            !! qi0_crt is highly dependent on horizontal resolution
-   real :: qr0_crt = 1.0e-4                                !< rain to snow or graupel/hail threshold
+   real(kind_phys) :: qr0_crt = 1.0e-4                                !< rain to snow or graupel/hail threshold
                                                            ! lfo used * mixing ratio * = 1.e-4 (hail in lfo)
-   real :: qs0_crt = 1.0e-3                                !< snow to graupel density threshold (0.6e-3 in purdue lin scheme)
+   real(kind_phys) :: qs0_crt = 1.0e-3                                !< snow to graupel density threshold (0.6e-3 in purdue lin scheme)
 
-   real :: c_paut = 0.55                                   !< autoconversion cloud water to rain (use 0.5 to reduce autoconversion)
-   real :: c_psaci = 0.02                                  !< accretion: cloud ice to snow (was 0.1 in zetac)
-   real :: c_piacr = 5.0                                   !< accretion: rain to ice:
-   real :: c_cracw = 0.9                                   !< rain accretion efficiency
-   real :: c_pgacs = 2.0e-3                                !< snow to graupel "accretion" eff. (was 0.1 in zetac)
+   real(kind_phys) :: c_paut = 0.55                                   !< autoconversion cloud water to rain (use 0.5 to reduce autoconversion)
+   real(kind_phys) :: c_psaci = 0.02                                  !< accretion: cloud ice to snow (was 0.1 in zetac)
+   real(kind_phys) :: c_piacr = 5.0                                   !< accretion: rain to ice:
+   real(kind_phys) :: c_cracw = 0.9                                   !< rain accretion efficiency
+   real(kind_phys) :: c_pgacs = 2.0e-3                                !< snow to graupel "accretion" eff. (was 0.1 in zetac)
 
    ! decreasing clin to reduce csacw (so as to reduce cloud water --- > snow)
 
-   real :: alin = 842.0                                    !< "a" in lin1983
-   real :: clin = 4.8                                      !< "c" in lin 1983, 4.8 -- > 6. (to ehance ql -- > qs)
+   real(kind_phys) :: alin = 842.0                                    !< "a" in lin1983
+   real(kind_phys) :: clin = 4.8                                      !< "c" in lin 1983, 4.8 -- > 6. (to ehance ql -- > qs)
 
    ! fall velocity tuning constants:
 
@@ -276,17 +277,17 @@ module gfdl_cloud_microphys_mod
 
    ! good values:
 
-   real :: vi_fac = 1.                                     !< if const_vi: 1 / 3
-   real :: vs_fac = 1.                                     !< if const_vs: 1.
-   real :: vg_fac = 1.                                     !< if const_vg: 2.
-   real :: vr_fac = 1.                                     !< if const_vr: 4.
+   real(kind_phys) :: vi_fac = 1.                                     !< if const_vi: 1 / 3
+   real(kind_phys) :: vs_fac = 1.                                     !< if const_vs: 1.
+   real(kind_phys) :: vg_fac = 1.                                     !< if const_vg: 2.
+   real(kind_phys) :: vr_fac = 1.                                     !< if const_vr: 4.
 
    ! upper bounds of fall speed (with variable speed option)
 
-   real :: vi_max = 0.5                                    !< max fall speed for ice
-   real :: vs_max = 5.0                                    !< max fall speed for snow
-   real :: vg_max = 8.0                                    !< max fall speed for graupel
-   real :: vr_max = 12.                                    !< max fall speed for rain
+   real(kind_phys) :: vi_max = 0.5                                    !< max fall speed for ice
+   real(kind_phys) :: vs_max = 5.0                                    !< max fall speed for snow
+   real(kind_phys) :: vg_max = 8.0                                    !< max fall speed for graupel
+   real(kind_phys) :: vr_max = 12.                                    !< max fall speed for rain
 
    ! cloud microphysics switchers
 
@@ -299,9 +300,9 @@ module gfdl_cloud_microphys_mod
    logical :: mp_print = .false.                           !< cloud microphysics debugging printout
    logical :: do_hail = .false.                            !< use hail parameters instead of graupel
 
-   ! real :: global_area = - 1.
+   ! real(kind_phys) :: global_area = - 1.
 
-   real :: log_10, tice0, t_wfr
+   real(kind_phys) :: log_10, tice0, t_wfr
 
     integer :: reiflag = 1
     ! 1: Heymsfield and Mcfarquhar, 1996
@@ -309,11 +310,11 @@ module gfdl_cloud_microphys_mod
      
     logical :: tintqs = .false. !< use temperature in the saturation mixing in PDF 
 
-    real :: rewmin = 5.0, rewmax = 10.0
-    real :: reimin = 10.0, reimax = 150.0
-    real :: rermin = 10.0, rermax = 10000.0
-    real :: resmin = 150.0, resmax = 10000.0
-    real :: regmin = 300.0, regmax = 10000.0
+    real(kind_phys) :: rewmin = 5.0, rewmax = 10.0
+    real(kind_phys) :: reimin = 10.0, reimax = 150.0
+    real(kind_phys) :: rermin = 10.0, rermax = 10000.0
+    real(kind_phys) :: resmin = 150.0, resmax = 10000.0
+    real(kind_phys) :: regmin = 300.0, regmax = 10000.0
     
    ! -----------------------------------------------------------------------
    ! namelist
@@ -370,50 +371,50 @@ subroutine gfdl_cloud_microphys_mod_driver (                                    
    integer, intent (in) :: kks, kke ! vertical dimension
    integer, intent (in) :: ktop, kbot ! vertical compute domain
 
-   real, intent (in) :: dt_in ! physics time step
+   real(kind_phys), intent (in) :: dt_in ! physics time step
 
-   real, intent (in), dimension (iis:iie, jjs:jje) :: area ! cell area
-   real, intent (in), dimension (iis:iie, jjs:jje) :: land ! land fraction
+   real(kind_phys), intent (in), dimension (iis:iie, jjs:jje) :: area ! cell area
+   real(kind_phys), intent (in), dimension (iis:iie, jjs:jje) :: land ! land fraction
 
-   real, intent (in), dimension (iis:iie, jjs:jje, kks:kke) :: delp, dz, uin, vin
-   real, intent (in), dimension (iis:iie, jjs:jje, kks:kke) :: pt, qv, ql, qr, qg, qa, qn
+   real(kind_phys), intent (in), dimension (iis:iie, jjs:jje, kks:kke) :: delp, dz, uin, vin
+   real(kind_phys), intent (in), dimension (iis:iie, jjs:jje, kks:kke) :: pt, qv, ql, qr, qg, qa, qn
 
-   real, intent (inout), dimension (iis:iie, jjs:jje, kks:kke) :: qi, qs
-   real, intent (inout), dimension (iis:iie, jjs:jje, kks:kke) :: pt_dt, qa_dt, udt, vdt, w
-   real, intent (inout), dimension (iis:iie, jjs:jje, kks:kke) :: qv_dt, ql_dt, qr_dt
-   real, intent (inout), dimension (iis:iie, jjs:jje, kks:kke) :: qi_dt, qs_dt, qg_dt
+   real(kind_phys), intent (inout), dimension (iis:iie, jjs:jje, kks:kke) :: qi, qs
+   real(kind_phys), intent (inout), dimension (iis:iie, jjs:jje, kks:kke) :: pt_dt, qa_dt, udt, vdt, w
+   real(kind_phys), intent (inout), dimension (iis:iie, jjs:jje, kks:kke) :: qv_dt, ql_dt, qr_dt
+   real(kind_phys), intent (inout), dimension (iis:iie, jjs:jje, kks:kke) :: qi_dt, qs_dt, qg_dt
 
-   real, intent (out), dimension (iis:iie, jjs:jje) :: rain, snow, ice, graupel
+   real(kind_phys), intent (out), dimension (iis:iie, jjs:jje) :: rain, snow, ice, graupel
 
    logical, intent (in) :: hydrostatic, phys_hydrostatic
 
    !integer, intent (in) :: seconds
-   real, intent (in), dimension (iis:iie, jjs:jje, kks:kke) :: p
+   real(kind_phys), intent (in), dimension (iis:iie, jjs:jje, kks:kke) :: p
    logical, intent (in) :: lradar
-   real, intent (out), dimension (iis:iie, jjs:jje, kks:kke) :: refl_10cm
+   real(kind_phys), intent (out), dimension (iis:iie, jjs:jje, kks:kke) :: refl_10cm
    logical, intent (in) :: reset
-   real, intent (out), dimension (iis:iie, jjs:jje, kks:kke) :: pfils, pflls
+   real(kind_phys), intent (out), dimension (iis:iie, jjs:jje, kks:kke) :: pfils, pflls
 
    ! Local variables
    logical :: melti = .false.
 
-   real :: mpdt, rdt, dts, convt, tot_prec
+   real(kind_phys) :: mpdt, rdt, dts, convt, tot_prec
 
    integer :: i, j, k
    integer :: is, ie, js, je ! physics window
    integer :: ks, ke ! vertical dimension
    integer :: days, ntimes, kflip
 
-   real, dimension (iie-iis+1, jje-jjs+1) :: prec_mp, prec1, cond, w_var, rh0
+   real(kind_phys), dimension (iie-iis+1, jje-jjs+1) :: prec_mp, prec1, cond, w_var, rh0
 
-   real, dimension (iie-iis+1, jje-jjs+1,kke-kks+1) :: vt_r, vt_s, vt_g, vt_i, qn2
+   real(kind_phys), dimension (iie-iis+1, jje-jjs+1,kke-kks+1) :: vt_r, vt_s, vt_g, vt_i, qn2
 
-   real, dimension (size(pt,1), size(pt,3)) :: m2_rain, m2_sol
+   real(kind_phys), dimension (size(pt,1), size(pt,3)) :: m2_rain, m2_sol
 
-   real :: allmax
+   real(kind_phys) :: allmax
 !+---+-----------------------------------------------------------------+
 !For 3D reflectivity calculations
-   real, dimension(ktop:kbot):: qv1d, t1d, p1d, qr1d, qs1d, qg1d, dBZ
+   real(kind_phys), dimension(ktop:kbot):: qv1d, t1d, p1d, qr1d, qs1d, qg1d, dBZ
 !+---+-----------------------------------------------------------------+
 
    is = 1
@@ -687,39 +688,39 @@ subroutine mpdrv (hydrostatic, uin, vin, w, delp, pt, qv, ql, qr, qi, qs,     &
     integer, intent (in) :: j, is, ie, js, je, ks, ke
     integer, intent (in) :: ntimes, ktop, kbot
 
-    real, intent (in) :: dt_in
+    real(kind_phys), intent (in) :: dt_in
 
-    real, intent (in), dimension (is:) :: area1, land
+    real(kind_phys), intent (in), dimension (is:) :: area1, land
 
-    real, intent (in), dimension (is:, js:, ks:) :: uin, vin, delp, pt, dz
-    real, intent (in), dimension (is:, js:, ks:) :: qv, ql, qr, qg, qa, qn
+    real(kind_phys), intent (in), dimension (is:, js:, ks:) :: uin, vin, delp, pt, dz
+    real(kind_phys), intent (in), dimension (is:, js:, ks:) :: qv, ql, qr, qg, qa, qn
 
-    real, intent (inout), dimension (is:, js:, ks:) :: qi, qs
-    real, intent (inout), dimension (is:, js:, ks:) :: u_dt, v_dt, w, pt_dt, qa_dt
-    real, intent (inout), dimension (is:, js:, ks:) :: qv_dt, ql_dt, qr_dt, qi_dt, qs_dt, qg_dt
+    real(kind_phys), intent (inout), dimension (is:, js:, ks:) :: qi, qs
+    real(kind_phys), intent (inout), dimension (is:, js:, ks:) :: u_dt, v_dt, w, pt_dt, qa_dt
+    real(kind_phys), intent (inout), dimension (is:, js:, ks:) :: qv_dt, ql_dt, qr_dt, qi_dt, qs_dt, qg_dt
 
-    real, intent (inout), dimension (is:) :: rain, snow, ice, graupel, cond
+    real(kind_phys), intent (inout), dimension (is:) :: rain, snow, ice, graupel, cond
 
-    real, intent (out), dimension (is:, js:) :: w_var
+    real(kind_phys), intent (out), dimension (is:, js:) :: w_var
 
-    real, intent (out), dimension (is:, js:, ks:) :: vt_r, vt_s, vt_g, vt_i, qn2
+    real(kind_phys), intent (out), dimension (is:, js:, ks:) :: vt_r, vt_s, vt_g, vt_i, qn2
 
-    real, intent (out), dimension (is:, ks:) :: m2_rain, m2_sol
+    real(kind_phys), intent (out), dimension (is:, ks:) :: m2_rain, m2_sol
 
-    real, dimension (ktop:kbot) :: qvz, qlz, qrz, qiz, qsz, qgz, qaz
-    real, dimension (ktop:kbot) :: vtiz, vtsz, vtgz, vtrz
-    real, dimension (ktop:kbot) :: dp0, dp1, dz0, dz1
-    real, dimension (ktop:kbot) :: qv0, ql0, qr0, qi0, qs0, qg0, qa0
-    real, dimension (ktop:kbot) :: t0, den, den0, tz, p1, denfac
-    real, dimension (ktop:kbot) :: ccn, c_praut, m1_rain, m1_sol, m1
-    real, dimension (ktop:kbot) :: u0, v0, u1, v1, w1
+    real(kind_phys), dimension (ktop:kbot) :: qvz, qlz, qrz, qiz, qsz, qgz, qaz
+    real(kind_phys), dimension (ktop:kbot) :: vtiz, vtsz, vtgz, vtrz
+    real(kind_phys), dimension (ktop:kbot) :: dp0, dp1, dz0, dz1
+    real(kind_phys), dimension (ktop:kbot) :: qv0, ql0, qr0, qi0, qs0, qg0, qa0
+    real(kind_phys), dimension (ktop:kbot) :: t0, den, den0, tz, p1, denfac
+    real(kind_phys), dimension (ktop:kbot) :: ccn, c_praut, m1_rain, m1_sol, m1
+    real(kind_phys), dimension (ktop:kbot) :: u0, v0, u1, v1, w1
 
-    real :: cpaut, rh_adj, rh_rain
-    real :: r1, s1, i1, g1, rdt, ccn0
-    real :: dt_rain, dts
-    real :: s_leng, t_land, t_ocean, h_var
-    real :: cvm, tmp, omq
-    real :: dqi, qio, qin
+    real(kind_phys) :: cpaut, rh_adj, rh_rain
+    real(kind_phys) :: r1, s1, i1, g1, rdt, ccn0
+    real(kind_phys) :: dt_rain, dts
+    real(kind_phys) :: s_leng, t_land, t_ocean, h_var
+    real(kind_phys) :: cvm, tmp, omq
+    real(kind_phys) :: dqi, qio, qin
 
     integer :: i, k, n
 
@@ -1105,15 +1106,15 @@ subroutine sedi_heat (ktop, kbot, dm, m1, dz, tz, qv, ql, qr, qi, qs, qg, cw)
 
     integer, intent (in) :: ktop, kbot
 
-    real, intent (in), dimension (ktop:kbot) :: dm, m1, dz, qv, ql, qr, qi, qs, qg
+    real(kind_phys), intent (in), dimension (ktop:kbot) :: dm, m1, dz, qv, ql, qr, qi, qs, qg
 
-    real, intent (inout), dimension (ktop:kbot) :: tz
+    real(kind_phys), intent (inout), dimension (ktop:kbot) :: tz
 
-    real, intent (in) :: cw ! heat capacity
+    real(kind_phys), intent (in) :: cw ! heat capacity
 
-    real, dimension (ktop:kbot) :: dgz, cvn
+    real(kind_phys), dimension (ktop:kbot) :: dgz, cvn
 
-    real :: tmp
+    real(kind_phys) :: tmp
 
     integer :: k
 
@@ -1159,35 +1160,35 @@ subroutine warm_rain (dt, ktop, kbot, dp, dz, tz, qv, ql, qr, qi, qs, qg, &
 
     integer, intent (in) :: ktop, kbot
 
-    real, intent (in) :: dt ! time step (s)
-    real, intent (in) :: rh_rain, h_var
+    real(kind_phys), intent (in) :: dt ! time step (s)
+    real(kind_phys), intent (in) :: rh_rain, h_var
 
-    real, intent (in), dimension (ktop:kbot) :: dp, dz, den
-    real, intent (in), dimension (ktop:kbot) :: denfac, ccn, c_praut
+    real(kind_phys), intent (in), dimension (ktop:kbot) :: dp, dz, den
+    real(kind_phys), intent (in), dimension (ktop:kbot) :: denfac, ccn, c_praut
 
-    real, intent (inout), dimension (ktop:kbot) :: tz, vtr
-    real, intent (inout), dimension (ktop:kbot) :: qv, ql, qr, qi, qs, qg
-    real, intent (inout), dimension (ktop:kbot) :: m1_rain, w1
+    real(kind_phys), intent (inout), dimension (ktop:kbot) :: tz, vtr
+    real(kind_phys), intent (inout), dimension (ktop:kbot) :: qv, ql, qr, qi, qs, qg
+    real(kind_phys), intent (inout), dimension (ktop:kbot) :: m1_rain, w1
 
-    real, intent (out) :: r1
+    real(kind_phys), intent (out) :: r1
 
-    real, parameter :: so3 = 7. / 3.
+    real(kind_phys), parameter :: so3 = 7. / 3.
 
-    real, dimension (ktop:kbot) :: dl, dm
-    real, dimension (ktop:kbot + 1) :: ze, zt
+    real(kind_phys), dimension (ktop:kbot) :: dl, dm
+    real(kind_phys), dimension (ktop:kbot + 1) :: ze, zt
 
-    real :: sink, dq, qc0, qc
-    real :: qden
-    real :: zs = 0.
-    real :: dt5
+    real(kind_phys) :: sink, dq, qc0, qc
+    real(kind_phys) :: qden
+    real(kind_phys) :: zs = 0.
+    real(kind_phys) :: dt5
 
     integer :: k
 
     ! fall velocity constants:
 
-    real, parameter :: vconr = 2503.23638966667
-    real, parameter :: normr = 25132741228.7183
-    real, parameter :: thr = 1.e-8
+    real(kind_phys), parameter :: vconr = 2503.23638966667
+    real(kind_phys), parameter :: normr = 25132741228.7183
+    real(kind_phys), parameter :: thr = 1.e-8
 
     logical :: no_fall
 
@@ -1378,17 +1379,17 @@ subroutine revap_racc (ktop, kbot, dt, tz, qv, ql, qr, qi, qs, qg, den, denfac, 
 
     integer, intent (in) :: ktop, kbot
 
-    real, intent (in) :: dt ! time step (s)
-    real, intent (in) :: rh_rain, h_var
+    real(kind_phys), intent (in) :: dt ! time step (s)
+    real(kind_phys), intent (in) :: rh_rain, h_var
 
-    real, intent (in), dimension (ktop:kbot) :: den, denfac
+    real(kind_phys), intent (in), dimension (ktop:kbot) :: den, denfac
 
-    real, intent (inout), dimension (ktop:kbot) :: tz, qv, qr, ql, qi, qs, qg
+    real(kind_phys), intent (inout), dimension (ktop:kbot) :: tz, qv, qr, ql, qi, qs, qg
 
-    real, dimension (ktop:kbot) :: lhl, cvm, q_liq, q_sol, lcpk
+    real(kind_phys), dimension (ktop:kbot) :: lhl, cvm, q_liq, q_sol, lcpk
 
-    real :: dqv, qsat, dqsdt, evap, t2, qden, q_plus, q_minus, sink
-    real :: qpz, dq, dqh, tin
+    real(kind_phys) :: dqv, qsat, dqsdt, evap, t2, qden, q_plus, q_minus, sink
+    real(kind_phys) :: qpz, dq, dqh, tin
 
     integer :: k
 
@@ -1481,13 +1482,13 @@ subroutine linear_prof (km, q, dm, z_var, h_var)
 
     integer, intent (in) :: km
 
-    real, intent (in) :: q (km), h_var
+    real(kind_phys), intent (in) :: q (km), h_var
 
-    real, intent (out) :: dm (km)
+    real(kind_phys), intent (out) :: dm (km)
 
     logical, intent (in) :: z_var
 
-    real :: dq (km)
+    real(kind_phys) :: dq (km)
 
     integer :: k
 
@@ -1547,23 +1548,23 @@ subroutine icloud (ktop, kbot, tzk, p1, qvk, qlk, qrk, qik, qsk, qgk, dp1, &
 
     integer, intent (in) :: ktop, kbot
 
-    real, intent (in), dimension (ktop:kbot) :: p1, dp1, den, denfac, vts, vtg, vtr
+    real(kind_phys), intent (in), dimension (ktop:kbot) :: p1, dp1, den, denfac, vts, vtg, vtr
 
-    real, intent (inout), dimension (ktop:kbot) :: tzk, qvk, qlk, qrk, qik, qsk, qgk, qak
+    real(kind_phys), intent (inout), dimension (ktop:kbot) :: tzk, qvk, qlk, qrk, qik, qsk, qgk, qak
 
-    real, intent (in) :: rh_adj, rh_rain, dts, h_var
+    real(kind_phys), intent (in) :: rh_adj, rh_rain, dts, h_var
 
-    real, dimension (ktop:kbot) :: lcpk, icpk, tcpk, di, lhl, lhi
-    real, dimension (ktop:kbot) :: cvm, q_liq, q_sol
+    real(kind_phys), dimension (ktop:kbot) :: lcpk, icpk, tcpk, di, lhl, lhi
+    real(kind_phys), dimension (ktop:kbot) :: cvm, q_liq, q_sol
 
-    real :: rdts, fac_g2v, fac_v2g, fac_i2s, fac_imlt
-    real :: tz, qv, ql, qr, qi, qs, qg, melt
-    real :: pracs, psacw, pgacw, psacr, pgacr, pgaci, praci, psaci
-    real :: pgmlt, psmlt, pgfr, pgaut, psaut, pgsub
-    real :: tc, tsq, dqs0, qden, qim, qsm
-    real :: dt5, factor, sink, qi_crt
-    real :: tmp, qsw, qsi, dqsdt, dq
-    real :: dtmp, qc, q_plus, q_minus
+    real(kind_phys) :: rdts, fac_g2v, fac_v2g, fac_i2s, fac_imlt
+    real(kind_phys) :: tz, qv, ql, qr, qi, qs, qg, melt
+    real(kind_phys) :: pracs, psacw, pgacw, psacr, pgacr, pgaci, praci, psaci
+    real(kind_phys) :: pgmlt, psmlt, pgfr, pgaut, psaut, pgsub
+    real(kind_phys) :: tc, tsq, dqs0, qden, qim, qsm
+    real(kind_phys) :: dt5, factor, sink, qi_crt
+    real(kind_phys) :: tmp, qsw, qsi, dqsdt, dq
+    real(kind_phys) :: dtmp, qc, q_plus, q_minus
 
     integer :: k
 
@@ -2034,29 +2035,29 @@ subroutine subgrid_z_proc (ktop, kbot, p1, den, denfac, dts, rh_adj, tz, qv, &
 
     integer, intent (in) :: ktop, kbot
 
-    real, intent (in), dimension (ktop:kbot) :: p1, den, denfac
+    real(kind_phys), intent (in), dimension (ktop:kbot) :: p1, den, denfac
 
-    real, intent (in) :: dts, rh_adj, h_var, rh_rain
+    real(kind_phys), intent (in) :: dts, rh_adj, h_var, rh_rain
 
-    real, intent (inout), dimension (ktop:kbot) :: tz, qv, ql, qr, qi, qs, qg, qa
+    real(kind_phys), intent (inout), dimension (ktop:kbot) :: tz, qv, ql, qr, qi, qs, qg, qa
 
-    real, dimension (ktop:kbot) :: lcpk, icpk, tcpk, tcp3, lhl, lhi
-    real, dimension (ktop:kbot) :: cvm, q_liq, q_sol, q_cond
+    real(kind_phys), dimension (ktop:kbot) :: lcpk, icpk, tcpk, tcp3, lhl, lhi
+    real(kind_phys), dimension (ktop:kbot) :: cvm, q_liq, q_sol, q_cond
 
-    real :: fac_v2l, fac_l2v
+    real(kind_phys) :: fac_v2l, fac_l2v
 
-    real :: pidep, qi_crt
+    real(kind_phys) :: pidep, qi_crt
 
     ! -----------------------------------------------------------------------
     ! qstar over water may be accurate only down to - 80 deg c with ~10% uncertainty
     ! must not be too large to allow psc
     ! -----------------------------------------------------------------------
 
-    real :: rh, rqi, tin, qsw, qsi, qpz, qstar
-    real :: dqsdt, dwsdt, dq, dq0, factor, tmp
-    real :: q_plus, q_minus, dt_evap, dt_pisub
-    real :: evap, sink, tc, pisub, q_adj, dtmp
-    real :: pssub, pgsub, tsq, qden, fac_g2v, fac_v2g
+    real(kind_phys) :: rh, rqi, tin, qsw, qsi, qpz, qstar
+    real(kind_phys) :: dqsdt, dwsdt, dq, dq0, factor, tmp
+    real(kind_phys) :: q_plus, q_minus, dt_evap, dt_pisub
+    real(kind_phys) :: evap, sink, tc, pisub, q_adj, dtmp
+    real(kind_phys) :: pssub, pgsub, tsq, qden, fac_g2v, fac_v2g
 
     integer :: k
 
@@ -2455,16 +2456,16 @@ subroutine revap_rac1 (hydrostatic, is, ie, dt, tz, qv, ql, qr, qi, qs, qg, den,
 
     integer, intent (in) :: is, ie
 
-    real, intent (in) :: dt ! time step (s)
+    real(kind_phys), intent (in) :: dt ! time step (s)
 
-    real, intent (in), dimension (is:ie) :: den, hvar, qi, qs, qg
+    real(kind_phys), intent (in), dimension (is:ie) :: den, hvar, qi, qs, qg
 
-    real, intent (inout), dimension (is:ie) :: tz, qv, qr, ql
+    real(kind_phys), intent (inout), dimension (is:ie) :: tz, qv, qr, ql
 
-    real, dimension (is:ie) :: lcp2, denfac, q_liq, q_sol, cvm, lhl
+    real(kind_phys), dimension (is:ie) :: lcp2, denfac, q_liq, q_sol, cvm, lhl
 
-    real :: dqv, qsat, dqsdt, evap, qden, q_plus, q_minus, sink
-    real :: tin, t2, qpz, dq, dqh
+    real(kind_phys) :: dqv, qsat, dqsdt, evap, qden, q_plus, q_minus, sink
+    real(kind_phys) :: tin, t2, qpz, dq, dqh
 
     integer :: i
 
@@ -2547,25 +2548,25 @@ subroutine terminal_fall (dtm, ktop, kbot, tz, qv, ql, qr, qg, qs, qi, dz, dp, &
 
     integer, intent (in) :: ktop, kbot
 
-    real, intent (in) :: dtm ! time step (s)
+    real(kind_phys), intent (in) :: dtm ! time step (s)
 
-    real, intent (in), dimension (ktop:kbot) :: vtg, vts, vti, den, dp, dz
+    real(kind_phys), intent (in), dimension (ktop:kbot) :: vtg, vts, vti, den, dp, dz
 
-    real, intent (inout), dimension (ktop:kbot) :: qv, ql, qr, qg, qs, qi, tz, m1_sol, w1
+    real(kind_phys), intent (inout), dimension (ktop:kbot) :: qv, ql, qr, qg, qs, qi, tz, m1_sol, w1
 
-    real, intent (out) :: r1, g1, s1, i1
+    real(kind_phys), intent (out) :: r1, g1, s1, i1
 
-    real, dimension (ktop:kbot + 1) :: ze, zt
+    real(kind_phys), dimension (ktop:kbot + 1) :: ze, zt
 
-    real :: qsat, dqsdt, dt5, evap, dtime
-    real :: factor, frac
-    real :: tmp, precip, tc, sink
+    real(kind_phys) :: qsat, dqsdt, dt5, evap, dtime
+    real(kind_phys) :: factor, frac
+    real(kind_phys) :: tmp, precip, tc, sink
 
-    real, dimension (ktop:kbot) :: lcpk, icpk, cvm, q_liq, q_sol, lhl, lhi
-    real, dimension (ktop:kbot) :: m1, dm
+    real(kind_phys), dimension (ktop:kbot) :: lcpk, icpk, cvm, q_liq, q_sol, lhl, lhi
+    real(kind_phys), dimension (ktop:kbot) :: m1, dm
 
-    real :: zs = 0.
-    real :: fac_imlt
+    real(kind_phys) :: zs = 0.
+    real(kind_phys) :: fac_imlt
 
     integer :: k, k0, m
 
@@ -2858,7 +2859,7 @@ subroutine check_column (ktop, kbot, q, no_fall)
 
     integer, intent (in) :: ktop, kbot
 
-    real, intent (in) :: q (ktop:kbot)
+    real(kind_phys), intent (in) :: q (ktop:kbot)
 
     logical, intent (out) :: no_fall
 
@@ -2886,19 +2887,19 @@ subroutine implicit_fall (dt, ktop, kbot, ze, vt, dp, q, precip, m1)
 
     integer, intent (in) :: ktop, kbot
 
-    real, intent (in) :: dt
+    real(kind_phys), intent (in) :: dt
 
-    real, intent (in), dimension (ktop:kbot + 1) :: ze
+    real(kind_phys), intent (in), dimension (ktop:kbot + 1) :: ze
 
-    real, intent (in), dimension (ktop:kbot) :: vt, dp
+    real(kind_phys), intent (in), dimension (ktop:kbot) :: vt, dp
 
-    real, intent (inout), dimension (ktop:kbot) :: q
+    real(kind_phys), intent (inout), dimension (ktop:kbot) :: q
 
-    real, intent (out), dimension (ktop:kbot) :: m1
+    real(kind_phys), intent (out), dimension (ktop:kbot) :: m1
 
-    real, intent (out) :: precip
+    real(kind_phys), intent (out) :: precip
 
-    real, dimension (ktop:kbot) :: dz, qm, dd
+    real(kind_phys), dimension (ktop:kbot) :: dz, qm, dd
 
     integer :: k
 
@@ -2955,28 +2956,28 @@ subroutine lagrangian_fall_ppm (ktop, kbot, zs, ze, zt, dp, q, precip, m1, mono)
 
     integer, intent (in) :: ktop, kbot
 
-    real, intent (in) :: zs
+    real(kind_phys), intent (in) :: zs
 
     logical, intent (in) :: mono
 
-    real, intent (in), dimension (ktop:kbot + 1) :: ze, zt
+    real(kind_phys), intent (in), dimension (ktop:kbot + 1) :: ze, zt
 
-    real, intent (in), dimension (ktop:kbot) :: dp
+    real(kind_phys), intent (in), dimension (ktop:kbot) :: dp
 
     ! m1: flux
-    real, intent (inout), dimension (ktop:kbot) :: q, m1
+    real(kind_phys), intent (inout), dimension (ktop:kbot) :: q, m1
 
-    real, intent (out) :: precip
+    real(kind_phys), intent (out) :: precip
 
-    real, dimension (ktop:kbot) :: qm, dz
+    real(kind_phys), dimension (ktop:kbot) :: qm, dz
 
-    real :: a4 (4, ktop:kbot)
+    real(kind_phys) :: a4 (4, ktop:kbot)
 
-    real :: pl, pr, delz, esl
+    real(kind_phys) :: pl, pr, delz, esl
 
     integer :: k, k0, n, m
 
-    real, parameter :: r3 = 1. / 3., r23 = 2. / 3.
+    real(kind_phys), parameter :: r3 = 1. / 3., r23 = 2. / 3.
 
     ! -----------------------------------------------------------------------
     ! density:
@@ -3055,19 +3056,19 @@ subroutine cs_profile (a4, del, km, do_mono)
 
     integer, intent (in) :: km ! vertical dimension
 
-    real, intent (in) :: del (km)
+    real(kind_phys), intent (in) :: del (km)
 
     logical, intent (in) :: do_mono
 
-    real, intent (inout) :: a4 (4, km)
+    real(kind_phys), intent (inout) :: a4 (4, km)
 
-    real, parameter :: qp_min = 1.e-6
+    real(kind_phys), parameter :: qp_min = 1.e-6
 
-    real :: gam (km)
-    real :: q (km + 1)
-    real :: d4, bet, a_bot, grat, pmp, lac
-    real :: pmp_1, lac_1, pmp_2, lac_2
-    real :: da1, da2, a6da
+    real(kind_phys) :: gam (km)
+    real(kind_phys) :: q (km + 1)
+    real(kind_phys) :: d4, bet, a_bot, grat, pmp, lac
+    real(kind_phys) :: pmp_1, lac_1, pmp_2, lac_2
+    real(kind_phys) :: da1, da2, a6da
 
     integer :: k
 
@@ -3234,9 +3235,9 @@ subroutine cs_limiters (km, a4)
 
     integer, intent (in) :: km
 
-    real, intent (inout) :: a4 (4, km) ! ppm array
+    real(kind_phys), intent (inout) :: a4 (4, km) ! ppm array
 
-    real, parameter :: r12 = 1. / 12.
+    real(kind_phys), parameter :: r12 = 1. / 12.
 
     integer :: k
 
@@ -3273,36 +3274,36 @@ subroutine fall_speed (ktop, kbot, den, qs, qi, qg, ql, tk, vts, vti, vtg)
 
     integer, intent (in) :: ktop, kbot
 
-    real, intent (in), dimension (ktop:kbot) :: den, qs, qi, qg, ql, tk
-    real, intent (out), dimension (ktop:kbot) :: vts, vti, vtg
+    real(kind_phys), intent (in), dimension (ktop:kbot) :: den, qs, qi, qg, ql, tk
+    real(kind_phys), intent (out), dimension (ktop:kbot) :: vts, vti, vtg
 
     ! fall velocity constants:
 
-    real, parameter :: thi = 1.0e-8 !< cloud ice threshold for terminal fall
-    real, parameter :: thg = 1.0e-8
-    real, parameter :: ths = 1.0e-8
+    real(kind_phys), parameter :: thi = 1.0e-8 !< cloud ice threshold for terminal fall
+    real(kind_phys), parameter :: thg = 1.0e-8
+    real(kind_phys), parameter :: ths = 1.0e-8
 
     ! coefficient for the parameterization of mass weighted fall velocity
     ! as a function of temperature and IWC.
     ! Table 1 in Deng and Mace (2008) \cite deng_and_mace_2008.
-    real, parameter :: aa = - 4.14122e-5
-    real, parameter :: bb = - 0.00538922
-    real, parameter :: cc = - 0.0516344
-    real, parameter :: dd = 0.00216078
-    real, parameter :: ee = 1.9714
+    real(kind_phys), parameter :: aa = - 4.14122e-5
+    real(kind_phys), parameter :: bb = - 0.00538922
+    real(kind_phys), parameter :: cc = - 0.0516344
+    real(kind_phys), parameter :: dd = 0.00216078
+    real(kind_phys), parameter :: ee = 1.9714
 
     ! marshall - palmer constants
 
-    real, parameter :: vcons = 6.6280504
-    real, parameter :: vcong = 87.2382675
-    real, parameter :: vconh = vcong * sqrt (rhoh / rhog)
-    real, parameter :: norms = 942477796.076938
-    real, parameter :: normg = 5026548245.74367
-    real, parameter :: normh = pi * rhoh * rnzh
+    real(kind_phys), parameter :: vcons = 6.6280504
+    real(kind_phys), parameter :: vcong = 87.2382675
+    real(kind_phys), parameter :: vconh = vcong * sqrt (rhoh / rhog)
+    real(kind_phys), parameter :: norms = 942477796.076938
+    real(kind_phys), parameter :: normg = 5026548245.74367
+    real(kind_phys), parameter :: normh = pi * rhoh * rnzh
 
-    real, dimension (ktop:kbot) :: qden, tc, rhof
+    real(kind_phys), dimension (ktop:kbot) :: qden, tc, rhof
 
-    real :: vi0
+    real(kind_phys) :: vi0
 
     integer :: k
 
@@ -3396,30 +3397,30 @@ subroutine setupm
 
     implicit none
 
-    real :: gcon, cd, scm3, pisq, act (8)
-    real :: vdifu, tcond
-    real :: visk
-    real :: ch2o, hltf
-    real :: hlts, hltc, ri50
+    real(kind_phys) :: gcon, cd, scm3, pisq, act (8)
+    real(kind_phys) :: vdifu, tcond
+    real(kind_phys) :: visk
+    real(kind_phys) :: ch2o, hltf
+    real(kind_phys) :: hlts, hltc, ri50
 
-    real, parameter :: gam263 = 1.456943, gam275 = 1.608355, gam290 = 1.827363, &
+    real(kind_phys), parameter :: gam263 = 1.456943, gam275 = 1.608355, gam290 = 1.827363, &
         gam325 = 2.54925, gam350 = 3.323363, gam380 = 4.694155, &
         gam425 = 8.285063, gam450 = 11.631769, gam480 = 17.837789, &
         gam625 = 184.860962, gam680 = 496.604067
 
     ! intercept parameters
 
-!    real, parameter :: rnzr = 8.0e6 ! lin83
-!    real, parameter :: rnzs = 3.0e6 ! lin83
-!    real, parameter :: rnzg = 4.0e6 ! rh84
+!    real(kind_phys), parameter :: rnzr = 8.0e6 ! lin83
+!    real(kind_phys), parameter :: rnzs = 3.0e6 ! lin83
+!    real(kind_phys), parameter :: rnzg = 4.0e6 ! rh84
 
     ! density parameters
 
-!    real, parameter :: rhos = 0.1e3 !< lin83 (snow density; 1 / 10 of water)
-!    real, parameter :: rhog = 0.4e3 !< rh84 (graupel density)
-    real, parameter :: acc (3) = (/ 5.0, 2.0, 0.5 /)
+!    real(kind_phys), parameter :: rhos = 0.1e3 !< lin83 (snow density; 1 / 10 of water)
+!    real(kind_phys), parameter :: rhog = 0.4e3 !< rh84 (graupel density)
+    real(kind_phys), parameter :: acc (3) = (/ 5.0, 2.0, 0.5 /)
 
-    real den_rc
+    real(kind_phys) den_rc
 
     integer :: i, k
 
@@ -3587,7 +3588,7 @@ subroutine gfdl_cloud_microphys_mod_init (me, master, nlunit, input_nml_file, lo
 
     ! integer :: unit, io, ierr, k, logunit
     ! logical :: flag
-    ! real :: tmp, q1, q2
+    ! real(kind_phys) :: tmp, q1, q2
 
     ! master = (mpp_pe () .eq.mpp_root_pe ())
 
@@ -3748,19 +3749,19 @@ end subroutine setup_con
 !! \cite lin_et_al_1983 )
 ! =======================================================================
 
-real function acr3d (v1, v2, q1, q2, c, cac, rho)
+real(kind_phys) function acr3d (v1, v2, q1, q2, c, cac, rho)
 
     implicit none
 
-    real, intent (in) :: v1, v2, c, rho
-    real, intent (in) :: q1, q2 ! mixing ratio!!!
-    real, intent (in) :: cac (3)
+    real(kind_phys), intent (in) :: v1, v2, c, rho
+    real(kind_phys), intent (in) :: q1, q2 ! mixing ratio!!!
+    real(kind_phys), intent (in) :: cac (3)
 
-    real :: t1, s1, s2
+    real(kind_phys) :: t1, s1, s2
 
     ! integer :: k
     !
-    ! real :: a
+    ! real(kind_phys) :: a
     !
     ! a = 0.0
     ! do k = 1, 3
@@ -3783,11 +3784,11 @@ end function acr3d
 !!  note: psacw and psacr must be calc before smlt is called
 ! =======================================================================
 
-real function smlt (tc, dqs, qsrho, psacw, psacr, c, rho, rhofac)
+real(kind_phys) function smlt (tc, dqs, qsrho, psacw, psacr, c, rho, rhofac)
 
     implicit none
 
-    real, intent (in) :: tc, dqs, qsrho, psacw, psacr, c (5), rho, rhofac
+    real(kind_phys), intent (in) :: tc, dqs, qsrho, psacw, psacr, c (5), rho, rhofac
 
     smlt = (c (1) * tc / rho - c (2) * dqs) * (c (3) * sqrt (qsrho) + &
         c (4) * qsrho ** 0.65625 * sqrt (rhofac)) + c (5) * tc * (psacw + psacr)
@@ -3799,11 +3800,11 @@ end function smlt
 !!\n  note: \f$P_{gacw}\f$ and \f$P_{gacr}\f$ must be calculated before gmlt is called.
 ! =======================================================================
 
-real function gmlt (tc, dqs, qgrho, pgacw, pgacr, c, rho)
+real(kind_phys) function gmlt (tc, dqs, qgrho, pgacw, pgacr, c, rho)
 
     implicit none
 
-    real, intent (in) :: tc, dqs, qgrho, pgacw, pgacr, c (5), rho
+    real(kind_phys), intent (in) :: tc, dqs, qgrho, pgacw, pgacr, c (5), rho
 
     gmlt = (c (1) * tc / rho - c (2) * dqs) * (c (3) * sqrt (qgrho) + &
         c (4) * qgrho ** 0.6875 / rho ** 0.25) + c (5) * tc * (pgacw + pgacr)
@@ -3878,16 +3879,16 @@ end subroutine qsmith_init
 !>\ingroup mod_gfdl_cloud_mp
 !>@brief The function 'wqs1' returns the saturation vapor pressure over pure
 !! liquid water for a given temperature and air density.
-real function wqs1 (ta, den)
+real(kind_phys) function wqs1 (ta, den)
 
     implicit none
 
     !> pure water phase; universal dry / moist formular using air density
     !> input "den" can be either dry or moist air density
 
-    real, intent (in) :: ta, den
+    real(kind_phys), intent (in) :: ta, den
 
-    real :: es, ap1, tmin
+    real(kind_phys) :: es, ap1, tmin
 
     integer :: it
 
@@ -3907,18 +3908,18 @@ end function wqs1
 !! analytic dqs/dT: rate of change of saturation vapor pressure WRT temperature.
 ! =======================================================================
 
-real function wqs2 (ta, den, dqdt)
+real(kind_phys) function wqs2 (ta, den, dqdt)
 
     implicit none
 
     ! pure water phase; universal dry / moist formular using air density
     ! input "den" can be either dry or moist air density
 
-    real, intent (in) :: ta, den
+    real(kind_phys), intent (in) :: ta, den
 
-    real, intent (out) :: dqdt
+    real(kind_phys), intent (out) :: dqdt
 
-    real :: es, ap1, tmin
+    real(kind_phys) :: es, ap1, tmin
 
     integer :: it
 
@@ -3943,13 +3944,13 @@ end function wqs2
 !! from the mixing ratio and the temperature.
 ! =======================================================================
 
-real function wet_bulb (q, t, den)
+real(kind_phys) function wet_bulb (q, t, den)
 
     implicit none
 
-    real, intent (in) :: t, q, den
+    real(kind_phys), intent (in) :: t, q, den
 
-    real :: qs, tp, dqdt
+    real(kind_phys) :: qs, tp, dqdt
 
     wet_bulb = t
     qs = wqs2 (wet_bulb, den, dqdt)
@@ -3970,16 +3971,16 @@ end function wet_bulb
 !! for table iii
 ! =======================================================================
 
-real function iqs1 (ta, den)
+real(kind_phys) function iqs1 (ta, den)
 
     implicit none
 
     !> water - ice phase; universal dry / moist formular using air density
     !> input "den" can be either dry or moist air density
 
-    real, intent (in) :: ta, den
+    real(kind_phys), intent (in) :: ta, den
 
-    real :: es, ap1, tmin
+    real(kind_phys) :: es, ap1, tmin
 
     integer :: it
 
@@ -3997,18 +3998,18 @@ end function iqs1
 !! humidity for table iii
 ! =======================================================================
 
-real function iqs2 (ta, den, dqdt)
+real(kind_phys) function iqs2 (ta, den, dqdt)
 
     implicit none
 
     ! water - ice phase; universal dry / moist formular using air density
     ! input "den" can be either dry or moist air density
 
-    real, intent (in) :: ta, den
+    real(kind_phys), intent (in) :: ta, den
 
-    real, intent (out) :: dqdt
+    real(kind_phys), intent (out) :: dqdt
 
-    real :: es, ap1, tmin
+    real(kind_phys) :: es, ap1, tmin
 
     integer :: it
 
@@ -4028,15 +4029,15 @@ end function iqs2
 !! specific humidity for table iii.
 ! =======================================================================
 
-real function qs1d_moist (ta, qv, pa, dqdt)
+real(kind_phys) function qs1d_moist (ta, qv, pa, dqdt)
 
     implicit none
 
-    real, intent (in) :: ta, pa, qv
+    real(kind_phys), intent (in) :: ta, pa, qv
 
-    real, intent (out) :: dqdt
+    real(kind_phys), intent (out) :: dqdt
 
-    real :: es, ap1, tmin, eps10
+    real(kind_phys) :: es, ap1, tmin, eps10
 
     integer :: it
 
@@ -4058,15 +4059,15 @@ end function qs1d_moist
 !! for pure liquid water , as well as des/dT.
 ! =======================================================================
 
-real function wqsat2_moist (ta, qv, pa, dqdt)
+real(kind_phys) function wqsat2_moist (ta, qv, pa, dqdt)
 
     implicit none
 
-    real, intent (in) :: ta, pa, qv
+    real(kind_phys), intent (in) :: ta, pa, qv
 
-    real, intent (out) :: dqdt
+    real(kind_phys), intent (out) :: dqdt
 
-    real :: es, ap1, tmin, eps10
+    real(kind_phys) :: es, ap1, tmin, eps10
 
     integer :: it
 
@@ -4088,13 +4089,13 @@ end function wqsat2_moist
 !! for pure liquid water.
 ! =======================================================================
 
-real function wqsat_moist (ta, qv, pa)
+real(kind_phys) function wqsat_moist (ta, qv, pa)
 
     implicit none
 
-    real, intent (in) :: ta, pa, qv
+    real(kind_phys), intent (in) :: ta, pa, qv
 
-    real :: es, ap1, tmin
+    real(kind_phys) :: es, ap1, tmin
 
     integer :: it
 
@@ -4112,13 +4113,13 @@ end function wqsat_moist
 !! for table iii
 ! =======================================================================
 
-real function qs1d_m (ta, qv, pa)
+real(kind_phys) function qs1d_m (ta, qv, pa)
 
     implicit none
 
-    real, intent (in) :: ta, pa, qv
+    real(kind_phys), intent (in) :: ta, pa, qv
 
-    real :: es, ap1, tmin
+    real(kind_phys) :: es, ap1, tmin
 
     integer :: it
 
@@ -4136,13 +4137,13 @@ end function qs1d_m
 !! vapor * density * between water and ice
 ! =======================================================================
 
-real function d_sat (ta, den)
+real(kind_phys) function d_sat (ta, den)
 
     implicit none
 
-    real, intent (in) :: ta, den
+    real(kind_phys), intent (in) :: ta, den
 
-    real :: es_w, es_i, ap1, tmin
+    real(kind_phys) :: es_w, es_i, ap1, tmin
 
     integer :: it
 
@@ -4161,13 +4162,13 @@ end function d_sat
 !! pressure for table ii
 ! =======================================================================
 
-real function esw_table (ta)
+real(kind_phys) function esw_table (ta)
 
     implicit none
 
-    real, intent (in) :: ta
+    real(kind_phys), intent (in) :: ta
 
-    real :: ap1, tmin
+    real(kind_phys) :: ap1, tmin
 
     integer :: it
 
@@ -4184,13 +4185,13 @@ end function esw_table
 !! vapor pressure for table iii
 ! =======================================================================
 
-real function es2_table (ta)
+real(kind_phys) function es2_table (ta)
 
     implicit none
 
-    real, intent (in) :: ta
+    real(kind_phys), intent (in) :: ta
 
-    real :: ap1, tmin
+    real(kind_phys) :: ap1, tmin
 
     integer :: it
 
@@ -4212,11 +4213,11 @@ subroutine esw_table1d (ta, es, n)
 
     integer, intent (in) :: n
 
-    real, intent (in) :: ta (n)
+    real(kind_phys), intent (in) :: ta (n)
 
-    real, intent (out) :: es (n)
+    real(kind_phys), intent (out) :: es (n)
 
-    real :: ap1, tmin
+    real(kind_phys) :: ap1, tmin
 
     integer :: i, it
 
@@ -4241,11 +4242,11 @@ subroutine es2_table1d (ta, es, n)
 
     integer, intent (in) :: n
 
-    real, intent (in) :: ta (n)
+    real(kind_phys), intent (in) :: ta (n)
 
-    real, intent (out) :: es (n)
+    real(kind_phys), intent (out) :: es (n)
 
-    real :: ap1, tmin
+    real(kind_phys) :: ap1, tmin
 
     integer :: i, it
 
@@ -4270,11 +4271,11 @@ subroutine es3_table1d (ta, es, n)
 
     integer, intent (in) :: n
 
-    real, intent (in) :: ta (n)
+    real(kind_phys), intent (in) :: ta (n)
 
-    real, intent (out) :: es (n)
+    real(kind_phys), intent (out) :: es (n)
 
-    real :: ap1, tmin
+    real(kind_phys) :: ap1, tmin
 
     integer :: i, it
 
@@ -4299,8 +4300,8 @@ subroutine qs_tablew (n)
 
     integer, intent (in) :: n
 
-    real :: delt = 0.1
-    real :: tmin, tem, fac0, fac1, fac2
+    real(kind_phys) :: delt = 0.1
+    real(kind_phys) :: tmin, tem, fac0, fac1, fac2
 
     integer :: i
 
@@ -4330,8 +4331,8 @@ subroutine qs_table2 (n)
 
     integer, intent (in) :: n
 
-    real :: delt = 0.1
-    real :: tmin, tem0, tem1, fac0, fac1, fac2
+    real(kind_phys) :: delt = 0.1
+    real(kind_phys) :: tmin, tem0, tem1, fac0, fac1, fac2
 
     integer :: i, i0, i1
 
@@ -4379,9 +4380,9 @@ subroutine qs_table3 (n)
 
     integer, intent (in) :: n
 
-    real :: delt = 0.1
-    real :: esbasw, tbasw, esbasi, tmin, tem, aa, b, c, d, e
-    real :: tem0, tem1
+    real(kind_phys) :: delt = 0.1
+    real(kind_phys) :: esbasw, tbasw, esbasi, tmin, tem, aa, b, c, d, e
+    real(kind_phys) :: tem0, tem1
 
     integer :: i, i0, i1
 
@@ -4399,9 +4400,9 @@ subroutine qs_table3 (n)
             ! see smithsonian meteorological tables page 350.
             ! -----------------------------------------------------------------------
             aa = - 9.09718 * (table_ice / tem - 1.)
-            b = - 3.56654 * alog10 (table_ice / tem)
+            b = - 3.56654 * log10 (table_ice / tem)
             c = 0.876793 * (1. - tem / table_ice)
-            e = alog10 (esbasi)
+            e = log10 (esbasi)
             table3 (i) = 0.1 * 10 ** (aa + b + c + e)
         else
             ! -----------------------------------------------------------------------
@@ -4409,10 +4410,10 @@ subroutine qs_table3 (n)
             ! see smithsonian meteorological tables page 350.
             ! -----------------------------------------------------------------------
             aa = - 7.90298 * (tbasw / tem - 1.)
-            b = 5.02808 * alog10 (tbasw / tem)
+            b = 5.02808 * log10 (tbasw / tem)
             c = - 1.3816e-7 * (10 ** ((1. - tem / tbasw) * 11.344) - 1.)
             d = 8.1328e-3 * (10 ** ((tbasw / tem - 1.) * (- 3.49149)) - 1.)
-            e = alog10 (esbasw)
+            e = log10 (esbasw)
             table3 (i) = 0.1 * 10 ** (aa + b + c + d + e)
         endif
     enddo
@@ -4436,13 +4437,13 @@ end subroutine qs_table3
 !>\ingroup mod_gfdl_cloud_mp
 !! The function 'qs_blend' computes the saturated specific humidity
 !! with a blend of water and ice depending on the temperature.
-real function qs_blend (t, p, q)
+real(kind_phys) function qs_blend (t, p, q)
 
     implicit none
 
-    real, intent (in) :: t, p, q
+    real(kind_phys), intent (in) :: t, p, q
 
-    real :: es, ap1, tmin
+    real(kind_phys) :: es, ap1, tmin
 
     integer :: it
 
@@ -4465,10 +4466,10 @@ subroutine qs_table (n)
 
     integer, intent (in) :: n
 
-    real :: delt = 0.1
-    real :: tmin, tem, esh20
-    real :: wice, wh2o, fac0, fac1, fac2
-    real :: esupc (200)
+    real(kind_phys) :: delt = 0.1
+    real(kind_phys) :: tmin, tem, esh20
+    real(kind_phys) :: wice, wh2o, fac0, fac1, fac2
+    real(kind_phys) :: esupc (200)
 
     integer :: i
 
@@ -4529,15 +4530,15 @@ subroutine qsmith (im, km, ks, t, p, q, qs, dqdt)
 
     integer, intent (in) :: im, km, ks
 
-    real, intent (in), dimension (im, km) :: t, p, q
+    real(kind_phys), intent (in), dimension (im, km) :: t, p, q
 
-    real, intent (out), dimension (im, km) :: qs
+    real(kind_phys), intent (out), dimension (im, km) :: qs
 
-    real, intent (out), dimension (im, km), optional :: dqdt
+    real(kind_phys), intent (out), dimension (im, km), optional :: dqdt
 
-    real :: eps10, ap1, tmin
+    real(kind_phys) :: eps10, ap1, tmin
 
-    real, dimension (im, km) :: es
+    real(kind_phys), dimension (im, km) :: es
 
     integer :: i, k, it
 
@@ -4581,13 +4582,13 @@ subroutine neg_adj (ktop, kbot, pt, dp, qv, ql, qr, qi, qs, qg)
 
     integer, intent (in) :: ktop, kbot
 
-    real, intent (in), dimension (ktop:kbot) :: dp
+    real(kind_phys), intent (in), dimension (ktop:kbot) :: dp
 
-    real, intent (inout), dimension (ktop:kbot) :: pt, qv, ql, qr, qi, qs, qg
+    real(kind_phys), intent (inout), dimension (ktop:kbot) :: pt, qv, ql, qr, qi, qs, qg
 
-    real, dimension (ktop:kbot) :: lcpk, icpk
+    real(kind_phys), dimension (ktop:kbot) :: lcpk, icpk
 
-    real :: dq, cvm
+    real(kind_phys) :: dq, cvm
 
     integer :: k
 
@@ -4670,7 +4671,7 @@ end subroutine neg_adj
 !>@brief quick local sum algorithm
 ! =======================================================================
 
-!real function g_sum (p, ifirst, ilast, jfirst, jlast, area, mode)
+!real(kind_phys) function g_sum (p, ifirst, ilast, jfirst, jlast, area, mode)
 !
 ! use mpp_mod, only: mpp_sum
 !
@@ -4679,11 +4680,11 @@ end subroutine neg_adj
 ! integer, intent (in) :: ifirst, ilast, jfirst, jlast
 ! integer, intent (in) :: mode ! if == 1 divided by area
 !
-! real, intent (in), dimension (ifirst:ilast, jfirst:jlast) :: p, area
+! real(kind_phys), intent (in), dimension (ifirst:ilast, jfirst:jlast) :: p, area
 !
 ! integer :: i, j
 !
-! real :: gsum
+! real(kind_phys) :: gsum
 !
 ! if (global_area < 0.) then
 ! global_area = 0.
@@ -4720,15 +4721,15 @@ subroutine interpolate_z (is, ie, js, je, km, zl, hgt, a3, a2)
 
     integer, intent (in) :: is, ie, js, je, km
 
-    real, intent (in), dimension (is:ie, js:je, km) :: a3
+    real(kind_phys), intent (in), dimension (is:ie, js:je, km) :: a3
 
-    real, intent (in), dimension (is:ie, js:je, km + 1) :: hgt ! hgt (k) > hgt (k + 1)
+    real(kind_phys), intent (in), dimension (is:ie, js:je, km + 1) :: hgt ! hgt (k) > hgt (k + 1)
 
-    real, intent (in) :: zl
+    real(kind_phys), intent (in) :: zl
 
-    real, intent (out), dimension (is:ie, js:je) :: a2
+    real(kind_phys), intent (out), dimension (is:ie, js:je) :: a2
 
-    real, dimension (km) :: zm !< middle layer height
+    real(kind_phys), dimension (km) :: zm !< middle layer height
 
     integer :: i, j, k
 
@@ -4770,24 +4771,24 @@ subroutine cloud_diagnosis (is, ie, ks, ke, den, delp, lsm, qmw, qmi, qmr, qms, 
     integer, intent (in) :: is, ie, ks, ke
     integer, intent (in), dimension (is:ie) :: lsm ! land sea mask, 0: ocean, 1: land, 2: sea ice
 
-    real, intent (in), dimension (is:ie, ks:ke) :: den, delp, t
-    real, intent (in), dimension (is:ie, ks:ke) :: qmw, qmi, qmr, qms, qmg !< units: kg / kg
+    real(kind_phys), intent (in), dimension (is:ie, ks:ke) :: den, delp, t
+    real(kind_phys), intent (in), dimension (is:ie, ks:ke) :: qmw, qmi, qmr, qms, qmg !< units: kg / kg
 
-    real, intent (out), dimension (is:ie, ks:ke) :: rew, rei, rer, res, reg !< units: micron
+    real(kind_phys), intent (out), dimension (is:ie, ks:ke) :: rew, rei, rer, res, reg !< units: micron
 
-    real, dimension (is:ie, ks:ke) :: qcw, qci, qcr, qcs, qcg !< units: g / m^2
+    real(kind_phys), dimension (is:ie, ks:ke) :: qcw, qci, qcr, qcs, qcg !< units: g / m^2
     
     integer :: i, k
 
-    real :: lambdar, lambdas, lambdag
-    real :: dpg, rei_fac, mask, ccn, bw
-    real, parameter :: rho_0 = 50.e-3
+    real(kind_phys) :: lambdar, lambdas, lambdag
+    real(kind_phys) :: dpg, rei_fac, mask, ccn, bw
+    real(kind_phys), parameter :: rho_0 = 50.e-3
 
-    real :: rhow = 1.0e3, rhor = 1.0e3, rhos = 1.0e2, rhog = 4.0e2
-    real :: n0r = 8.0e6, n0s = 3.0e6, n0g = 4.0e6
-    real :: alphar = 0.8, alphas = 0.25, alphag = 0.5
-    real :: gammar = 17.837789, gammas = 8.2850630, gammag = 11.631769
-    real :: qmin = 1.0e-12, beta = 1.22, qmin1 = 9.e-6
+    real(kind_phys) :: rhow = 1.0e3, rhor = 1.0e3, rhos = 1.0e2, rhog = 4.0e2
+    real(kind_phys) :: n0r = 8.0e6, n0s = 3.0e6, n0g = 4.0e6
+    real(kind_phys) :: alphar = 0.8, alphas = 0.25, alphag = 0.5
+    real(kind_phys) :: gammar = 17.837789, gammas = 8.2850630, gammag = 11.631769
+    real(kind_phys) :: qmin = 1.0e-12, beta = 1.22, qmin1 = 9.e-6
 
     do k = ks, ke
         do i = is, ie
@@ -4912,21 +4913,21 @@ end subroutine cloud_diagnosis
 
 !..Sub arguments
       INTEGER, INTENT(IN):: kts, kte, ii,jj
-      REAL, DIMENSION(kts:kte), INTENT(IN)::                            &
+      real(kind_phys), DIMENSION(kts:kte), INTENT(IN)::                            &
                       qv1d, qr1d, qs1d, qg1d, t1d, p1d
-      REAL, DIMENSION(kts:kte), INTENT(INOUT):: dBZ
+      real(kind_phys), DIMENSION(kts:kte), INTENT(INOUT):: dBZ
 
 !..Local variables
-      REAL, DIMENSION(kts:kte):: temp, pres, qv, rho
-      REAL, DIMENSION(kts:kte):: rr, rs, rg
-!      REAL:: temp_C
+      real(kind_phys), DIMENSION(kts:kte):: temp, pres, qv, rho
+      real(kind_phys), DIMENSION(kts:kte):: rr, rs, rg
+!      real(kind_phys):: temp_C
 
       DOUBLE PRECISION, DIMENSION(kts:kte):: ilamr, ilams, ilamg
       DOUBLE PRECISION, DIMENSION(kts:kte):: N0_r, N0_s, N0_g
       DOUBLE PRECISION:: lamr, lams, lamg
       LOGICAL, DIMENSION(kts:kte):: L_qr, L_qs, L_qg
 
-      REAL, DIMENSION(kts:kte):: ze_rain, ze_snow, ze_graupel
+      real(kind_phys), DIMENSION(kts:kte):: ze_rain, ze_snow, ze_graupel
       DOUBLE PRECISION:: fmelt_s, fmelt_g
 
       INTEGER:: i, k, k_0, kbot, n
