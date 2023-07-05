@@ -408,6 +408,8 @@ show some variables in the namelist that must match the SDF.
 <tr><td>nssl_hail_on    <td>mp_nssl          <td>NSSL flag to activate the hail category         <td>.false.
 <tr><td>nssl_ccn_on     <td>mp_nssl          <td>NSSL flag to activate the CCN category          <td>.true.
 <tr><td>nssl_invertccn  <td>mp_nssl          <td>NSSL flag to treat CCN as activated or unactivated      <td>.true.
+<tr><td>nssl_ehw0       <td>mp_nssl          <td>NSSL graupel-droplet collection efficiency      <td>0.9
+<tr><td>nssl_ehlw0      <td>mp_nssl          <td>NSSL hail-droplet collection efficiency         <td>0.9
 <tr><td colspan="4" align= center>\b Parameters \b related \b to \b gravity \b drag \b scheme \b options
 <tr><td>knob_ugwp_version <td>cires_ugwp                 <td>parameter selects a version of the UGWP implementation in FV3GFS-127L  \n       
                                                          <ul>
