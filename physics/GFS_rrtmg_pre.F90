@@ -119,17 +119,17 @@
       integer, intent(in) :: ntdu1, ntdu2, ntdu3, ntdu4, ntdu5, ntss1, ntss2, ntss3,  &
                              ntss4, ntss5, ntsu, ntbcb, ntbcl, ntocb, ntocl, ntchm
 
-      character(len=3), dimension(:), intent(in) :: lndp_var_list
+      character(len=3), dimension(:), pointer    :: lndp_var_list
 
       logical,              intent(in) :: lextop, lsswr, lslwr, ltaerosol, lgfdlmprad, &
                                           uni_cld, effr_in, do_mynnedmf,       &
                                           lmfshal, lmfdeep2, pert_clds, mraerosol
       logical,              intent(in) :: aero_dir_fdb
-      real(kind=kind_phys), dimension(:,:), intent(in) :: smoke_ext, dust_ext
+      real(kind=kind_phys), dimension(:,:), pointer    :: smoke_ext, dust_ext
 
       logical,              intent(in) :: nssl_ccn_on, nssl_invertccn
       integer,              intent(in) :: spp_rad
-      real(kind_phys),      intent(in) :: spp_wts_rad(:,:)
+      real(kind_phys),      pointer    :: spp_wts_rad(:,:)
 
       real(kind=kind_phys), intent(in) :: fhswr, fhlwr, solhr, sup, julian, sppt_amp
       real(kind=kind_phys), intent(in) :: con_eps, epsm1, fvirt, rog, rocp, con_rd
@@ -139,10 +139,10 @@
                                                         slmsk, dx
 
       real(kind=kind_phys), dimension(:,:), intent(in) :: prsi, prsl, prslk,   &
-                                                          tgrs, sfc_wts,       &
+                                                          tgrs,                &
                                                           mg_cld, effrr_in,    &
-                                                          cnvw_in, cnvc_in,    &
-                                                          sppt_wts
+                                                          cnvw_in, cnvc_in
+      real(kind=kind_phys), dimension(:,:), pointer    :: sfc_wts, sppt_wts
 
       real(kind=kind_phys), dimension(:,:,:), intent(in) :: qgrs
       real(kind=kind_phys), dimension(:,:,:), intent(inout) :: aer_nm
@@ -155,7 +155,7 @@
       real(kind=kind_phys), dimension(:,:), intent(inout) :: clouds1,          &
                                                              clouds2, clouds3, &
                                                              clouds4, clouds5
-      real(kind=kind_phys), dimension(:,:), intent(in)  :: qci_conv
+      real(kind=kind_phys), dimension(:,:), pointer     :: qci_conv
       real(kind=kind_phys), dimension(:),   intent(out) :: lwp_ex,iwp_ex, &
                                                            lwp_fc,iwp_fc
 
