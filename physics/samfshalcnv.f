@@ -70,7 +70,8 @@
       real(kind=kind_phys), intent(in) ::  delt
       real(kind=kind_phys), intent(in) :: psp(:), delp(:,:),            &
      &   prslp(:,:), garea(:), hpbl(:), dot(:,:), phil(:,:),            &
-     &   qmicro(:,:),tmf(:,:),prevsq(:,:),q(:,:)
+     &   prevsq(:,:),q(:,:)
+      real(kind=kind_phys), pointer    :: qmicro(:,:),tmf(:,:)
 
       real(kind=kind_phys), intent(in) :: sigmain(:,:)
 !

@@ -38,7 +38,7 @@
       logical, intent(in) :: satmedmf, trans_trac
 
       real(kind=kind_phys), dimension(:),   intent(inout) :: rainc, cldwrk
-      real(kind=kind_phys), dimension(:,:), intent(inout) :: upd_mf, dwn_mf, det_mf
+      real(kind=kind_phys), dimension(:,:), pointer       :: upd_mf, dwn_mf, det_mf
       real(kind=kind_phys), dimension(:,:), intent(inout) :: cnvw, cnvc
 
       real(kind=kind_phys), dimension(:,:,:), pointer       :: dtend
