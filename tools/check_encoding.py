@@ -18,4 +18,4 @@ for root, dirs, files in os.walk(os.getcwd()):
             if not contents.isascii():
                 for line in contents.split('\n'):
                     if not line.isascii():
-                        raise Exception('Detected non-ascii characters in file {}, line: "{}"'.format(os.path.join(root, file), line))            
+                        raise Exception('Detected non-ascii characters in file {}, line: "{}"'.format(os.path.join(root, file), line))
