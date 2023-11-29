@@ -160,7 +160,7 @@ contains
       real(kind=kind_phys), intent(inout), dimension(:,:) :: rew, rei, rer, res, reg
       logical, intent (in) :: cplchm
       ! ice and liquid water 3d precipitation fluxes - only allocated if cplchm is .true.
-      real(kind=kind_phys), intent(inout), dimension(:,:) :: pfi_lsan, pfl_lsan
+      real(kind=kind_phys), pointer      , dimension(:,:) :: pfi_lsan, pfl_lsan
 
       character(len=*), intent(out) :: errmsg
       integer, intent(out)          :: errflg

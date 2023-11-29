@@ -74,15 +74,16 @@
       logical, dimension(:), intent(in) :: use_flake
 
       real(kind=kind_phys), dimension(:),   intent(in)  :: xlat, xlon, slmsk,           &
-                                                           sfc_alb_pert, lndp_prt_list, &
+                                                           sfc_alb_pert,                &
                                                            landfrac, lakefrac,          &
                                                            snodl, snodi, sncovr,        &
                                                            sncovr_ice, fice, zorl,      &
                                                            hprime, tsfg, tsfa, tisfc,   &
                                                            coszen, alvsf, alnsf, alvwf, &
                                                            alnwf, facsf, facwf, snoalb
-      character(len=3)    , dimension(:),   intent(in)  :: lndp_var_list
-      real(kind=kind_phys), dimension(:),   intent(in)  :: albdvis_ice, albdnir_ice,    &
+      real(kind=kind_phys), dimension(:),   pointer     :: lndp_prt_list
+      character(len=3)    , dimension(:),   pointer     :: lndp_var_list
+      real(kind=kind_phys), dimension(:),   pointer     :: albdvis_ice, albdnir_ice,    &
                                                            albivis_ice, albinir_ice
 
       real(kind=kind_phys), dimension(:),   intent(inout) :: albdvis_lnd, albdnir_lnd,  &

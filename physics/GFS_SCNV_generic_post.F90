@@ -31,7 +31,7 @@
       real(kind=kind_phys), dimension(:,:,:),   intent(in) :: save_q, gq0
 
       ! dtend only allocated if ldiag3d == .true.
-      real(kind=kind_phys), intent(inout) :: dtend(:,:,:)
+      real(kind=kind_phys), pointer       :: dtend(:,:,:)
       integer, intent(in) :: dtidx(:,:)
       integer, intent(in) :: index_of_temperature, index_of_x_wind, index_of_y_wind, index_of_process_scnv
       real(kind=kind_phys), dimension(:,:,:), intent(in) :: clw

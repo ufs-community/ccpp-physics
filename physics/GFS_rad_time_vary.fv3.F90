@@ -29,23 +29,23 @@
          implicit none
 
          ! Interface variables
-         logical,                intent(in)    :: lrseeds
-         integer,                intent(in)    :: rseeds(:,:)
-         integer,                intent(in)    :: isubc_lw, isubc_sw, cnx, cny, isc, jsc, kdt
-         integer,                intent(in)    :: imp_physics, imp_physics_zhao_carr
-         logical,                intent(in)    :: lslwr, lsswr
-         integer,                intent(inout) :: icsdsw(:), icsdlw(:)
-         integer,                intent(in)    :: imap(:), jmap(:)
-         real(kind_phys),        intent(in)    :: sec
-         real(kind_phys),        intent(inout) :: ps_2delt(:)
-         real(kind_phys),        intent(inout) :: ps_1delt(:)
-         real(kind_phys),        intent(inout) :: t_2delt(:,:)
-         real(kind_phys),        intent(inout) :: t_1delt(:,:)
-         real(kind_phys),        intent(inout) :: qv_2delt(:,:)
-         real(kind_phys),        intent(inout) :: qv_1delt(:,:)
-         real(kind_phys),        intent(in)    :: t(:,:), qv(:,:), ps(:)
-         character(len=*),       intent(out)   :: errmsg
-         integer,                intent(out)   :: errflg
+         logical,                             intent(in)    :: lrseeds
+         integer,                allocatable, intent(in)    :: rseeds(:,:)
+         integer,                             intent(in)    :: isubc_lw, isubc_sw, cnx, cny, isc, jsc, kdt
+         integer,                             intent(in)    :: imp_physics, imp_physics_zhao_carr
+         logical,                             intent(in)    :: lslwr, lsswr
+         integer,                allocatable, intent(inout) :: icsdsw(:), icsdlw(:)
+         integer,                allocatable, intent(in)    :: imap(:), jmap(:)
+         real(kind_phys),                     intent(in)    :: sec
+         real(kind_phys),        allocatable, intent(inout) :: ps_2delt(:)
+         real(kind_phys),        allocatable, intent(inout) :: ps_1delt(:)
+         real(kind_phys),        allocatable, intent(inout) :: t_2delt(:,:)
+         real(kind_phys),        allocatable, intent(inout) :: t_1delt(:,:)
+         real(kind_phys),        allocatable, intent(inout) :: qv_2delt(:,:)
+         real(kind_phys),        allocatable, intent(inout) :: qv_1delt(:,:)
+         real(kind_phys),        allocatable, intent(in)    :: t(:,:), qv(:,:), ps(:)
+         character(len=*),                    intent(out)   :: errmsg
+         integer,                             intent(out)   :: errflg
 
          ! Local variables
          type (random_stat) :: stat

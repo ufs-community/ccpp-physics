@@ -62,7 +62,7 @@
      &                                    prsl(:,:), tin(:,:),          &
      &                                    delp(:,:),                    &
      &                                    prdout(:,:,:), dt
-      real(kind=kind_phys), intent(inout) :: dtend(:,:,:)
+      real(kind=kind_phys), pointer       :: dtend(:,:,:)
       integer, intent(in) :: dtidx(:,:), ntoz,                          &
      &  index_of_process_prod_loss, index_of_process_ozmix,             &
      &  index_of_process_temp, index_of_process_overhead_ozone

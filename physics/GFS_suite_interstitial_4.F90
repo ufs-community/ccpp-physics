@@ -37,7 +37,7 @@
 
       ! dtend and dtidx are only allocated if ldiag3d
       logical, intent(in)                                   :: ldiag3d, qdiag3d
-      real(kind=kind_phys), dimension(:,:,:), intent(inout) :: dtend
+      real(kind=kind_phys), dimension(:,:,:), pointer       :: dtend
       integer,              dimension(:,:),   intent(in)    :: dtidx
       integer,                                intent(in)    :: index_of_process_conv_trans,ntk,ntke
 

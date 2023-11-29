@@ -53,7 +53,8 @@
       real(kind=kind_phys), intent(in   ), dimension(:,:,:) :: gq0
 
       real(kind=kind_phys), intent(inout   ), dimension(:,:)   :: sigmain
-      real(kind=kind_phys), intent(inout   ), dimension(:,:)   :: sigmaout,qmicro
+      real(kind=kind_phys), intent(inout   ), dimension(:,:)   :: sigmaout
+      real(kind=kind_phys), pointer         , dimension(:,:)   :: qmicro
       real(kind=kind_phys), intent(inout), dimension(:,:)   :: rhc, save_qc
       ! save_qi is not allocated for Zhao-Carr MP
       real(kind=kind_phys), intent(inout), dimension(:,:)   :: save_qi

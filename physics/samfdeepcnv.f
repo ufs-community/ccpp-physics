@@ -100,9 +100,10 @@
       logical, intent(in)  :: first_time_step,restart,hwrf_samfdeep,    &
      &     progsigma
       real(kind=kind_phys), intent(in) :: nthresh
-      real(kind=kind_phys), intent(in) :: ca_deep(:)
-      real(kind=kind_phys), intent(in) :: sigmain(:,:),qmicro(:,:),     &
-     &     tmf(:,:),q(:,:), prevsq(:,:)
+      real(kind=kind_phys), pointer    :: ca_deep(:)
+      real(kind=kind_phys), intent(in) :: sigmain(:,:),                 &
+     &     q(:,:), prevsq(:,:)
+      real(kind=kind_phys), pointer    :: qmicro(:,:), tmf(:,:)
       real(kind=kind_phys), intent(out) :: rainevap(:)
       real(kind=kind_phys), intent(out) :: sigmaout(:,:)
       logical, intent(in)  :: do_ca,ca_closure,ca_entr,ca_trigger
@@ -121,7 +122,7 @@
       ! GJF* These variables are conditionally allocated depending on whether the
       !     Morrison-Gettelman microphysics is used, so they must be declared 
       !     using assumed shape.
-      real(kind=kind_phys), dimension(:,:), intent(inout) ::            &
+      real(kind=kind_phys), dimension(:,:), pointer ::                  &
      &   qlcn, qicn, w_upi, cnv_mfd, cnv_dqldt, clcn                    &
      &,  cnv_fice, cnv_ndrop, cnv_nice, cf_upi
       ! *GJF

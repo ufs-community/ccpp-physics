@@ -214,7 +214,9 @@
 
       real(kind=kind_phys), dimension(:), intent(in) ::                 &
      &      sinlat, coslat, xlon, coszen, tf, tsflw, sfcdlw,            &
-     &      sfcdsw, sfcnsw, sfculw, sfculw_med, tsfc, tsfc_radtime
+     &      sfcdsw, sfcnsw, sfculw, tsfc
+      real(kind=kind_phys), dimension(:), pointer    ::                 &
+     &      sfculw_med, tsfc_radtime
 
       real(kind=kind_phys), dimension(:), intent(in) ::                 &
      &                         tsfc_lnd, tsfc_ice, tsfc_wat,            &
@@ -227,7 +229,9 @@
       real(kind=kind_phys), dimension(:,:), intent(in) :: swh, hlw,     &
      &                                     swhc, hlwc, p_lay, t_lay
 
-      real(kind=kind_phys), dimension(:,:), intent(in) :: p_lev,        &
+      real(kind=kind_phys), dimension(:,:), intent(in) :: p_lev
+
+      real(kind=kind_phys), dimension(:,:), pointer    ::               &
      &     flux2D_lwUP, flux2D_lwDOWN, fluxlwUP_jac
 
       real(kind_phys),           intent(in   ) :: con_g, con_cp,        &
@@ -237,8 +241,9 @@
 
 
 !  ---  input/output:
-      real(kind=kind_phys), dimension(:,:), intent(inout) :: dtdt, htrlw
-      real(kind=kind_phys), dimension(:,:), intent(inout) :: dtdtnp
+      real(kind=kind_phys), dimension(:,:), intent(inout) :: dtdt
+      real(kind=kind_phys), dimension(:,:), pointer       :: htrlw
+      real(kind=kind_phys), dimension(:,:), pointer       :: dtdtnp
 
 !  ---  outputs:
       real(kind=kind_phys), dimension(:), intent(out) ::                &

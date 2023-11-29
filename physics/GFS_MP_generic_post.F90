@@ -55,7 +55,7 @@
       real(kind=kind_phys), dimension(:,:),    intent(in)    :: prsi, phii
       real(kind=kind_phys), dimension(:,:,:),  intent(in)    :: gq0, save_q
 
-      real(kind=kind_phys), dimension(:,:,:),  intent(in)    :: dfi_radar_tten
+      real(kind=kind_phys), dimension(:,:,:),  pointer       :: dfi_radar_tten
 
       real(kind=kind_phys), dimension(:),      intent(in   ) :: sr
       real(kind=kind_phys), dimension(:),      intent(inout) :: rain, domr_diag, domzr_diag, domip_diag, doms_diag, tprcp,  &
@@ -63,7 +63,7 @@
                                                                 totprcpb, toticeb, totsnwb, totgrpb, pwat
       real(kind=kind_phys), dimension(:),      intent(inout) :: rain_cpl, rainc_cpl, snow_cpl
 
-      real(kind=kind_phys), dimension(:,:,:),   intent(inout) :: dtend
+      real(kind=kind_phys), dimension(:,:,:),  pointer       :: dtend
       integer,         dimension(:,:), intent(in)    :: dtidx
 
       ! Stochastic physics / surface perturbations
@@ -71,17 +71,17 @@
 
       ! Rainfall variables previous time step
       integer, intent(in) :: lsm, lsm_ruc, lsm_noahmp
-      real(kind=kind_phys), dimension(:),      intent(inout) :: raincprv
-      real(kind=kind_phys), dimension(:),      intent(inout) :: rainncprv
-      real(kind=kind_phys), dimension(:),      intent(inout) :: iceprv
-      real(kind=kind_phys), dimension(:),      intent(inout) :: snowprv
-      real(kind=kind_phys), dimension(:),      intent(inout) :: graupelprv
-      real(kind=kind_phys), dimension(:),      intent(inout) :: draincprv
-      real(kind=kind_phys), dimension(:),      intent(inout) :: drainncprv
-      real(kind=kind_phys), dimension(:),      intent(inout) :: diceprv
-      real(kind=kind_phys), dimension(:),      intent(inout) :: dsnowprv
-      real(kind=kind_phys), dimension(:),      intent(inout) :: dgraupelprv
-      real(kind=kind_phys), dimension(:,:),    intent(inout) :: dqdt_qmicro
+      real(kind=kind_phys), dimension(:),      pointer       :: raincprv
+      real(kind=kind_phys), dimension(:),      pointer       :: rainncprv
+      real(kind=kind_phys), dimension(:),      pointer       :: iceprv
+      real(kind=kind_phys), dimension(:),      pointer       :: snowprv
+      real(kind=kind_phys), dimension(:),      pointer       :: graupelprv
+      real(kind=kind_phys), dimension(:),      pointer       :: draincprv
+      real(kind=kind_phys), dimension(:),      pointer       :: drainncprv
+      real(kind=kind_phys), dimension(:),      pointer       :: diceprv
+      real(kind=kind_phys), dimension(:),      pointer       :: dsnowprv
+      real(kind=kind_phys), dimension(:),      pointer       :: dgraupelprv
+      real(kind=kind_phys), dimension(:,:),    pointer       :: dqdt_qmicro
       real(kind=kind_phys), dimension(:,:),    intent(inout) :: prevsq
       real(kind=kind_phys),                    intent(in)    :: dtp
 
