@@ -34,8 +34,8 @@
 !     intent out
       real(kind=kind_phys), intent(out) :: sigmaout(im,km)
       real(kind=kind_phys), intent(out) :: sigmab(im)
-      character(len=*),     intent(out) :: errmsg
-      integer,              intent(out) :: errflg
+      character(len=*),     intent(inout) :: errmsg
+      integer,              intent(inout) :: errflg
 
 !     Local variables
       integer              :: i,k,km1

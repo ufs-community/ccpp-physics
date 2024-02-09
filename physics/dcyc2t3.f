@@ -247,9 +247,11 @@
 
 !  ---  outputs:
       real(kind=kind_phys), dimension(:), intent(out) ::                &
-     &      adjsfcdsw, adjsfcnsw, adjsfcdlw, adjsfculw, xmu, xcosz,     &
+     &      adjsfcdsw, adjsfcnsw, adjsfcdlw, xmu, xcosz,                &
      &      adjnirbmu, adjnirdfu, adjvisbmu, adjvisdfu,                 &
      &      adjnirbmd, adjnirdfd, adjvisbmd, adjvisdfd
+
+      real(kind=kind_phys), dimension(:), intent(inout) :: adjsfculw
 
       real(kind=kind_phys), dimension(:), intent(out) ::                &
      &      adjsfculw_lnd, adjsfculw_ice, adjsfculw_wat
