@@ -4057,7 +4057,6 @@ SUBROUTINE CUMDWN   & !! Freeze & Melt & Evaporation
                ( IM    , IJSDIM, KMAX  ,nctp,              & !DD dimensions
                  GTR   ,                                   & ! modified
                  GDR   , DELP  , DELTA , KTMX  , IMFXR ,   & ! input
-                 sigmai        , sigma ,                   & !DDsigma input
                  ISTS  , IENS                            )   ! input
 !
 !DD      use ppgrid      , only: IJSDIM => pcols, KMAX => pver
@@ -4083,7 +4082,7 @@ SUBROUTINE CUMDWN   & !! Freeze & Melt & Evaporation
         ! 2: mass fixer is applied, total mass never change through cumulus scheme
         !    e.g. CO2
       INTEGER      ISTS, IENS
-      REAL(kind_phys)     sigmai (IM,KMAX+1,NCTP), sigma(IM,KMAX+1)   !!DDsigma cloud updraft fraction
+!     REAL(kind_phys)     sigmai (IM,KMAX+1,NCTP), sigma(IM,KMAX+1)   !!DDsigma cloud updraft fraction
 !
 !   [INTERNAL WORK]
       REAL(kind_phys)     GDR1
@@ -4184,8 +4183,8 @@ SUBROUTINE CUMDWN   & !! Freeze & Melt & Evaporation
       REAL(kind_phys) :: CLWMAX  = 1.e-3_kind_phys
       REAL(kind_phys) :: TPRPMAX = 1.e-2_kind_phys
       REAL(kind_phys) :: GTQIMAX = 1.e-5_kind_phys
-      REAL(kind_phys) :: GTM2MAX = 1._kind_phys
-      REAL(kind_phys) :: GTM3MAX = 1._kind_phys
+!     REAL(kind_phys) :: GTM2MAX = 1._kind_phys
+!     REAL(kind_phys) :: GTM3MAX = 1._kind_phys
 !
       DO K=1,KMAX
         DO I=ISTS, IENS
