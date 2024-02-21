@@ -63,6 +63,7 @@ subroutine m_micro_init(imp_physics, imp_physics_mg, fprcp, gravit, rair, rh2o, 
 
     errmsg = ''
     errflg = 0
+
     if (is_initialized) return
 
     if (imp_physics /= imp_physics_mg) then
@@ -409,6 +410,7 @@ end subroutine m_micro_init
 ! Initialize CCPP error handling variables
        errmsg = ''
        errflg = 0
+
        lprnt = .false.
        ipr   = 1
 
