@@ -102,7 +102,6 @@ set(SCHEMES_OPENMP_OFF ${LOCAL_CURRENT_SOURCE_DIR}/physics/rte-rrtmgp/rrtmgp/mo_
                        ${LOCAL_CURRENT_SOURCE_DIR}/physics/rte-rrtmgp/examples/rfmip-clear-sky/mo_rfmip_io.F90
                        ${LOCAL_CURRENT_SOURCE_DIR}/physics/rte-rrtmgp/examples/rfmip-clear-sky/rrtmgp_rfmip_lw.F90
                        ${LOCAL_CURRENT_SOURCE_DIR}/physics/rte-rrtmgp/examples/mo_simple_netcdf.F90
-                       ${LOCAL_CURRENT_SOURCE_DIR}/physics/rte-rrtmgp/examples/all-sky/rrtmgp_allsky.F90
                        ${LOCAL_CURRENT_SOURCE_DIR}/physics/rte-rrtmgp/examples/all-sky/mo_load_cloud_coefficients.F90
                        ${LOCAL_CURRENT_SOURCE_DIR}/physics/rte-rrtmgp/examples/all-sky/mo_garand_atmos_io.F90
                        ${LOCAL_CURRENT_SOURCE_DIR}/physics/rte-rrtmgp/rte/mo_rte_config.F90
