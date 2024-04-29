@@ -65,7 +65,8 @@
      &                                     adjust_cloudIce,          &
      &                                     adjust_cloudH2O,          &
      &                                     adjust_cloudFinal
-
+      use module_radiation_cloud_optics, only: cloud_mp_SAMF
+      
       use module_radsw_parameters,   only: topfsw_type, sfcfsw_type, &
      &                                     profsw_type, NBDSW
       use module_radlw_parameters,   only: topflw_type, sfcflw_type, &
@@ -84,9 +85,6 @@
                                            make_RainNumber
       ! For NRL Ozone
       use module_ozphys, only: ty_ozphys
-
-      ! For convective-cloud to radiation cloud coupling (RRTMG uses RRTMGP code)
-      use GFS_rrtmgp_cloud_mp, only: cloud_mp_SAMF
       
       implicit none
 

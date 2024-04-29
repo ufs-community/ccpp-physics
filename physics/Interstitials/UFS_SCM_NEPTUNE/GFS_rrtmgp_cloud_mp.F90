@@ -9,6 +9,7 @@ module GFS_rrtmgp_cloud_mp
   use machine,      only: kind_phys
   use radiation_tools,   only: check_error_msg
   use module_radiation_clouds, only: progcld_thompson
+  use module_radiation_cloud_overlap, only: cloud_mp_SAMF
   use rrtmgp_lw_cloud_optics, only: &
        radliq_lwr => radliq_lwrLW, radliq_upr => radliq_uprLW,&
        radice_lwr => radice_lwrLW, radice_upr => radice_uprLW  
@@ -462,88 +463,6 @@ contains
        enddo
     enddo
   end subroutine cloud_mp_MYNN
-
-
-!> \ingroup GFS_rrtmgp_cloud_mp 
-!! Compute cloud radiative properties for SAMF convective cloud scheme.
-!!
-!! - The total-cloud convective mixing-ratio is partitioned by phase into liquid/ice 
-!!   cloud properties. LWP and IWP are computed.
-!!
-!! - The liquid and ice cloud effective particle sizes are assigned reference values.
-!!   (*NOTE* STUB in place to expand this using "cmp_Re")
-!!
-!! - If cmp_XuRndl = True, the convective cloud-fraction is computed using Xu-Randall (1996).
-!!   Otherwise, the cloud-fraction provided by the convection scheme is unperturbed.
-!!
-!! \section cloud_mp_SAMF_gen General Algorithm
-  subroutine cloud_mp_SAMF(cmp_XuRndl, cmp_Re, nCol, nLev, t_lay, p_lev, p_lay, qs_lay,  &
-       relhum, cnv_mixratio, con_ttp, con_g, alpha0,                                     &
-       cld_cnv_lwp, cld_cnv_reliq, cld_cnv_iwp, cld_cnv_reice, cld_cnv_frac)
-    implicit none
-
-    ! Inputs
-    logical, intent(in)    :: &
-         cmp_XuRndl,    & ! Compute convective cloud fraction using Xu-Randall?
-         cmp_Re           ! Compute liquid/ice particle sizes using ?????
-    integer, intent(in)    :: &
-         nCol,          & ! Number of horizontal grid points
-         nLev             ! Number of vertical layers
-    real(kind_phys), intent(in) :: &
-         con_g,         & ! Physical constant: gravity         (m s-2)
-         con_ttp,       & ! Triple point temperature of water  (K)
-         alpha0           ! Parameter for Xu-Randall scheme.   (-)
-    real(kind_phys), dimension(:,:),intent(in) :: &
-         t_lay,         & ! Temperature at layer-centers       (K)
-         p_lev,         & ! Pressure at layer-interfaces       (Pa)
-         p_lay,         & ! Presure at layer-centers           (Pa)
-         qs_lay,        & ! Specific-humidity at layer-centers (kg/kg)
-         relhum,        & ! Relative-humidity                  (1)
-         cnv_mixratio     ! Convective cloud mixing-ratio      (kg/kg)
-    ! Outputs
-    real(kind_phys), dimension(:,:),intent(inout) :: &
-         cld_cnv_lwp,   & ! Convective cloud liquid water path
-         cld_cnv_reliq, & ! Convective cloud liquid effective radius
-         cld_cnv_iwp,   & ! Convective cloud ice water path
-         cld_cnv_reice, & ! Convective cloud ice effecive radius
-         cld_cnv_frac     ! Convective cloud-fraction
-    ! Local
-    integer :: iCol, iLay
-    real(kind_phys) :: tem0, tem1, deltaP, clwc
-
-    tem0 = 1.0e5/con_g
-    do iLay = 1, nLev
-       do iCol = 1, nCol
-          if (cnv_mixratio(iCol,iLay) > 0._kind_phys) then
-             ! Partition water paths by phase.
-             tem1   = min(1.0, max(0.0, (con_ttp-t_lay(iCol,iLay))*0.05))
-             deltaP = abs(p_lev(iCol,iLay+1)-p_lev(iCol,iLay))*0.01
-             clwc   = max(0.0, cnv_mixratio(iCol,iLay)) * tem0 * deltaP
-             cld_cnv_iwp(iCol,iLay)   = clwc * tem1
-             cld_cnv_lwp(iCol,iLay)   = clwc - cld_cnv_iwp(iCol,iLay)
-
-             ! Assign particles size(s).
-             if (cmp_Re) then
-                ! do something here a bit more fancy?
-             else
-                ! Assume default liquid/ice effective radius (microns)
-                cld_cnv_reliq(iCol,iLay) = reliqcnv_def
-                cld_cnv_reice(iCol,iLay) = reicecnv_def
-             endif
-
-             ! Recompute cloud-fraction using Xu-Randall (1996)?
-             if (cmp_XuRndl) then
-                cld_cnv_frac(iCol,iLay) = cld_frac_XuRandall(p_lay(iCol,iLay),           &
-                     qs_lay(iCol,iLay), relhum(iCol,iLay), cnv_mixratio(iCol,iLay), alpha0)
-             else
-                ! Otherwise, cloud-fraction from convection scheme will pass through and
-                ! be used by the radiation.
-             endif
-          endif ! No juice.
-       enddo    ! Columns
-    enddo       ! Layers
-
-  end subroutine cloud_mp_SAMF
 
 !> \ingroup GFS_rrtmgp_cloud_mp 
 !! This routine computes the cloud radiative properties for a "unified cloud".
