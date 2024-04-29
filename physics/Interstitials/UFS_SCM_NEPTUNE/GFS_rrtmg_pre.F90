@@ -35,7 +35,7 @@
         lmfshal, lcnorm, lmfdeep2, lcrick, fhswr, fhlwr, solhr, sup, con_eps,  &
         epsm1, fvirt, rog, rocp, con_rd, xlat_d, xlat, xlon, coslat, sinlat,   &
         tsfc, slmsk, prsi, prsl, prslk, tgrs, sfc_wts, mg_cld, effrr_in,       &
-        pert_clds, sppt_wts, sppt_amp, cnvw_in, cnvc_in, qgrs, aer_nm, dx,     &
+        pert_clds, sppt_wts, sppt_amp, cnvw_in, cnvc_inout, qgrs, aer_nm, dx,  &
         icloud, iaermdl, iaerflg, con_pi, con_g, con_ttp, con_thgni, si,       & !inputs from here and above
         coszen, coszdg, effrl_inout, effri_inout, effrs_inout,                 &
         clouds1, clouds2, clouds3, clouds4, clouds5, qci_conv,                 & !in/out from here and above
@@ -45,7 +45,8 @@
         gasvmr_ccl4,  gasvmr_cfc113, aerodp,ext550, clouds6, clouds7, clouds8, &
         clouds9, cldsa, cldfra, cldfra2d, lwp_ex,iwp_ex, lwp_fc,iwp_fc,        &
         faersw1, faersw2, faersw3, faerlw1, faerlw2, faerlw3, alpha, rrfs_sd,  &
-        aero_dir_fdb, fdb_coef, spp_wts_rad, spp_rad, ico2, ozphys,      &
+        aero_dir_fdb, fdb_coef, spp_wts_rad, spp_rad, ico2, ozphys,            &
+        cld_cnv_lwp, cld_cnv_reliq, cld_cnv_iwp, cld_cnv_reice,                &
         errmsg, errflg)
 
       use machine,                   only: kind_phys
@@ -83,6 +84,10 @@
                                            make_RainNumber
       ! For NRL Ozone
       use module_ozphys, only: ty_ozphys
+
+      ! For convective-cloud to radiation cloud coupling (RRTMG uses RRTMGP code)
+      use GFS_rrtmgp_cloud_mp, only: cloud_mp_SAMF
+      
       implicit none
 
       integer,              intent(in)  :: im, levs, lm, lmk, lmp, ltp,        &
@@ -145,9 +150,10 @@
       real(kind=kind_phys), dimension(:,:), intent(in) :: prsi, prsl, prslk,   &
                                                           tgrs, sfc_wts,       &
                                                           mg_cld, effrr_in,    &
-                                                          cnvw_in, cnvc_in,    &
+                                                          cnvw_in,             &
                                                           sppt_wts
-
+      real(kind=kind_phys), dimension(:,:), intent(inout) :: cnvc_inout
+      
       real(kind=kind_phys), dimension(:,:,:), intent(in) :: qgrs
       real(kind=kind_phys), dimension(:,:,:), intent(inout) :: aer_nm
 
@@ -197,6 +203,11 @@
                                                            clouds8,   &
                                                            clouds9,   &
                                                            cldfra
+      real(kind=kind_phys), dimension(:,:), intent(out) :: &
+                                                           cld_cnv_lwp,   &
+                                                           cld_cnv_reliq, &
+                                                           cld_cnv_iwp,   &
+                                                           cld_cnv_reice
       real(kind=kind_phys), dimension(:), intent(out) :: cldfra2d
       real(kind=kind_phys), dimension(:,:), intent(out) :: cldsa
 
@@ -941,7 +952,7 @@
               !     but it looks like the Zhao-Carr-PDF scheme is not in the CCPP
               deltaq(i,k1) = 0.0!Tbd%phy_f3d(i,k,5)      !GJF: this variable is not in phy_f3d anymore
               cnvw  (i,k1) = cnvw_in(i,k)
-              cnvc  (i,k1) = cnvc_in(i,k)
+              cnvc  (i,k1) = cnvc_inout(i,k)
             enddo
           enddo
         elseif ((npdf3d == 0) .and. (ncnvcld3d == 1)) then ! all other microphysics with pdfcld = .false. and cnvcld = .true.
@@ -995,6 +1006,11 @@
 
 !      endif                             ! end_if_ntcw
 
+!> - Call cloud_mp_SAMF() to calculate convective cloud properties.
+        call cloud_mp_SAMF(.false., .false., IM, LM, tlyr, plvl, plyr, &
+             qstl, rhly, cnvw_in, con_ttp, con_g, 200., cld_cnv_lwp,   &
+             cld_cnv_reliq, cld_cnv_iwp, cld_cnv_reice, cnvc_inout)
+        
 !> - Call ppfbet() to perturb cld cover.
        if (pert_clds) then
           do i=1,im

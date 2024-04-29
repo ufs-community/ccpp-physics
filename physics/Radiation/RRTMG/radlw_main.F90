@@ -430,7 +430,9 @@
      &       HLW0,HLWB,FLXPRF,                                          &   !  ---  optional
      &       cld_lwp, cld_ref_liq, cld_iwp, cld_ref_ice,                &
      &       cld_rwp,cld_ref_rain, cld_swp, cld_ref_snow,               &
-     &       cld_od, errmsg, errflg                                     &
+     &       cld_od,                                                    &
+     &       cld_cnv_lwp, cld_cnv_reliq, cld_cnv_iwp, cld_cnv_reice,    &
+     &       cld_cnv_frac, errmsg, errflg                               &
      &     )
 
 !  ====================  defination of variables  ====================  !
@@ -626,7 +628,8 @@
       real (kind=kind_phys), dimension(:,:),intent(in),optional::       &
      &       cld_lwp, cld_ref_liq,  cld_iwp, cld_ref_ice,               &
      &       cld_rwp, cld_ref_rain, cld_swp, cld_ref_snow,              &
-     &       cld_od
+     &       cld_od, cld_cnv_lwp, cld_cnv_reliq, cld_cnv_iwp,           &
+     &       cld_cnv_reice, cld_cnv_frac
 
       real (kind=kind_phys), dimension(:), intent(in) :: sfemis,        &
      &       sfgtmp, de_lgth
@@ -667,7 +670,7 @@
      &       clwp, ciwp, relw, reiw, cda1, cda2, cda3, cda4,            &
      &       coldry, colbrd, h2ovmr, o3vmr, fac00, fac01, fac10, fac11, &
      &       selffac, selffrac, forfac, forfrac, minorfrac, scaleminor, &
-     &       scaleminorn2, temcol, dz
+     &       scaleminorn2, temcol, dz, cda5, cda6, cda7, cda8, cldfrc_cnv
 
       real (kind=kind_phys), dimension(nbands,0:nlay) :: pklev, pklay
 
@@ -894,6 +897,12 @@
               cda2(k)  = cld_ref_rain(iplon,k1)
               cda3(k)  = cld_swp(iplon,k1)
               cda4(k)  = cld_ref_snow(iplon,k1)
+              ! Radiatively active convective cloud?
+              cda5(k)  = cld_cnv_lwp(iplon,k1)
+              cda6(k)  = cld_cnv_reliq(iplon,k1)
+              cda7(k)  = cld_cnv_iwp(iplon,k1)
+              cda8(k)  = cld_cnv_reice(iplon,k1)
+              cldfrc_cnv(k) = cld_cnv_frac(iplon,k1)
             enddo
           else                       ! use diagnostic cloud method
             do k = 1, nlay
@@ -1080,6 +1089,7 @@
           call cldprop                                                  &
 !  ---  inputs:
      &     ( cldfrc,clwp,relw,ciwp,reiw,cda1,cda2,cda3,cda4,            &
+     &       cldfrc_cnv, cda5, cda6, cda7, cda8,                        &
      &       nlay, nlp1, ipseed(iplon), dz, delgth, iovr, alph,         &
      &       ilwcliq, ilwcice, isubclw,                                 &
 !  ---  outputs:
@@ -1529,6 +1539,7 @@
 !!\section gen_cldprop cldprop General Algorithm
       subroutine cldprop                                                &
      &     ( cfrac,cliqp,reliq,cicep,reice,cdat1,cdat2,cdat3,cdat4,     & !  ---  inputs
+     &       cnv_cfrac, cnv_cliqp, cnv_reliq, cnv_cicep, cnv_reice,     &
      &       nlay, nlp1, ipseed, dz, de_lgth, iovr, alpha, ilwcliq,     &
      &       ilwcice, isubclw, cldfmc, taucld                           & !  ---  outputs
      &     )
@@ -1558,6 +1569,11 @@
 !    cdat2 - real, layer cloud single scattering albedo            nlay !
 !    cdat3 - real, layer cloud asymmetry factor                    nlay !
 !    cdat4 - real, optional use                                    nlay !
+!    cnv_cfrac - real, layer cloud (cnv) fraction                0:nlp1 !
+!    cnv_cliqp - real, layer in-cloud (cnv) liq water path         nlay !
+!    cnv_reliq - real, mean eff radius for liq (cnv) cloud         nlay !
+!    cnv_cicep - real, layer in-cloud (cnv) ice water path         nlay !
+!    cnv_reice - real, mean eff radius for ice cloud (cnv)         nlay !
 !    cliqp - not used                                              nlay !
 !    reliq - not used                                              nlay !
 !    cicep - not used                                              nlay !
@@ -1635,7 +1651,8 @@
 
       real (kind=kind_phys), dimension(0:nlp1), intent(in) :: cfrac
       real (kind=kind_phys), dimension(nlay),   intent(in) :: cliqp,    &
-     &       reliq, cicep, reice, cdat1, cdat2, cdat3, cdat4, dz
+     &       reliq, cicep, reice, cdat1, cdat2, cdat3, cdat4, dz,       &
+     &       cnv_cfrac, cnv_cliqp, cnv_reliq, cnv_cicep, cnv_reice
       real (kind=kind_phys),                    intent(in) :: de_lgth
       real (kind=kind_phys), dimension(nlay),   intent(in) :: alpha
 
@@ -1782,7 +1799,16 @@
             enddo
 
           endif  lab_if_cld
-        enddo  lab_do_k
+          lab_if_cnvcld : if (cnv_cfrac(k) > cldmin) then
+             print*,'SWALES FOUND SOME CONVECTIVE CLOUD IN RRTMG'
+          endif lab_if_cnvcld
+          write(*,'(a10,2f15.8)') 'cfrac = ',cnv_cfrac(k),cfrac(k)
+          write(*,'(a10,2f15.8)') 'cliqp = ',cnv_cliqp(k),cliqp(k)
+          write(*,'(a10,2f15.8)') 'reliq = ',cnv_reliq(k),reliq(k)
+          write(*,'(a10,2f15.8)') 'cicep = ',cnv_cicep(k),cicep(k)
+          write(*,'(a10,2f15.8)') 'reice = ',cnv_reice(k),reice(k)
+          
+       enddo  lab_do_k
 
       else  lab_if_ilwcliq
 
