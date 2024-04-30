@@ -1797,17 +1797,11 @@
             do ib = 1, nbands
               taucld(ib,k) = tauice(ib) + tauliq(ib) + tauran + tausnw
             enddo
-
+          write(*,'(a10,i5,5f15.8)') 'cloudmp  - ',k,cfrac(k),cliqp(k),reliq(k),cicep(k),reice(k)
           endif  lab_if_cld
           lab_if_cnvcld : if (cnv_cfrac(k) > cldmin) then
-             print*,'SWALES FOUND SOME CONVECTIVE CLOUD IN RRTMG'
+             write(*,'(a10,i5,5f15.8)') 'cloudcnv - ',k,cnv_cfrac(k),cnv_cliqp(k),cnv_reliq(k),cnv_cicep(k),cnv_reice(k)
           endif lab_if_cnvcld
-          write(*,'(a10,2f15.8)') 'cfrac = ',cnv_cfrac(k),cfrac(k)
-          write(*,'(a10,2f15.8)') 'cliqp = ',cnv_cliqp(k),cliqp(k)
-          write(*,'(a10,2f15.8)') 'reliq = ',cnv_reliq(k),reliq(k)
-          write(*,'(a10,2f15.8)') 'cicep = ',cnv_cicep(k),cicep(k)
-          write(*,'(a10,2f15.8)') 'reice = ',cnv_reice(k),reice(k)
-          
        enddo  lab_do_k
 
       else  lab_if_ilwcliq
