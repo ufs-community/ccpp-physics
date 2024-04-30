@@ -52,11 +52,12 @@ contains
          relhum,        & ! Relative-humidity                  (1)
          cnv_mixratio     ! Convective cloud mixing-ratio      (kg/kg)
     ! Outputs
-    real(kind_phys), dimension(:,:),intent(inout) :: &
+    real(kind_phys), dimension(:,:),intent(out) :: &
          cld_cnv_lwp,   & ! Convective cloud liquid water path
          cld_cnv_reliq, & ! Convective cloud liquid effective radius
          cld_cnv_iwp,   & ! Convective cloud ice water path
-         cld_cnv_reice, & ! Convective cloud ice effecive radius
+         cld_cnv_reice    ! Convective cloud ice effecive radius
+    real(kind_phys), dimension(:,:),intent(inout) :: &
          cld_cnv_frac     ! Convective cloud-fraction
     ! Local
     integer :: iCol, iLay
@@ -72,7 +73,7 @@ contains
              clwc   = max(0.0, cnv_mixratio(iCol,iLay)) * tem0 * deltaP
              cld_cnv_iwp(iCol,iLay)   = clwc * tem1
              cld_cnv_lwp(iCol,iLay)   = clwc - cld_cnv_iwp(iCol,iLay)
-
+             
              ! Assign particles size(s).
              if (cmp_Re) then
                 ! do something here a bit more fancy?
@@ -89,6 +90,7 @@ contains
              else
                 ! Otherwise, cloud-fraction from convection scheme will pass through and
                 ! be used by the radiation.
+                !cld_cnv_frac(iCol,iLay) = 1._kind_phys
              endif
           endif ! No juice.
        enddo    ! Columns

@@ -2122,11 +2122,10 @@
 !            clwf(i,k) = clw(i,k)
 !          enddo
 !        enddo
-!      endif
-
+!     endif
+      
 !> - Include grid-mean suspended cloud condensate in Xu-Randall cloud fraction
 !>   if xr_cnvcld is true:
-
       if(xr_cnvcld)then
         do k = 1, NLAY
           do i = 1, IX
@@ -2142,7 +2141,7 @@
           enddo
         enddo
       endif
-
+      
 !> - Compute total-cloud liquid/ice condensate path in \f$ g/m^2 \f$.
 !>   The total condensate includes convective condensate.
         do k = 1, NLAY-1
