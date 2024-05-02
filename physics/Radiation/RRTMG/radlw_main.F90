@@ -431,8 +431,8 @@
      &       cld_lwp, cld_ref_liq, cld_iwp, cld_ref_ice,                &
      &       cld_rwp,cld_ref_rain, cld_swp, cld_ref_snow,               &
      &       cld_od,                                                    &
-     &       cld_cnv_lwp, cld_cnv_reliq, cld_cnv_iwp, cld_cnv_reice,    &
-     &       cld_cnv_frac, errmsg, errflg                               &
+     &       add_cnvcld, cnvcld_lwp, cnvcld_reliq, cnvcld_iwp,          &
+     &       cnvcld_reice, errmsg, errflg                               &
      &     )
 
 !  ====================  defination of variables  ====================  !
@@ -613,7 +613,7 @@
            iovr_maxrand, iovr_max
       integer, intent(in) :: icseed(npts)
 
-      logical,  intent(in) :: lprnt, inc_minor_gas
+      logical,  intent(in) :: lprnt, inc_minor_gas, add_cnvcld
 
       real (kind=kind_phys), dimension(:,:), intent(in) :: plvl,        &
      &       tlvl
@@ -628,8 +628,7 @@
       real (kind=kind_phys), dimension(:,:),intent(in),optional::       &
      &       cld_lwp, cld_ref_liq,  cld_iwp, cld_ref_ice,               &
      &       cld_rwp, cld_ref_rain, cld_swp, cld_ref_snow,              &
-     &       cld_od, cld_cnv_lwp, cld_cnv_reliq, cld_cnv_iwp,           &
-     &       cld_cnv_reice, cld_cnv_frac
+     &       cld_od, cnvcld_lwp, cnvcld_reliq, cnvcld_iwp, cnvcld_reice
 
       real (kind=kind_phys), dimension(:), intent(in) :: sfemis,        &
      &       sfgtmp, de_lgth
@@ -659,7 +658,7 @@
      &       intent(inout) :: flxprf
 
 !  ---  locals:
-      real (kind=kind_phys), dimension(0:nlp1) :: cldfrc, cldfrc_cnv
+      real (kind=kind_phys), dimension(0:nlp1) :: cldfrc
 
       real (kind=kind_phys), dimension(0:nlay) :: totuflux, totdflux,   &
      &       totuclfl, totdclfl, tz
@@ -898,11 +897,10 @@
               cda3(k)  = cld_swp(iplon,k1)
               cda4(k)  = cld_ref_snow(iplon,k1)
               ! Radiatively active convective cloud?
-              cda5(k)  = cld_cnv_lwp(iplon,k1)
-              cda6(k)  = cld_cnv_reliq(iplon,k1)
-              cda7(k)  = cld_cnv_iwp(iplon,k1)
-              cda8(k)  = cld_cnv_reice(iplon,k1)
-              cldfrc_cnv(k) = cld_cnv_frac(iplon,k1)
+              cda5(k)  = cnvcld_lwp(iplon,k1)
+              cda6(k)  = cnvcld_reliq(iplon,k1)
+              cda7(k)  = cnvcld_iwp(iplon,k1)
+              cda8(k)  = cnvcld_reice(iplon,k1)
             enddo
           else                       ! use diagnostic cloud method
             do k = 1, nlay
@@ -914,8 +912,6 @@
 
           cldfrc(0)    = f_one       ! padding value only
           cldfrc(nlp1) = f_zero      ! padding value only
-          cldfrc_cnv(0)    = f_one
-          cldfrc_cnv(nlp1) = f_zero
           
 !> -# Compute precipitable water vapor for diffusivity angle adjustments.
 
@@ -1013,11 +1009,10 @@
               cda3(k)  = cld_swp(iplon,k)
               cda4(k)  = cld_ref_snow(iplon,k)
               ! Radiatively active convective cloud?
-              cda5(k)  = cld_cnv_lwp(iplon,k)
-              cda6(k)  = cld_cnv_reliq(iplon,k)
-              cda7(k)  = cld_cnv_iwp(iplon,k)
-              cda8(k)  = cld_cnv_reice(iplon,k)
-              cldfrc_cnv(k) = cld_cnv_frac(iplon,k)
+              cda5(k)  = cnvcld_lwp(iplon,k)
+              cda6(k)  = cnvcld_reliq(iplon,k)
+              cda7(k)  = cnvcld_iwp(iplon,k)
+              cda8(k)  = cnvcld_reice(iplon,k)
             enddo
           else                       ! use diagnostic cloud method
             do k = 1, nlay
@@ -1029,8 +1024,6 @@
           cldfrc(0)    = f_one       ! padding value only
           cldfrc(nlp1) = f_zero      ! padding value only
 
-          cldfrc_cnv(0)    = f_one
-          cldfrc_cnv(nlp1) = f_zero
 !  --- ...  compute precipitable water vapor for diffusivity angle adjustments
 
           tem1 = f_zero
@@ -1099,7 +1092,7 @@
           call cldprop                                                  &
 !  ---  inputs:
      &     ( cldfrc,clwp,relw,ciwp,reiw,cda1,cda2,cda3,cda4,            &
-     &       cldfrc_cnv, cda5, cda6, cda7, cda8,                        &
+     &       add_cnvcld, cda5, cda6, cda7, cda8,                        &
      &       nlay, nlp1, ipseed(iplon), dz, delgth, iovr, alph,         &
      &       ilwcliq, ilwcice, isubclw,                                 &
 !  ---  outputs:
@@ -1549,7 +1542,7 @@
 !!\section gen_cldprop cldprop General Algorithm
       subroutine cldprop                                                &
      &     ( cfrac,cliqp,reliq,cicep,reice,cdat1,cdat2,cdat3,cdat4,     & !  ---  inputs
-     &       cnv_cfrac, cnv_cliqp, cnv_reliq, cnv_cicep, cnv_reice,     &
+     &       add_cnvcld, cnv_cliqp, cnv_reliq, cnv_cicep, cnv_reice,    &
      &       nlay, nlp1, ipseed, dz, de_lgth, iovr, alpha, ilwcliq,     &
      &       ilwcice, isubclw, cldfmc, taucld                           & !  ---  outputs
      &     )
@@ -1579,7 +1572,7 @@
 !    cdat2 - real, layer cloud single scattering albedo            nlay !
 !    cdat3 - real, layer cloud asymmetry factor                    nlay !
 !    cdat4 - real, optional use                                    nlay !
-!    cnv_cfrac - real, layer cloud (cnv) fraction                0:nlp1 !
+!    add_cnvcld - logical, flag to add convective cloud                 !
 !    cnv_cliqp - real, layer in-cloud (cnv) liq water path         nlay !
 !    cnv_reliq - real, mean eff radius for liq (cnv) cloud         nlay !
 !    cnv_cicep - real, layer in-cloud (cnv) ice water path         nlay !
@@ -1659,7 +1652,8 @@
       integer, intent(in) :: nlay, nlp1, ipseed, iovr, ilwcliq, ilwcice,&
            isubclw
 
-      real (kind=kind_phys), dimension(0:nlp1), intent(in) :: cfrac,cnv_cfrac
+      logical, intent(in) :: add_cnvcld
+      real (kind=kind_phys), dimension(0:nlp1), intent(in) :: cfrac
       real (kind=kind_phys), dimension(nlay),   intent(in) :: cliqp,    &
      &       reliq, cicep, reice, cdat1, cdat2, cdat3, cdat4, dz,       &
      &       cnv_cliqp, cnv_reliq, cnv_cicep, cnv_reice
@@ -1816,7 +1810,7 @@
           ! - Add radiative contribution from convective cloud to total cloud radiative properties.
           !
           ! #####################################################################################
-          lab_if_cnvcld : if (cnv_cliqp(k)+cnv_cliqp(k) > 0._kind_phys) then
+          lab_if_cnvcld : if (add_cnvcld .and. cnv_cliqp(k)+cnv_cicep(k) > 0._kind_phys) then
              ! calculation of absorption coefficients due to convective water clouds.
              if ( cnv_cliqp(k) <= f_zero ) then
                 do ib = 1, nbands
