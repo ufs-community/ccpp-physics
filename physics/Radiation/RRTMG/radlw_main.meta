@@ -434,6 +434,20 @@
   dimensions = ()
   type = logical
   intent = in
+[scale_ccld_cndste]
+  standard_name = flag_to_scale_convective_condensate_in_radiation_by_convective_updraft_fraction
+  long_name = flag to scale convective condensate see by radiation using the convective updraft fraction
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
+[scale_ccld_optics]
+  standard_name = flag_to_scale_convective_cloud_optics_by_convective_updraft_fraction
+  long_name = flag to scale convective cloud optics see by radiation using the convective updraft fraction
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
 [cnvcld_lwp]
   standard_name = convective_cloud_liquid_water_path
   long_name = layer convective cloud liquid water path

@@ -506,8 +506,9 @@
      &       HSW0,HSWB,FLXPRF,FDNCMP,                                   &   ! ---  optional
      &       cld_lwp, cld_ref_liq, cld_iwp, cld_ref_ice,                &
      &       cld_rwp,cld_ref_rain, cld_swp, cld_ref_snow,               &
-     &       cld_od, cld_ssa, cld_asy, add_cnvcld, cnvcld_lwp,          &
-     &       cnvcld_reliq, cnvcld_iwp, cnvcld_reice, errmsg, errflg     &
+     &       cld_od, cld_ssa, cld_asy, add_cnvcld, scale_ccld_cndste,   &
+     &       scale_ccld_optics, cnvcld_lwp, cnvcld_reliq, cnvcld_iwp,   &
+     &       cnvcld_reice, errmsg, errflg     &
      &     )
 
 !  ====================  defination of variables  ====================  !
@@ -693,7 +694,7 @@
       integer, dimension(:), intent(in) :: idxday, icseed
 
       logical, intent(in) :: lprnt, lsswr, inc_minor_gas, top_at_1
-      logical, intent(in) :: add_cnvcld
+      logical, intent(in) :: add_cnvcld, scale_ccld_cndste, scale_ccld_optics
       
       real (kind=kind_phys), dimension(:,:), intent(in) ::              &
      &       plvl, tlvl
@@ -1145,7 +1146,8 @@
           call cldprop                                                  &
 !  ---  inputs:
      &     ( cfrac,cliqp,reliq,cicep,reice,cdat1,cdat2,cdat3,cdat4,     &
-     &       add_cnvcld, cdat5, cdat6, cdat7, cdat8,                    &
+     &       add_cnvcld, scale_ccld_cndste, scale_ccld_optics, cdat5,   &
+     &       cdat6, cdat7, cdat8,                                       &
      &       zcf1, nlay, ipseed(j1), dz, delgth, alph, iswcliq, iswcice,&
      &       isubcsw, iovr,                                             &
 !  ---  outputs:
@@ -1579,7 +1581,8 @@
 !!\section General_cldprop cldprop General Algorithm
       subroutine cldprop                                                &
      &     ( cfrac,cliqp,reliq,cicep,reice,cdat1,cdat2,cdat3,cdat4,     &   !  ---  inputs
-     &       add_cnvcld, cnv_cliqp, cnv_reliq, cnv_cicep, cnv_reice,    &
+     &       add_cnvcld, scale_ccld_cndste, scale_ccld_optics,          &
+     &       cnv_cliqp, cnv_reliq, cnv_cicep, cnv_reice,                &
      &       cf1, nlay, ipseed, dz, delgth, alpha, iswcliq, iswcice,    &
      &       isubcsw, iovr, taucw, ssacw, asycw, cldfrc, cldfmc         &   !  ---  output
      &     )
@@ -1669,7 +1672,7 @@
 !  ---  inputs:
       integer, intent(in) :: nlay, ipseed, iswcliq, iswcice, isubcsw,   &
            iovr
-      logical, intent(in) :: add_cnvcld
+      logical, intent(in) :: add_cnvcld, scale_ccld_cndste, scale_ccld_optics
       real (kind=kind_phys), intent(in) :: cf1, delgth
 
       real (kind=kind_phys), dimension(nlay), intent(in) :: cliqp,      &
@@ -1908,7 +1911,7 @@
           ! #####################################################################################
           lab_if_cnvcld : if (add_cnvcld .and. cnv_cliqp(k)+cnv_cicep(k) > 0._kind_phys) then
              ! Calculation of absorption coefficients due to convective water clouds.
-             if ( cnv_cliqp <= f_zero ) then
+             if ( cnv_cliqp(k) <= f_zero ) then
                 do ib = nblow, nbhgh
                    tauliq(ib) = f_zero
                    ssaliq(ib) = f_zero
@@ -1924,7 +1927,7 @@
                       extcoliq = max(f_zero,            extliq1(index,ib) + fint*(extliq1(index+1,ib)-extliq1(index,ib)) )
                       ssacoliq = max(f_zero, min(f_one, ssaliq1(index,ib) + fint*(ssaliq1(index+1,ib)-ssaliq1(index,ib)) ))
                       asycoliq = max(f_zero, min(f_one, asyliq1(index,ib) + fint*(asyliq1(index+1,ib)-asyliq1(index,ib)) ))
-                      tauliq(ib) = cnv_cliqp  * extcoliq
+                      tauliq(ib) = cnv_cliqp(k)  * extcoliq
                       ssaliq(ib) = tauliq(ib) * ssacoliq
                       asyliq(ib) = ssaliq(ib) * asycoliq
                    enddo
@@ -1933,14 +1936,14 @@
                       extcoliq = max(f_zero,            extliq2(index,ib) + fint*(extliq2(index+1,ib)-extliq2(index,ib)) )
                       ssacoliq = max(f_zero, min(f_one, ssaliq2(index,ib) + fint*(ssaliq2(index+1,ib)-ssaliq2(index,ib)) ))
                       asycoliq = max(f_zero, min(f_one, asyliq2(index,ib) + fint*(asyliq2(index+1,ib)-asyliq2(index,ib)) ))
-                      tauliq(ib) = cnv_cliqp  * extcoliq
+                      tauliq(ib) = cnv_cliqp(k)  * extcoliq
                       ssaliq(ib) = tauliq(ib) * ssacoliq
                       asyliq(ib) = ssaliq(ib) * asycoliq
                    enddo
                 endif   ! end if_iswcliq_block
              endif   ! end if_cldliq_block
              ! Calculation of absorption coefficients due to ice clouds.
-             if ( cnv_cicep <= f_zero ) then
+             if ( cnv_cicep(k) <= f_zero ) then
                 do ib = nblow, nbhgh
                    tauice(ib) = f_zero
                    ssaice(ib) = f_zero
@@ -1956,7 +1959,7 @@
                       extcoice = max(f_zero,                  abari(ia)+bbari(ia)/refice )
                       ssacoice = max(f_zero, min(f_one, f_one-cbari(ia)-dbari(ia)*refice ))
                       asycoice = max(f_zero, min(f_one,       ebari(ia)+fbari(ia)*refice ))
-                      tauice(ib) = cnv_cicep  * extcoice
+                      tauice(ib) = cnv_cicep(k)  * extcoice
                       ssaice(ib) = tauice(ib) * ssacoice
                       asyice(ib) = ssaice(ib) * asycoice
                    enddo
@@ -1970,7 +1973,7 @@
                       extcoice = max(f_zero,            extice2(index,ib) + fint*(extice2(index+1,ib)-extice2(index,ib)) )
                       ssacoice = max(f_zero, min(f_one, ssaice2(index,ib) + fint*(ssaice2(index+1,ib)-ssaice2(index,ib)) ))
                       asycoice = max(f_zero, min(f_one, asyice2(index,ib) + fint*(asyice2(index+1,ib)-asyice2(index,ib)) ))
-                      tauice(ib) = cnv_cicep  * extcoice
+                      tauice(ib) = cnv_cicep(k)  * extcoice
                       ssaice(ib) = tauice(ib) * ssacoice
                       asyice(ib) = ssaice(ib) * asycoice
                    enddo
@@ -1985,7 +1988,7 @@
                       extcoice = max(f_zero,            extice3(index,ib) + fint*(extice3(index+1,ib)-extice3(index,ib)) )
                       ssacoice = max(f_zero, min(f_one, ssaice3(index,ib) + fint*(ssaice3(index+1,ib)-ssaice3(index,ib)) ))
                       asycoice = max(f_zero, min(f_one, asyice3(index,ib) + fint*(asyice3(index+1,ib)-asyice3(index,ib)) ))
-                      tauice(ib) = cnv_cicep  * extcoice
+                      tauice(ib) = cnv_cicep(k)  * extcoice
                       ssaice(ib) = tauice(ib) * ssacoice
                       asyice(ib) = ssaice(ib) * asycoice
                    enddo

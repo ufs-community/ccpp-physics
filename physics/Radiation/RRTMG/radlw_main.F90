@@ -431,8 +431,9 @@
      &       cld_lwp, cld_ref_liq, cld_iwp, cld_ref_ice,                &
      &       cld_rwp,cld_ref_rain, cld_swp, cld_ref_snow,               &
      &       cld_od,                                                    &
-     &       add_cnvcld, cnvcld_lwp, cnvcld_reliq, cnvcld_iwp,          &
-     &       cnvcld_reice, errmsg, errflg                               &
+     &       add_cnvcld, scale_ccld_cndste, scale_ccld_optics,          &
+     &       cnvcld_lwp, cnvcld_reliq, cnvcld_iwp, cnvcld_reice,        &
+     &       errmsg, errflg                                             &
      &     )
 
 !  ====================  defination of variables  ====================  !
@@ -613,7 +614,8 @@
            iovr_maxrand, iovr_max
       integer, intent(in) :: icseed(npts)
 
-      logical,  intent(in) :: lprnt, inc_minor_gas, add_cnvcld
+      logical,  intent(in) :: lprnt, inc_minor_gas, add_cnvcld,         &
+     &       scale_ccld_cndste, scale_ccld_optics
 
       real (kind=kind_phys), dimension(:,:), intent(in) :: plvl,        &
      &       tlvl
@@ -1092,7 +1094,8 @@
           call cldprop                                                  &
 !  ---  inputs:
      &     ( cldfrc,clwp,relw,ciwp,reiw,cda1,cda2,cda3,cda4,            &
-     &       add_cnvcld, cda5, cda6, cda7, cda8,                        &
+     &       add_cnvcld, scale_ccld_cndste, scale_ccld_optics,          &
+     &       cda5, cda6, cda7, cda8,                                    &
      &       nlay, nlp1, ipseed(iplon), dz, delgth, iovr, alph,         &
      &       ilwcliq, ilwcice, isubclw,                                 &
 !  ---  outputs:
@@ -1542,7 +1545,8 @@
 !!\section gen_cldprop cldprop General Algorithm
       subroutine cldprop                                                &
      &     ( cfrac,cliqp,reliq,cicep,reice,cdat1,cdat2,cdat3,cdat4,     & !  ---  inputs
-     &       add_cnvcld, cnv_cliqp, cnv_reliq, cnv_cicep, cnv_reice,    &
+     &       add_cnvcld, scale_ccld_cndste, scale_ccld_optics,          &
+     &       cnv_cliqp, cnv_reliq, cnv_cicep, cnv_reice,                &
      &       nlay, nlp1, ipseed, dz, de_lgth, iovr, alpha, ilwcliq,     &
      &       ilwcice, isubclw, cldfmc, taucld                           & !  ---  outputs
      &     )
@@ -1652,7 +1656,7 @@
       integer, intent(in) :: nlay, nlp1, ipseed, iovr, ilwcliq, ilwcice,&
            isubclw
 
-      logical, intent(in) :: add_cnvcld
+      logical, intent(in) :: add_cnvcld, scale_ccld_cndste, scale_ccld_optics
       real (kind=kind_phys), dimension(0:nlp1), intent(in) :: cfrac
       real (kind=kind_phys), dimension(nlay),   intent(in) :: cliqp,    &
      &       reliq, cicep, reice, cdat1, cdat2, cdat3, cdat4, dz,       &
