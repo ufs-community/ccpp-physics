@@ -1,18 +1,12 @@
 module module_radiation_cloud_optics
-  use machine,      only: kind_phys
+  use machine,                 only: kind_phys
+  use module_radiation_clouds, only: retab
   implicit none
   
   real (kind_phys), parameter :: &
-       cld_limit_lower = 0.001, &
-       cld_limit_ovcst = 1.0 - 1.0e-8, &
-       reliq_def  = 10.0 ,      & ! Default liq radius, in stratiform cloud, to 10 micron (used when effr_in=F)
-       reice_def  = 50.0,       & ! Default ice radius, in stratiform cloud, to 50 micron (used when effr_in=F)
-       reliqcnv_def = 10.0 ,    & ! Default liq radius, in convective cloud, to 10 micron (used when effr_in=F)
-       reicecnv_def = 50.0,     & ! Default ice radius, in convective cloud, to 50 micron (used when effr_in=F)
-       rerain_def = 1000.0,     & ! Default rain radius to 1000 micron (used when effr_in=F)
-       resnow_def = 250.0,      & ! Default snow radius to 250 micron (used when effr_in=F)
-       reice_min  = 10.0,       & ! Minimum ice size allowed by GFDL MP scheme
-       reice_max  = 150.0         ! Maximum ice size allowed by GFDL MP scheme
+       reliqcnv_def = 10.0, & ! Default liq radius, in convective cloud, to 10 micron
+       reicecnv_def = 50.0    ! Default ice radius, in convective cloud, to 50 micron
+
 contains
   
 !> \ingroup radiation_cloud_optics
@@ -29,21 +23,23 @@ contains
 !!
 !! \section cloud_mp_SAMF_gen General Algorithm
   subroutine cloud_mp_SAMF(cmp_XuRndl, cmp_Re, nCol, nLev, t_lay, p_lev, p_lay, qs_lay,  &
-       relhum, cnv_mixratio, con_ttp, con_g, alpha0,                                     &
+       relhum, cnv_mixratio, con_ttp, con_g, alpha0, xland, do_cnv_phase_partition,      &
        cld_cnv_lwp, cld_cnv_reliq, cld_cnv_iwp, cld_cnv_reice, cld_cnv_frac)
     implicit none
 
     ! Inputs
     logical, intent(in)    :: &
          cmp_XuRndl,    & ! Compute convective cloud fraction using Xu-Randall?
-         cmp_Re           ! Compute liquid/ice particle sizes using ?????
+         cmp_Re,        & ! Compute liquid/ice particle sizes using ?????
+         do_cnv_phase_partition
     integer, intent(in)    :: &
          nCol,          & ! Number of horizontal grid points
          nLev             ! Number of vertical layers
     real(kind_phys), intent(in) :: &
          con_g,         & ! Physical constant: gravity         (m s-2)
          con_ttp,       & ! Triple point temperature of water  (K)
-         alpha0           ! Parameter for Xu-Randall scheme.   (-)
+         alpha0,        & ! Parameter for Xu-Randall scheme.   (-)
+         xland            ! Land/Sea mask
     real(kind_phys), dimension(:,:),intent(in) :: &
          t_lay,         & ! Temperature at layer-centers       (K)
          p_lev,         & ! Pressure at layer-interfaces       (Pa)
@@ -60,23 +56,38 @@ contains
     real(kind_phys), dimension(:,:),intent(inout) :: &
          cld_cnv_frac     ! Convective cloud-fraction
     ! Local
-    integer :: iCol, iLay
+    integer :: iCol, iLay, idx_rei
     real(kind_phys) :: tem0, tem1, deltaP, clwc
 
     tem0 = 1.0e5/con_g
     do iLay = 1, nLev
        do iCol = 1, nCol
           if (cnv_mixratio(iCol,iLay) > 0._kind_phys) then
-             ! Partition water paths by phase.
-             tem1   = min(1.0, max(0.0, (con_ttp-t_lay(iCol,iLay))*0.05))
+             ! Compute liquid water path
              deltaP = abs(p_lev(iCol,iLay+1)-p_lev(iCol,iLay))*0.01
              clwc   = max(0.0, cnv_mixratio(iCol,iLay)) * tem0 * deltaP
-             cld_cnv_iwp(iCol,iLay)   = clwc * tem1
-             cld_cnv_lwp(iCol,iLay)   = clwc - cld_cnv_iwp(iCol,iLay)
+
+             ! Partition path by phase?
+             if (do_cnv_phase_partition) then
+                tem1   = min(1.0, max(0.0, (con_ttp-t_lay(iCol,iLay))*0.05))
+                cld_cnv_iwp(iCol,iLay) = clwc * tem1
+                cld_cnv_lwp(iCol,iLay) = clwc - cld_cnv_iwp(iCol,iLay)
+             else
+                cld_cnv_lwp(iCol,iLay) = clwc
+             endif
              
              ! Assign particles size(s).
              if (cmp_Re) then
-                ! do something here a bit more fancy?
+                ! DJS2024: This is identical to in radiation_clouds.f:_progcld_thompson()
+                if ((xland(iCol) - 1.5) .gt. 0.) then
+                   cld_cnv_reliq(iCol,iLay) = 9.5
+                else
+                   cld_cnv_reliq(iCol,iLay) = 5.5
+                endif
+                idx_rei = int(t_lay(iCol,iLay)-179.)
+                idx_rei = min(max(idx_rei,1),75)
+                corr = t_lay(iCol,iLay) - int(t_lay(iCol,iLay))
+                cld_cnv_reice(iCol,iLay) = max(5.0, retab(idx_rei)*(1.-corr) + retab(idx_rei+1)*corr)
              else
                 ! Assume default liquid/ice effective radius (microns)
                 cld_cnv_reliq(iCol,iLay) = reliqcnv_def

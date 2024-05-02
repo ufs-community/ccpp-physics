@@ -19,7 +19,7 @@
 !>\section rrtmg_pre_gen General Algorithm
       subroutine GFS_rrtmg_pre_run (im, levs, lm, lmk, lmp, n_var_lndp, lextop,&
         ltp, imfdeepcnv, imfdeepcnv_gf, imfdeepcnv_c3, me, ncnd, ntrac,        &
-        num_p3d, npdf3d, xr_cnvcld,                                            &
+        num_p3d, npdf3d, xr_cnvcld, do_phasepart,                              &
         ncnvcld3d,ntqv, ntcw,ntiw, ntlnc, ntinc, ntrnc, ntsnc, ntccn, top_at_1,&
         ntrw, ntsw, ntgl, nthl, ntwa, ntoz, ntsmoke, ntdust, ntcoarsepm,       &
         ntclamt, nleffr, nieffr, nseffr, lndp_type, kdt,                       &
@@ -132,7 +132,7 @@
                                           uni_cld, effr_in, do_mynnedmf,       &
                                           lmfshal, lmfdeep2, pert_clds, lcrick,&
                                           lcnorm, top_at_1, lextop, mraerosol
-      logical,              intent(in) :: rrfs_sd, aero_dir_fdb, xr_cnvcld
+      logical,              intent(in) :: rrfs_sd, aero_dir_fdb, xr_cnvcld, do_phasepart
 
       logical,              intent(in) :: nssl_ccn_on, nssl_invertccn
       integer,              intent(in) :: spp_rad
@@ -1005,9 +1005,10 @@
 !      endif                             ! end_if_ntcw
 
 !> - Call cloud_mp_SAMF() to calculate convective cloud properties.
-        call cloud_mp_SAMF(.false., .false., IM, LM, tlyr, plvl, plyr, &
-             qstl, rhly, cnvw_in, con_ttp, con_g, 200., cld_cnv_lwp,   &
-             cld_cnv_reliq, cld_cnv_iwp, cld_cnv_reice, cnvc_inout)
+        call cloud_mp_SAMF(.false., .true., IM, LM, tlyr, plvl, plyr,  &
+             qstl, rhly, cnvw_in, con_ttp, con_g, 200., xland,         &
+             do_phasepart, cld_cnv_lwp, cld_cnv_reliq, cld_cnv_iwp,    &
+             cld_cnv_reice, cnvc_inout)
         
 !> - Call ppfbet() to perturb cld cover.
        if (pert_clds) then

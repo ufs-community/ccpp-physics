@@ -1918,7 +1918,7 @@
                    asyliq(ib) = f_zero
                 enddo
              else
-                factor = cnv_reliq - 1.5
+                factor = cnv_reliq(k) - 1.5
                 index  = max( 1, min( 57, int( factor ) ))
                 fint   = factor - float(index)
 
@@ -1953,7 +1953,7 @@
                 ! Ebert and curry approach for all particle sizes though somewhat
                 ! unjustified for large ice particles.
                 if ( iswcice == 1 ) then
-                   refice = min(130.0_kind_phys,max(13.0_kind_phys,cnv_reice))
+                   refice = min(130.0_kind_phys,max(13.0_kind_phys,cnv_reice(k)))
                    do ib = nblow, nbhgh
                       ia = idxebc(ib)           ! eb_&_c band index for ice cloud coeff
                       extcoice = max(f_zero,                  abari(ia)+bbari(ia)/refice )
@@ -1965,7 +1965,7 @@
                    enddo
                 ! Streamer approach for ice effective radius between 5.0 and 131.0 microns.
                 elseif ( iswcice == 2 ) then
-                   refice = min(131.0_kind_phys,max(5.0_kind_phys,cnv_reice))
+                   refice = min(131.0_kind_phys,max(5.0_kind_phys,cnv_reice(k)))
                    factor = (refice - 2.0) / 3.0
                    index  = max( 1, min( 42, int( factor ) ))
                    fint   = factor - float(index)
@@ -1980,7 +1980,7 @@
                 ! Fu's approach for ice effective radius between 4.8 and 135 microns
                 ! (generalized effective size from 5 to 140 microns).
                 elseif ( iswcice == 3 ) then
-                   dgeice = max( 5.0, min( 140.0, 1.0315*cnv_reice ))
+                   dgeice = max( 5.0, min( 140.0, 1.0315*cnv_reice(k)))
                    factor = (dgeice - 2.0) / 3.0
                    index  = max( 1, min( 45, int( factor ) ))
                    fint   = factor - float(index)

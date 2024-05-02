@@ -253,7 +253,7 @@ contains
        if (imfdeepcnv == imfdeepcnv_samf) then
           alpha0 = 200.
           call cloud_mp_SAMF(.false., .false., nCol, nLev, t_lay, p_lev, p_lay, qs_lay, &
-               relhum, cnv_mixratio, con_ttp, con_g, alpha0,                            &
+               relhum, cnv_mixratio, con_ttp, con_g, alpha0, lsmask, .true.,            &
                cld_cnv_lwp, cld_cnv_reliq, cld_cnv_iwp, cld_cnv_reice, cld_cnv_frac)
        endif
 

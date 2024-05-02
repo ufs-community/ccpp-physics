@@ -63,6 +63,13 @@
   dimensions = ()
   type = logical
   intent = in
+[do_phasepart]
+  standard_name = flag_for_phase_partitioning_in_radiatively_active_convective_cloud
+  long_name = flag for partitioning the convective condensate into liquid and ice phase using temperature
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
 [ltp]
   standard_name = extra_top_layer
   long_name = extra top layer for radiation
