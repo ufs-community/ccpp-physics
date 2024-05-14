@@ -508,7 +508,7 @@
      &       cld_rwp,cld_ref_rain, cld_swp, cld_ref_snow,               &
      &       cld_od, cld_ssa, cld_asy, add_cnvcld, scale_ccld_cndste,   &
      &       scale_ccld_optics, cnvcld_lwp, cnvcld_reliq, cnvcld_iwp,   &
-     &       cnvcld_reice, errmsg, errflg     &
+     &       cnvcld_reice, sigmain, errmsg, errflg     &
      &     )
 
 !  ====================  defination of variables  ====================  !
@@ -721,7 +721,7 @@
      &       cld_lwp, cld_ref_liq,  cld_iwp, cld_ref_ice,               &
      &       cld_rwp, cld_ref_rain, cld_swp, cld_ref_snow,              &
      &       cld_od, cld_ssa, cld_asy,                                  &
-     &       cnvcld_lwp, cnvcld_reliq, cnvcld_iwp, cnvcld_reice
+     &       cnvcld_lwp, cnvcld_reliq, cnvcld_iwp, cnvcld_reice, sigmain
 
       real(kind=kind_phys),dimension(:,:,:),intent(in)::aeraod
       real(kind=kind_phys),dimension(:,:,:),intent(in)::aerssa
@@ -769,7 +769,8 @@
      &       pavel, tavel, coldry, colmol, h2ovmr, o3vmr, temcol,       &
      &       cliqp, reliq, cicep, reice, cdat1, cdat2, cdat3, cdat4,    &
      &       cfrac, fac00, fac01, fac10, fac11, forfac, forfrac,        &
-     &       selffac, selffrac, rfdelp, dz, cdat5, cdat6, cdat7, cdat8
+     &       selffac, selffrac, rfdelp, dz, cdat5, cdat6, cdat7, cdat8, &
+     &       cdat9
 
       real (kind=kind_phys), dimension(nlp1) :: fnet, flxdc, flxuc,     &
      &       flxd0, flxu0
@@ -997,6 +998,7 @@
               cdat6(k) = cnvcld_reliq(j1,kk)
               cdat7(k) = cnvcld_iwp(j1,kk)
               cdat8(k) = cnvcld_reice(j1,kk)
+              cdat9(k) = sigmain(j1,kk)
             enddo
           else                     ! use diagnostic cloud method
             do k = 1, nlay
@@ -1091,10 +1093,11 @@
               cdat3(k) = cld_swp(j1,k)       ! cloud snow path
               cdat4(k) = cld_ref_snow(j1,k)  ! snow partical effctive radius
               ! Radiatively active convective cloud?  
-              cdat5(k) = cnvcld_lwp(j1,kk)
-              cdat6(k) = cnvcld_reliq(j1,kk)
-              cdat7(k) = cnvcld_iwp(j1,kk)
-              cdat8(k) = cnvcld_reice(j1,kk)
+              cdat5(k) = cnvcld_lwp(j1,k)
+              cdat6(k) = cnvcld_reliq(j1,k)
+              cdat7(k) = cnvcld_iwp(j1,k)
+              cdat8(k) = cnvcld_reice(j1,k)
+              cdat9(k) = sigmain(j1,k)
             enddo
           else                     ! use diagnostic cloud method
             do k = 1, nlay
@@ -1147,7 +1150,7 @@
 !  ---  inputs:
      &     ( cfrac,cliqp,reliq,cicep,reice,cdat1,cdat2,cdat3,cdat4,     &
      &       add_cnvcld, scale_ccld_cndste, scale_ccld_optics, cdat5,   &
-     &       cdat6, cdat7, cdat8,                                       &
+     &       cdat6, cdat7, cdat8, cdat9,                                &
      &       zcf1, nlay, ipseed(j1), dz, delgth, alph, iswcliq, iswcice,&
      &       isubcsw, iovr,                                             &
 !  ---  outputs:
@@ -1582,7 +1585,7 @@
       subroutine cldprop                                                &
      &     ( cfrac,cliqp,reliq,cicep,reice,cdat1,cdat2,cdat3,cdat4,     &   !  ---  inputs
      &       add_cnvcld, scale_ccld_cndste, scale_ccld_optics,          &
-     &       cnv_cliqp, cnv_reliq, cnv_cicep, cnv_reice,                &
+     &       cnv_cliqp, cnv_reliq, cnv_cicep, cnv_reice, sigmain,       &
      &       cf1, nlay, ipseed, dz, delgth, alpha, iswcliq, iswcice,    &
      &       isubcsw, iovr, taucw, ssacw, asycw, cldfrc, cldfmc         &   !  ---  output
      &     )
@@ -1677,7 +1680,7 @@
 
       real (kind=kind_phys), dimension(nlay), intent(in) :: cliqp,      &
      &       reliq, cicep, reice, cdat1, cdat2, cdat3, cdat4, cfrac, dz,&
-     &       cnv_cliqp, cnv_reliq, cnv_cicep, cnv_reice
+     &       cnv_cliqp, cnv_reliq, cnv_cicep, cnv_reice, sigmain
       real (kind=kind_phys), dimension(nlay), intent(in) :: alpha
 
 !  ---  outputs:
@@ -1696,7 +1699,7 @@
       real (kind=kind_phys) :: dgeice, factor, fint, tauran, tausnw,    &
      &       cldliq, refliq, cldice, refice, cldran, cldsnw, refsnw,    &
      &       extcoliq, ssacoliq, asycoliq, extcoice, ssacoice, asycoice,&
-     &       dgesnw
+     &       dgesnw, cnv_cliqp_tmp, cnv_cicep_tmp
 
       logical :: lcloudy(nlay,ngptsw)
       integer :: ia, ib, ig, jb, k, index
@@ -1905,13 +1908,29 @@
           !
           ! Do we have any convective clouds in this layer?
           ! If so,
-          ! - Compute cloud-optical properties using the convective condensate, and assumed size.
+          ! - Compute cloud-optical properties using the provided convective condensate and
+          !   cloud particle size(s).
+          !
+          ! - If scale_ccld_cndste, prior to computing the convective cloud optics, scale the
+          !   convective cloud condensate by the convective updraft area fraction.
+          !
+          ! - If scale_ccld_optics, scale the convective cloud optical properties by convective
+          !   updraft area fraction.
+          !
           ! - Add radiative contribution from convective cloud to total cloud radiative properties.
           !
           ! #####################################################################################
           lab_if_cnvcld : if (add_cnvcld .and. cnv_cliqp(k)+cnv_cicep(k) > 0._kind_phys) then
+             ! Scale convective cloud condensate by convective updraft area fraction?
+             cnv_cliqp_tmp = cnv_cliqp(k)
+             cnv_cicep_tmp = cnv_cicep(k)
+             if (scale_ccld_cndste) then
+                cnv_cliqp_tmp = cnv_cliqp(k)*sigmain(k)
+                cnv_cicep_tmp = cnv_cicep(k)*sigmain(k)
+             endif
+             
              ! Calculation of absorption coefficients due to convective water clouds.
-             if ( cnv_cliqp(k) <= f_zero ) then
+             if ( cnv_cliqp_tmp <= f_zero ) then
                 do ib = nblow, nbhgh
                    tauliq(ib) = f_zero
                    ssaliq(ib) = f_zero
@@ -1927,23 +1946,23 @@
                       extcoliq = max(f_zero,            extliq1(index,ib) + fint*(extliq1(index+1,ib)-extliq1(index,ib)) )
                       ssacoliq = max(f_zero, min(f_one, ssaliq1(index,ib) + fint*(ssaliq1(index+1,ib)-ssaliq1(index,ib)) ))
                       asycoliq = max(f_zero, min(f_one, asyliq1(index,ib) + fint*(asyliq1(index+1,ib)-asyliq1(index,ib)) ))
-                      tauliq(ib) = cnv_cliqp(k)  * extcoliq
-                      ssaliq(ib) = tauliq(ib) * ssacoliq
-                      asyliq(ib) = ssaliq(ib) * asycoliq
+                      tauliq(ib) = cnv_cliqp_tmp * extcoliq
+                      ssaliq(ib) = tauliq(ib)    * ssacoliq
+                      asyliq(ib) = ssaliq(ib)    * asycoliq
                    enddo
                 elseif ( iswcliq == 2 ) then   ! use updated coeffs
                    do ib = nblow, nbhgh
                       extcoliq = max(f_zero,            extliq2(index,ib) + fint*(extliq2(index+1,ib)-extliq2(index,ib)) )
                       ssacoliq = max(f_zero, min(f_one, ssaliq2(index,ib) + fint*(ssaliq2(index+1,ib)-ssaliq2(index,ib)) ))
                       asycoliq = max(f_zero, min(f_one, asyliq2(index,ib) + fint*(asyliq2(index+1,ib)-asyliq2(index,ib)) ))
-                      tauliq(ib) = cnv_cliqp(k)  * extcoliq
-                      ssaliq(ib) = tauliq(ib) * ssacoliq
-                      asyliq(ib) = ssaliq(ib) * asycoliq
+                      tauliq(ib) = cnv_cliqp_tmp * extcoliq
+                      ssaliq(ib) = tauliq(ib)    * ssacoliq
+                      asyliq(ib) = ssaliq(ib)    * asycoliq
                    enddo
                 endif   ! end if_iswcliq_block
              endif   ! end if_cldliq_block
              ! Calculation of absorption coefficients due to ice clouds.
-             if ( cnv_cicep(k) <= f_zero ) then
+             if ( cnv_cicep_tmp <= f_zero ) then
                 do ib = nblow, nbhgh
                    tauice(ib) = f_zero
                    ssaice(ib) = f_zero
@@ -1959,9 +1978,9 @@
                       extcoice = max(f_zero,                  abari(ia)+bbari(ia)/refice )
                       ssacoice = max(f_zero, min(f_one, f_one-cbari(ia)-dbari(ia)*refice ))
                       asycoice = max(f_zero, min(f_one,       ebari(ia)+fbari(ia)*refice ))
-                      tauice(ib) = cnv_cicep(k)  * extcoice
-                      ssaice(ib) = tauice(ib) * ssacoice
-                      asyice(ib) = ssaice(ib) * asycoice
+                      tauice(ib) = cnv_cicep_tmp * extcoice
+                      ssaice(ib) = tauice(ib)    * ssacoice
+                      asyice(ib) = ssaice(ib)    * asycoice
                    enddo
                 ! Streamer approach for ice effective radius between 5.0 and 131.0 microns.
                 elseif ( iswcice == 2 ) then
@@ -1973,9 +1992,9 @@
                       extcoice = max(f_zero,            extice2(index,ib) + fint*(extice2(index+1,ib)-extice2(index,ib)) )
                       ssacoice = max(f_zero, min(f_one, ssaice2(index,ib) + fint*(ssaice2(index+1,ib)-ssaice2(index,ib)) ))
                       asycoice = max(f_zero, min(f_one, asyice2(index,ib) + fint*(asyice2(index+1,ib)-asyice2(index,ib)) ))
-                      tauice(ib) = cnv_cicep(k)  * extcoice
-                      ssaice(ib) = tauice(ib) * ssacoice
-                      asyice(ib) = ssaice(ib) * asycoice
+                      tauice(ib) = cnv_cicep_tmp * extcoice
+                      ssaice(ib) = tauice(ib)    * ssacoice
+                      asyice(ib) = ssaice(ib)    * asycoice
                    enddo
                 ! Fu's approach for ice effective radius between 4.8 and 135 microns
                 ! (generalized effective size from 5 to 140 microns).
@@ -1988,9 +2007,9 @@
                       extcoice = max(f_zero,            extice3(index,ib) + fint*(extice3(index+1,ib)-extice3(index,ib)) )
                       ssacoice = max(f_zero, min(f_one, ssaice3(index,ib) + fint*(ssaice3(index+1,ib)-ssaice3(index,ib)) ))
                       asycoice = max(f_zero, min(f_one, asyice3(index,ib) + fint*(asyice3(index+1,ib)-asyice3(index,ib)) ))
-                      tauice(ib) = cnv_cicep(k)  * extcoice
-                      ssaice(ib) = tauice(ib) * ssacoice
-                      asyice(ib) = ssaice(ib) * asycoice
+                      tauice(ib) = cnv_cicep_tmp * extcoice
+                      ssaice(ib) = tauice(ib)    * ssacoice
+                      asyice(ib) = ssaice(ib)    * asycoice
                    enddo
                 endif   ! end if_iswcice_block
              endif      ! end if_cnv_cicep_block
@@ -1998,6 +2017,15 @@
              ! Increment optics.
              do ib = 1, nbdsw
                 jb = nblow + ib - 1
+                ! Scale convective cloud optics by updraft area fraction?
+                if (scale_ccld_optics) then
+                   tauice(ib) = tauice(ib)*sigmain(k)
+                   tauliq(ib) = tauliq(ib)*sigmain(k)
+                   ssaice(ib) = ssaice(ib)*sigmain(k)
+                   ssaliq(ib) = ssaliq(ib)*sigmain(k)
+                   asyice(ib) = asyice(ib)*sigmain(k)
+                   asyliq(ib) = asyliq(ib)*sigmain(k)
+                endif
                 taucw(k,ib) = taucw(k,ib) + tauliq(jb) + tauice(jb)
                 ssacw(k,ib) = ssacw(k,ib) + ssaliq(jb) + ssaice(jb)
                 asycw(k,ib) = asycw(k,ib) + asyliq(jb) + asyice(jb)

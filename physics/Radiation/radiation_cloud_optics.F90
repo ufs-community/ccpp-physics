@@ -38,7 +38,8 @@ contains
     real(kind_phys), intent(in) :: &
          con_g,         & ! Physical constant: gravity         (m s-2)
          con_ttp,       & ! Triple point temperature of water  (K)
-         alpha0,        & ! Parameter for Xu-Randall scheme.   (-)
+         alpha0           ! Parameter for Xu-Randall scheme.   (-)
+    real(kind_phys), dimension(:),intent(in) :: &
          xland            ! Land/Sea mask
     real(kind_phys), dimension(:,:),intent(in) :: &
          t_lay,         & ! Temperature at layer-centers       (K)
@@ -57,7 +58,7 @@ contains
          cld_cnv_frac     ! Convective cloud-fraction
     ! Local
     integer :: iCol, iLay, idx_rei
-    real(kind_phys) :: tem0, tem1, deltaP, clwc
+    real(kind_phys) :: tem0, tem1, deltaP, clwc, corr
 
     tem0 = 1.0e5/con_g
     do iLay = 1, nLev
@@ -90,6 +91,7 @@ contains
                 cld_cnv_reice(iCol,iLay) = max(5.0, retab(idx_rei)*(1.-corr) + retab(idx_rei+1)*corr)
              else
                 ! Assume default liquid/ice effective radius (microns)
+                ! DJS2024: Default particle size assumptions are the same as used in stratiform cloud.
                 cld_cnv_reliq(iCol,iLay) = reliqcnv_def
                 cld_cnv_reice(iCol,iLay) = reicecnv_def
              endif

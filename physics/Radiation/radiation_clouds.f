@@ -230,7 +230,7 @@
      &       cld_init, radiation_clouds_prop,                           &
      &       progcld_thompson_wsm6, progcld_thompson, cal_cldfra3,      &
      &       find_cloudLayers, adjust_cloudIce, adjust_cloudH2O,        &
-     &       adjust_cloudFinal, gethml
+     &       adjust_cloudFinal, gethml, retab
 
 ! =================
       contains
