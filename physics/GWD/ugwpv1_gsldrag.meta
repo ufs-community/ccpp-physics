@@ -459,6 +459,14 @@
   type = real
   kind = kind_phys
   intent = in
+[alpha_fd]
+  standard_name = alpha_coefficient_for_turbulent_orographic_form_drag
+  long_name = alpha coefficient for Beljaars et al turbulent orographic form drag
+  units = none
+  dimensions = ()
+  type = real
+  kind = kind_phys
+  intent = in
 [jdat]
   standard_name = date_and_time_of_forecast_in_united_states_order
   long_name = current forecast date and time

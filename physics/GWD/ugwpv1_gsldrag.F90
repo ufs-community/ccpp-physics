@@ -307,7 +307,7 @@ contains
           fhzero, kdt, ldiag3d, lssav, flag_for_gwd_generic_tend, do_gsl_drag_ls_bl,    &
           do_gsl_drag_ss, do_gsl_drag_tofd, do_ugwp_v1, do_ugwp_v1_orog_only,           &
           do_ugwp_v1_w_gsldrag, gwd_opt, do_tofd, ldiag_ugwp, ugwp_seq_update,          &
-          cdmbgwd, jdat, nmtvr, hprime, oc, theta, sigma, gamma,                        &
+          cdmbgwd, alpha_fd, jdat, nmtvr, hprime, oc, theta, sigma, gamma,              &
           elvmax, clx, oa4, varss,oc1ss,oa4ss,ol4ss, dx,  xlat, xlat_d, sinlat, coslat, &
           area, rain, br1, hpbl, kpbl, slmsk,                                           &
           ugrs, vgrs, tgrs, q1, prsi, prsl, prslk, phii, phil,  del, tau_amf,           &
@@ -371,7 +371,7 @@ contains
 ! SSO parameters and variables
     integer,                 intent(in) :: gwd_opt                         !gwd_opt  and nmtvr are "redundant" controls
     integer,                 intent(in) :: nmtvr
-    real(kind=kind_phys),    intent(in) :: cdmbgwd(:)                      ! for gsl_drag
+    real(kind=kind_phys),    intent(in) :: cdmbgwd(:), alpha_fd            ! for gsl_drag
 
     real(kind=kind_phys),    intent(in), dimension(:)       :: hprime, oc, theta, sigma, gamma
 
@@ -557,8 +557,8 @@ contains
                  du_osscol, dv_osscol, du_ofdcol, dv_ofdcol,         &
                  slmsk,br1,hpbl, con_g,con_cp,con_rd,con_rv,         &
                  con_fv, con_pi, lonr,                               &
-                 cdmbgwd(1:2),me,master,lprnt,ipr,rdxzb,dx,gwd_opt,  &
-                 do_gsl_drag_ls_bl,do_gsl_drag_ss,do_gsl_drag_tofd,  &
+                 cdmbgwd(1:2),alpha_fd,me,master,                    &
+                 lprnt,ipr,rdxzb,dx,gwd_opt,                         &
                  dtend, dtidx, index_of_process_orographic_gwd,      &
                  index_of_temperature, index_of_x_wind,              &
                  index_of_y_wind, ldiag3d, ldiag_ugwp,               &

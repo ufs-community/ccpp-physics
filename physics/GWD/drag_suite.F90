@@ -219,8 +219,8 @@
      &           dusfc_ms,dvsfc_ms,dusfc_bl,dvsfc_bl,                   &
      &           dusfc_ss,dvsfc_ss,dusfc_fd,dvsfc_fd,                   &
      &           slmsk,br1,hpbl,                                        &
-     &           g, cp, rd, rv, fv, pi, imx, cdmbgwd, me, master,       &
-     &           lprnt, ipr, rdxzb, dx, gwd_opt,                        &
+     &           g, cp, rd, rv, fv, pi, imx, cdmbgwd, alpha_fd,         &
+     &           me, master, lprnt, ipr, rdxzb, dx, gwd_opt,            &
      &           do_gsl_drag_ls_bl, do_gsl_drag_ss, do_gsl_drag_tofd,   &
      &           dtend, dtidx, index_of_process_orographic_gwd,         &
      &           index_of_temperature, index_of_x_wind,                 &
@@ -327,7 +327,8 @@
    integer, intent(in) :: gwd_opt
    logical, intent(in) :: lprnt
    integer, intent(in) :: KPBL(:)
-   real(kind=kind_phys), intent(in) :: deltim, G, CP, RD, RV, cdmbgwd(:)
+   real(kind=kind_phys), intent(in) :: deltim, G, CP, RD, RV,    &
+                                       cdmbgwd(:), alpha_fd
    real(kind=kind_phys), intent(inout), optional :: dtend(:,:,:)
    logical, intent(in) :: ldiag3d
    integer, intent(in) :: dtidx(:,:)
@@ -444,6 +445,7 @@
    real(kind=kind_phys), dimension(im,km) :: utendform,vtendform
    real(kind=kind_phys)                 :: a1,a2,wsp
    real(kind=kind_phys)                 :: H_efold
+   real(kind=kind_phys), parameter      :: coeff_fd = 6.325e-3_kind_phys
 
 ! critical richardson number for wave breaking : ! larger drag with larger value
    real(kind=kind_phys), parameter       ::  ric     = 0.25
@@ -1363,8 +1365,10 @@ IF ( do_gsl_drag_tofd ) THEN
             H_efold = 1500.
             DO k=kts,km
                wsp=SQRT(uwnd1(i,k)**2 + vwnd1(i,k)**2)
-               ! alpha*beta*Cmd*Ccorr*2.109 = 12.*1.*0.005*0.6*2.109 = 0.0759
-               var_temp = 0.0759*EXP(-(zl(i,k)/H_efold)**1.5)*a2*          &
+               ! Note:  In Beljaars et al. (2004):
+               ! alpha_fd*beta*Cmd*Ccorr*2.109 = 12.*1.*0.005*0.6*2.109 = 0.0759
+               ! lump beta*Cmd*Ccorr*2.109 into 1.*0.005*0.6*2.109 = coeff_fd ~ 6.325e-3_kind_phys
+               var_temp = alpha_fd*coeff_fd*EXP(-(zl(i,k)/H_efold)**1.5)*a2*       &
                                  zl(i,k)**(-1.2)*ss_taper(i) ! this is greater than zero
                !  Note:  This is a semi-implicit treatment of the time differencing
                !  per Beljaars et al. (2004, QJRMS)
