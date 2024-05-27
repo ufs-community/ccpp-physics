@@ -559,6 +559,7 @@ contains
                  con_fv, con_pi, lonr,                               &
                  cdmbgwd(1:2),alpha_fd,me,master,                    &
                  lprnt,ipr,rdxzb,dx,gwd_opt,                         &
+                 do_gsl_drag_ls_bl,do_gsl_drag_ss,do_gsl_drag_tofd,  &
                  dtend, dtidx, index_of_process_orographic_gwd,      &
                  index_of_temperature, index_of_x_wind,              &
                  index_of_y_wind, ldiag3d, ldiag_ugwp,               &
