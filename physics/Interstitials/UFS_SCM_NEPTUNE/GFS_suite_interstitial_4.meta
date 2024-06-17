@@ -4,7 +4,7 @@
   type = scheme
   relative_path = ../../
   dependencies = hooks/machine.F
-  dependencies = MP/Thompson/module_mp_thompson_make_number_concentrations.F90
+  dependencies = MP/TEMPO/module_mp_thompson_utils.F90
 
 ########################################################################
 [ccpp-arg-table]

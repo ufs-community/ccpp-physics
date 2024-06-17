@@ -16,7 +16,7 @@
       qdiag3d, save_lnc, save_inc, ntk, ntke, otsptflag, errmsg, errflg)
 
       use machine,               only: kind_phys
-      use module_mp_thompson_make_number_concentrations, only: make_IceNumber, make_DropletNumber
+      use module_mp_thompson_utils, only: make_IceNumber, make_DropletNumber
 
       implicit none
 
