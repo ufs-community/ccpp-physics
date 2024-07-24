@@ -1,16 +1,16 @@
 [ccpp-table-properties]
-  name = mp_thompson
+  name = mp_tempo
   type = scheme
   dependencies = ../../hooks/machine.F
   dependencies = ../module_mp_radar.F90
-  dependencies = ../TEMPO/tempo/module_mp_thompson_params.F90
-  dependencies = ../TEMPO/tempo/module_mp_thompson_main.F90
-  dependencies = ../TEMPO/tempo/module_mp_thompson_utils.F90
-  dependencies = ../TEMPO/module_mp_thompson.F90
+  dependencies = tempo/module_mp_thompson_params.F90
+  dependencies = tempo/module_mp_thompson_utils.F90	
+  dependencies = tempo/module_mp_thompson_main.F90
+  dependencies = module_mp_tempo.F90
 
 ########################################################################
 [ccpp-arg-table]
-  name = mp_thompson_init
+  name = mp_tempo_init
   type = scheme
 [ncol]
   standard_name = horizontal_dimension
@@ -126,6 +126,23 @@
   type = real
   kind = kind_phys
   intent = inout
+[chw]
+  standard_name = mass_number_concentration_of_graupel_in_air
+  long_name = graupel number concentration
+  units = kg-1
+  dimensions = (horizontal_dimension,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = inout
+[vh]
+  standard_name = graupel_volume
+  long_name = graupel particle volume
+  units = m3 kg-1
+  dimensions = (horizontal_dimension,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = inout
+  optional = True
 [ni]
   standard_name = mass_number_concentration_of_cloud_ice_water_crystals_in_air
   long_name = ice number concentration
@@ -145,6 +162,13 @@
 [is_aerosol_aware]
   standard_name = flag_for_aerosol_physics
   long_name = flag for aerosol-aware physics
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
+[is_hail_aware]
+  standard_name = flag_for_hail_physics
+  long_name = flag for hail-aware physics
   units = flag
   dimensions = ()
   type = logical
@@ -269,13 +293,6 @@
   dimensions = ()
   type = integer
   intent = in
-[ext_diag]
-  standard_name = flag_for_extended_diagnostic_output_from_thompson_microphysics
-  long_name = flag for extended diagnostic output from thompson microphysics
-  units = flag
-  dimensions = ()
-  type = logical
-  intent = in
 [diag3d]
   standard_name = extended_diagnostics_output_from_thompson_microphysics
   long_name = set of 3d arrays for extended diagnostics output from thompson microphysics
@@ -303,7 +320,7 @@
 
 ########################################################################
 [ccpp-arg-table]
-  name = mp_thompson_run
+  name = mp_tempo_run
   type = scheme
 [ncol]
   standard_name = horizontal_loop_extent
@@ -398,6 +415,23 @@
   type = real
   kind = kind_phys
   intent = inout
+[chw]
+  standard_name = mass_number_concentration_of_graupel_of_new_state
+  long_name = graupel number concentration
+  units = kg-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = inout
+[vh]
+  standard_name = graupel_volume_of_new_state
+  long_name = graupel particle volume
+  units = m3 kg-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = inout
+  optional = True
 [ni]
   standard_name = mass_number_concentration_of_cloud_ice_water_crystals_in_air_of_new_state
   long_name = ice number concentration
@@ -417,6 +451,13 @@
 [is_aerosol_aware]
   standard_name = flag_for_aerosol_physics
   long_name = flag for aerosol-aware physics
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
+[is_hail_aware]
+  standard_name = flag_for_hail_physics
+  long_name = flag for hail-aware physics
   units = flag
   dimensions = ()
   type = logical
@@ -480,6 +521,7 @@
   dimensions = ()
   type = logical
   intent = in
+  optional = True
 [tgrs]
   standard_name = air_temperature_of_new_state
   long_name = model layer mean temperature
@@ -688,13 +730,6 @@
   dimensions = ()
   type = integer
   intent = in
-[ext_diag]
-  standard_name = flag_for_extended_diagnostic_output_from_thompson_microphysics
-  long_name = flag for extended diagnostic output from thompson microphysics
-  units = flag
-  dimensions = ()
-  type = logical
-  intent = in
 [diag3d]
   standard_name = extended_diagnostics_output_from_thompson_microphysics
   long_name = set of 3d arrays for extended diagnostics output from thompson microphysics
@@ -803,7 +838,7 @@
 
 ########################################################################
 [ccpp-arg-table]
-  name = mp_thompson_finalize
+  name = mp_tempo_finalize
   type = scheme
 [errmsg]
   standard_name = ccpp_error_message

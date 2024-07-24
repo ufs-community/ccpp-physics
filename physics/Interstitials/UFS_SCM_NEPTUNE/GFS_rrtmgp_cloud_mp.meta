@@ -4,7 +4,7 @@
   relative_path = ../../
   dependencies = hooks/machine.F
   dependencies = Radiation/radiation_tools.F90,Radiation/radiation_clouds.f,Radiation/RRTMGP/rrtmgp_lw_cloud_optics.F90
-  dependencies = MP/TEMPO/module_mp_thompson_utils.F90,MP/TEMPO/drivers/ccpp/module_mp_thompson.F90
+  dependencies = MP/TEMPO/tempo/module_mp_thompson_utils.F90,MP/TEMPO/tempo/module_mp_thompson_params.F90
 
 ########################################################################
 [ccpp-arg-table]
