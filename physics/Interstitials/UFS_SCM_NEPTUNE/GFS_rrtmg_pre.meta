@@ -3,7 +3,7 @@
   type = scheme
   relative_path = ../../
   dependencies = tools/funcphys.f90,hooks/machine.F
-  dependencies = MP/TEMPO/drivers/ccpp/module_mp_thompson.F90,MP/TEMPO/module_mp_thompson_utils.F90
+  dependencies = MP/TEMPO/tempo/module_mp_thompson_params.F90,MP/TEMPO/tempo/module_mp_thompson_utils.F90
   dependencies = Radiation/RRTMG/radcons.f90,Radiation/radiation_aerosols.f
   dependencies = Radiation/radiation_astronomy.f,Radiation/radiation_clouds.f,Radiation/radiation_gases.f
   dependencies = Radiation/RRTMG/radlw_param.f,Radiation/RRTMG/radsw_param.f,Radiation/radiation_cloud_overlap.F90
