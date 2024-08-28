@@ -3,5 +3,6 @@
   url = https://github.com/earth-system-radiation/rte-rrtmgp
   branch = main
 [submodule "physics/MP/TEMPO"]
-	path = physics/MP/TEMPO/tempo
-	url = https://github.com/NCAR/TEMPO.git
+  path = physics/MP/TEMPO/tempo
+  url = https://github.com/NCAR/TEMPO.git
+  branch = main
