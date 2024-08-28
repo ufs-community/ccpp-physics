@@ -613,9 +613,10 @@ contains
             re_cloud, re_ice, re_snow
          real(wp), dimension(ims:ime, kms:kme, jms:jme), intent(inout):: pfils, pflls
          integer, intent(in) :: rand_perturb_on, kme_stoch, n_var_spp
-         real(wp), dimension(:,:), intent(in) :: rand_pert
-         real(wp), dimension(:), intent(in) :: spp_prt_list, spp_stddev_cutoff
-         character(len=10), dimension(:), intent(in) :: spp_var_list
+         real(wp), dimension(:,:), optional, intent(in) :: rand_pert
+         real(wp), dimension(:), optional, intent(in) :: spp_prt_list
+         real(wp), dimension(:), intent(in) :: spp_stddev_cutoff
+         character(len=10), optional, dimension(:), intent(in) :: spp_var_list
          integer, intent(in):: has_reqc, has_reqi, has_reqs
          
          real(wp), dimension(ims:ime, kms:kme, jms:jme), intent(in):: &
@@ -642,7 +643,7 @@ contains
         ! Extended diagnostics, array pointers only associated if ext_diag flag is .true.
          logical, intent (in) :: ext_diag
          logical, optional, intent(in):: aero_ind_fdb
-         real(wp), dimension(:,:,:), intent(inout)::                     &
+         real(wp), optional, dimension(:,:,:), intent(inout)::                     &
         !vts1, txri, txrc,                       &
             prw_vcdc,                               &
             prw_vcde, tpri_inu, tpri_ide_d,         &

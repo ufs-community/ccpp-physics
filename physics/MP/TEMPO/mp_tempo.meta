@@ -134,6 +134,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [vh]
   standard_name = graupel_volume
   long_name = graupel particle volume
@@ -423,6 +424,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [vh]
   standard_name = graupel_volume_of_new_state
   long_name = graupel particle volume
@@ -521,7 +523,6 @@
   dimensions = ()
   type = logical
   intent = in
-  optional = True
 [tgrs]
   standard_name = air_temperature_of_new_state
   long_name = model layer mean temperature

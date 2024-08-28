@@ -13,11 +13,6 @@ module mp_tempo
       use module_mp_thompson_utils
       use module_mp_thompson_main
       use module_mp_tempo
-      
-      ! use module_mp_thompson, only : thompson_init, mp_gt_driver, thompson_finalize, calc_effectRad
-      ! use module_mp_thompson, only : naIN0, naIN1, naCCN0, naCCN1, eps, Nt_c_l, Nt_c_o
-      ! use module_mp_thompson, only : re_qc_min, re_qc_max, re_qi_min, re_qi_max, re_qs_min, re_qs_max
-      ! use module_mp_thompson_make_number_concentrations, only: make_IceNumber, make_DropletNumber, make_RainNumber
 
       implicit none
 
@@ -67,18 +62,18 @@ module mp_tempo
          real(kind_phys),           intent(inout) :: qg(:,:)
          real(kind_phys),           intent(inout) :: ni(:,:)
          real(kind_phys),           intent(inout) :: nr(:,:)
-         real(kind_phys),           intent(inout) :: chw(:,:)
-         real(kind_phys),           intent(inout) :: vh(:,:)
+         real(kind_phys),           intent(inout), optional :: chw(:,:)
+         real(kind_phys),           intent(inout), optional :: vh(:,:)
 
          ! Aerosols
          logical,                   intent(in   ) :: is_aerosol_aware
          logical,                   intent(in   ) :: merra2_aerosol_aware
          logical,                   intent(in   ) :: is_hail_aware
-         real(kind_phys),           intent(inout) :: nc(:,:)
-         real(kind_phys),           intent(inout) :: nwfa(:,:)
-         real(kind_phys),           intent(inout) :: nifa(:,:)
-         real(kind_phys),           intent(inout) :: nwfa2d(:)
-         real(kind_phys),           intent(inout) :: nifa2d(:)
+         real(kind_phys),           intent(inout), optional :: nc(:,:)
+         real(kind_phys),           intent(inout), optional :: nwfa(:,:)
+         real(kind_phys),           intent(inout), optional :: nifa(:,:)
+         real(kind_phys),           intent(inout), optional :: nwfa2d(:)
+         real(kind_phys),           intent(inout), optional :: nifa2d(:)
          real(kind_phys),           intent(in)    :: aerfld(:,:,:)
          ! State variables
          real(kind_phys),           intent(in   ) :: tgrs(:,:)
@@ -178,8 +173,10 @@ module mp_tempo
 
            ni = ni/(1.0_kind_phys-spechum)
            nr = nr/(1.0_kind_phys-spechum)
-           chw = chw/(1.0_kind_phys-spechum)
-           vh = vh/(1.0_kind_phys-spechum)
+           if (is_hail_aware) then
+              chw = chw/(1.0_kind_phys-spechum)
+              vh  = vh/(1.0_kind_phys-spechum)
+           endif
            if (is_aerosol_aware .or. merra2_aerosol_aware) then
               nc = nc/(1.0_kind_phys-spechum)
               nwfa = nwfa/(1.0_kind_phys-spechum)
@@ -201,8 +198,10 @@ module mp_tempo
          where(qr .GT. 0 .and. nr .LE. 0.0) nr = make_RainNumber(qr*rho, tgrs) * orho
          where(qr .EQ. 0.0 .and. nr .GT. 0.0) nr=0.0
 
-         where(qg .LE. 0.0) chw=0.0
-         where(qg .LE. 0.0) vh=0.0
+         if (is_hail_aware) then
+            where(qg .LE. 0.0) chw=0.0
+            where(qg .LE. 0.0) vh=0.0
+         endif
 
          !..Check for existing aerosol data, both CCN and IN aerosols.  If missing
          !.. fill in just a basic vertical profile, somewhat boundary-layer following.
@@ -314,8 +313,10 @@ module mp_tempo
 
            ni = ni/(1.0_kind_phys+qv)
            nr = nr/(1.0_kind_phys+qv)
-           chw = chw/(1.0_kind_phys+qv)
-           vh = vh/(1.0_kind_phys+qv)
+           if (is_hail_aware) then
+              chw = chw/(1.0_kind_phys+qv)
+              vh  = vh/(1.0_kind_phys+qv)
+           endif
            if (is_aerosol_aware .or. merra2_aerosol_aware) then
               nc = nc/(1.0_kind_phys+qv)
               nwfa = nwfa/(1.0_kind_phys+qv)
@@ -377,8 +378,8 @@ module mp_tempo
          real(kind_phys),           intent(inout) :: qg(:,:)
          real(kind_phys),           intent(inout) :: ni(:,:)
          real(kind_phys),           intent(inout) :: nr(:,:)
-         real(kind_phys),           intent(inout) :: chw(:,:)
-         real(kind_phys),           intent(inout) :: vh(:,:)
+         real(kind_phys), optional, intent(inout) :: chw(:,:)
+         real(kind_phys), optional, intent(inout) :: vh(:,:)
          ! Aerosols
          logical,                   intent(in)    :: is_aerosol_aware, fullradar_diag 
          logical,                   intent(in)    :: merra2_aerosol_aware, is_hail_aware
@@ -401,10 +402,10 @@ module mp_tempo
          real,                      intent(in   ) :: dt_inner
          ! Precip/rain/snow/graupel fall amounts and fraction of frozen precip
          real(kind_phys),           intent(inout) :: prcp(:)
-         real(kind_phys),           intent(inout) :: rain(:)
-         real(kind_phys),           intent(inout) :: graupel(:)
-         real(kind_phys),           intent(inout) :: ice(:)
-         real(kind_phys),           intent(inout) :: snow(:)
+         real(kind_phys), optional, intent(inout) :: rain(:)
+         real(kind_phys), optional, intent(inout) :: graupel(:)
+         real(kind_phys), optional, intent(inout) :: ice(:)
+         real(kind_phys), optional, intent(inout) :: snow(:)
          real(kind_phys),           intent(  out) :: sr(:)
          ! Radar reflectivity
          real(kind_phys),           intent(inout) :: refl_10cm(:,:)
@@ -428,15 +429,15 @@ module mp_tempo
          ! SPP
          integer,                   intent(in) :: spp_mp
          integer,                   intent(in) :: n_var_spp
-         real(kind_phys),           intent(in) :: spp_wts_mp(:,:)
-         real(kind_phys),           intent(in) :: spp_prt_list(:)
-         character(len=10),          intent(in) :: spp_var_list(:)
-         real(kind_phys),           intent(in) :: spp_stddev_cutoff(:)
+         real(kind_phys),  optional,intent(in) :: spp_wts_mp(:,:)
+         real(kind_phys),  optional,intent(in) :: spp_prt_list(:)
+         character(len=10),optional,intent(in) :: spp_var_list(:)
+         real(kind_phys),  optional,intent(in) :: spp_stddev_cutoff(:)
 
          logical, intent (in) :: cplchm
          ! ice and liquid water 3d precipitation fluxes - only allocated if cplchm is .true.
-         real(kind=kind_phys), intent(inout), dimension(:,:) :: pfi_lsan
-         real(kind=kind_phys), intent(inout), dimension(:,:) :: pfl_lsan
+         real(kind=kind_phys), optional, intent(inout), dimension(:,:) :: pfi_lsan
+         real(kind=kind_phys), optional, intent(inout), dimension(:,:) :: pfl_lsan
 
          ! Local variables
 
@@ -601,8 +602,10 @@ module mp_tempo
 
            ni = ni/(1.0_kind_phys-spechum)
            nr = nr/(1.0_kind_phys-spechum)
-           chw = chw/(1.0_kind_phys-spechum)
-           vh = vh/(1.0_kind_phys-spechum)
+           if (is_hail_aware) then
+              chw = chw/(1.0_kind_phys-spechum)
+              vh  = vh/(1.0_kind_phys-spechum)
+           endif
            if (is_aerosol_aware .or. merra2_aerosol_aware) then
               nc = nc/(1.0_kind_phys-spechum)
               nwfa = nwfa/(1.0_kind_phys-spechum)
@@ -856,8 +859,10 @@ module mp_tempo
 
            ni = ni/(1.0_kind_phys+qv)
            nr = nr/(1.0_kind_phys+qv)
-           chw = chw/(1.0_kind_phys+qv)
-           vh = vh/(1.0_kind_phys+qv)
+           if (is_hail_aware) then
+              chw = chw/(1.0_kind_phys+qv)
+              vh  = vh/(1.0_kind_phys+qv)
+           endif
            if (is_aerosol_aware .or. merra2_aerosol_aware) then
               nc = nc/(1.0_kind_phys+qv)
               nwfa = nwfa/(1.0_kind_phys+qv)
