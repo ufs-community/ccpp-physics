@@ -74,8 +74,8 @@
 
       ! For Thompson MP
       use module_mp_thompson,        only: calc_effectRad_thmpsn     => calc_effectRad, &
-                                           Nt_c_l_thmpsn             => Nt_c,           &
-                                           Nt_c_o_thmpsn             => Nt_c,           &
+                                           Nt_c_l_thmpsn             => Nt_c_l,         &
+                                           Nt_c_o_thmpsn             => Nt_c_o,         &
                                            re_qc_min_thmpsn          => re_qc_min,      &
                                            re_qc_max_thmpsn          => re_qc_max,      &
                                            re_qi_min_thmpsn          => re_qi_min,      &
