@@ -4,5 +4,5 @@
   branch = main
 [submodule "physics/MP/TEMPO"]
   path = physics/MP/TEMPO/tempo
-  url = https://github.com/NCAR/TEMPO.git
-  branch = main
+  url = https://github.com/dustinswales/TEMPO.git
+  branch = feature/add_ccpp_type

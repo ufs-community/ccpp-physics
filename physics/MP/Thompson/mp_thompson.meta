@@ -3,10 +3,7 @@
   type = scheme
   dependencies = ../../hooks/machine.F
   dependencies = ../module_mp_radar.F90
-  dependencies = ../TEMPO/tempo/module_mp_thompson_params.F90
-  dependencies = ../TEMPO/tempo/module_mp_thompson_main.F90
-  dependencies = ../TEMPO/tempo/module_mp_thompson_utils.F90
-  dependencies = module_mp_thompson.F90
+  dependencies = module_mp_thompson.F90,module_mp_thompson_make_number_concentrations.F90
 
 ########################################################################
 [ccpp-arg-table]
