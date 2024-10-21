@@ -3315,7 +3315,7 @@
      &                 modify_qvapor, max_relh,                         &
      &                 kts,kte, debug_flag)
 !
-      USE module_mp_thompson   , ONLY : rsif, rslf
+      USE module_mp_thompson_utils   , ONLY : rsif, rslf
       IMPLICIT NONE
 !
       INTEGER, INTENT(IN):: kts, kte

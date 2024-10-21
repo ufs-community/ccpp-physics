@@ -12,10 +12,11 @@ module GFS_rrtmgp_cloud_mp
   use rrtmgp_lw_cloud_optics, only: &
        radliq_lwr => radliq_lwrLW, radliq_upr => radliq_uprLW,&
        radice_lwr => radice_lwrLW, radice_upr => radice_uprLW  
-  use module_mp_thompson, only: calc_effectRad, Nt_c_l, Nt_c_o, re_qc_min, re_qc_max,  &
-       re_qi_min, re_qi_max, re_qs_min, re_qs_max
-  use module_mp_thompson_make_number_concentrations, only: make_IceNumber,             &
+  use module_mp_thompson_utils, only: calc_effectRad, make_IceNumber,         &
        make_DropletNumber, make_RainNumber
+  use module_mp_thompson_params, only: Nt_c_l, Nt_c_o, re_qc_min, re_qc_max,  &
+       re_qi_min, re_qi_max, re_qs_min, re_qs_max, configs
+
   
   real (kind_phys), parameter :: &
        cld_limit_lower = 0.001, &
@@ -901,10 +902,11 @@ contains
     ! Compute effective radii for liquid/ice/snow.
     do iCol=1,nCol
        ilsmask = nint(lsmask(iCol))
-       call calc_effectRad (t_lay(iCol,:), p_lay(iCol,:), qv_mp(iCol,:), qc_mp(iCol,:),  &
-                            nc_mp(iCol,:), qi_mp(iCol,:), ni_mp(iCol,:), qs_mp(iCol,:),  &
-                            re_cloud(iCol,:), re_ice(iCol,:), re_snow(iCol,:), ilsmask,  & 
-                            1, nLev )
+       call calc_effectRad (t1d=t_lay(iCol,:), p1d=p_lay(iCol,:), qv1d=qv_mp(iCol,:), qc1d=qc_mp(iCol,:),  &
+                            nc1d=nc_mp(iCol,:), qi1d=qi_mp(iCol,:), ni1d=ni_mp(iCol,:), qs1d=qs_mp(iCol,:),  &
+                            re_qc1d=re_cloud(iCol,:), re_qi1d=re_ice(iCol,:), re_qs1d=re_snow(iCol,:), kts=1, kte=nLev, &
+                            lsml=ilsmask, configs=configs)
+
        do iLay = 1, nLev
           re_cloud(iCol,iLay) = MAX(re_qc_min, MIN(re_cloud(iCol,iLay), re_qc_max))
           re_ice(iCol,iLay)   = MAX(re_qi_min, MIN(re_ice(iCol,iLay),   re_qi_max))

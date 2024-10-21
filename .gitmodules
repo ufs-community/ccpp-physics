@@ -2,3 +2,7 @@
   path = physics/Radiation/RRTMGP/rte-rrtmgp
   url = https://github.com/earth-system-radiation/rte-rrtmgp
   branch = main
+[submodule "physics/MP/TEMPO"]
+  path = physics/MP/TEMPO/tempo
+  url = https://github.com/dustinswales/TEMPO.git
+  branch = feature/add_ccpp_type
