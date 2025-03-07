@@ -25,11 +25,11 @@ The HRRR_gf suite uses the parameterizations in the following order:
  - \ref THOMPSON
 
 \section sdf_hrrrgfsuite Suite Definition File 
-\include suite_SCM_HRRR_gf.xml
+\include suite_FV3_HRRR_gf.xml
 
 \section hrrr_gf_nml_option Namelist 
 - General physics options
-\snippet input_HRRR_gf.nml GFS_PHYSICS_NML
+\snippet FV3_HRRR_gf_input.nml GFS_PHYSICS_NML
 
 
 

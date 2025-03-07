@@ -988,8 +988,9 @@ INPUT                  = pdftxt/SRW_mainpage.txt \
                          pdftxt/SRW_all_schemes_list.txt \
                          pdftxt/GFS_v16_suite.txt \
                          pdftxt/HRRR_suite.txt \
+                         pdftxt/HRRR_gf_suite.txt \
                          pdftxt/RAP_suite.txt \
-                         pdftxt/RRFS_v1beta_suite.txt \
+                         pdftxt/RRFS_sas_suite.txt \
                          pdftxt/WoFS_v0_suite.txt \
                          pdftxt/RRFS_SGSCLOUD.txt \
                          pdftxt/GFS_RRTMG.txt \
@@ -997,11 +998,11 @@ INPUT                  = pdftxt/SRW_mainpage.txt \
                          pdftxt/MYNN_SFCLAYER.txt \
                          pdftxt/GFS_NSST.txt \
                          pdftxt/GFS_OCEAN.txt \
-                         pdftxt/GFS_NOAH.txt \
+                         pdftxt/NOAH_LSM.txt \
                          pdftxt/GFS_SFCSICE.txt \
                          pdftxt/GFS_SATMEDMFVDIFQ.txt \
-                         pdftxt/GFS_NOAHMP.txt \
-                         pdftxt/GFS_UGWPv0.txt \
+                         pdftxt/NOAHMP_LSM.txt \
+                         pdftxt/UGWPv0.txt \
                          pdftxt/GFS_drag_suite.txt \
                          pdftxt/GFS_GWDPS.txt \
                          pdftxt/GFS_OZPHYS.txt \

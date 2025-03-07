@@ -6,7 +6,7 @@
 The UFS-SRW App. assembles the parameterizations in suites. 
 
 \b Radiation
- - \subpage GFS_RRTMG 
+ - \subpage GFS_RRTMG_page 
 
 \b PBL \b and \b Turbulence
  - \subpage GFS_SATMEDMFVDIFQ 
@@ -16,7 +16,6 @@ The UFS-SRW App. assembles the parameterizations in suites.
  - \subpage GFS_NOAH 
  - \subpage RUCLSM 
  - \subpage NoahMP 
- - \subpage CLM_LAKE_model
 
 \b Cumulus \b Parameterizations
  - \subpage GFS_SAMFdeep 
@@ -47,8 +46,11 @@ The UFS-SRW App. assembles the parameterizations in suites.
  - \subpage GFS_OCEAN 
  - \subpage GFS_SFCSICE 
 
-\b Others
- - \subpage GFS_SPP
+\b Lakes
+ - \subpage CLM_LAKE_page
+
+\b Smoke/Dust
+ - \todo SRW-SD
 
 The input information for the parameterizations includes the values of the gridbox mean prognostic variables (wind components, temperature,
 specific humidity, cloud fraction, water contents for cloud liquid, cloud ice, rain, snow, graupel, and ozone concentration), the provisional
