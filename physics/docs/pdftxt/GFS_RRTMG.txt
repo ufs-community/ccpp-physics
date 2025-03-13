@@ -84,7 +84,7 @@ radiation_clouds_prop can connect to the calculations of the cloud
 radiation properties for all the microphysics schemes.
 
 Summary of the major changes:
-- \ref radiation_clouds.f : A new subroutine module_radiation_clouds::radiation_clouds_prop was added to radiation_clouds.f. This new subroutine calculates all cloud radiation properties for all the microphysics schemes. 
+-  radiation_clouds.f : A new subroutine module_radiation_clouds::radiation_clouds_prop was added to radiation_clouds.f. This new subroutine calculates all cloud radiation properties for all the microphysics schemes. 
 
  -    module_radiation_clouds::progcld_zhao_carr()
  -    module_radiation_clouds::progcld_zhao_carr_pdf()

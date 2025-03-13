@@ -998,6 +998,7 @@ INPUT                  = pdftxt/SRW_mainpage.txt \
                          pdftxt/MYNN_SFCLAYER.txt \
                          pdftxt/GFS_NSST.txt \
                          pdftxt/GFS_OCEAN.txt \
+                         pdftxt/SMOKE_DUST.txt \
                          pdftxt/NOAH_LSM.txt \
                          pdftxt/GFS_SFCSICE.txt \
                          pdftxt/GFS_SATMEDMFVDIFQ.txt \
