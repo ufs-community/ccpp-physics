@@ -18,6 +18,7 @@ The HRRR suite uses the parameterizations in the following order:
  - \ref GFS_NSST
  - \ref RUCLSM
  - \ref CLM_LAKE_page
+ - \todo SMK_DUST
  - \ref MYNNEDMF
  - \ref GFS_drag_suite
  - \ref GFS_OZPHYS
