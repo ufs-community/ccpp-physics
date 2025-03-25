@@ -985,6 +985,7 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = pdftxt/SRW_mainpage.txt \
+                         pdftxt/srw_phy_update.txt \
                          pdftxt/SRW_all_schemes_list.txt \
                          pdftxt/GFS_v16_suite.txt \
                          pdftxt/HRRR_suite.txt \
@@ -1010,7 +1011,6 @@ INPUT                  = pdftxt/SRW_mainpage.txt \
                          pdftxt/GFS_SAMFdeep.txt \
                          pdftxt/GFS_SAMFshal.txt \
                          pdftxt/GFDL_cloud.txt \
-                         pdftxt/GFS_CAUTOMATA.txt \
                          pdftxt/NSSLMICRO.txt \
                          pdftxt/MYNN_EDMF.txt \
                          pdftxt/CU_GF_deep.txt \
