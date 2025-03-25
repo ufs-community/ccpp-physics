@@ -13,7 +13,7 @@ The RRFS_sas suite uses the parameterizations in the following order:
  - \ref SFC_MYNNSFL
  - \ref RUCLSM
  - \ref CLM_LAKE_page
- - \todo SMK_dust
+ - \ref SMK_DUST
  - \ref MYNNEDMF
  - \ref GFS_drag_suite
  - \ref GFS_H2OPHYS

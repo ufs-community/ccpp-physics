@@ -3,7 +3,7 @@
 
 \section allscheme_overview Physical Parameterizations and Suites 
 
-The UFS-SRW App. assembles the parameterizations in suites. 
+The UFS-SRW App assembles the parameterizations in suites. 
 
 \b Radiation
  - \subpage GFS_RRTMG_page 
@@ -15,7 +15,6 @@ The UFS-SRW App. assembles the parameterizations in suites.
 \b Land \b Surface \b Model
  - \subpage GFS_NOAH 
  - \subpage RUCLSM 
- - \subpage NoahMP 
 
 \b Cumulus \b Parameterizations
  - \subpage GFS_SAMFdeep 
@@ -49,8 +48,8 @@ The UFS-SRW App. assembles the parameterizations in suites.
 \b Lakes
  - \subpage CLM_LAKE_page
 
-\b Smoke/Dust
- - \todo SMK_DUST
+\b Smoke&Dust
+ - \subpage SMK_DUST
 
 The input information for the parameterizations includes the values of the gridbox mean prognostic variables (wind components, temperature,
 specific humidity, cloud fraction, water contents for cloud liquid, cloud ice, rain, snow, graupel, and ozone concentration), the provisional
@@ -85,7 +84,7 @@ Table 1.  Physics suites and primary schemes supported in SRW v3.0.0
 |\b LSM              | \ref GFS_NOAH          |   \ref RUCLSM  and \ref CLM_LAKE_page  |   \ref RUCLSM and \ref CLM_LAKE_page | \ref RUCLSM and \ref CLM_LAKE_page |   \ref GFS_NOAH       | \ref RUCLSM         |
 |\b Gravity \b Wave \b Drag| \ref GFS_UGWP_v0 |   \ref GFS_drag_suite                  |   \ref  GFS_drag_suite   | \ref  GFS_drag_suite                |   \ref GFS_UGWP_v0    | \ref GFS_drag_suite |
 |\b Ice and \b Snow  | \ref GFS_SFCSICE       |   \ref RUCLSM                          |   \ref RUCLSM            | \ref RUCLSM                         |   \ref GFS_SFCSICE    | \ref RUCLSM         | 
-|\b Smoke and \b Dust  |                        |   \ref SMK_DUST                        |   \ref SMK_DUST          | \ref SMK_DUST                       |                       |                     |
+|\b Smoke and \b Dust|                        |   \ref SMK_DUST                        |   \ref SMK_DUST          | \ref SMK_DUST                       |                       |                     |
 \tableofcontents
 
 

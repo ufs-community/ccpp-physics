@@ -14,20 +14,22 @@
     ccpp_suite = 'FV3_WoFS_v0'
 /
 
+!>[CIRES_UGWP_NML]
 &cires_ugwp_nml
-    knob_ugwp_azdir = 2, 4, 4, 4
-    knob_ugwp_doaxyz = 1
-    knob_ugwp_doheat = 1
-    knob_ugwp_dokdis = 1
-    knob_ugwp_effac = 1, 1, 1, 1
-    knob_ugwp_ndx4lh = 1
-    knob_ugwp_solver = 2
-    knob_ugwp_source = 1, 1, 0, 0
-    knob_ugwp_stoch = 0, 0, 0, 0
-    knob_ugwp_version = 0
-    knob_ugwp_wvspec = 1, 25, 25, 25
-    launch_level = 25
+    knob_ugwp_azdir     = 2, 4, 4, 4
+    knob_ugwp_doaxyz    = 1
+    knob_ugwp_doheat    = 1
+    knob_ugwp_dokdis    = 1
+    knob_ugwp_effac     = 1, 1, 1, 1
+    knob_ugwp_ndx4lh    = 1
+    knob_ugwp_solver    = 2
+    knob_ugwp_source    = 1, 1, 0, 0
+    knob_ugwp_stoch     = 0, 0, 0, 0
+    knob_ugwp_version   = 0
+    knob_ugwp_wvspec    = 1, 25, 25, 25
+    launch_level        = 25
 /
+!! [CIRES_UGWP_NML]
 
 &diag_manager_nml
     max_output_fields = 500
@@ -217,7 +219,7 @@
     nssl_cccn           = 600000000.0
     nssl_hail_on        = .true.
     nssl_ccn_on         = .true.
-    lsoil = 4
+    lsoil               = 4
 /
 !![GFS_PHYSICS_NML]
 

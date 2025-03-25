@@ -1002,7 +1002,6 @@ INPUT                  = pdftxt/SRW_mainpage.txt \
                          pdftxt/NOAH_LSM.txt \
                          pdftxt/GFS_SFCSICE.txt \
                          pdftxt/GFS_SATMEDMFVDIFQ.txt \
-                         pdftxt/NOAHMP_LSM.txt \
                          pdftxt/UGWPv0.txt \
                          pdftxt/GFS_drag_suite.txt \
                          pdftxt/GFS_GWDPS.txt \
@@ -1011,6 +1010,7 @@ INPUT                  = pdftxt/SRW_mainpage.txt \
                          pdftxt/GFS_SAMFdeep.txt \
                          pdftxt/GFS_SAMFshal.txt \
                          pdftxt/GFDL_cloud.txt \
+                         pdftxt/GFS_CAUTOMATA.txt \
                          pdftxt/NSSLMICRO.txt \
                          pdftxt/MYNN_EDMF.txt \
                          pdftxt/CU_GF_deep.txt \
@@ -1027,7 +1027,8 @@ INPUT                  = pdftxt/SRW_mainpage.txt \
                          ../SFC_Models \
                          ../photochem \
                          ../smoke_dust   \
-                         ../Radiation
+                         ../Radiation    \
+                         ../Interstitials/UFS_SCM_NEPTUNE
 
 
 # This tag can be used to specify the character encoding of the source files
@@ -1089,6 +1090,7 @@ RECURSIVE              = YES
 # run.
 
 EXCLUDE                = ../Radiation/RRTMGP/rte-rrtmgp \
+                         ../Interstitials/UFS_SCM_NEPTUNE/GFS_phys_time_vary.scm.F90 \
                          ../MP/Morrison_Gettelman \
                          ../MP/Ferrier_Aligo \ 
                          ../MP/Zhao_Carr \
