@@ -1,6 +1,6 @@
 /**
 \page SMK_DUST SRW Smoke and Dust Scheme
-\section des_smkdust  Description
+\section des_smkdust Smoke Scheme Description
 
 The SRW v3.0.0 release includes the smoke modeling capability. In the model, a single aerosol tracer (smoke)
 represents primary fine particulate matter (PM2.5) from biomass burning (BB) emissions. The BB emissions are
@@ -38,21 +38,66 @@ SRW v3.0.0:
 | AOTK                                                                |aerosol optical depth                | unitless |                                        
 \tableofcontents 
 
-The FENGSHA dust emission scheme (Tong et al., 2017) is used in the SRW-SD. In the FENGSHA scheme, dust emissions are calculated only 
-when the friction velocity exceeds the designated threshold value for the land use type and soil texture. These threshold friction
-velocities are based on wind tunnel measurements conducted both in the laboratory and in the field. The Baker-Schepanski map (BSM)
-sediment supply map is used for the FENGSHA implementation in UFS-SRW. Dust aerosol emissions are represented with five bins corresponding
-to dry size ranges (radius in \f$\mu\f$m: 0.73,1.4,2.4,4.5, and 8.0) and densities (in \f$kg/m^3\f$:2500, 2650, 2650, 2650, and 2650).
-To save computational time in short-range numerical weather forecasts, the first bin and part of the second bin are used to represent
-fine dust aerosol, while the remaining bins represent coarse particulate aerosols. The SRW-SD model includes dry deposition, large-scale wet 
-deposition, boundary mixing, convective transport, and wet removal of dust. Additionally, the direct feedback of dust to radiation is
-also implemented in the SRW-SD model.
+\section Fengsha_desp FENGSHA Dust Emission Scheme
+
+Aerosols have both direct and indirect effects on meteorology, atmospheric chemistry, human health, and ultimately 
+the global energy budget with dust being a major contributor to the atmospheric aerosol burden. A great effort has been
+made to characterized the sources and mobilization of dust, however, current models still show large uncertainty as the 
+modeling of mineral dust in the atmosphere is complex.
+
+The FENGSHA dust emission model, implemented into the operational NOAA National Air Quality Forecast Capability (NAQFC),
+and the new Global Ensemble Forecast System with Aerosols (GEFS-Aerosols), is a flexible emission model capable of predicting 
+dust emissions across forecast scales.
+
+The FENGSHA dust emission scheme, developed by NOAA ARL, simulates mineral dust emissions using a combination of theoretical frameworks 
+and empirical measurements. FENGSHA builds upon the MB95 dust emission model by integrating Dale Gillette's observations,
+emphasizing the role of soil characteristics - such as texture, moisture, and roughness - in determining dry threshold friction 
+velocities. This scheme enhances predictions of dust aerosol concentrations, providing instrumental in applications like air quality forecasting
+and climate modeling.
+
+FENGSHA merges theoretical concepts from Marticorena and Bergametti (1995) \cite marticorena_and_bergametti_1995 with empirical data to 
+model dust emissions more accurately. The main horizontal dust flux uses the Webb et al. (2020) \cite WEBB2020100560 flux equation:
+\f[
+ Q = C \frac{\rho_{a}}{g}(R u_{*}^3) \left ( 1 - \frac{u_{*t}^2(R,H)}{u_{*}^2} \right ) \left ( 1 + \frac{u_{*t}(R,H)}{u_{*}} \right )
+
+\f]
+
+- \b Threshold \b Friction \b Velocity: Soil properties control the minimum wind force required to mobilize dust particles, refined by
+Gillette's empirical findings.
+- \b Vertical-to-Horizontal \b Flux \b Ratio: Derived from Marticorena and Bergametti (1995) \cite marticorena_and_bergametti_1995, this
+calculation links friction velocity to emission processes.
+- \b Drag \b Partition \b Correction: Based on MacKinnon et al. (2004) \cite MACKINNON2004103, these adjustments account for surface
+roughness influences on dust emissions.
+- \b Soil \b Moisture \b Effects: Incorporates corrections from Fecan and Shao methods to adjust for the impact of soil water content. 
 
 
- 
+FENGSHA is implemented in CCPP with modular subroutines for compatibility with other atmospheric components. Key routines include:
+- dust_fengsha_mod::fengsha_drag: Calculates drag partition corrections, adjusting for surface roughness effects.
+- dust_fengsha_mod::dustemissionfengsha: Computes dust emissions using inputs such as soil composition, wind velocity, and air density.
+- dust_fengsha_mod::moisturecorrectionfecan and dust_fengsha_mod::moisturecorrectionshao: Refine emission thresholds based on soil moisture conditions.
+- dust_fengsha_mod::dustfluxv2hratiomb95: Estimates vertical-to-horizontal flux ratios using clay content and flux limits.
+
+  
+
 \section intra_smkdust Intraphysics Communication
  +  \ref arg_table_rrfs_smoke_wrapper_run 
 
-\section gen_al_smkdust General Algorithm
-+ \ref  gen_rrfs_smoke_wrapper
+\subsection fensha_intra_com FENGSHA Dust Emission scheme
+The scheme facilitates seamless interaction with other physical processes, including aerosol microphysical and radiation models,
+ensuring consistency in atmospheric simulations. FENGSHA'S modular structure allows its outputs -binned surface emissions - to integrate
+smoothly into broader forecasting frameworks.
+
+
+\section gen_al_smkdust FENGSHA Dust Emission General Algorithm
+-# Initialize dust emissions and prepare scaling factors
+-# Ensure that dust emissions do not occur over water, forests, bedrock or snow and ice
+-# Apply soil moisture corrections using Fecan \cite angeo-17-149-1999 or Shao \cite shao_2004 methods 
+-# Compute threshold wind friction velocity, accounting for drag partition corrections
+-# Calculate horizontal saltation flux and distribute emissions across particle size bins
+-# Convert emissions to mass flux, ensuring compatibility with downstream components
+
+
+FENGSHA is employed in operational systems like GEFS-Aerosol(Zhang et al. 2021 \cite zhang_etal_2021) and NAQFC (Huang et al. 2025, 
+Li et al., 2024), enhancing air quility and dust even predictions. It provides detailed insights into the interactions between
+soil properties and atmospheric dynamics.
 */
