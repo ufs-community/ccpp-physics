@@ -985,7 +985,7 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = pdftxt/SRW_mainpage.txt \
-                         pdftxt/srw_phy_update.txt \
+                         pdftxt/srw3_phy_update.txt \
                          pdftxt/SRW_all_schemes_list.txt \
                          pdftxt/GFS_v16_suite.txt \
                          pdftxt/HRRR_suite.txt \
@@ -1027,7 +1027,7 @@ INPUT                  = pdftxt/SRW_mainpage.txt \
                          ../SFC_Models \
                          ../photochem \
                          ../smoke_dust   \
-                         ../Radiation    \
+                         ../Radiation   \ 
                          ../Interstitials/UFS_SCM_NEPTUNE
 
 
