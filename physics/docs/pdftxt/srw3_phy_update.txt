@@ -54,7 +54,7 @@ levels and reduce the outgoing longwave radiation bias
 - Cloud number concentration divided into two parts (over land and others). Number concentration over 
 ocean reduced to a smaller number (50/\f$cm^3\f$) from its previous default (100/\f$cm^3\f$). Both changes were made to increase
 the downward shortwave radiative flux and reduce the negative bias off coastal regions including the Southeast Pacific
-- To reduce the high bias in downward shortwave (DSW) radiative flux over land has been increased from 100/\f$cm^3\f$ to 150/\f$cm^3\f$. The convective 
+- To reduce the high bias in downward shortwave (DSW), radiative flux over land has been increased from 100/\f$cm^3\f$ to 150/\f$cm^3\f$. The convective 
 cloud ice radius in radiation_clouds has been reduced from 50 \f$\mu\f$m to 25 \f$\mu\f$m. The 2020 summer HRv4 test results show a reduction in the high DSW bias over land and a corresponding reduction in the low bias of upward shortwave and radiative flux at the top of the atmosphere 
 - Small fixes to the minimum size of snow and collision constants
 
