@@ -42,7 +42,7 @@ SRW v3.0.0:
 
 Aerosols have both direct and indirect effects on meteorology, atmospheric chemistry, human health, and ultimately 
 the global energy budget with dust being a major contributor to the atmospheric aerosol burden. A great effort has been
-made to characterized the sources and mobilization of dust, however, current models still show large uncertainty as the 
+made to characterize the sources and mobilization of dust, however, current models still show large uncertainty as the 
 modeling of mineral dust in the atmosphere is complex.
 
 The FENGSHA dust emission model, implemented into the operational NOAA National Air Quality Forecast Capability (NAQFC),
