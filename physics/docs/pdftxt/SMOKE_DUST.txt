@@ -7,7 +7,7 @@ represents primary fine particulate matter (PM2.5) from biomass burning (BB) emi
 estimated using the fire radiative energy data from the regional ABI and VIIRS Emissions (RAVE) product
 (Li et al. 2022 \cite LI2022113237), which integrates fire radiative power (FRP) data from the Geostationary 
 Operational Environmental Satellites (GOES-R ABI) and the Joint Polar Satellite System (JPSS VIIRS). The FRP data
-from RAVE is used to estimate the fire heat flux in SRW to simulate the fire plumerise in the model. The SRW application
+from RAVE is used to estimate the fire heat flux in SRW to simulate the fire plume rise in the model. The SRW application
 allows users to select predefined grids for smoke emission processing, and the smoke model forecast in the SRW
 supports most of the predefined grids such as 25, 13 and 3 km resolution grids, which cover CONUS and North
 America regions. The appropriate fixed smoke model files have been staged on Tier 1 platforms to support these forecast grids.
