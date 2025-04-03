@@ -84,7 +84,7 @@ FENGSHA is implemented in CCPP with modular subroutines for compatibility with o
 
 \subsection fensha_intra_com FENGSHA Dust Emission scheme
 The scheme facilitates seamless interaction with other physical processes, including aerosol microphysical and radiation models,
-ensuring consistency in atmospheric simulations. FENGSHA'S modular structure allows its outputs -binned surface emissions - to integrate
+ensuring consistency in atmospheric simulations. FENGSHA'S modular structure allows its outputs — binned surface emissions — to integrate
 smoothly into broader forecasting frameworks.
 
 
