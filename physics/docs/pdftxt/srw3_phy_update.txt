@@ -73,7 +73,7 @@ cloud ice radius in radiation_clouds has been reduced from 50 \f$\mu\f$m to 25 \
 - Wet leaf contribution factor is included
 - Leaf-area index now depends on momentum roughness length
 - Soil thermal conductivity enhancement: To reduce persistent nighttime and early morning warm surface temperature bias in GFS models,
-a new lookup table developed from the PNNL soil carbon dataset and VIIRS surface type data is included, and the effects of soil organic matter (SOM) on soil thermal properties have been accounted for GFSv17 prototype tests show that including SOM results in better simulation of 
+a new lookup table developed from the PNNL soil carbon dataset and VIIRS surface type data is included, and the effects of soil organic matter (SOM) on soil thermal properties have been accounted for. GFSv17 prototype tests show that including SOM results in better simulation of 
 ground heat flux, reducing heat storage in the soil during the day, and mitigating the nighttime warm bias, particularly over the Great Plains.
 - Evapotranspiration adjustment: The aquifer hydraulic conductivity has been updated to use the algorithm average rather than the harmonic average. This increases the amount of water uptake by the soil layer, improving evapotranspiration modeling
 - Snow aging at night: Fixed an issue to allow snow aging to occur at night, ensuring more realistic snow dynamics
