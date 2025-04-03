@@ -28,7 +28,7 @@ The updates since the previous release are carefully outlined in Bengtsson and H
 - Scale-awareness turned off when explicit microphysics is not active anywhere in the column
 - Convection is completely suppressed at grid points where the MYNN PBL sheme produces shallow convection
 - Radar reflectivity considers mass flux PDF as well as whether scale-awareness is turned on at the gird point in equation
-- Add a new parameter \p gf_coldstart to control where GF will be cold started or not.
+- Add a new parameter \p gf_coldstart to control whether GF will be cold started or not.
 
 \b GFS \b Scale-aware \b TKE-EDMF \b PBL \b Scheme:
 - Implementation of a parameterization for environmental wind shear effect in the GFS TKE-EDMF PBL and cumulus schemes to reduce 
