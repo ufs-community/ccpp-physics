@@ -74,7 +74,7 @@ roughness influences on dust emissions.
 FENGSHA is implemented in CCPP with modular subroutines for compatibility with other atmospheric components. Key routines include:
 - dust_fengsha_mod::fengsha_drag: Calculates drag partition corrections, adjusting for surface roughness effects.
 - dust_fengsha_mod::dustemissionfengsha: Computes dust emissions using inputs such as soil composition, wind velocity, and air density.
-- dust_fengsha_mod::moisturecorrectionfecan and dust_fengsha_mod::moisturecorrectionshao: Refine emission thresholds based on soil moisture conditions.
+- dust_fengsha_mod::moisturecorrectionfecan and dust_fengsha_mod::moisturecorrectionshao: Refines emission thresholds based on soil moisture conditions.
 - dust_fengsha_mod::dustfluxv2hratiomb95: Estimates vertical-to-horizontal flux ratios using clay content and flux limits.
 
   
