@@ -98,6 +98,6 @@ smoothly into broader forecasting frameworks.
 
 
 FENGSHA is employed in operational systems like GEFS-Aerosol(Zhang et al. 2021 \cite zhang_etal_2021) and NAQFC (Huang et al. 2025, 
-Li et al., 2024), enhancing air quility and dust even predictions. It provides detailed insights into the interactions between
+Li et al., 2024), enhancing air quility and dust event predictions. It provides detailed insights into the interactions between
 soil properties and atmospheric dynamics.
 */
