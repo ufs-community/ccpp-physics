@@ -294,6 +294,9 @@ contains
                                     + prod(iCol,3) * (t(iCol,iLev) - prod(iCol,5)) &
                                     + prod(iCol,4) * (colo3(iCol,iLev)-coloz(iCol,iLev))
           oz(iCol,iLev) = (ozib(iCol)  + tem*dt) / (1.0 - prod(iCol,2)*dt)
+          if (oz(iCol,iLev) < 0) then
+             oz(iCol,iLev) = 0
+          endif
        enddo
 
        ! Diagnostics (optional)
