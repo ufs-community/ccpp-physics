@@ -20,7 +20,7 @@
 !! used in the closure computations in the samfshalcnv. scheme
 !!\section gen_progsigma progsigma_calc General Algorithm 
       subroutine progsigma_calc (im,km,flag_init,flag_restart,flag_shallow,&
-           flag_mid,del,tmf,qmicro,dbyo1,zdqca,omega_u,zeta,hvap,          &
+           flag_mid,sigmab_coldstart,del,tmf,qmicro,dbyo1,zdqca,omega_u,zeta,hvap,          &
            delt,qadv,kbcon1,ktcon,cnvflg,betascu,betamcu,betadcu,          &
            sigmind,sigminm,sigmins,sigmain,sigmaout,sigmab)
 !                                                           
@@ -38,6 +38,7 @@
            qmicro(im,km),tmf(im,km),dbyo1(im,km),zdqca(im,km),           &
            omega_u(im,km),zeta(im,km)
       logical, intent(in)  :: flag_init,flag_restart,cnvflg(im),flag_shallow,flag_mid
+      logical, intent(in)  :: sigmab_coldstart
       real(kind=kind_phys), intent(in) :: sigmain(im,km)
 
 !     intent out
@@ -63,7 +64,8 @@
       km1=km-1
       invdelt = 1./delt
 
-      if (flag_init) then
+      if (flag_init .and. (.not. flag_restart        &
+          .or. sigmab_coldstart)) then
            sigmind_new=0.0
       else
            sigmind_new=sigmind

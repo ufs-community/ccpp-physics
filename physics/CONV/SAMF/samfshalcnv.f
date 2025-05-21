@@ -57,7 +57,8 @@
      &     rn,kbot,ktop,kcnv,islimsk,garea,                             &
      &     dot,ncloud,hpbl,ud_mf,dt_mf,cnvw,cnvc,                       &
      &     clam,c0s,c1,evef,pgcon,asolfac,hwrf_samfshal,                & 
-     &     sigmain,sigmaout,betadcu,betamcu,betascu,errmsg,errflg)
+     &     sigmain,sigmaout,betadcu,betamcu,betascu,sigmab_coldstart,   &
+     &     errmsg,errflg)
 !
       use machine , only : kind_phys
       use funcphys , only : fpvs
@@ -89,7 +90,7 @@
       real(kind=kind_phys), intent(in) :: clam,    c0s,     c1,         &
      &                     asolfac, evef, pgcon
       logical,          intent(in)  :: hwrf_samfshal,first_time_step,   &
-     &     restart,progsigma
+     &     restart,progsigma,sigmab_coldstart
       character(len=*), intent(out) :: errmsg
       integer,          intent(out) :: errflg
 !
@@ -1955,7 +1956,8 @@ c
 !> - From Bengtsson et al. (2022) \cite Bengtsson_2022 prognostic closure scheme, equation 8, call progsigma_calc() to compute updraft area fraction based on a moisture budget
       if(progsigma)then
 !     Initial computations, dynamic q-tendency
-         if(first_time_step .and. .not.restart)then
+         if(first_time_step .and. (.not.restart 
+     &          .or. sigmab_coldstart))then
             do k = 1,km
                do i = 1,im
                   qadv(i,k)=0.
@@ -1978,7 +1980,8 @@ c
          flag_shallow = .true.
          flag_mid = .false.
          call progsigma_calc(im,km,first_time_step,restart,flag_shallow,
-     &        flag_mid,del,tmfq,qmicro,dbyo1,zdqca,omega_u,zeta,hvap,
+     &        flag_mid,sigmab_coldstart,del,tmfq,qmicro,dbyo1,zdqca,
+     &        omega_u,zeta,hvap,
      &        delt,qadv,kbcon1,ktcon,cnvflg,betascu,betamcu,betadcu,
      &        sigmind,sigminm,sigmins,sigmain,sigmaout,sigmab)
       endif
