@@ -49,6 +49,22 @@
   dimensions = ()
   type = logical
   intent = in
+[fn_nml]
+  standard_name = filename_of_namelist
+  long_name = namelist filename
+  units = none
+  dimensions = ()
+  type = character
+  kind = len=*
+  intent = in
+[input_nml_file]
+  standard_name = filename_of_internal_namelist
+  long_name = character string to store full namelist contents
+  units = none
+  dimensions = (number_of_lines_in_internal_namelist)
+  type = character
+  kind = len=*
+  intent = in
 [mpirank]
   standard_name = mpi_rank
   long_name = current MPI-rank
@@ -118,7 +134,6 @@
   type = real
   kind = kind_phys
   intent = inout
-  optional = True
 [crw]
   standard_name = mass_number_concentration_of_rain_water_in_air
   long_name = rain number concentration
@@ -159,7 +174,6 @@
   type = real
   kind = kind_phys
   intent = inout
-  optional = True
 [con_g]
   standard_name = gravitational_acceleration
   long_name = gravitational acceleration
@@ -438,7 +452,6 @@
   type = real
   kind = kind_phys
   intent = inout
-  optional = True
 [crw]
   standard_name = mass_number_concentration_of_rain_of_new_state
   long_name = rain number concentration
@@ -488,7 +501,6 @@
   type = real
   kind = kind_phys
   intent = inout
-  optional = True
 [vhl]
   standard_name = hail_volume_of_new_state
   long_name = hail particle volume
@@ -589,7 +601,6 @@
   type = real
   kind = kind_phys
   intent = inout
-  optional = True
 [graupel]
   standard_name = lwe_thickness_of_graupel_amount
   long_name = graupel fall on physics timestep
@@ -598,7 +609,6 @@
   type = real
   kind = kind_phys
   intent = inout
-  optional = True
 [ice]
   standard_name = lwe_thickness_of_ice_amount
   long_name = ice fall on physics timestep
@@ -607,7 +617,6 @@
   type = real
   kind = kind_phys
   intent = inout
-  optional = True
 [snow]
   standard_name = lwe_thickness_of_snow_amount
   long_name = snow fall on physics timestep
@@ -616,7 +625,6 @@
   type = real
   kind = kind_phys
   intent = inout
-  optional = True
 [sr]
   standard_name = ratio_of_snowfall_to_rainfall
   long_name = ratio of snowfall to large-scale rainfall
