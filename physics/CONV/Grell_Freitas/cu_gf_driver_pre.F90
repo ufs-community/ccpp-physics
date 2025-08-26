@@ -59,7 +59,7 @@ module cu_gf_driver_pre
       ! For restart runs, can assume that prevst and prevsq
       ! are read from the restart files beforehand, same
       ! for conv_act.
-      if((flag_init .and. .not.flag_restart) .or. gf_coldstart) then
+      if((flag_init) .and. (.not.flag_restart .or. gf_coldstart)) then
 !$acc kernels
         forcet(:,:)=0.0
         forceq(:,:)=0.0
