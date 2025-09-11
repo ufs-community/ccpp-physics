@@ -785,8 +785,8 @@ contains
   do iz = isnow+1, 0
 !     tksno(iz) = 3.2217e-6*bdsnoi(iz)**2.           ! stieglitz(yen,1965)
 !    tksno(iz) = 2e-2+2.5e-6*bdsnoi(iz)*bdsnoi(iz)   ! anderson, 1976
-!    tksno(iz) = 0.35                                ! constant
-    tksno(iz) = 2.576e-6*bdsnoi(iz)**2. + 0.074    ! verseghy (1991)
+    tksno(iz) = 0.35                                ! constant
+!    tksno(iz) = 2.576e-6*bdsnoi(iz)**2. + 0.074    ! verseghy (1991)
 !    tksno(iz) = 2.22*(bdsnoi(iz)/1000.)**1.88      ! douvill(yen, 1981)
   enddo
 
@@ -982,8 +982,8 @@ contains
         cf1=((1.+sl1)/(1.+sl2*cosz)-sl1)
         fzen=amax1(cf1,0.)
 
-        albsni(1)=0.95*(1.-c1*fage)         
-        albsni(2)=0.65*(1.-c2*fage)        
+        albsni(1)=0.95  !*(1.-c1*fage)  ! remove aging over glaciers       
+        albsni(2)=0.65  !*(1.-c2*fage)  ! remove aging over glaciers 
 
         albsnd(1)=albsni(1)+0.4*fzen*(1.-albsni(1))    !  vis direct
         albsnd(2)=albsni(2)+0.4*fzen*(1.-albsni(2))    !  nir direct
@@ -2616,7 +2616,7 @@ end if   ! opt_gla == 1
 ! local
   integer :: iz
   real (kind=kind_phys)    :: bdsnow  !< bulk density of snow (kg/m3)
-  real (kind=kind_phys),parameter :: mwd  = 100.   !< maximum water depth (mm)
+  real (kind=kind_phys),parameter :: mwd  = 600.   !< maximum water depth (mm)
 ! ----------------------------------------------------------------------
    snoflow = 0.0
    ponding1 = 0.0
@@ -2662,7 +2662,7 @@ end if   ! opt_gla == 1
 
 !to obtain equilibrium state of snow in glacier region
        
-   if(sneqv > mwd) then   ! 100 mm -> maximum water depth
+   if(sneqv > mwd) then   ! 600 mm -> maximum water depth
       bdsnow      = snice(0) / dzsnso(0)
       snoflow     = (sneqv - mwd)
       snice(0)    = snice(0)  - snoflow 
@@ -2736,19 +2736,28 @@ end if   ! opt_gla == 1
 ! local
 
   integer :: newnode            !< 0-no new layers, 1-creating new layers
+  real (kind=kind_phys) :: snowhin_adj  !< new snow depth rate with minimum adj [m/s]
+  real (kind=kind_phys) :: qsnow_adj    !< new snow water rate with minimum adj [mm/s]
+  real (kind=kind_phys) :: snowh_def    !< snow depth deficit this timestep 
+  real (kind=kind_phys), parameter :: snow_depth_min = 0.2  ! 20cm
 ! ----------------------------------------------------------------------
     newnode  = 0
 
+    snowh_def = max(0.0,snow_depth_min - (snowh + snowhin*dt))  ! if > 0 add more snow
+
+    snowhin_adj = snowhin + snowh_def/dt
+    qsnow_adj   = qsnow   + snowh_def*120.0/dt  ! assume new snow density = 120
+
 ! shallow snow / no layer
 
-    if(isnow == 0 .and. qsnow > 0.)  then
-      snowh = snowh + snowhin * dt
-      sneqv = sneqv + qsnow * dt
+    if(isnow == 0 .and. qsnow_adj > 0.)  then
+      snowh = snowh + snowhin_adj * dt
+      sneqv = sneqv + qsnow_adj * dt
     end if
 
 ! creating a new layer
  
-    if(isnow == 0  .and. qsnow>0. .and. snowh >= 0.025) then
+    if(isnow == 0  .and. qsnow_adj>0. .and. snowh >= 0.025) then
       isnow    = -1
       newnode  =  1
       dzsnso(0)= snowh
@@ -2760,9 +2769,9 @@ end if   ! opt_gla == 1
 
 ! snow with layers
 
-    if(isnow <  0 .and. newnode == 0 .and. qsnow > 0.) then
-         snice(isnow+1)  = snice(isnow+1)   + qsnow   * dt
-         dzsnso(isnow+1) = dzsnso(isnow+1)  + snowhin * dt
+    if(isnow <  0 .and. newnode == 0 .and. qsnow_adj > 0.) then
+         snice(isnow+1)  = snice(isnow+1)   + qsnow_adj   * dt
+         dzsnso(isnow+1) = dzsnso(isnow+1)  + snowhin_adj * dt
     endif
 
 ! ----------------------------------------------------------------------
@@ -3519,4 +3528,3 @@ module module_sf_noahmp_glacier
   use noahmp_glacier_globals
 
 end module module_sf_noahmp_glacier
-
