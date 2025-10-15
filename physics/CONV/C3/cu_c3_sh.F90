@@ -69,7 +69,7 @@ contains
                          zuo,xmb_out,kbcon,ktop,k22,ierr,ierrc,     &
                          flag_init, flag_restart,fv,r_d,delp,tmf,qmicro, & 
                          forceqv_spechum,betascu,betamcu,betadcu,sigmain,&
-                         sigmaout,progsigma,dx,  &
+                         sigmaout,progsigma,sigmab_coldstart,dx,  &
                          outt,outq,outqc,outu,outv,cnvwt,pre,cupclw,     & ! output tendencies
                          itf,ktf,its,ite, kts,kte,ipr,tropics)  ! dimesnional variables
 !
@@ -85,7 +85,7 @@ contains
         ,intent (in   )                   ::                                &
         itf,ktf,                                                            &
         its,ite, kts,kte,ipr
-     logical, intent(in) :: flag_init, flag_restart, progsigma
+     logical, intent(in) :: flag_init, flag_restart, progsigma, sigmab_coldstart
      logical :: make_calc_for_xk = .true.
      integer, intent (in   )              ::                                &
         ichoice
@@ -979,7 +979,7 @@ contains
             endif
          enddo
          call progsigma_calc(itf,ktf,flag_init,flag_restart,flag_shallow,  &
-              flag_mid,del,tmf,qmicro,dbyo,zdqca,omega_u,zeta,xlv,dtime,  &
+              flag_mid,sigmab_coldstart,del,tmf,qmicro,dbyo,zdqca,omega_u,zeta,xlv,dtime,  &
               forceqv_spechum,kbcon,ktop,cnvflg,betascu,betamcu,betadcu,   &
               sigmind,sigminm,sigmins,sigmain,sigmaout,sigmab)
 
