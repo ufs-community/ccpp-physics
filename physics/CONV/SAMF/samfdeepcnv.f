@@ -9,7 +9,8 @@
       use samfcnv_aerosols, only : samfdeepcnv_aerosols
       use progsigma, only : progsigma_calc
       use progomega, only : progomega_calc
-      
+      use mo_conv_kind, only : conv_wp
+
       contains
 
       subroutine samfdeepcnv_init(imfdeepcnv,imfdeepcnv_samf,            &
@@ -631,7 +632,9 @@ c
       do k = 1, km
         do i=1,im
           if (k <= kmax(i)) then
-            qeso(i,k) = 0.01 * fpvs(to(i,k))      ! fpvs is in pa
+!            qeso(i,k) = 0.01 * fpvs(to(i,k))      ! fpvs is in pa
+            qeso(i,k) = 0.01_conv_wp * 
+     &                  real(fpvs(real(to(i,k), kind_phys)), conv_wp) 
             qeso(i,k) = eps * qeso(i,k) / (pfld(i,k) + epsm1*qeso(i,k))
             val1      =             1.e-8
             qeso(i,k) = max(qeso(i,k), val1)
@@ -702,7 +705,9 @@ c
           if (k <= kmax(i)-1) then
             dz      = .5 * (zo(i,k+1) - zo(i,k))
             dp      = .5 * (pfld(i,k+1) - pfld(i,k))
-            es      = 0.01 * fpvs(to(i,k+1))      ! fpvs is in pa
+!            es      = 0.01 * fpvs(to(i,k+1))      ! fpvs is in pa
+            es = 0.01_conv_wp * 
+     &           real(fpvs(real(to(i,k+1), kind_phys)), conv_wp) 
             pprime  = pfld(i,k+1) + epsm1 * es
             qs      = eps * es / pprime
             dqsdp   = - qs / pprime
@@ -722,7 +727,9 @@ c
       do k = 1, km1
         do i=1,im
           if (k <= kmax(i)-1) then
-            qeso(i,k) = 0.01 * fpvs(to(i,k))      ! fpvs is in pa
+!            qeso(i,k) = 0.01 * fpvs(to(i,k))      ! fpvs is in pa
+            qeso(i,k) = 0.01_conv_wp * 
+     &                  real(fpvs(real(to(i,k), kind_phys)), conv_wp)
             qeso(i,k) = eps * qeso(i,k) / (po(i,k) + epsm1*qeso(i,k))
             val1      =             1.e-8
             qeso(i,k) = max(qeso(i,k), val1)
@@ -2591,7 +2598,9 @@ c
       do k = 1, km
         do i = 1, im
           if(asqecflg(i) .and. k <= kmax(i)) then
-            qeso(i,k) = 0.01 * fpvs(to(i,k))      ! fpvs is in pa
+!            qeso(i,k) = 0.01 * fpvs(to(i,k))      ! fpvs is in pa
+            qeso(i,k) = 0.01_conv_wp * 
+     &                  real(fpvs(real(to(i,k), kind_phys)), conv_wp)
             qeso(i,k) = eps * qeso(i,k) / (pfld(i,k)+epsm1*qeso(i,k))
             val       =             1.e-8
             qeso(i,k) = max(qeso(i,k), val )
@@ -2608,7 +2617,9 @@ c
           if(asqecflg(i) .and. k <= kmax(i)-1) then
             dz = .5 * (zo(i,k+1) - zo(i,k))
             dp = .5 * (pfld(i,k+1) - pfld(i,k))
-            es = 0.01 * fpvs(to(i,k+1))      ! fpvs is in pa
+!            es = 0.01 * fpvs(to(i,k+1))      ! fpvs is in pa
+            es = 0.01_conv_wp * 
+     &           real(fpvs(real(to(i,k+1), kind_phys)), conv_wp) 
             pprime = pfld(i,k+1) + epsm1 * es
             qs = eps * es / pprime
             dqsdp = - qs / pprime
@@ -2626,7 +2637,9 @@ c
       do k = 1, km1
         do i = 1, im
           if(asqecflg(i) .and. k <= kmax(i)-1) then
-            qeso(i,k) = 0.01 * fpvs(to(i,k))      ! fpvs is in pa
+!            qeso(i,k) = 0.01 * fpvs(to(i,k))      ! fpvs is in pa
+            qeso(i,k) = 0.01_conv_wp * 
+     &                  real(fpvs(real(to(i,k), kind_phys)), conv_wp)
             qeso(i,k) = eps * qeso(i,k) / (po(i,k) + epsm1 * qeso(i,k))
             val1      =             1.e-8
             qeso(i,k) = max(qeso(i,k), val1)
@@ -3100,7 +3113,9 @@ c
             qo(i,k) = q1(i,k)
             uo(i,k) = u1(i,k)
             vo(i,k) = v1(i,k)
-            qeso(i,k) = 0.01 * fpvs(t1(i,k))      ! fpvs is in pa
+!            qeso(i,k) = 0.01 * fpvs(t1(i,k))      ! fpvs is in pa
+            qeso(i,k) = 0.01_conv_wp * 
+     &                  real(fpvs(real(t1(i,k), kind_phys)), conv_wp)  
             qeso(i,k) = eps * qeso(i,k) / (pfld(i,k) + epsm1*qeso(i,k))
             val     =             1.e-8
             qeso(i,k) = max(qeso(i,k), val )
@@ -3343,7 +3358,9 @@ c
         do i = 1, im
           if (cnvflg(i) .and. k <= kmax(i)) then
             if(k <= ktcon(i)) then
-              qeso(i,k) = 0.01 * fpvs(t1(i,k))      ! fpvs is in pa
+!              qeso(i,k) = 0.01 * fpvs(t1(i,k))      ! fpvs is in pa
+              qeso(i,k) = 0.01_conv_wp * 
+     &                    real(fpvs(real(t1(i,k), kind_phys)), conv_wp)
               qeso(i,k) = eps * qeso(i,k)/(pfld(i,k) + epsm1*qeso(i,k))
               val     =             1.e-8
               qeso(i,k) = max(qeso(i,k), val )
