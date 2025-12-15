@@ -145,14 +145,14 @@
       integer              i, indx, jmn, k, kk, km1, n
 !     integer              latd,lond
 !
-      real(kind=kind_phys) clamd,   tkemx,   tkemn,   dtke,
+      real(kind=conv_wp) clamd,   tkemx,   tkemn,   dtke,
      &                     beta,    clamca,
      &                     cxlame,  cxlamd,
      &                     xlamde,  xlamdd,
      &                     crtlame, crtlamd
 !
 !     real(kind=kind_phys) detad
-      real(kind=kind_phys) adw,     aup,     aafac,   d0,
+      real(kind=conv_wp) adw,     aup,     aafac,   d0,
      &                     dellat,  desdt,   dg,
      &                     dh,      dhh,     dp,
      &                     dq,      dqsdp,   dqsdt,   dt,
@@ -177,6 +177,9 @@
 !    &                     xqrch,   mbdt,    tem,
      &                     xqrch,   tem,     tem1,    tem2,
      &                     ptem,    ptem1,   ptem2
+     
+      real(kind=conv_wp) :: omegaout_loc(im,km)
+      real(kind=conv_wp) :: sigmaout_loc(im,km)
 !
       integer              kb(im), kb1(im), kbcon(im), kbcon1(im),
      &                     ktcon(im), ktcon1(im), ktconn(im),
@@ -184,7 +187,7 @@
      &                     kbm(im), kmax(im), kd94(im)
 !
 !     real(kind=kind_phys) aa1(im),     acrt(im),   acrtfct(im),
-      real(kind=kind_phys) aa1(im),     tkemean(im),clamt(im),
+      real(kind=conv_wp) aa1(im),     tkemean(im),clamt(im),
      &                     ps(im),      del(im,km), prsl(im,km),
      &                     umean(im),   advfac(im), gdx(im),
      &                     delhbar(im), delq(im),   delq2(im),
@@ -206,30 +209,31 @@
 !     &                     xpwev(im),   delebar(im,ntr),
      &                     delubar(im), delvbar(im)
 !
-      real(kind=kind_phys) c0(im), sfcpbl(im)
+      real(kind=conv_wp) c0(im), sfcpbl(im)
 cj
-      real(kind=kind_phys) cinpcr,  cinpcrmx,  cinpcrmn,
+      real(kind=conv_wp) cinpcr,  cinpcrmx,  cinpcrmn,
      &                     cinacr,  cinacrmx,  cinacrmn,
      &                     sfclfac, rhcrt,
      &                     tkcrt,   cmxfac
 cj
 !
 !  parameters for updraft velocity calculation
-      real(kind=kind_phys) bb1, bb2, csmf, wucb
+      real(kind=conv_wp) bb1, bb2, csmf, wucb
 !
 !  parameters for prognostic sigma closure                                                                                                                                                      
-      real(kind=kind_phys) omega_u(im,km),zdqca(im,km),tmfq(im,km),
+      real(kind=conv_wp) omega_u(im,km),zdqca(im,km),tmfq(im,km),
      &     omegac(im),zeta(im,km),dbyo1(im,km),sigmab(im),qadv(im,km),
      &     tentr(im,km)
-      real(kind=kind_phys) gravinv,invdelt,sigmind,sigminm,sigmins
-      parameter(sigmind=0.01,sigmins=0.03,sigminm=0.01)
+      real(kind=conv_wp) gravinv,invdelt,sigmind,sigminm,sigmins
+      parameter(sigmind=0.01_conv_wp,sigmins=0.03_conv_wp,
+     &          sigminm=0.01_conv_wp)
       logical flag_shallow, flag_mid
 c  physical parameters
 !     parameter(grav=grav,asolfac=0.958)
 !     parameter(elocp=hvap/cp,el2orc=hvap*hvap/(rv*cp))
 !     parameter(c0s=.002,c1=.002,d0=.01)
 !     parameter(d0=.01)
-      parameter(d0=.001)
+      parameter(d0=.001_conv_wp)
 !     parameter(c0l=c0s*asolfac)
 !
 ! asolfac: aerosol-aware parameter based on Lim (2011)
@@ -239,40 +243,42 @@ c  physical parameters
 !      Until a realistic Nccn is provided, Nccns are assumed
 !      as Nccn=100 for sea and Nccn=1000 for land
 !
-      parameter(cm=1.0,cq=1.0)
+      parameter(cm=1.0_conv_wp,cq=1.0_conv_wp)
 !     parameter(fact1=(cvap-cliq)/rv,fact2=hvap/rv-fact1*t0c)
-      parameter(clamd=0.03,tkemx=0.65,tkemn=0.05)
-      parameter(clamca=0.03)
+      parameter(clamd=0.03_conv_wp,tkemx=0.65_conv_wp,
+     &          tkemn=0.05_conv_wp)
+      parameter(clamca=0.03_conv_wp)
       parameter(dtke=tkemx-tkemn)
-      parameter(cthk=200.,dthk=25.,sfclfac=0.2,rhcrt=0.75)
-      parameter(cinpcrmx=180.,cinpcrmn=120.)
+      parameter(cthk=200.0_conv_wp,dthk=25.0_conv_wp,
+     &          sfclfac=0.2_conv_wp,rhcrt=0.75)
+      parameter(cinpcrmx=180.0_conv_wp,cinpcrmn=120._conv_wp)
 !     parameter(cinacrmx=-120.,cinacrmn=-120.)
-      parameter(cinacrmx=-120.,cinacrmn=-80.)
-      parameter(bb1=4.0,bb2=0.8,csmf=0.2)
-      parameter(tkcrt=2.,cmxfac=15.)
-      parameter(betaw=.03)
+      parameter(cinacrmx=-120.0_conv_wp,cinacrmn=-80.0_conv_wp)
+      parameter(bb1=4.0_conv_wp,bb2=0.8_conv_wp,csmf=0.2_conv_wp)
+      parameter(tkcrt=2.0_conv_wp,cmxfac=15.0_conv_wp)
+      parameter(betaw=.03_conv_wp)
 
 !
 !  local variables and arrays
-      real(kind=kind_phys) pfld(im,km),    to(im,km),     qo(im,km),
+      real(kind=conv_wp) pfld(im,km),    to(im,km),     qo(im,km),
      &                     uo(im,km),      vo(im,km),     qeso(im,km),
      &                     ctr(im,km,ntr), ctro(im,km,ntr)
 !  for aerosol transport
 !     real(kind=kind_phys) qaero(im,km,ntc)
 c  variables for tracer wet deposition,
-      real(kind=kind_phys), dimension(im,km,ntc) :: chem_c, chem_pw,
+      real(kind=conv_wp), dimension(im,km,ntc) :: chem_c, chem_pw,
      &  wet_dep
 !
 !  for updraft velocity calculation
-      real(kind=kind_phys) wu2(im,km),     buo(im,km),    drag(im,km),
+      real(kind=conv_wp) wu2(im,km),     buo(im,km),    drag(im,km),
      &                     wush(im,km),    wc(im)
 !
 !  for updraft fraction & scale-aware function
-      real(kind=kind_phys) scaldfunc(im), sigmagfm(im)
+      real(kind=conv_wp) scaldfunc(im), sigmagfm(im)
 !
 c  cloud water
 !     real(kind=kind_phys) tvo(im,km)
-      real(kind=kind_phys) qlko_ktcon(im), dellal(im,km), tvo(im,km),
+      real(kind=conv_wp) qlko_ktcon(im), dellal(im,km), tvo(im,km),
      &                     dbyo(im,km),    zo(im,km),
      &                     xlamue(im,km),  xlamud(im,km),
      &                     fent1(im,km),   fent2(im,km),
@@ -292,10 +298,12 @@ c  cloud water
 !  variables for Total Variation Diminishing (TVD) flux-limiter scheme
 !     on environmental subsidence and uplifting
 !
-      real(kind=kind_phys) q_diff(im,0:km-1), e_diff(im,0:km-1,ntr),
-     &                     flxtvd(im,0:km-1)
-      real(kind=kind_phys) rrkp, phkp
-      real(kind=kind_phys) tsumn(im), tsump(im), rtnp(im)
+!      real(kind=kind_phys) q_diff(im,0:km-1), e_diff(im,0:km-1,ntr),
+!     &                     flxtvd(im,0:km-1)
+      real(kind=conv_wp) :: q_diff(im,0:km), flxtvd(im,0:km)
+      real(kind=conv_wp) :: e_diff(im,0:km,ntr)
+      real(kind=conv_wp) rrkp, phkp
+      real(kind=conv_wp) tsumn(im), tsump(im), rtnp(im)
 !
       logical do_aerosols, totflg, cnvflg(im), asqecflg(im), flg(im)
 !
@@ -310,21 +318,25 @@ c  cloud water
 c  gdas derived acrit
 c     data acritt/.203,.515,.521,.566,.625,.665,.659,.688,
 c    &            .743,.813,.886,.947,1.138,1.377,1.896/
-      real(kind=kind_phys) tf, tcr, tcrf
-      parameter (tf=233.16, tcr=263.16, tcrf=1.0/(tcr-tf))
+      real(kind=conv_wp) tf, tcr, tcrf
+      parameter (tf=233.16_conv_wp, tcr=263.16_conv_wp, 
+     &           tcrf=1.0_conv_wp/(tcr-tf))
 
       ! Initialize CCPP error handling variables
       errmsg = ''
       errflg = 0
 
-      gravinv = 1./grav
-      invdelt = 1./delt
+      gravinv = 1.0_conv_wp/real(grav, kind=conv_wp)
+      invdelt = 1.0_conv_wp/real(delt, kind=conv_wp)
 
-      elocp = hvap/cp
-      el2orc = hvap*hvap/(rv*cp)
+      elocp = real(hvap, kind=conv_wp)/real(cp, kind=conv_wp)
+      el2orc = (real(hvap, kind=conv_wp)*real(hvap, kind=conv_wp))/
+     &         (real(rv, kind=conv_wp)*real(cp, kind=conv_wp))
 
-      fact1 = (cvap-cliq)/rv
-      fact2 = hvap/rv-fact1*t0c
+      fact1 = (real(cvap, kind=conv_wp)-real(cliq, kind=conv_wp))/
+     &         real(rv, kind=conv_wp)
+      fact2 = real(hvap, kind=conv_wp)/real(rv, kind=conv_wp)-fact1 *
+     &         real(t0c, kind=conv_wp)
 c-----------------------------------------------------------------------
 !>  ## Determine whether to perform aerosol transport
       if(hwrf_samfdeep) then
@@ -340,9 +352,9 @@ c-----------------------------------------------------------------------
 
 !************************************************************************
 !     convert input Pa terms to Cb terms  -- Moorthi
-      ps   = psp   * 0.001
-      prsl = prslp * 0.001
-      del  = delp  * 0.001
+      ps   = real(psp, kind=conv_wp) * 0.001_conv_wp
+      prsl = real(prslp, kind=conv_wp) * 0.001_conv_wp
+      del  = real(delp, kind=conv_wp) * 0.001_conv_wp
 !************************************************************************
 !
 !
@@ -351,61 +363,79 @@ c-----------------------------------------------------------------------
 c
 c  initialize arrays
 c
-      chem_c  = 0.
-      chem_pw = 0.
-      wet_dep = 0.
+      chem_c  = 0.0_conv_wp
+      chem_pw = 0.0_conv_wp
+      wet_dep = 0.0_conv_wp
 !
       do i=1,im
         cnvflg(i) = .true.
         if(do_mynnedmf) then
-            if(maxMF(i).gt.0.)cnvflg(i)=.false.
+            if(maxMF(i).gt.0.0_conv_wp)cnvflg(i)=.false.
         endif
-        sfcpbl(i) = sfclfac * hpbl(i)
-        rn(i)=0.
-        mbdt(i)=10.
+        sfcpbl(i) = real(sfclfac, kind=conv_wp) * real(hpbl(i), 
+     &              kind=conv_wp)
+        rn(i)=0.0_conv_wp
+        mbdt(i)=10.0_conv_wp
         kbot(i)=km+1
         ktop(i)=0
         kbcon(i)=km
         ktcon(i)=1
         ktconn(i)=1
-        dtconv(i) = 3600.
-        cldwrk(i) = 0.
-        pdot(i) = 0.
+        dtconv(i) = 3600.0_conv_wp
+        cldwrk(i) = 0.0_conv_wp
+        pdot(i) = 0.0_conv_wp
         lmin(i) = 1
         jmin(i) = 1
-        qlko_ktcon(i) = 0.
-        edt(i)  = 0.
-        edto(i) = 0.
-        edtx(i) = 0.
+        qlko_ktcon(i) = 0.0_conv_wp
+        edt(i)  = 0.0_conv_wp
+        edto(i) = 0.0_conv_wp
+        edtx(i) = 0.0_conv_wp
 !       acrt(i) = 0.
 !       acrtfct(i) = 1.
-        aa1(i)  = 0.
-        aa2(i)  = 0.
-        xaa0(i) = 0.
-        cina(i) = 0.
-        pwavo(i)= 0.
-        pwevo(i)= 0.
-        xmb(i)  = 0.
-        xpwav(i)= 0.
-        xpwev(i)= 0.
-        vshear(i) = 0.
-        advfac(i) = 0.
-        rainevap(i) = 0.
-        omegac(i)=0.
-        gdx(i) = sqrt(garea(i))
+        aa1(i)  = 0.0_conv_wp
+        aa2(i)  = 0.0_conv_wp
+        xaa0(i) = 0.0_conv_wp
+        cina(i) = 0.0_conv_wp
+        pwavo(i)= 0.0_conv_wp
+        pwevo(i)= 0.0_conv_wp
+        xmb(i)  = 0.0_conv_wp
+        xpwav(i)= 0.0_conv_wp
+        xpwev(i)= 0.0_conv_wp
+        vshear(i) = 0.0_conv_wp
+        advfac(i) = 0.0_conv_wp
+        rainevap(i) = 0.0_conv_wp
+        omegac(i)=0.0_conv_wp
+        gdx(i) = sqrt(real(garea(i), kind=conv_wp))
+        umean(i) = 0.0_conv_wp
+        deltv(i) = 0.0_conv_wp
+        delq(i) = 0.0_conv_wp
+        qevap(i) = 0.0_conv_wp
       enddo
 
       do k=1,km
         do i=1,im
-          xlamud(i,k) = 0.
-          xlamue(i,k) = 0.
+          xlamud(i,k) = 0.0_conv_wp
+          xlamue(i,k) = 0.0_conv_wp
+          qeso(i,k) = 0.0_conv_wp
+          qadv(i,k) = 0.0_conv_wp
+          tmfq(i,k) = 0.0_conv_wp
+          flxtvd(i,k) = 0.0_conv_wp
+          q_diff(i,k) = 0.0_conv_wp
         enddo
       enddo
 !
+      do n = 1, ntr
+        do k = 0, km
+           do i = 1, im
+              e_diff(i,k,n) = 0.0_conv_wp
+           enddo
+        enddo
+      enddo
+
       if (hwrf_samfdeep) then
         do i=1,im
-          scaldfunc(i)=-1.0
-          sigmagfm(i)=-1.0
+          scaldfunc(i)=-1.0_conv_wp
+          sigmagfm(i)=-1.0_conv_wp
 !         sigmuout(i)=-1.0
         enddo
       endif
@@ -413,19 +443,19 @@ c
 !>  - determine aerosol-aware rain conversion parameter over land
       do i=1,im
         if(islimsk(i) == 1) then
-           c0(i) = c0s*asolfac
+           c0(i) = real(c0s, conv_wp) * real(asolfac, conv_wp)
         else
-           c0(i) = c0s
+           c0(i) = real(c0s, conv_wp) 
         endif
       enddo
 !
 !>  - determine rain conversion parameter above the freezing level which exponentially decreases with decreasing temperature from Han et al.'s (2017) \cite han_et_al_2017 equation 8.
       do k = 1, km
         do i = 1, im
-          if(t1(i,k) > 273.16) then
+          if(real(t1(i,k), conv_wp) > 273.16_conv_wp) then
             c0t(i,k) = c0(i)
           else
-            tem = d0 * (t1(i,k) - 273.16)
+            tem = d0 * (real(t1(i,k), conv_wp) - 273.16_conv_wp)
             tem1 = exp(tem)
             c0t(i,k) = c0(i) * tem1
           endif
@@ -434,33 +464,33 @@ c
 !>  - Initialize convective cloud water and cloud cover to zero.
       do k = 1, km
         do i = 1, im
-          cnvw(i,k) = 0.
-          cnvc(i,k) = 0.
+          cnvw(i,k) = 0.0_conv_wp
+          cnvc(i,k) = 0.0_conv_wp
         enddo
       enddo
 ! hchuang code change
 !>  - Initialize updraft and downdraft mass fluxes to zero.
       do k = 1, km
         do i = 1, im
-          ud_mf(i,k) = 0.
-          dd_mf(i,k) = 0.
-          dt_mf(i,k) = 0.
+          ud_mf(i,k) = 0.0_conv_wp
+          dd_mf(i,k) = 0.0_conv_wp
+          dt_mf(i,k) = 0.0_conv_wp
         enddo
       enddo
       if(mp_phys == mp_phys_mg) then
         do k = 1, km
           do i = 1, im
-            QLCN(i,k)      = qtr(i,k,2)
-            QICN(i,k)      = qtr(i,k,1)
-            w_upi(i,k)     = 0.0
-            cf_upi(i,k)    = 0.0
-            CNV_MFD(i,k)   = 0.0
+            QLCN(i,k)      = real(qtr(i,k,2), conv_wp)
+            QICN(i,k)      = real(qtr(i,k,1), conv_wp)
+            w_upi(i,k)     = 0.0_conv_wp
+            cf_upi(i,k)    = 0.0_conv_wp
+            CNV_MFD(i,k)   = 0.0_conv_wp
 
-            CNV_DQLDT(i,k) = 0.0
-            CLCN(i,k)      = 0.0
-            CNV_FICE(i,k)  = 0.0
-            CNV_NDROP(i,k) = 0.0
-            CNV_NICE(i,k)  = 0.0
+            CNV_DQLDT(i,k) = 0.0_conv_wp
+            CLCN(i,k)      = 0.0_conv_wp
+            CNV_FICE(i,k)  = 0.0_conv_wp
+            CNV_NDROP(i,k) = 0.0_conv_wp
+            CNV_NICE(i,k)  = 0.0_conv_wp
           enddo
         enddo
       endif
@@ -469,41 +499,41 @@ c
 !       acrit(k) = acritt(k) * (975. - pcrit(k))
 !     enddo
 !
-      dt2 = delt
+      dt2 = real(delt, kind=conv_wp)
 !     val   =         1200.
-      val   =         600.
+      val   =         600.0_conv_wp
       dtmin = max(dt2, val )
 !     val   =         5400.
-      val   =         10800.
+      val   =         10800.0_conv_wp
       dtmax = max(dt2, val )
 !  model tunable parameters are all here
-      edtmaxl = .3
-      edtmaxs = .3
+      edtmaxl = .3_conv_wp
+      edtmaxs = .3_conv_wp
 !     evfact  = 0.3
 !     evfactl = 0.3
-      aafac   = .1
+      aafac   = .1_conv_wp
       if (hwrf_samfdeep) then
-        cxlame  = 1.0e-3
+        cxlame  = 1.0e-3_conv_wp
       else
-        cxlame  = 1.0e-4
+        cxlame  = 1.0e-4_conv_wp
       endif
-      cxlamd  = 0.75e-4
-      crtlame = 1.0e-4
-      crtlamd = 1.0e-4
-      xlamde  = 1.0e-4
-      xlamdd  = 1.0e-4
+      cxlamd  = 0.75e-4_conv_wp
+      crtlame = 1.0e-4_conv_wp
+      crtlamd = 1.0e-4_conv_wp
+      xlamde  = 1.0e-4_conv_wp
+      xlamdd  = 1.0e-4_conv_wp
 !
 !     pgcon   = 0.7     ! Gregory et al. (1997, QJRMS)
 !     pgcon   = 0.55    ! Zhang & Wu (2003,JAS)
 !
-      w1l     = -8.e-3
-      w2l     = -4.e-2
-      w3l     = -5.e-3
-      w4l     = -5.e-4
-      w1s     = -2.e-4
-      w2s     = -2.e-3
-      w3s     = -1.e-3
-      w4s     = -2.e-5
+      w1l     = -8.e-3_conv_wp
+      w2l     = -4.e-2_conv_wp
+      w3l     = -5.e-3_conv_wp
+      w4l     = -5.e-4_conv_wp
+      w1s     = -2.e-4_conv_wp
+      w2s     = -2.e-3_conv_wp
+      w3s     = -1.e-3_conv_wp
+      w4s     = -2.e-5_conv_wp
 c
 c  define top layer for search of the downdraft originating layer
 c  and the maximum thetae for updraft
@@ -514,15 +544,15 @@ c
         kbm(i)   = km
         kmax(i)  = km
         kd94(i)  = km
-        tx1(i)   = 1.0 / ps(i)
+        tx1(i)   = 1.0_conv_wp / ps(i)
       enddo
 !
       do k = 1, km
         do i=1,im
-          if (prsl(i,k)*tx1(i) > 0.04) kmax(i)  = k + 1
-          if (prsl(i,k)*tx1(i) > 0.45) kbmax(i) = k + 1
-          if (prsl(i,k)*tx1(i) > 0.70) kbm(i)   = k + 1
-          if (prsl(i,k)*tx1(i) > 0.94) kd94(i)  = k + 1
+          if (prsl(i,k)*tx1(i) > 0.04_conv_wp) kmax(i)  = k + 1
+          if (prsl(i,k)*tx1(i) > 0.45_conv_wp) kbmax(i) = k + 1
+          if (prsl(i,k)*tx1(i) > 0.70_conv_wp) kbm(i)   = k + 1
+          if (prsl(i,k)*tx1(i) > 0.94_conv_wp) kd94(i)  = k + 1
         enddo
       enddo
       do i=1,im
@@ -538,19 +568,19 @@ c
 !>  - Calculate hydrostatic height at layer centers assuming a flat surface (no terrain) from the geopotential.
       do k = 1, km
         do i=1,im
-          zo(i,k) = phil(i,k) / grav
+          zo(i,k) = real(phil(i,k), conv_wp) / real(grav, conv_wp)
         enddo
       enddo
 !>  - Calculate interface height
       do k = 1, km1
       do i=1,im
-        zi(i,k) = 0.5*(zo(i,k)+zo(i,k+1))
+        zi(i,k) = 0.5_conv_wp*(zo(i,k)+zo(i,k+1))
       enddo
       enddo
       if (hwrf_samfdeep) then
         do k = 1, km1
         do i=1,im
-          xlamue(i,k) = clam / zi(i,k)
+          xlamue(i,k) = real(clam, conv_wp) / zi(i,k)
         enddo
         enddo
       endif
@@ -561,67 +591,93 @@ c
 !>  - Convert prsl from centibar to millibar, set normalized mass fluxes to 1, cloud properties to 0, and save model state variables (after advection/turbulence).
       do k = 1, km
         do i = 1, im
+          pfld(i,k)  = 0.0_conv_wp
+          eta(i,k)   = 1.0_conv_wp  
+          etad(i,k)  = 1.0_conv_wp 
+          fent1(i,k) = 1.0_conv_wp  
+          fent2(i,k) = 1.0_conv_wp  
+          
+          rh(i,k)    = 0.0_conv_wp
+          frh(i,k)   = 0.0_conv_wp
+          hcko(i,k)  = 0.0_conv_wp
+          qcko(i,k)  = 0.0_conv_wp
+          qrcko(i,k) = 0.0_conv_wp
+          ucko(i,k)  = 0.0_conv_wp
+          vcko(i,k)  = 0.0_conv_wp
+          hcdo(i,k)  = 0.0_conv_wp
+          qcdo(i,k)  = 0.0_conv_wp
+          ucdo(i,k)  = 0.0_conv_wp
+          vcdo(i,k)  = 0.0_conv_wp
+          qrcd(i,k)  = 0.0_conv_wp
+          qrcdo(i,k) = 0.0_conv_wp
+          dbyo(i,k)  = 0.0_conv_wp
+          pwo(i,k)   = 0.0_conv_wp
+          pwdo(i,k)  = 0.0_conv_wp
+          dellal(i,k)= 0.0_conv_wp
+          dellah(i,k) = 0.0_conv_wp
+          dellaq(i,k) = 0.0_conv_wp
+          dellau(i,k) = 0.0_conv_wp
+          dellav(i,k) = 0.0_conv_wp
+
+          to(i,k)    = 0.0_conv_wp
+          qo(i,k)    = 0.0_conv_wp
+          uo(i,k)    = 0.0_conv_wp
+          vo(i,k)    = 0.0_conv_wp
+          
+          wu2(i,k)   = 0.0_conv_wp
+          buo(i,k)   = 0.0_conv_wp
+          wush(i,k)  = 0.0_conv_wp
+          drag(i,k)  = 0.0_conv_wp
+          cnvwt(i,k) = 0.0_conv_wp
+
           if (k <= kmax(i)) then
-            pfld(i,k) = prsl(i,k) * 10.0
-            eta(i,k)  = 1.
-            fent1(i,k)= 1.
-            fent2(i,k)= 1.
-            rh(i,k)   = 0.
-            frh(i,k)  = 0.
-            hcko(i,k) = 0.
-            qcko(i,k) = 0.
-            qrcko(i,k)= 0.
-            ucko(i,k) = 0.
-            vcko(i,k) = 0.
-            etad(i,k) = 1.
-            hcdo(i,k) = 0.
-            qcdo(i,k) = 0.
-            ucdo(i,k) = 0.
-            vcdo(i,k) = 0.
-            qrcd(i,k) = 0.
-            qrcdo(i,k)= 0.
-            dbyo(i,k) = 0.
-            pwo(i,k)  = 0.
-            pwdo(i,k) = 0.
-            dellal(i,k) = 0.
-            to(i,k)   = t1(i,k)
-            qo(i,k)   = q1(i,k)
-            uo(i,k)   = u1(i,k)
-            vo(i,k)   = v1(i,k)
-!           uo(i,k)   = u1(i,k) * rcs(i)
-!           vo(i,k)   = v1(i,k) * rcs(i)
-            wu2(i,k)  = 0.
-            buo(i,k)  = 0.
-            wush(i,k) = 0.
-            drag(i,k) = 0.
-            cnvwt(i,k)= 0.
+            pfld(i,k) = prsl(i,k) * 10.0_conv_wp
+            
+            to(i,k)   = real(t1(i,k), conv_wp)
+            qo(i,k)   = real(q1(i,k), conv_wp)
+            uo(i,k)   = real(u1(i,k), conv_wp)
+            vo(i,k)   = real(v1(i,k), conv_wp)
+            
           endif
         enddo
       enddo
 
       do k = 1, km
          do i = 1, im
-            dbyo1(i,k)=0.
-            zdqca(i,k)=0.
-            omega_u(i,k)=0.
-            zeta(i,k)=1.0
+            dbyo1(i,k)=0.0_conv_wp
+            zdqca(i,k)=0.0_conv_wp
+            omega_u(i,k)=0.0_conv_wp
+            zeta(i,k)=1.0_conv_wp
          enddo
       enddo
 
 !
 !  initialize tracer variables
 !
+      do n = 1, ntr
+         do i = 1, im
+            delebar(i,n) = 0.0_conv_wp
+         enddo
+         do k = 1, km
+            do i = 1, im
+               dellae(i,k,n) = 0.0_conv_wp
+               ctr(i,k,n)    = 0.0_conv_wp
+               ctro(i,k,n)   = 0.0_conv_wp
+               ecko(i,k,n)   = 0.0_conv_wp
+               ercko(i,k,n)  = 0.0_conv_wp
+               ecdo(i,k,n)   = 0.0_conv_wp
+            enddo
+         enddo
+      enddo
+      
       if(.not.hwrf_samfdeep) then
       do n = 3, ntr+2
         kk = n-2
         do k = 1, km
           do i = 1, im
             if (k <= kmax(i)) then
-              ctr(i,k,kk)  = qtr(i,k,n)
-              ctro(i,k,kk) = qtr(i,k,n)
-              ecko(i,k,kk) = 0.
-              ercko(i,k,kk) = 0.
-              ecdo(i,k,kk) = 0.
+              ctr(i,k,kk)  = real(qtr(i,k,n), conv_wp)
+              ctro(i,k,kk) = real(qtr(i,k,n), conv_wp)
             endif
           enddo
         enddo
@@ -635,10 +691,11 @@ c
 !            qeso(i,k) = 0.01 * fpvs(to(i,k))      ! fpvs is in pa
             qeso(i,k) = 0.01_conv_wp * 
      &                  real(fpvs(real(to(i,k), kind_phys)), conv_wp) 
-            qeso(i,k) = eps * qeso(i,k) / (pfld(i,k) + epsm1*qeso(i,k))
-            val1      =             1.e-8
+            qeso(i,k) = real(eps, conv_wp) * qeso(i,k) / (pfld(i,k) +
+     &                  real(epsm1, conv_wp) * qeso(i,k))
+            val1      = 1.e-8_conv_wp
             qeso(i,k) = max(qeso(i,k), val1)
-            val2      =           1.e-10
+            val2      = 1.e-10_conv_wp
             qo(i,k)   = max(qo(i,k), val2 )
 !           qo(i,k)   = min(qo(i,k),qeso(i,k))
 !           tvo(i,k)  = to(i,k) + fv * to(i,k) * qo(i,k)
@@ -653,9 +710,10 @@ c
         do i=1,im
           if (k <= kmax(i)) then
 !           tem       = grav * zo(i,k) + cp * to(i,k)
-            tem       = phil(i,k) + cp * to(i,k)
-            heo(i,k)  = tem  + hvap * qo(i,k)
-            heso(i,k) = tem  + hvap * qeso(i,k)
+            tem = real(phil(i,k), conv_wp) + real(cp, conv_wp) * 
+     &                 to(i,k)
+            heo(i,k) = tem + real(hvap, conv_wp) * qo(i,k)
+            heso(i,k) = tem + real(hvap, conv_wp) * qeso(i,k)
 c           heo(i,k)  = min(heo(i,k),heso(i,k))
           endif
         enddo
@@ -703,22 +761,26 @@ c
       do k = 1, km1
         do i=1,im
           if (k <= kmax(i)-1) then
-            dz      = .5 * (zo(i,k+1) - zo(i,k))
-            dp      = .5 * (pfld(i,k+1) - pfld(i,k))
+            dz = .5_conv_wp * (zo(i,k+1) - zo(i,k))
+            dp = .5_conv_wp * (pfld(i,k+1) - pfld(i,k))
 !            es      = 0.01 * fpvs(to(i,k+1))      ! fpvs is in pa
             es = 0.01_conv_wp * 
      &           real(fpvs(real(to(i,k+1), kind_phys)), conv_wp) 
-            pprime  = pfld(i,k+1) + epsm1 * es
-            qs      = eps * es / pprime
+            pprime  = pfld(i,k+1) + real(epsm1, conv_wp) * es
+            qs      = real(eps, conv_wp) * es / pprime
             dqsdp   = - qs / pprime
-            desdt   = es * (fact1 / to(i,k+1) + fact2 / (to(i,k+1)**2))
+            desdt   = es * (real(fact1, conv_wp) / to(i,k+1) + 
+     &                real(fact2,conv_wp) / (to(i,k+1)**2))
             dqsdt   = qs * pfld(i,k+1) * desdt / (es * pprime)
-            gamma   = el2orc * qeso(i,k+1) / (to(i,k+1)**2)
-            dt      = (grav*dz + hvap*dqsdp*dp) / (cp * (1. + gamma))
+            gamma   = real(el2orc, conv_wp) * qeso(i,k+1) /
+     &                (to(i,k+1)**2)
+            dt      = (real(grav, conv_wp)*dz + real(hvap, conv_wp)*
+     &                dqsdp*dp)/(real(cp, conv_wp) * 
+     &                (1.0_conv_wp + gamma))
             dq      = dqsdt * dt + dqsdp * dp
             to(i,k) = to(i,k+1) + dt
             qo(i,k) = qo(i,k+1) + dq
-            po(i,k) = .5 * (pfld(i,k) + pfld(i,k+1))
+            po(i,k) = .5_conv_wp * (pfld(i,k) + pfld(i,k+1))
           endif
         enddo
       enddo
@@ -730,20 +792,23 @@ c
 !            qeso(i,k) = 0.01 * fpvs(to(i,k))      ! fpvs is in pa
             qeso(i,k) = 0.01_conv_wp * 
      &                  real(fpvs(real(to(i,k), kind_phys)), conv_wp)
-            qeso(i,k) = eps * qeso(i,k) / (po(i,k) + epsm1*qeso(i,k))
-            val1      =             1.e-8
+            qeso(i,k) = real(eps, conv_wp) * qeso(i,k) / (po(i,k) + 
+     &                  real(epsm1, conv_wp) * qeso(i,k))
+            val1      = 1.e-8_conv_wp
             qeso(i,k) = max(qeso(i,k), val1)
-            val2      =           1.e-10
+            val2      = 1.e-10_conv_wp
             qo(i,k)   = max(qo(i,k), val2 )
 !           qo(i,k)   = min(qo(i,k),qeso(i,k))
-            rh(i,k) = min(qo(i,k)/qeso(i,k), 1.)
-            frh(i,k)  = 1. - rh(i,k)
-            heo(i,k)  = .5 * grav * (zo(i,k) + zo(i,k+1)) +
-     &                  cp * to(i,k) + hvap * qo(i,k)
-            heso(i,k) = .5 * grav * (zo(i,k) + zo(i,k+1)) +
-     &                  cp * to(i,k) + hvap * qeso(i,k)
-            uo(i,k)   = .5 * (uo(i,k) + uo(i,k+1))
-            vo(i,k)   = .5 * (vo(i,k) + vo(i,k+1))
+            rh(i,k) = min(qo(i,k)/qeso(i,k), 1.0_conv_wp)
+            frh(i,k)  = 1.0_conv_wp - rh(i,k)
+            heo(i,k)  = .5_conv_wp * real(grav, conv_wp) * (zo(i,k) + 
+     &                  zo(i,k+1)) + real(cp, conv_wp) * to(i,k) +
+     &                  real(hvap, conv_wp) * qo(i,k)
+            heso(i,k) = .5_conv_wp * real(grav, conv_wp) * (zo(i,k) + 
+     &                  zo(i,k+1)) + real(cp, conv_wp) * to(i,k) +
+     &                  real(hvap, conv_wp) * qeso(i,k)
+            uo(i,k)   = .5_conv_wp * uo(i,k) + uo(i,k+1)
+            vo(i,k)   = .5_conv_wp * vo(i,k) + vo(i,k+1)
           endif
         enddo
       enddo
@@ -752,7 +817,7 @@ c
       do k = 1, km1
         do i=1,im
           if (k <= kmax(i)-1) then
-            ctro(i,k,n) = .5 * (ctro(i,k,n) + ctro(i,k+1,n))
+            ctro(i,k,n) = .5_conv_wp * (ctro(i,k,n) + ctro(i,k+1,n))
           endif
         enddo
       enddo
@@ -792,7 +857,8 @@ c
       do i=1,im
         if(cnvflg(i)) then
 !         pdot(i)  = 10.* dot(i,kbcon(i))
-          pdot(i)  = 0.01 * dot(i,kbcon(i)) ! Now dot is in Pa/s
+          pdot(i)  = 0.01_conv_wp * 
+     &               real(dot(i,kbcon(i)), conv_wp) ! Now dot is in Pa/s
         endif
       enddo
 c
@@ -817,18 +883,18 @@ c
           elseif(pdot(i) >= -w4) then
             tem = - (pdot(i) + w4) / (w4 - w3)
           else
-            tem = 0.
+            tem = 0.0_conv_wp
           endif
-          val1    =            -1.
+          val1    = -1.0_conv_wp
           tem = max(tem,val1)
-          val2    =             1.
+          val2    =  1.0_conv_wp
           tem = min(tem,val2)
-          ptem = 1. - tem
-          ptem1= .5*(cinpcrmx-cinpcrmn)
+          ptem = 1.0_conv_wp - tem
+          ptem1= .5_conv_wp*(cinpcrmx-cinpcrmn)
           cinpcr = cinpcrmx - ptem * ptem1
           tem1 = pfld(i,kb(i)) - pfld(i,kbcon(i))
           if(tem1 > cinpcr .and.
-     &       zi(i,kbcon(i)) > hpbl(i)) then
+     &       zi(i,kbcon(i)) > real(hpbl(i), conv_wp)) then
              cnvflg(i) = .false.
           endif
         endif
@@ -836,7 +902,8 @@ c
 !!
       if(do_ca .and. ca_trigger)then
          do i=1,im
-            if(ca_deep(i) > nthresh) cnvflg(i) = .true.
+            if(real(ca_deep(i), conv_wp) > real(nthresh, conv_wp)) 
+     &         cnvflg(i) = .true.
             if(kbcon(i) == kmax(i)) cnvflg(i) = .false.
          enddo
       endif
@@ -890,7 +957,8 @@ c
 !!
       if(do_ca .and. ca_trigger)then
          do i=1,im
-            if(ca_deep(i) > nthresh) cnvflg(i) = .true.
+            if(real(ca_deep(i), conv_wp) > real(nthresh, conv_wp)) 
+     &         cnvflg(i) = .true.
             if(kbcon(i) == kmax(i)) cnvflg(i) = .false.
          enddo
       endif
@@ -904,15 +972,16 @@ c
       do i=1,im
         if(cnvflg(i)) then
 !         pdot(i)  = 10.* dot(i,kbcon(i))
-          pdot(i)  = 0.01 * dot(i,kbcon(i)) ! Now dot is in Pa/s
+          pdot(i)  = 0.01_conv_wp * 
+     &               real(dot(i,kbcon(i)), conv_wp) ! Now dot is in Pa/s
         endif
       enddo
 !
 !> - if the mean relative humidity in the subcloud layers is less than a threshold value (rhcrt), convection is not triggered.
 !
       do i = 1, im
-        rhbar(i) = 0.
-        sumx(i) = 0.
+        rhbar(i) = 0.0_conv_wp
+        sumx(i) = 0.0_conv_wp
       enddo
       do k = 1, km1
         do i = 1, im
@@ -936,7 +1005,8 @@ c
 !!
       if(do_ca .and. ca_trigger)then
          do i=1,im
-            if(ca_deep(i) > nthresh) cnvflg(i) = .true.
+            if(real(ca_deep(i), conv_wp) > real(nthresh, conv_wp)) 
+     &         cnvflg(i) = .true.
             if(kbcon(i) == kmax(i)) cnvflg(i) = .false.
          enddo
       endif
@@ -955,8 +1025,8 @@ c
 !
         do i= 1, im
           if(cnvflg(i)) then
-            sumx(i) = 0.
-            tkemean(i) = 0.
+            sumx(i) = 0.0_conv_wp
+            tkemean(i) = 0.0_conv_wp
           endif
         enddo
         do k = 1, km1
@@ -964,7 +1034,7 @@ c
             if(cnvflg(i)) then
               if(k >= kb(i) .and. k < kbcon(i)) then
                 dz = zo(i,k+1) - zo(i,k)
-                tkemean(i) = tkemean(i) + tkeh(i,k) * dz
+                tkemean(i) = tkemean(i) + real(tkeh(i,k), conv_wp) * dz
                 sumx(i) = sumx(i) + dz
               endif
             endif
@@ -975,13 +1045,14 @@ c
           if(cnvflg(i)) then
              tkemean(i) = tkemean(i) / sumx(i)
              if(tkemean(i) > tkemx) then
-               clamt(i) = clam + clamd
+               clamt(i) = real(clam, conv_wp) + real(clamd, conv_wp)
              else if(tkemean(i) < tkemn) then
-               clamt(i) = clam - clamd
+               clamt(i) = real(clam, conv_wp) - real(clamd, conv_wp)
              else
                tem = tkemx - tkemean(i)
-               tem1 = 1. - 2. *  tem / dtke
-               clamt(i) = clam + clamd * tem1
+               tem1 = 1.0_conv_wp - 2.0_conv_wp *  tem / dtke
+               clamt(i) = real(clam, conv_wp) + real(clamd, conv_wp) * 
+     &                    tem1
              endif
           endif
         enddo
@@ -989,10 +1060,12 @@ c
         if(do_ca .and. ca_entr)then
             do i=1,im
                if(cnvflg(i)) then
-                  if(ca_deep(i) > nthresh)then
-                     clamt(i) = clam - clamca
+                  if(real(ca_deep(i), conv_wp) > real(nthresh, 
+     &               conv_wp))then
+                     clamt(i) = real(clam, conv_wp) -
+     &                          real(clamca, conv_wp)
                   else
-                     clamt(i) = clam
+                     clamt(i) = real(clam, conv_wp)
                   endif
                endif
             enddo
@@ -1005,9 +1078,9 @@ c
             cxlamet(i) = cxlame
             cxlamdt(i) = cxlamd
             if(tkemean(i) > tkcrt) then
-              tem = 1. + tkemean(i)/tkcrt
+              tem = 1.0_conv_wp + tkemean(i)/tkcrt
               tem1 = min(tem, cmxfac)
-              clamt(i) = tem1 * clam
+              clamt(i) = tem1 * real(clam, conv_wp)
               xlamdet(i) = tem1 * xlamdet(i)
               xlamddt(i) = tem1 * xlamddt(i)
               cxlamet(i) = tem1 * cxlamet(i)
@@ -1021,27 +1094,29 @@ c
          if(do_ca .and. ca_entr)then
             do i=1,im
                if(cnvflg(i)) then
-                  if(ca_deep(i) > nthresh)then
-                     clamt(i) = clam - clamca
+                  if(real(ca_deep(i), conv_wp) > real(nthresh, 
+     &               conv_wp))then
+                     clamt(i) = real(clam, conv_wp) -
+     &                          real(clamca, conv_wp)
                   else
-                     clamt(i) = clam
+                     clamt(i) = real(clam, conv_wp)
                   endif
                endif
             enddo
          else
             do i=1,im
                if(cnvflg(i))then
-                  clamt(i)  = clam
+                  clamt(i)  = real(clam, conv_wp)
                endif
             enddo
          endif
 !
         do i=1,im
           if(cnvflg(i)) then
-            xlamdet(i) = xlamde
-            xlamddt(i) = xlamdd
-            cxlamet(i) = cxlame
-            cxlamdt(i) = cxlamd
+            xlamdet(i) = real(xlamde, conv_wp)
+            xlamddt(i) = real(xlamdd, conv_wp)
+            cxlamet(i) = real(cxlame, conv_wp)
+            cxlamdt(i) = real(cxlamd, conv_wp)
           endif
         enddo
 !
@@ -1055,7 +1130,7 @@ c
           if(cnvflg(i)) then
             dz =zo(i,k+1) - zo(i,k)
             xlamue(i,k) = clamt(i) / (zi(i,k) + dz)
-            xlamue(i,k) = max(xlamue(i,k), crtlame)
+            xlamue(i,k) = max(xlamue(i,k), real(crtlame, conv_wp))
           endif
         enddo
       enddo
@@ -1102,7 +1177,7 @@ c
         do i=1,im
           if(cnvflg(i) .and. k < kmax(i)) then
 !               xlamud(i,k) = crtlamd
-                xlamud(i,k) = 0.001 * clamt(i)
+                xlamud(i,k) = 0.001_conv_wp * clamt(i)
           endif
         enddo
        enddo
@@ -1117,8 +1192,8 @@ c
           if(cnvflg(i).and.
      &      (k > kbcon(i) .and. k < kmax(i))) then
               tem = qeso(i,k)/qeso(i,kbcon(i))
-              fent1(i,k) = min(tem**2, 3.0)
-              fent2(i,k) = min(tem**3, 5.2)
+              fent1(i,k) = min(tem**2, 3.0_conv_wp)
+              fent2(i,k) = min(tem**3, 5.2_conv_wp)
           endif
         enddo
       enddo
@@ -1132,7 +1207,7 @@ c
         do i=1,im
           if(cnvflg(i) .and.
      &      (k > kbcon(i) .and. k < kmax(i))) then
-              tem = cxlamet(i) * frh(i,k) * fent2(i,k)
+              tem = real(cxlamet(i),conv_wp)*frh(i,k)*fent2(i,k)
               xlamue(i,k) = xlamue(i,k)*fent1(i,k) + tem
           endif
         enddo
@@ -1143,9 +1218,9 @@ c
           if(cnvflg(i) .and.
      &       (k > kbcon(i) .and. k < kmax(i))) then
               tentr(i,k)=xlamue(i,k)*fent1(i,k)
-              tem = cxlamet(i) * frh(i,k) * fent2(i,k)
+              tem = real(cxlamet(i),conv_wp)*frh(i,k)*fent2(i,k)    
               xlamue(i,k) = xlamue(i,k)*fent1(i,k) + tem
-              tem1 = cxlamdt(i) * frh(i,k)
+              tem1 = real(cxlamdt(i),conv_wp) * frh(i,k)
               xlamud(i,k) = xlamud(i,k) + tem1
           endif
         enddo
@@ -1166,9 +1241,9 @@ c
           if (cnvflg(i)) then
             if(k < kbcon(i) .and. k >= kb(i)) then
               dz       = zi(i,k+1) - zi(i,k)
-              tem      = 0.5*(xlamud(i,k)+xlamud(i,k+1))
-              ptem     = 0.5*(xlamue(i,k)+xlamue(i,k+1))-tem
-              eta(i,k) = eta(i,k+1) / (1. + ptem * dz)
+              tem      = 0.5_conv_wp*(xlamud(i,k)+xlamud(i,k+1))
+              ptem     = 0.5_conv_wp*(xlamue(i,k)+xlamue(i,k+1))-tem
+              eta(i,k) = eta(i,k+1) / (1.0_conv_wp + ptem * dz)
             endif
           endif
         enddo
@@ -1184,10 +1259,10 @@ c
          if(flg(i))then
            if(k > kbcon(i) .and. k < kmax(i)) then
               dz       = zi(i,k) - zi(i,k-1)
-              tem      = 0.5*(xlamud(i,k)+xlamud(i,k-1))
-              ptem     = 0.5*(xlamue(i,k)+xlamue(i,k-1))-tem
+              tem      = 0.5_conv_wp*(xlamud(i,k)+xlamud(i,k-1))
+              ptem     = 0.5_conv_wp*(xlamue(i,k)+xlamue(i,k-1))-tem
               eta(i,k) = eta(i,k-1) * (1 + ptem * dz)
-              if(eta(i,k) <= 0.) then
+              if(eta(i,k) <= 0.0_conv_wp) then
                 kmax(i) = k
                 ktconn(i) = k
                 flg(i)   = .false.
@@ -1203,10 +1278,10 @@ c
       do i = 1, im
         if(cnvflg(i)) then
           indx         = kb(i)
-          hcko(i,indx) = heo(i,indx)
-          ucko(i,indx) = uo(i,indx)
-          vcko(i,indx) = vo(i,indx)
-          pwavo(i)     = 0.
+          hcko(i,indx) = real(heo(i,indx), conv_wp)
+          ucko(i,indx) = real(uo(i,indx), conv_wp)
+          vcko(i,indx) = real(vo(i,indx), conv_wp)
+          pwavo(i)     = 0.0_conv_wp
         endif
       enddo
       if (.not.hwrf_samfdeep) then
@@ -1215,8 +1290,8 @@ c
         do i = 1, im
           if(cnvflg(i)) then
             indx = kb(i)
-            ecko(i,indx,n) = ctro(i,indx,n)
-            ercko(i,indx,n) = ctro(i,indx,n)
+            ecko(i,indx,n) = real(ctro(i,indx,n), conv_wp)
+            ercko(i,indx,n) = real(ctro(i,indx,n), conv_wp)
           endif
         enddo
        enddo
@@ -1232,21 +1307,21 @@ c
           if (cnvflg(i)) then
             if(k > kb(i) .and. k < kmax(i)) then
               dz   = zi(i,k) - zi(i,k-1)
-              tem  = 0.5 * (xlamue(i,k)+xlamue(i,k-1)) * dz
-              tem1 = 0.25 * (xlamud(i,k)+xlamud(i,k-1)) * dz
-              factor = 1. + tem - tem1
-              hcko(i,k) = ((1.-tem1)*hcko(i,k-1)+tem*0.5*
-     &                     (heo(i,k)+heo(i,k-1)))/factor
+              tem  = 0.5_conv_wp * (xlamue(i,k)+xlamue(i,k-1)) * dz
+              tem1 = 0.25_conv_wp * (xlamud(i,k)+xlamud(i,k-1)) * dz
+              factor = 1.0_conv_wp + tem - tem1
+              hcko(i,k) = ((1.0_conv_wp-tem1)*hcko(i,k-1)+tem*
+     &                    0.5_conv_wp*(heo(i,k)+heo(i,k-1)))/factor
               dbyo(i,k) = hcko(i,k) - heso(i,k)
 !
-              tem  = 0.5 * cm * tem
-              factor = 1. + tem
-              ptem = tem + pgcon
-              ptem1= tem - pgcon
-              ucko(i,k) = ((1.-tem)*ucko(i,k-1)+ptem*uo(i,k)
-     &                     +ptem1*uo(i,k-1))/factor
-              vcko(i,k) = ((1.-tem)*vcko(i,k-1)+ptem*vo(i,k)
-     &                     +ptem1*vo(i,k-1))/factor
+              tem  = 0.5_conv_wp * real(cm,conv_wp) * tem
+              factor = 1.0_conv_wp + tem
+              ptem = tem + real(pgcon,conv_wp)
+              ptem1= tem - real(pgcon,conv_wp)
+              ucko(i,k)=  ((1.0_conv_wp-tem)*ucko(i,k-1)+ptem*
+     &                    uo(i,k)+ptem1*uo(i,k-1))/factor
+              vcko(i,k)=  ((1.0_conv_wp-tem)*vcko(i,k-1)+ptem*
+     &                    vo(i,k)+ptem1*vo(i,k-1))/factor
             endif
           endif
         enddo
@@ -1263,10 +1338,10 @@ c
           if (cnvflg(i)) then
             if(k > kb(i) .and. k < kmax(i)) then
               dz   = zi(i,k) - zi(i,k-1)
-              tem  = 0.25 * (xlamue(i,k)+xlamue(i,k-1)) * dz
+              tem  = 0.25_conv_wp * (xlamue(i,k)+xlamue(i,k-1)) * dz
               tem  = cq * tem
-              factor = 1. + tem
-              ecko(i,k,n) = ((1.-tem)*ecko(i,k-1,n)+tem*
+              factor = 1.0_conv_wp + tem
+              ecko(i,k,n) = ((1.0_conv_wp-tem)*ecko(i,k-1,n)+tem*
      &                     (ctro(i,k,n)+ctro(i,k-1,n)))/factor
               ercko(i,k,n) = ecko(i,k,n)
             endif
@@ -1282,14 +1357,15 @@ c
                if (cnvflg(i)) then
                  if(k > kb(i) .and. k < kmax(i)) then
                    dz = zi(i,k) - zi(i,k-1)
-                   tem  = 0.25 * (xlamue(i,k)+xlamue(i,k-1)) * dz
+                   tem  = 0.25_conv_wp * (xlamue(i,k)+xlamue(i,k-1))*dz
                    tem  = cq * tem
-                   factor = 1. + tem
-                   ecko(i,k,kk) = ((1. - tem) * ecko(i,k-1,kk) + tem *
-     &                     (ctro(i,k,kk) + ctro(i,k-1,kk))) / factor
+                   factor = 1.0_conv_wp + tem
+                   ecko(i,k,kk) = ((1.0_conv_wp - tem) * ecko(i,k-1,kk)+
+     &                           tem * (ctro(i,k,kk) + ctro(i,k-1,kk)))/
+     &                           factor
                    ercko(i,k,kk) = ecko(i,k,kk)
-                   chem_c(i,k,n) = fscav(n) * ecko(i,k,kk)
-                   tem = chem_c(i,k,n) / (1. + c0t(i,k) * dz)
+                   chem_c(i,k,n) = real(fscav(n), conv_wp) *ecko(i,k,kk)
+                   tem = chem_c(i,k,n) / (1.0_conv_wp + c0t(i,k) * dz)
                    chem_pw(i,k,n) = c0t(i,k) * dz * tem * eta(i,k-1)
                    ecko(i,k,kk) = tem + ecko(i,k,kk) - chem_c(i,k,n)
                  endif
@@ -1304,11 +1380,12 @@ c
                if (cnvflg(i)) then
                  if(k > kb(i) .and. k < kmax(i)) then
                    dz = zi(i,k) - zi(i,k-1)
-                   tem  = 0.25 * (xlamue(i,k)+xlamue(i,k-1)) * dz
+                   tem  = 0.25_conv_wp * (xlamue(i,k)+xlamue(i,k-1)) *dz
                    tem  = cq * tem
-                   factor = 1. + tem
-                   ecko(i,k,kk) = ((1. - tem) * ecko(i,k-1,kk) + tem *
-     &                   (ctro(i,k,kk) + ctro(i,k-1,kk))) / factor
+                   factor = 1.0_conv_wp + tem
+                   ecko(i,k,kk) = ((1.0_conv_wp - tem) * ecko(i,k-1,kk)
+     &                           +tem * (ctro(i,k,kk) + ctro(i,k-1,kk)))
+     &                           /factor
                    ercko(i,k,kk) = ecko(i,k,kk)
                  endif
                endif
@@ -1329,7 +1406,7 @@ c
       do k = 2, km1
       do i=1,im
         if (flg(i) .and. k < kmax(i)) then
-          if(k >= kbcon(i) .and. dbyo(i,k) > 0.) then
+          if(k >= kbcon(i) .and. dbyo(i,k) > 0.0_conv_wp) then
             kbcon1(i) = k
             flg(i)    = .false.
           endif
@@ -1344,7 +1421,7 @@ c
       do i=1,im
         if(cnvflg(i)) then
           tem = pfld(i,kbcon(i)) - pfld(i,kbcon1(i))
-          if(tem > dthk) then
+          if(tem > real(dthk, conv_wp)) then
              cnvflg(i) = .false.
           endif
         endif
@@ -1353,7 +1430,8 @@ c
 
       if(do_ca .and. ca_trigger)then
          do i=1,im
-            if(ca_deep(i) > nthresh) cnvflg(i) = .true.
+            if(real(ca_deep(i), conv_wp) > real(nthresh, conv_wp))
+     &         cnvflg(i) = .true.
             if(kbcon(i) == kmax(i)) cnvflg(i) = .false.
          enddo
       endif
@@ -1373,18 +1451,19 @@ c
           if (cnvflg(i)) then
             if(k > kb(i) .and. k < kbcon1(i)) then
               dz1 = zo(i,k+1) - zo(i,k)
-              gamma = el2orc * qeso(i,k) / (to(i,k)**2)
-              rfact =  1. + fv * cp * gamma
-     &                 * to(i,k) / hvap
+              gamma = real(el2orc, conv_wp) * qeso(i,k) / (to(i,k)**2)
+              rfact =  1.0_conv_wp + real(fv, conv_wp) *
+     &                 real(cp, conv_wp) *gamma *to(i,k) /
+     &                 real(hvap, conv_wp)
               cina(i) = cina(i) +
 !    &                 dz1 * eta(i,k) * (grav / (cp * to(i,k)))
-     &                 dz1 * (grav / (cp * to(i,k)))
-     &                 * dbyo(i,k) / (1. + gamma)
-     &                 * rfact
-              val = 0.
+     &                 dz1 * (real(grav, conv_wp) / (real(cp, conv_wp) *
+     &                 to(i,k))) * dbyo(i,k) / (1.0_conv_wp + gamma) *
+     &                 rfact
+              val = 0.0_conv_wp
               cina(i) = cina(i) +
 !    &                 dz1 * eta(i,k) * grav * fv *
-     &                 dz1 * grav * fv *
+     &                 dz1 * real(grav, conv_wp) * real(fv, conv_wp) *
      &                 max(val,(qeso(i,k) - qo(i,k)))
             endif
           endif
@@ -1394,7 +1473,7 @@ c
       if(hwrf_samfdeep) then
        do i = 1, im
         if(cnvflg(i)) then
-          cinacr = cinacrmx
+          cinacr = real(cinacrmx, conv_wp)
           if(cina(i) < cinacr) cnvflg(i) = .false.
         endif
        enddo
@@ -1417,16 +1496,17 @@ c
           elseif(pdot(i) >= -w4) then
             tem = - (pdot(i) + w4) / (w4 - w3)
           else
-            tem = 0.
+            tem = 0.0_conv_wp
           endif
 
-          val1    =            -1.
+          val1 = -1.0_conv_wp
           tem = max(tem,val1)
-          val2    =             1.
+          val2 = 1.0_conv_wp
           tem = min(tem,val2)
-          tem = 1. - tem
-          tem1= .5*(cinacrmx-cinacrmn)
-          cinacr = cinacrmx - tem * tem1
+          tem = 1.0_conv_wp - tem
+          tem = 0.5_conv_wp*(real(cinacrmx, conv_wp) - 
+     &          real(cinacrmn, conv_wp))
+          cinacr = real(cinacrmx, conv_wp) - tem * tem1
           if(cina(i) < cinacr) cnvflg(i) = .false.
         endif
        enddo
@@ -1434,7 +1514,8 @@ c
 !!
       if(do_ca .and. ca_trigger)then
          do i=1,im
-            if(ca_deep(i) > nthresh) cnvflg(i) = .true.
+            if(real(ca_deep(i), conv_wp) > real(nthresh, conv_wp))
+     &        cnvflg(i) = .true.
             if(kbcon(i) == kmax(i)) cnvflg(i) = .false.
          enddo
       endif
@@ -1456,7 +1537,7 @@ c
       do k = 2, km1
       do i = 1, im
         if (flg(i) .and. k < kmax(i)) then
-          if(k > kbcon1(i) .and. dbyo(i,k) < 0.) then
+          if(k > kbcon1(i) .and. dbyo(i,k) < 0.0_conv_wp) then
              ktcon(i) = k
              flg(i)   = .false.
           endif
@@ -1470,14 +1551,15 @@ c
              ktcon(i) = ktconn(i)
           endif
           tem = pfld(i,kbcon(i))-pfld(i,ktcon(i))
-          if(tem < cthk) cnvflg(i) = .false.
+          if(tem < real(cthk, conv_wp)) cnvflg(i) = .false.
         endif
       enddo
 
 
       if(do_ca .and. ca_trigger)then
          do i=1,im
-            if(ca_deep(i) > nthresh) cnvflg(i) = .true.
+            if(real(ca_deep(i), conv_wp) > real(nthresh, conv_wp))
+     &        cnvflg(i) = .true.
             if(kbcon(i) == kmax(i)) cnvflg(i) = .false.
          enddo
       endif
@@ -1527,8 +1609,8 @@ c
       do i = 1, im
         if(cnvflg(i)) then
           k = kbcon(i)
-          dp = 1000. * del(i,k)
-          xmbmax(i) = dp / (grav * dt2)
+          dp = 1000.0_conv_wp * del(i,k)
+          xmbmax(i) = dp / (real(grav, conv_wp) * real(dt2, conv_wp))
         endif
       enddo
 c
@@ -1549,15 +1631,16 @@ c
           if (cnvflg(i)) then
             if(k > kb(i) .and. k < ktcon(i)) then
               dz    = zi(i,k) - zi(i,k-1)
-              gamma = el2orc * qeso(i,k) / (to(i,k)**2)
-              qrch = qeso(i,k)
-     &             + gamma * dbyo(i,k) / (hvap * (1. + gamma))
+              gamma = real(el2orc, conv_wp) * qeso(i,k) / (to(i,k)**2)
+              qrch = qeso(i,k) + gamma * dbyo(i,k) / (real(hvap,
+     &               conv_wp) * (1.0_conv_wp + gamma))
 cj
-              tem  = 0.25 * (xlamue(i,k)+xlamue(i,k-1)) * dz
-              tem  = cq * tem
-              factor = 1. + tem
-              qcko(i,k) = ((1.-tem)*qcko(i,k-1)+tem*
-     &                     (qo(i,k)+qo(i,k-1)))/factor
+              tem  = 0.25_conv_wp * (xlamue(i,k)+xlamue(i,k-1)) * dz
+              tem  = real(cq, conv_wp) * tem
+              factor = 1.0_conv_wp + tem
+              qcko(i,k) = ((1.0_conv_wp-tem)*qcko(i,k-1)+tem*
+     &                    (real(qo(i,k), conv_wp)+real(qo(i,k-1),
+     &                    conv_wp)))/factor
               qrcko(i,k) = qcko(i,k)
 cj
               dq = eta(i,k) * (qcko(i,k) - qrch)
@@ -1566,46 +1649,46 @@ c
 c
 c  check if there is excess moisture to release latent heat
 c
-              if(k >= kbcon(i) .and. dq > 0.) then
-                etah = .5 * (eta(i,k) + eta(i,k-1))
-                dp = 1000. * del(i,k)
+              if(k >= kbcon(i) .and. dq > 0.0_conv_wp) then
+                etah = .5_conv_wp * (eta(i,k) + eta(i,k-1))
+                dp = 1000.0_conv_wp * del(i,k)
                 if(ncloud > 0 .and. k > jmin(i)) then
-                  ptem = c0t(i,k) + c1
+                  ptem = c0t(i,k) + real(c1, conv_wp)
                   qlk = dq / (eta(i,k) + etah * ptem * dz)
-                  dellal(i,k) = etah * c1 * dz * qlk * grav / dp
+                  dellal(i,k) = etah * real(c1, conv_wp) * dz * qlk *
+     &                          real(grav, conv_wp) / dp
                 else
                   qlk = dq / (eta(i,k) + etah * c0t(i,k) * dz)
                 endif
 !               aa1(i) = aa1(i) - dz * grav * qlk * etah
 !               aa1(i) = aa1(i) - dz * grav * qlk
-                buo(i,k) = buo(i,k) - grav * qlk
+                buo(i,k) = buo(i,k) - real(grav, conv_wp) * qlk
                 qcko(i,k) = qlk + qrch
                 pwo(i,k) = etah * c0t(i,k) * dz * qlk
                 pwavo(i) = pwavo(i) + pwo(i,k)
 !               cnvwt(i,k) = (etah*qlk + pwo(i,k)) * grav / dp
-                cnvwt(i,k) = etah * qlk * grav / dp
+                cnvwt(i,k) = etah * qlk * real(grav, conv_wp) / dp
                 zdqca(i,k)=dq/eta(i,k)
               endif
 !
 !  compute buoyancy and drag for updraft velocity
 !
               if(k >= kbcon(i)) then
-                rfact =  1. + fv * cp * gamma
-     &                   * to(i,k) / hvap
-                buo(i,k) = buo(i,k) + (grav / (cp * to(i,k)))
-     &                   * dbyo(i,k) / (1. + gamma)
-     &                   * rfact
-                val = 0.
-                buo(i,k) = buo(i,k) + grav * fv *
-     &                     max(val,(qeso(i,k) - qo(i,k)))
+                rfact =  1.0_conv_wp + real(fv, conv_wp) * 
+     &                   real(cp, conv_wp)* gamma * to(i,k) / 
+     &                   real(hvap, conv_wp)
+                buo(i,k) = buo(i,k) + (real(grav, conv_wp) /
+     &                     (real(cp, conv_wp) * to(i,k))) * dbyo(i,k) /
+     &                     (1.0_conv_wp + gamma) * rfact
+                val = 0.0_conv_wp
+                buo(i,k) = buo(i,k) + real(grav, conv_wp) *
+     &                     real(fv, conv_wp) * max(val,(qeso(i,k) -
+     &                     qo(i,k)))
                 drag(i,k) = max(xlamue(i,k),xlamud(i,k))
-!
-                tem = ((uo(i,k)-uo(i,k-1))/dz)**2
-                tem = tem+((vo(i,k)-vo(i,k-1))/dz)**2
-                wush(i,k) = csmf * sqrt(tem)
-!
+                tem = ((uo(i,k) - uo(i,k-1))/dz)**2
+                tem = tem + ((vo(i,k) - vo(i,k-1))/dz)**2
+                wush(i,k) = real(csmf, conv_wp) * sqrt(tem)
               endif
-!
             endif
           endif
         enddo
@@ -1652,7 +1735,7 @@ c
 !! (discretized according to Grell (1993) \cite grell_1993 equation B.10 using B.2 and B.3 of Arakawa and Schubert (1974) \cite arakawa_and_schubert_1974 and assuming \f$\eta=1\f$) where \f$A_u\f$ is the updraft cloud work function, \f$z_0\f$ and \f$z_t\f$ are cloud base and cloud top, respectively, \f$\gamma = \frac{L}{c_p}\left(\frac{\partial \overline{q_s}}{\partial T}\right)_p\f$ and other quantities are previously defined.
       do i = 1, im
         if (cnvflg(i)) then
-          aa1(i) = 0.
+          aa1(i) = 0.0_conv_wp
         endif
       enddo
       do k = 2, km1
@@ -1670,7 +1753,7 @@ c
 !
 !> - If the updraft cloud work function is negative, convection does not occur, and the scheme returns to the calling routine.
       do i = 1, im
-        if(cnvflg(i) .and. aa1(i) <= 0.) cnvflg(i) = .false.
+        if(cnvflg(i) .and. aa1(i) <= 0.0_conv_wp) cnvflg(i) = .false.
       enddo
 !!
       totflg = .true.
@@ -1700,23 +1783,24 @@ c
           if (flg(i)) then
             if(k >= ktcon(i) .and. k < kmax(i)) then
               dz1 = zo(i,k+1) - zo(i,k)
-              gamma = el2orc * qeso(i,k) / (to(i,k)**2)
-              rfact =  1. + fv * cp * gamma
-     &                 * to(i,k) / hvap
+              gamma = real(el2orc, conv_wp) * qeso(i,k) / (to(i,k)**2)
+              rfact =  1.0_conv_wp + real(fv, conv_wp) *
+     &                 real(cp, conv_wp) * gamma * to(i,k) /
+     &                 real(hvap, conv_wp)
               aa2(i) = aa2(i) +
 !    &                 dz1 * eta(i,k) * (grav / (cp * to(i,k)))
-     &                 dz1 * (grav / (cp * to(i,k)))
-     &                 * dbyo(i,k) / (1. + gamma)
-     &                 * rfact
+     &                 dz1 * (real(grav, conv_wp) / (real(cp, conv_wp) *
+     &                 to(i,k)))* dbyo(i,k) / (1.0_conv_wp + gamma) * 
+     &                 rfact  
 !             val = 0.
 !             aa2(i) = aa2(i) +
 !!   &                 dz1 * eta(i,k) * grav * fv *
 !    &                 dz1 * grav * fv *
 !    &                 max(val,(qeso(i,k) - qo(i,k)))        
 !NRL MNM: Limit overshooting not to be deeper than half the actual cloud              
-              tem  = 0.5 * (zi(i,ktcon(i))-zi(i,kbcon(i)))
+              tem  = 0.5_conv_wp * (zi(i,ktcon(i))-zi(i,kbcon(i)))
               tem1 = zi(i,k)-zi(i,ktcon(i))
-              if(aa2(i) < 0. .or. tem1 >= tem) then
+              if(aa2(i) < 0.0_conv_wp .or. tem1 >= tem) then
                 ktcon1(i) = k
                 flg(i) = .false.
               endif
@@ -1734,28 +1818,30 @@ c
           if (cnvflg(i)) then
             if(k >= ktcon(i) .and. k < ktcon1(i)) then
               dz    = zi(i,k) - zi(i,k-1)
-              gamma = el2orc * qeso(i,k) / (to(i,k)**2)
-              qrch = qeso(i,k)
-     &             + gamma * dbyo(i,k) / (hvap * (1. + gamma))
+              gamma = real(el2orc, conv_wp) * qeso(i,k) / (to(i,k)**2)
+              qrch = qeso(i,k) + gamma * dbyo(i,k) / (real(hvap,
+     &               conv_wp) * (1.0_conv_wp + gamma))
 cj
-              tem  = 0.25 * (xlamue(i,k)+xlamue(i,k-1)) * dz
-              tem  = cq * tem
-              factor = 1. + tem
-              qcko(i,k) = ((1.-tem)*qcko(i,k-1)+tem*
-     &                     (qo(i,k)+qo(i,k-1)))/factor
+              tem  = 0.25_conv_wp * (xlamue(i,k)+xlamue(i,k-1)) * dz
+              tem  = real(cq, conv_wp) * tem
+              factor = 1.0_conv_wp + tem
+              qcko(i,k) =((1.0_conv_wp-tem)*qcko(i,k-1)+tem*
+     &                   (real(qo(i,k), conv_wp) + real(qo(i,k-1),
+     &                   conv_wp)))/factor
               qrcko(i,k) = qcko(i,k)
 cj
               dq = eta(i,k) * (qcko(i,k) - qrch)
 c
 c  check if there is excess moisture to release latent heat
 c
-              if(dq > 0.) then
-                etah = .5 * (eta(i,k) + eta(i,k-1))
-                dp = 1000. * del(i,k)
+              if(dq > 0.0_conv_wp) then
+                etah = .5_conv_wp * (eta(i,k) + eta(i,k-1))
+                dp = 1000.0_conv_wp * del(i,k)
                 if(ncloud > 0) then
-                  ptem = c0t(i,k) + c1
+                  ptem = c0t(i,k) + real(c1, conv_wp)
                   qlk = dq / (eta(i,k) + etah * ptem * dz)
-                  dellal(i,k) = etah * c1 * dz * qlk * grav / dp
+                  dellal(i,k) = etah * real(c1, conv_wp) * dz * qlk *
+     &                          real(grav, conv_wp) / dp
                 else
                   qlk = dq / (eta(i,k) + etah * c0t(i,k) * dz)
                 endif
@@ -1763,7 +1849,7 @@ c
                 pwo(i,k) = etah * c0t(i,k) * dz * qlk
                 pwavo(i) = pwavo(i) + pwo(i,k)
 !               cnvwt(i,k) = (etah*qlk + pwo(i,k)) * grav / dp
-                cnvwt(i,k) = etah * qlk * grav / dp
+                cnvwt(i,k) = etah * qlk * real(grav, conv_wp) / dp
                 zdqca(i,k)=dq/eta(i,k)
               endif
             endif
@@ -1779,32 +1865,42 @@ c
          do i = 1, im
             if (cnvflg(i)) then
                k = kbcon1(i)
-               tem = po(i,k) / (rd * to(i,k))
-               wucb = -0.01 * dot(i,k) / (tem * grav)
-               if(wucb.gt.0.) then
+               tem = po(i,k) / (real(rd, conv_wp) * to(i,k))
+               wucb = -0.01_conv_wp * real(dot(i,k), conv_wp) /
+     &                (tem * real(grav, conv_wp))
+               if(wucb.gt.0.0_conv_wp) then
                   wu2(i,k) = wucb * wucb
                else
-                  wu2(i,k) = 0.
+                  wu2(i,k) = 0.0_conv_wp
                endif
             endif
          enddo
       endif
 !                  
       if (progomega) then
+         do k=1,km
+           do i=1,im
+             omegaout_loc(i,k) = 0.0_conv_wp
+           enddo
+         enddo
          call progomega_calc(first_time_step,restart,im,km,
-     &        kbcon1,ktcon,omegain,delt,del,zi,cnvflg,omegaout,
-     &        grav,buo,drag,wush,tentr,bb1,bb2)
+     &        kbcon1,ktcon,real(omegain, conv_wp),real(delt, conv_wp),
+     &        del,zi,cnvflg,omegaout_loc,real(grav, conv_wp),buo,drag,
+     &        wush,tentr,real(bb1, conv_wp),real(bb2, conv_wp))      
          do k = 1, km
             do i = 1, im
                if (cnvflg(i)) then
                   if(k > kbcon1(i) .and. k < ktcon(i)) then
-                     omega_u(i,k)=omegaout(i,k)
-                     omega_u(i,k)=MAX(omega_u(i,k),-80.)
+                     omegaout(i,k) = real(omegaout_loc(i,k), kind_phys)
+                     omega_u(i,k)=real(omegaout(i,k), conv_wp)
+                     omega_u(i,k)=MAX(omega_u(i,k),-80.0_conv_wp)
 !     Convert to m/s for use in convective time-scale:
-                     rho = po(i,k)*100. / (rd * to(i,k))
-                     tem = (-omega_u(i,k)) / ((rho * grav))
+                     rho = po(i,k)*100.0_conv_wp/(real(rd, conv_wp)*
+     &                     to(i,k))
+                     tem = (-omega_u(i,k)) / ((rho * real(grav,
+     &                     conv_wp)))
                      wu2(i,k) = tem**2
-                     wu2(i,k) = max(wu2(i,k), 0.)
+                     wu2(i,k) = max(wu2(i,k), 0.0_conv_wp)
                   endif
               endif
             enddo
@@ -1816,14 +1912,16 @@ c
                if (cnvflg(i)) then
                   if(k > kbcon1(i) .and. k < ktcon(i)) then
                      dz    = zi(i,k) - zi(i,k-1)
-                     tem  = 0.25 * bb1 * (drag(i,k-1)+drag(i,k)) * dz
-                     tem1 = 0.5 * bb2 * (buo(i,k-1)+buo(i,k))
+                     tem  = 0.25_conv_wp * real(bb1, conv_wp) *
+     &                      (drag(i,k-1)+drag(i,k)) * dz
+                     tem1 = 0.5_conv_wp * real(bb2, conv_wp) *
+     &                      (buo(i,k-1)+buo(i,k))
                      tem2 = wush(i,k) * sqrt(wu2(i,k-1))
                      tem2 = (tem1 - tem2) * dz
-                     ptem = (1. - tem) * wu2(i,k-1)
-                     ptem1 = 1. + tem
+                     ptem = (1.0_conv_wp - tem) * wu2(i,k-1)
+                     ptem1 = 1.0_conv_wp + tem
                      wu2(i,k) = (ptem + tem2) / ptem1
-                     wu2(i,k) = max(wu2(i,k), 0.)
+                     wu2(i,k) = max(wu2(i,k), 0.0_conv_wp)
                   endif
                endif
             enddo
@@ -1833,9 +1931,11 @@ c
             do i = 1, im
                if (cnvflg(i)) then
                   if(k > kbcon1(i) .and. k < ktcon(i)) then
-                     rho = po(i,k)*100. / (rd * to(i,k))
-                     omega_u(i,k)=-1.0*sqrt(wu2(i,k))*rho*grav
-                     omega_u(i,k)=MAX(omega_u(i,k),-80.)
+                     rho = po(i,k)*100.0_conv_wp/(real(rd, conv_wp)*
+     &                     to(i,k))
+                     omega_u(i,k)=-1.0_conv_wp*sqrt(wu2(i,k))*rho*
+     &                            real(grav, conv_wp)
+                     omega_u(i,k)=MAX(omega_u(i,k),-80.0_conv_wp)
                   endif
                endif
             enddo
@@ -1847,15 +1947,15 @@ c
 !  compute updraft velocity average over the whole cumulus
 !> - Calculate the mean updraft velocity within the cloud (wc).
       do i = 1, im
-        wc(i) = 0.
-        sumx(i) = 0.
+        wc(i) = 0.0_conv_wp
+        sumx(i) = 0.0_conv_wp
       enddo
       do k = 2, km1
         do i = 1, im
           if (cnvflg(i)) then
             if(k > kbcon1(i) .and. k < ktcon(i)) then
               dz = zi(i,k) - zi(i,k-1)
-              tem = 0.5 * (sqrt(wu2(i,k)) + sqrt(wu2(i,k-1)))
+              tem = 0.5_conv_wp * (sqrt(wu2(i,k)) + sqrt(wu2(i,k-1)))
               wc(i) = wc(i) + tem * dz
               sumx(i) = sumx(i) + dz
             endif
@@ -1864,12 +1964,12 @@ c
       enddo
       do i = 1, im
         if(cnvflg(i)) then
-          if(sumx(i) == 0.) then
+          if(sumx(i) == 0.0_conv_wp) then
              cnvflg(i)=.false.
           else
              wc(i) = wc(i) / sumx(i)
           endif
-          val = 1.e-4
+          val = 1.e-4_conv_wp
           if (wc(i) < val) cnvflg(i)=.false.
         endif
       enddo      
@@ -1877,15 +1977,15 @@ c
 !> - For progsigma = T, calculate the mean updraft velocity within the cloud (omegac),cast in pressure coordinates.                                                                                                                                  
       if(progsigma)then
          do i = 1, im
-            omegac(i) = 0.
-            sumx(i) = 0.
+            omegac(i) = 0.0_conv_wp
+            sumx(i) = 0.0_conv_wp
          enddo
          do k = 2, km1
             do i = 1, im
                if (cnvflg(i)) then
                   if(k > kbcon1(i) .and. k < ktcon(i)) then
-                     dp = 1000. * del(i,k)
-                     tem = 0.5 * (omega_u(i,k) + omega_u(i,k-1))
+                     dp = 1000.0_conv_wp * del(i,k)
+                     tem = 0.5_conv_wp * (omega_u(i,k) + omega_u(i,k-1))
                      omegac(i) = omegac(i) + tem * dp
                      sumx(i) = sumx(i) + dp
                   endif
@@ -1894,12 +1994,12 @@ c
          enddo
          do i = 1, im
             if(cnvflg(i)) then
-               if(sumx(i) == 0.) then
+               if(sumx(i) == 0.0_conv_wp) then
                   cnvflg(i)=.false.
                else
                   omegac(i) = omegac(i) / sumx(i)
                endif
-               val = -1.2
+               val = -1.2_conv_wp
                if (omegac(i) > val) cnvflg(i)=.false.
             endif
          enddo
@@ -1909,13 +2009,13 @@ c
             do i = 1, im
                if (cnvflg(i)) then
                   if(k >= kbcon1(i) .and. k < ktcon(i)) then
-                     if(omega_u(i,k) .ne. 0.)then
+                     if(omega_u(i,k) .ne. 0.0_conv_wp)then
                         zeta(i,k)=eta(i,k)*(omegac(i)/omega_u(i,k))
                      else
-                        zeta(i,k)=0.
+                        zeta(i,k)=0.0_conv_wp
                      endif
-                    zeta(i,k)=MAX(0.,zeta(i,k))
-                    zeta(i,k)=MIN(1.,zeta(i,k))
+                    zeta(i,k)=MAX(0.0_conv_wp,zeta(i,k))
+                    zeta(i,k)=MIN(1.0_conv_wp,zeta(i,k))
                   endif
                endif
             enddo
@@ -1945,14 +2045,14 @@ c
       do i = 1, im
         if(cnvflg(i)) then
           k = ktcon(i) - 1
-          gamma = el2orc * qeso(i,k) / (to(i,k)**2)
-          qrch = qeso(i,k)
-     &         + gamma * dbyo(i,k) / (hvap * (1. + gamma))
+          gamma = real(el2orc, conv_wp) * qeso(i,k) / (to(i,k)**2)
+          qrch = qeso(i,k) + gamma * dbyo(i,k) / (real(hvap, conv_wp) * 
+     &           (1.0_conv_wp + gamma)) 
           dq = qcko(i,k) - qrch
 c
 c  check if there is excess moisture to release latent heat
 c
-          if(dq > 0.) then
+          if(dq > 0.0_conv_wp) then
             qlko_ktcon(i) = dq
             qcko(i,k) = qrch
             zdqca(i,k) = dq
@@ -1978,15 +2078,15 @@ c
 !! where \f$\Delta V\f$ is the integrated horizontal shear over the cloud depth, \f$\Delta z\f$, (the ratio is converted to units of \f$10^{-3} s^{-1}\f$). The variable "edto" is \f$1-E\f$ and is constrained to the range \f$[0,0.9]\f$.
       do i = 1, im
         if(cnvflg(i)) then
-          vshear(i) = 0.
+          vshear(i) = 0.0_conv_wp
         endif
       enddo
       do k = 2, km
         do i = 1, im
           if (cnvflg(i)) then
             if(k > kb(i) .and. k <= ktcon(i)) then
-              shear = sqrt((uo(i,k)-uo(i,k-1)) ** 2
-     &                   + (vo(i,k)-vo(i,k-1)) ** 2)
+              shear = sqrt((uo(i,k) - uo(i,k-1))**2 + (vo(i,k) - 
+     &                vo(i,k-1))**2 )
               vshear(i) = vshear(i) + shear
             endif
           endif
@@ -1994,13 +2094,15 @@ c
       enddo
       do i = 1, im
         if(cnvflg(i)) then
-          vshear(i) = 1.e3 * vshear(i) / (zi(i,ktcon(i))-zi(i,kb(i)))
-          e1=1.591-.639*vshear(i)
-     &       +.0953*(vshear(i)**2)-.00496*(vshear(i)**3)
-          edt(i)=1.-e1
-          val =         .9
+          vshear(i) = 1.e3_conv_wp * vshear(i) / (zi(i,ktcon(i))-
+     &                zi(i,kb(i)))
+          e1 = 1.591_conv_wp - .639_conv_wp * vshear(i) +
+     &         .0953_conv_wp * (vshear(i)**2) - .00496_conv_wp *
+     &         (vshear(i)**3)
+          edt(i)=1.0_conv_wp-e1
+          val =  .9_conv_wp
           edt(i) = min(edt(i),val)
-          val =         .0
+          val = .0_conv_wp
           edt(i) = max(edt(i),val)
           edto(i)=edt(i)
           edtx(i)=edt(i)
@@ -2016,7 +2118,7 @@ c
 !! \f$\lambda_d\f$ is the detrainment rate, \f$\beta\f$ is a constant currently set to 0.05, implying that only 5% of downdraft mass flux at LFC reaches the ground surface due to detrainment, \f$k_{LFC}\f$ is the vertical index of the LFC level, and \f$\overline{\Delta z}\f$ is the average vertical grid spacing below the LFC.
       do i = 1, im
         if(cnvflg(i)) then
-          sumx(i) = 0.
+          sumx(i) = 0.0_conv_wp
         endif
       enddo
       do k = 1, km1
@@ -2030,12 +2132,12 @@ c
       enddo
       enddo
       do i = 1, im
-        beta = betas
-        if(islimsk(i) == 1) beta = betal
+        beta = real(betas, conv_wp)
+        if(islimsk(i) == 1) beta = real(betal, conv_wp)
         if(cnvflg(i)) then
-          dz  = (sumx(i)+zi(i,1))/float(kd94(i))
-          tem = 1./float(kd94(i))
-          xlamd(i) = (1.-beta**tem)/dz
+          dz  = (sumx(i)+zi(i,1))/real(kd94(i), conv_wp)
+          tem = 1.0_conv_wp/real(kd94(i), conv_wp)
+          xlamd(i) = (1.0_conv_wp-beta**tem)/dz
         endif
       enddo
 c
@@ -2048,11 +2150,11 @@ c
            if(k < jmin(i) .and. k >= kd94(i)) then
               dz        = zi(i,k+1) - zi(i,k)
               ptem      = xlamddt(i) - xlamdet(i)
-              etad(i,k) = etad(i,k+1) * (1. - ptem * dz)
+              etad(i,k) = etad(i,k+1) * (1.0_conv_wp - ptem * dz)
            else if(k < kd94(i)) then
               dz        = zi(i,k+1) - zi(i,k)
               ptem      = xlamd(i) + xlamddt(i) - xlamdet(i)
-              etad(i,k) = etad(i,k+1) * (1. - ptem * dz)
+              etad(i,k) = etad(i,k+1) * (1.0_conv_wp - ptem * dz)
            endif
           endif
         enddo
@@ -2069,7 +2171,7 @@ c
           qrcdo(i,jmn)= qo(i,jmn)
           ucdo(i,jmn) = uo(i,jmn)
           vcdo(i,jmn) = vo(i,jmn)
-          pwevo(i) = 0.
+          pwevo(i) = 0.0_conv_wp
         endif
       enddo
 ! for tracers
@@ -2091,24 +2193,24 @@ cj
               dz = zi(i,k+1) - zi(i,k)
               if(k >= kd94(i)) then
                  tem  = xlamdet(i) * dz
-                 tem1 = 0.5 * xlamddt(i) * dz
+                 tem1 = 0.5_conv_wp * xlamddt(i) * dz
               else
                  tem  = xlamdet(i) * dz
-                 tem1 = 0.5 * (xlamd(i)+xlamddt(i)) * dz
+                 tem1 = 0.5_conv_wp * (xlamd(i)+xlamddt(i)) * dz
               endif
-              factor = 1. + tem - tem1
-              hcdo(i,k) = ((1.-tem1)*hcdo(i,k+1)+tem*0.5*
-     &                     (heo(i,k)+heo(i,k+1)))/factor
+              factor = 1.0_conv_wp + tem - tem1
+              hcdo(i,k) = ((1.0_conv_wp-tem1)*hcdo(i,k+1)+tem*
+     &                    0.5_conv_wp*(heo(i,k)+heo(i,k+1)))/factor
               dbyo(i,k) = hcdo(i,k) - heso(i,k)
 !
-              tem  = 0.5 * cm * tem
-              factor = 1. + tem
-              ptem = tem - pgcon
-              ptem1= tem + pgcon
-              ucdo(i,k) = ((1.-tem)*ucdo(i,k+1)+ptem*uo(i,k+1)
-     &                     +ptem1*uo(i,k))/factor
-              vcdo(i,k) = ((1.-tem)*vcdo(i,k+1)+ptem*vo(i,k+1)
-     &                     +ptem1*vo(i,k))/factor
+              tem  = 0.5_conv_wp * cm * tem
+              factor = 1.0_conv_wp + tem
+              ptem = tem - real(pgcon, conv_wp)
+              ptem1= tem + real(pgcon, conv_wp)
+              ucdo(i,k)=  ((1.0_conv_wp-tem)*ucdo(i,k+1)+ptem*
+     &                    uo(i,k+1)+ptem1*uo(i,k))/factor
+              vcdo(i,k)=  ((1.0_conv_wp-tem)*vcdo(i,k+1)+ptem*
+     &                    vo(i,k+1)+ptem1*vo(i,k))/factor
           endif
         enddo
       enddo
@@ -2118,10 +2220,10 @@ cj
         do i = 1, im
           if (cnvflg(i) .and. k < jmin(i)) then
               dz = zi(i,k+1) - zi(i,k)
-              tem  = 0.5 * xlamdet(i) * dz
-              tem  = cq * tem
-              factor = 1. + tem
-              ecdo(i,k,n) = ((1.-tem)*ecdo(i,k+1,n)+tem*
+              tem  = 0.5_conv_wp * xlamdet(i) * dz
+              tem  = real(cq, conv_wp) * tem
+              factor = 1.0_conv_wp + tem
+              ecdo(i,k,n) = ((1.0_conv_wp-tem)*ecdo(i,k+1,n)+tem*
      &                     (ctro(i,k,n)+ctro(i,k+1,n)))/factor
           endif
         enddo
@@ -2133,17 +2235,20 @@ c
       do k = km1, 1, -1
         do i = 1, im
           if (cnvflg(i) .and. k < jmin(i)) then
-              gamma      = el2orc * qeso(i,k) / (to(i,k)**2)
-              qrcdo(i,k) = qeso(i,k)+
-     &                (1./hvap)*(gamma/(1.+gamma))*dbyo(i,k)
+              gamma      = real(el2orc, conv_wp) * qeso(i,k) / 
+     &                     (to(i,k)**2)
+              qrcdo(i,k) = qeso(i,k)+(1.0_conv_wp/real(hvap, conv_wp))*
+     &                     (gamma/(1.0_conv_wp+gamma))*dbyo(i,k)
+!
 !             detad      = etad(i,k+1) - etad(i,k)
 cj
               dz = zi(i,k+1) - zi(i,k)
-              tem  = 0.5 * xlamdet(i) * dz
-              tem  = cq * tem
-              factor = 1. + tem
-              qcdo(i,k) = ((1.-tem)*qrcdo(i,k+1)+tem*
-     &                     (qo(i,k)+qo(i,k+1)))/factor
+              tem  = 0.5_conv_wp * xlamdet(i) * dz
+              tem  = real(cq, conv_wp) * tem
+              factor = 1.0_conv_wp + tem
+              qcdo(i,k)=  ((1.0_conv_wp-tem)*qrcdo(i,k+1)+tem*
+     &                    (real(qo(i,k), conv_wp)+real(qo(i,k+1),
+     &                    conv_wp)))/factor
 cj
 !             pwdo(i,k)  = etad(i,k+1) * qcdo(i,k+1) -
 !    &                     etad(i,k) * qrcdo(i,k)
@@ -2165,11 +2270,11 @@ c
         edtmax = edtmaxl
         if(islimsk(i) == 0) edtmax = edtmaxs
         if(cnvflg(i)) then
-          if(pwevo(i) < 0.) then
+          if(pwevo(i) < 0.0_conv_wp) then
             edto(i) = -edto(i) * pwavo(i) / pwevo(i)
             edto(i) = min(edto(i),edtmax)
           else
-            edto(i) = 0.
+            edto(i) = 0.0_conv_wp
           endif
         endif
       enddo
@@ -2180,26 +2285,28 @@ c
       do k = km1, 1, -1
         do i = 1, im
           if (cnvflg(i) .and. k < jmin(i)) then
-              gamma = el2orc * qeso(i,k) / to(i,k)**2
+              gamma = real(el2orc, conv_wp) * qeso(i,k) / to(i,k)**2
               dhh = hcdo(i,k)
               dt = to(i,k)
               dg = gamma
               dh = heso(i,k)
               dz = zo(i,k) - zo(i,k+1)
 !             aa1(i)=aa1(i)+edto(i)*dz*etad(i,k)
-              aa1(i) = aa1(i)+edto(i)*dz
-     &                 *(grav/(cp*dt))*((dhh-dh)/(1.+dg))
-     &                 *(1.+fv*cp*dg*dt/hvap)
-              val = 0.
+              aa1(i) = aa1(i)+edto(i)*dz*
+     &             (real(grav, conv_wp)/(real(cp, conv_wp)*dt))*
+     &             ((dhh-dh)/(1.0_conv_wp+dg))*(1.0_conv_wp+real(fv,
+     &             conv_wp)*real(cp, conv_wp)*dg*dt/real(hvap,
+     &             conv_wp))
+              val = 0.0_conv_wp
 !             aa1(i)=aa1(i)+edto(i)*dz*etad(i,k)
-              aa1(i) = aa1(i)+edto(i)*dz
-     &               *grav*fv*max(val,(qeso(i,k)-qo(i,k)))
+              aa1(i) = aa1(i)+edto(i)*dz*real(grav, conv_wp)*
+     &                 real(fv, conv_wp)*max(val,(qeso(i,k)-qo(i,k)))
           endif
         enddo
       enddo
 !> - Check for negative total cloud work function; if found, return to calling routine without modifying state variables.
       do i = 1, im
-        if(cnvflg(i) .and. aa1(i) <= 0.) then
+        if(cnvflg(i) .and. aa1(i) <= 0.0_conv_wp) then
            cnvflg(i) = .false.
         endif
       enddo
@@ -2218,10 +2325,10 @@ c
       do k = 1, km
         do i = 1, im
           if(cnvflg(i) .and. k <= kmax(i)) then
-            dellah(i,k) = 0.
-            dellaq(i,k) = 0.
-            dellau(i,k) = 0.
-            dellav(i,k) = 0.
+            dellah(i,k) = 0.0_conv_wp
+            dellaq(i,k) = 0.0_conv_wp
+            dellau(i,k) = 0.0_conv_wp
+            dellav(i,k) = 0.0_conv_wp
           endif
         enddo
       enddo
@@ -2230,7 +2337,7 @@ c
       do k = 1, km
         do i = 1, im
           if(cnvflg(i) .and. k <= kmax(i)) then
-            dellae(i,k,n) = 0.
+            dellae(i,k,n) = 0.0_conv_wp
           endif
         enddo
       enddo
@@ -2238,8 +2345,8 @@ c
       endif
       do i = 1, im
         if(cnvflg(i)) then
-          dp = 1000. * del(i,1)
-          tem = edto(i) * etad(i,1) * grav / dp
+          dp = 1000.0_conv_wp * del(i,1)
+          tem = edto(i) * etad(i,1) * real(grav, conv_wp) / dp
           dellah(i,1) = tem * (hcdo(i,1) - heo(i,1))
           dellaq(i,1) = tem * qrcdo(i,1)
           dellau(i,1) = tem * (ucdo(i,1) - uo(i,1))
@@ -2250,9 +2357,9 @@ c
       do n = 1, ntr
       do i = 1, im
         if(cnvflg(i)) then
-          dp = 1000. * del(i,1)
+          dp = 1000.0_conv_wp * del(i,1)
           dellae(i,1,n) = edto(i) * etad(i,1) * ecdo(i,1,n)
-     &                     * grav / dp
+     &                     * real(grav, conv_wp) / dp
         endif
       enddo
       enddo
@@ -2263,19 +2370,19 @@ c
       do k = 2, km1
         do i = 1, im
           if (cnvflg(i) .and. k < ktcon(i)) then
-              aup = 1.
-              if(k <= kb(i)) aup = 0.
-              adw = 1.
-              if(k > jmin(i)) adw = 0.
-              dp = 1000. * del(i,k)
+              aup = 1.0_conv_wp
+              if(k <= kb(i)) aup = 0.0_conv_wp
+              adw = 1.0_conv_wp
+              if(k > jmin(i)) adw = 0.0_conv_wp
+              dp = 1000.0_conv_wp * del(i,k)
               dz = zi(i,k) - zi(i,k-1)
 c
               dv1h = heo(i,k)
-              dv2h = .5 * (heo(i,k) + heo(i,k-1))
+              dv2h = .5_conv_wp * (heo(i,k) + heo(i,k-1))
               dv3h = heo(i,k-1)
 c
-              tem  = 0.5 * (xlamue(i,k)+xlamue(i,k-1))
-              tem1 = 0.5 * (xlamud(i,k)+xlamud(i,k-1))
+              tem  = 0.5_conv_wp * (xlamue(i,k)+xlamue(i,k-1))
+              tem1 = 0.5_conv_wp * (xlamud(i,k)+xlamud(i,k-1))
 c
               if(k <= kd94(i)) then
                 ptem  = xlamdet(i)
@@ -2285,15 +2392,16 @@ c
                 ptem1 = xlamddt(i)
               endif
 
-              factor = grav / dp
+              factor = real(grav, conv_wp) / dp
 cj
-              dellah(i,k) = dellah(i,k) +
-     &     ((aup*eta(i,k)-adw*edto(i)*etad(i,k))*dv1h
-     &    - (aup*eta(i,k-1)-adw*edto(i)*etad(i,k-1))*dv3h
-     &    - (aup*tem*eta(i,k-1)+adw*edto(i)*ptem*etad(i,k))*dv2h*dz
-     &    +  aup*tem1*eta(i,k-1)*.5*(hcko(i,k)+hcko(i,k-1))*dz
-     &    +  adw*edto(i)*ptem1*etad(i,k)*.5*(hcdo(i,k)+hcdo(i,k-1))*dz
-     &         ) * factor
+              dellah(i,k) = dellah(i,k)+((aup*eta(i,k)-adw*edto(i)*
+     &                      etad(i,k))*dv1h-(aup*eta(i,k-1)-adw*edto(i)*
+     &                      etad(i,k-1))*dv3h-(aup*tem*eta(i,k-1)+adw*
+     &                      edto(i)*ptem*etad(i,k))*dv2h*dz+aup*tem1*
+     &                      eta(i,k-1)*.5_conv_wp*(hcko(i,k)+
+     &                      hcko(i,k-1))*dz+adw*edto(i)*ptem1*etad(i,k)*
+     &                      .5_conv_wp*(hcdo(i,k)+hcdo(i,k-1))*dz)* 
+     &                      factor
 cj
               tem1 = -eta(i,k) * qrcko(i,k)
               tem2 = -eta(i,k-1) * qcko(i,k-1)
@@ -2324,18 +2432,18 @@ cj
       do k = 2, km1
         do i = 1, im
           if (cnvflg(i) .and. k < ktcon(i)) then
-              aup = 1.
-              if(k <= kb(i)) aup = 0.
-              adw = 1.
+              aup = 1.0_conv_wp
+              if(k <= kb(i)) aup = 0.0_conv_wp
+              adw = 1.0_conv_wp
               if(k > jmin(i)) adw = 0.
-              dp = 1000. * del(i,k)
+              dp = 1000.0_conv_wp * del(i,k)
 cj
               tem1 = -eta(i,k) * ercko(i,k,n)
               tem2 = -eta(i,k-1) * ecko(i,k-1,n)
               ptem1 = -etad(i,k) * ecdo(i,k,n)
               ptem2 = -etad(i,k-1) * ecdo(i,k-1,n)
-              dellae(i,k,n) = dellae(i,k,n) +
-     &           (aup*(tem1-tem2)-adw*edto(i)*(ptem1-ptem2))*grav/dp
+              dellae(i,k,n) = dellae(i,k,n) + (aup*(tem1-tem2)-adw*
+     &                      edto(i)*(ptem1-ptem2))*real(grav,conv_wp)/dp
 cj
           endif
         enddo
@@ -2348,8 +2456,8 @@ c
       do i = 1, im
         if(cnvflg(i)) then
           indx = ktcon(i)
-          dp = 1000. * del(i,indx)
-          tem = eta(i,indx-1) * grav / dp
+          dp = 1000.0_conv_wp * del(i,indx)
+          tem = eta(i,indx-1) * real(grav,conv_wp) / dp
           dellah(i,indx) = tem * (hcko(i,indx-1) - heo(i,indx-1))
           dellaq(i,indx) = tem *  qcko(i,indx-1)
           dellau(i,indx) = tem * (ucko(i,indx-1) - uo(i,indx-1))
@@ -2365,9 +2473,9 @@ c
       do i = 1, im
         if(cnvflg(i)) then
           indx = ktcon(i)
-          dp = 1000. * del(i,indx)
+          dp = 1000.0_conv_wp * del(i,indx)
           dellae(i,indx,n) = eta(i,indx-1) *
-     &             ecko(i,indx-1,n) * grav / dp
+     &             ecko(i,indx-1,n) * real(grav, conv_wp) / dp
         endif
       enddo
       enddo
@@ -2381,63 +2489,66 @@ c
       do k=1,km1
         do i=1,im
           if(cnvflg(i) .and. k <= ktcon(i)) then
-            q_diff(i,k) = q1(i,k) - q1(i,k+1)
+            q_diff(i,k) = real(q1(i,k), conv_wp) - real(q1(i,k+1),
+     &                    conv_wp)
           endif
         enddo
       enddo
       do i=1,im
         if(cnvflg(i)) then
-          if(q1(i,1) >= 0.) then
-            q_diff(i,0) = max(0.,2.*q1(i,1)-q1(i,2))-
-     &                        q1(i,1)
+          if(real(q1(i,1), conv_wp) >= 0.0_conv_wp) then
+            q_diff(i,0) = max(0.0_conv_wp,2.0_conv_wp*real(q1(i,1), 
+     &                    conv_wp)-real(q1(i,2), conv_wp))-
+     &                    real(q1(i,1), conv_wp)  
           else
-            q_diff(i,0) = min(0.,2.*q1(i,1)-q1(i,2))-
-     &                          q1(i,1)
+            q_diff(i,0) = min(0.0_conv_wp,2.0_conv_wp*real(q1(i,1),
+     &                    conv_wp)-real(q1(i,2), conv_wp))-
+     &                    real(q1(i,1), conv_wp)
           endif
         endif
       enddo
 !
-      flxtvd = 0.
+      flxtvd = 0.0_conv_wp
       do k = 1, km1
         do i = 1, im
           if(cnvflg(i) .and. k < ktcon(i)) then
-            tem = 0.
+            tem = 0.0_conv_wp
             if(k >= kb(i)) tem = eta(i,k)
             if(k <= jmin(i)) then
               tem = tem - edto(i) * etad(i,k)
             endif
-            if(tem > 0.) then
-              rrkp = 0.
-              if(abs(q_diff(i,k)) > 1.e-22)
+            if(tem > 0.0_conv_wp) then
+              rrkp = 0.0_conv_wp
+              if(abs(q_diff(i,k)) > 1.e-22_conv_wp)
      &               rrkp = q_diff(i,k+1) / q_diff(i,k)
-              phkp = (rrkp+abs(rrkp)) / (1.+abs(rrkp))
-              tem1 = q1(i,k+1) +
-     &                   phkp*(qo(i,k)-q1(i,k+1))
+              phkp = (rrkp+abs(rrkp)) / (1.0_conv_wp+abs(rrkp))
+              tem1 = real(q1(i,k+1), conv_wp) +
+     &                   phkp*(qo(i,k)-real(q1(i,k+1), conv_wp))
               flxtvd(i,k) = tem * tem1
-            elseif(tem < 0.) then
-              rrkp = 0.
-              if(abs(q_diff(i,k)) > 1.e-22)
+            elseif(tem < 0.0_conv_wp) then
+              rrkp = 0.0_conv_wp
+              if(abs(q_diff(i,k)) > 1.e-22_conv_wp)
      &               rrkp = q_diff(i,k-1) / q_diff(i,k)
-              phkp = (rrkp+abs(rrkp)) / (1.+abs(rrkp))
-              tem1 = q1(i,k) +
-     &                  phkp*(qo(i,k)-q1(i,k))
+              phkp = (rrkp+abs(rrkp)) / (1.0_conv_wp+abs(rrkp))
+              tem1 = real(q1(i,k), conv_wp) +
+     &                  phkp*(qo(i,k)-real(q1(i,k), conv_wp))
               flxtvd(i,k) = tem * tem1
             else
               tem1 = qo(i,k)
-              flxtvd(i,k) = 0.
+              flxtvd(i,k) = 0.0_conv_wp
             endif
 !
 ! subtract the double counting change rates at jmin+1 & kb beforehand
 !
             if(k == jmin(i)) then
-              dp = 1000. * del(i,k+1)
+              dp = 1000.0_conv_wp * del(i,k+1)
               dellaq(i,k+1) = dellaq(i,k+1) -
-     &            edto(i) * etad(i,k) * tem1 * grav/dp
+     &            edto(i) * etad(i,k) * tem1 * real(grav, conv_wp)/dp
             endif
             if(k == kb(i)) then
-              dp = 1000. * del(i,k)
+              dp = 1000.0_conv_wp * del(i,k)
               dellaq(i,k) = dellaq(i,k) -
-     &            eta(i,k) * tem1 * grav/dp
+     &            eta(i,k) * tem1 * real(grav, conv_wp)/dp
             endif
 !
           endif
@@ -2447,9 +2558,9 @@ c
       do k=1,km1
         do i=1,im
           if(cnvflg(i) .and. k <= ktcon(i)) then
-             dp = 1000. * del(i,k)
+             dp = 1000.0_conv_wp * del(i,k)
              dellaq(i,k) = dellaq(i,k) +
-     &           (flxtvd(i,k) - flxtvd(i,k-1)) * grav/dp
+     &           (flxtvd(i,k) - flxtvd(i,k-1)) * real(grav, conv_wp)/dp
           endif
         enddo
       enddo
@@ -2468,12 +2579,12 @@ c
         enddo
         do i=1,im
           if(cnvflg(i)) then
-            if(ctr(i,1,n) >= 0.) then
-              e_diff(i,0,n) = max(0.,2.*ctr(i,1,n)-ctr(i,2,n))-
-     &                          ctr(i,1,n)
+            if(ctr(i,1,n) >= 0.0_conv_wp) then
+              e_diff(i,0,n) = max(0.0_conv_wp,2.0_conv_wp*ctr(i,1,n)-
+     &                        ctr(i,2,n))-ctr(i,1,n)
             else
-              e_diff(i,0,n) = min(0.,2.*ctr(i,1,n)-ctr(i,2,n))-
-     &                          ctr(i,1,n)
+              e_diff(i,0,n) = min(0.0_conv_wp,2.0_conv_wp*ctr(i,1,n)-
+     &                        ctr(i,2,n))-ctr(i,1,n)
             endif
           endif
         enddo
@@ -2481,47 +2592,47 @@ c
 !
       do n=1,ntr
 !
-        flxtvd = 0.
+        flxtvd = 0.0_conv_wp
         do k = 1, km1
           do i = 1, im
             if(cnvflg(i) .and. k < ktcon(i)) then
-              tem = 0.
+              tem = 0.0_conv_wp
               if(k >= kb(i)) tem = eta(i,k)
               if(k <= jmin(i)) then
                 tem = tem - edto(i) * etad(i,k)
               endif
-              if(tem > 0.) then
-                rrkp = 0.
-                if(abs(e_diff(i,k,n)) > 1.e-22)
+              if(tem > 0.0_conv_wp) then
+                rrkp = 0.0_conv_wp
+                if(abs(e_diff(i,k,n)) > 1.e-22_conv_wp)
      &                 rrkp = e_diff(i,k+1,n) / e_diff(i,k,n)
-                phkp = (rrkp+abs(rrkp)) / (1.+abs(rrkp))
+                phkp = (rrkp+abs(rrkp)) / (1.0_conv_wp+abs(rrkp))
                 tem1 = ctr(i,k+1,n) +
      &                     phkp*(ctro(i,k,n)-ctr(i,k+1,n))
                 flxtvd(i,k) = tem * tem1
-              elseif(tem < 0.) then
-                rrkp = 0.
-                if(abs(e_diff(i,k,n)) > 1.e-22)
+              elseif(tem < 0.0_conv_wp) then
+                rrkp = 0.0_conv_wp
+                if(abs(e_diff(i,k,n)) > 1.e-22_conv_wp)
      &                 rrkp = e_diff(i,k-1,n) / e_diff(i,k,n)
-                phkp = (rrkp+abs(rrkp)) / (1.+abs(rrkp))
+                phkp = (rrkp+abs(rrkp)) / (1.0_conv_wp+abs(rrkp))
                 tem1 = ctr(i,k,n) +
      &                    phkp*(ctro(i,k,n)-ctr(i,k,n))
                 flxtvd(i,k) = tem * tem1
               else
                 tem1 = ctro(i,k,n)
-                flxtvd(i,k) = 0.
+                flxtvd(i,k) = 0.0_conv_wp
               endif
 !
 ! subtract the double counting change rates at jmin+1 & kb beforehand
 !
               if(k == jmin(i)) then
-                dp = 1000. * del(i,k+1)
+                dp = 1000.0_conv_wp * del(i,k+1)
                 dellae(i,k+1,n) = dellae(i,k+1,n) -
-     &              edto(i)*etad(i,k) * tem1 * grav/dp
+     &              edto(i)*etad(i,k) * tem1 * real(grav, conv_wp)/dp
               endif
               if(k == kb(i)) then
-                dp = 1000. * del(i,k)
+                dp = 1000.0_conv_wp * del(i,k)
                 dellae(i,k,n) = dellae(i,k,n) -
-     &              eta(i,k) * tem1 * grav/dp
+     &              eta(i,k) * tem1 * real(grav, conv_wp)/dp
               endif
 !
             endif
@@ -2531,9 +2642,9 @@ c
         do k=1,km1
           do i=1,im
             if(cnvflg(i) .and. k <= ktcon(i)) then
-               dp = 1000. * del(i,k)
-               dellae(i,k,n) = dellae(i,k,n) +
-     &             (flxtvd(i,k) - flxtvd(i,k-1)) * grav/dp
+               dp = 1000.0_conv_wp * del(i,k)
+               dellae(i,k,n) = dellae(i,k,n) + (flxtvd(i,k) - 
+     &                         flxtvd(i,k-1)) * real(grav, conv_wp)/dp
             endif
           enddo
         enddo
@@ -2547,11 +2658,11 @@ c
 !> - If grid size is less than a threshold value (dxcrtas: currently 8km if progsigma is not used), or progsigma = true, the quasi-equilibrium assumption of Arakawa-Schubert is not used any longer.
 !
       if(progsigma)then
-         dxcrtas=500.e3
-         dxcrtuf=10.e3
+         dxcrtas=500.e3_conv_wp
+         dxcrtuf=10.e3_conv_wp
       else
-         dxcrtas=8.e3
-         dxcrtuf=15.e3
+         dxcrtas=8.e3_conv_wp
+         dxcrtuf=15.e3_conv_wp
       endif
 
 
@@ -2568,14 +2679,15 @@ c
         do i = 1, im
           if (asqecflg(i) .and. k <= kmax(i)) then
             if(k > ktcon(i)) then
-              qo(i,k) = q1(i,k)
-              to(i,k) = t1(i,k)
+              qo(i,k) = real(q1(i,k), conv_wp)
+              to(i,k) = real(t1(i,k), conv_wp)
             endif
             if(k <= ktcon(i)) then
-              qo(i,k) = dellaq(i,k) * mbdt(i) + q1(i,k)
-              dellat = (dellah(i,k) - hvap * dellaq(i,k)) / cp
-              to(i,k) = dellat * mbdt(i) + t1(i,k)
-              val   =           1.e-10
+              qo(i,k) = dellaq(i,k) * mbdt(i) + real(q1(i,k), conv_wp)
+              dellat = (dellah(i,k) - real(hvap, conv_wp) * dellaq(i,k))
+     &                 / real(cp, conv_wp)           
+              to(i,k) = dellat * mbdt(i) + real(t1(i,k), conv_wp)
+              val   = 1.e-10_conv_wp
               qo(i,k) = max(qo(i,k), val  )
             endif
           endif
@@ -2601,8 +2713,9 @@ c
 !            qeso(i,k) = 0.01 * fpvs(to(i,k))      ! fpvs is in pa
             qeso(i,k) = 0.01_conv_wp * 
      &                  real(fpvs(real(to(i,k), kind_phys)), conv_wp)
-            qeso(i,k) = eps * qeso(i,k) / (pfld(i,k)+epsm1*qeso(i,k))
-            val       =             1.e-8
+            qeso(i,k) = real(eps, conv_wp) * qeso(i,k) / (pfld(i,k) +
+     &                  real(epsm1, conv_wp)*qeso(i,k))
+            val       = 1.e-8_conv_wp
             qeso(i,k) = max(qeso(i,k), val )
 !           tvo(i,k)  = to(i,k) + fv * to(i,k) * qo(i,k)
           endif
@@ -2615,22 +2728,24 @@ c
       do k = 1, km1
         do i = 1, im
           if(asqecflg(i) .and. k <= kmax(i)-1) then
-            dz = .5 * (zo(i,k+1) - zo(i,k))
-            dp = .5 * (pfld(i,k+1) - pfld(i,k))
+            dz = .5_conv_wp * (zo(i,k+1) - zo(i,k))
+            dp = .5_conv_wp * (pfld(i,k+1) - pfld(i,k))
 !            es = 0.01 * fpvs(to(i,k+1))      ! fpvs is in pa
             es = 0.01_conv_wp * 
      &           real(fpvs(real(to(i,k+1), kind_phys)), conv_wp) 
-            pprime = pfld(i,k+1) + epsm1 * es
-            qs = eps * es / pprime
+            pprime = pfld(i,k+1) + real(epsm1, conv_wp) * es
+            qs = real(eps, conv_wp) * es / pprime
             dqsdp = - qs / pprime
-            desdt = es * (fact1 / to(i,k+1) + fact2 / (to(i,k+1)**2))
+            desdt = es * (real(fact1, conv_wp) / to(i,k+1) +
+     &              real(fact2, conv_wp)  / (to(i,k+1)**2))
             dqsdt = qs * pfld(i,k+1) * desdt / (es * pprime)
-            gamma = el2orc * qeso(i,k+1) / (to(i,k+1)**2)
-            dt = (grav * dz + hvap * dqsdp * dp) / (cp * (1. + gamma))
+            gamma = real(el2orc, conv_wp) * qeso(i,k+1) / (to(i,k+1)**2)
+            dt = (real(grav, conv_wp)*dz +real(hvap, conv_wp)*dqsdp*dp)/
+     &           (real(cp, conv_wp) * (1.0_conv_wp + gamma))
             dq = dqsdt * dt + dqsdp * dp
             to(i,k) = to(i,k+1) + dt
             qo(i,k) = qo(i,k+1) + dq
-            po(i,k) = .5 * (pfld(i,k) + pfld(i,k+1))
+            po(i,k) = .5_conv_wp * (pfld(i,k) + pfld(i,k+1))
           endif
         enddo
       enddo
@@ -2640,24 +2755,29 @@ c
 !            qeso(i,k) = 0.01 * fpvs(to(i,k))      ! fpvs is in pa
             qeso(i,k) = 0.01_conv_wp * 
      &                  real(fpvs(real(to(i,k), kind_phys)), conv_wp)
-            qeso(i,k) = eps * qeso(i,k) / (po(i,k) + epsm1 * qeso(i,k))
-            val1      =             1.e-8
+            qeso(i,k) = real(eps, conv_wp) * qeso(i,k) / (po(i,k) +
+     &                  real(epsm1, conv_wp) * qeso(i,k))
+            val1      = 1.e-8_conv_wp
             qeso(i,k) = max(qeso(i,k), val1)
-            val2      =           1.e-10
+            val2      = 1.e-10_conv_wp
             qo(i,k)   = max(qo(i,k), val2 )
 !           qo(i,k)   = min(qo(i,k),qeso(i,k))
-            heo(i,k)   = .5 * grav * (zo(i,k) + zo(i,k+1)) +
-     &                    cp * to(i,k) + hvap * qo(i,k)
-            heso(i,k) = .5 * grav * (zo(i,k) + zo(i,k+1)) +
-     &                  cp * to(i,k) + hvap * qeso(i,k)
+            heo(i,k)   = .5_conv_wp * real(grav, conv_wp) * (zo(i,k) +
+     &                  zo(i,k+1)) + real(cp, conv_wp) * to(i,k) +
+     &                  real(hvap, conv_wp) * qo(i,k)
+            heso(i,k) = .5_conv_wp * real(grav, conv_wp) * (zo(i,k) +
+     &                  zo(i,k+1)) + real(cp, conv_wp) * to(i,k) +
+     &                  real(hvap, conv_wp) * qeso(i,k)
           endif
         enddo
       enddo
       do i = 1, im
         if(asqecflg(i)) then
           k = kmax(i)
-          heo(i,k) = grav * zo(i,k) + cp * to(i,k) + hvap * qo(i,k)
-          heso(i,k) = grav * zo(i,k) + cp * to(i,k) + hvap * qeso(i,k)
+          heo(i,k) = real(grav, conv_wp) * zo(i,k) + real(cp, conv_wp) *
+     &               to(i,k) + real(hvap, conv_wp) * qo(i,k)
+          heso(i,k) = real(grav, conv_wp) * zo(i,k) + real(cp, conv_wp)*
+     &                to(i,k) + real(hvap, conv_wp) * qeso(i,k)
 c         heo(i,k) = min(heo(i,k),heso(i,k))
         endif
       enddo
@@ -2669,8 +2789,8 @@ c
 !> - As before, recalculate the updraft cloud work function.
       do i = 1, im
         if(asqecflg(i)) then
-          xaa0(i) = 0.
-          xpwav(i) = 0.
+          xaa0(i) = 0.0_conv_wp
+          xpwav(i) = 0.0_conv_wp
         endif
       enddo
 c
@@ -2686,11 +2806,11 @@ c
           if (asqecflg(i)) then
             if(k > kb(i) .and. k <= ktcon(i)) then
               dz = zi(i,k) - zi(i,k-1)
-              tem  = 0.5 * (xlamue(i,k)+xlamue(i,k-1)) * dz
-              tem1 = 0.25 * (xlamud(i,k)+xlamud(i,k-1)) * dz
-              factor = 1. + tem - tem1
-              hcko(i,k) = ((1.-tem1)*hcko(i,k-1)+tem*0.5*
-     &                     (heo(i,k)+heo(i,k-1)))/factor
+              tem  = 0.5_conv_wp * (xlamue(i,k)+xlamue(i,k-1)) * dz
+              tem1 = 0.25_conv_wp * (xlamud(i,k)+xlamud(i,k-1)) * dz
+              factor = 1.0_conv_wp + tem - tem1
+              hcko(i,k) = ((1.0_conv_wp-tem1)*hcko(i,k-1)+tem*
+     &                    0.50_conv_wp*(heo(i,k)+heo(i,k-1)))/factor
             endif
           endif
         enddo
@@ -2700,30 +2820,31 @@ c
           if (asqecflg(i)) then
             if(k > kb(i) .and. k < ktcon(i)) then
               dz = zi(i,k) - zi(i,k-1)
-              gamma = el2orc * qeso(i,k) / (to(i,k)**2)
+              gamma = real(el2orc, conv_wp) * qeso(i,k) / (to(i,k)**2)
               xdby = hcko(i,k) - heso(i,k)
-              xqrch = qeso(i,k)
-     &              + gamma * xdby / (hvap * (1. + gamma))
+              xqrch = qeso(i,k) + gamma * xdby / (real(hvap, conv_wp) *
+     &                (1.0_conv_wp + gamma))
 cj
-              tem  = 0.25 * (xlamue(i,k)+xlamue(i,k-1)) * dz
-              tem  = cq * tem
-              factor = 1. + tem
-              qcko(i,k) = ((1.-tem)*qcko(i,k-1)+tem*
-     &                     (qo(i,k)+qo(i,k-1)))/factor
+              tem  = 0.25_conv_wp * (xlamue(i,k)+xlamue(i,k-1)) * dz
+              tem  = real(cq, conv_wp) * tem
+              factor = 1.0_conv_wp + tem
+              qcko(i,k) = ((1.0_conv_wp-tem)*qcko(i,k-1)+tem*
+     &                    (real(qo(i,k), conv_wp)+real(qo(i,k-1),
+     &                    conv_wp)))/factor
 cj
               dq = eta(i,k) * (qcko(i,k) - xqrch)
 c
-              if(k >= kbcon(i) .and. dq > 0.) then
-                etah = .5 * (eta(i,k) + eta(i,k-1))
+              if(k >= kbcon(i) .and. dq > 0.0_conv_wp) then
+                etah = .5_conv_wp * (eta(i,k) + eta(i,k-1))
                 if(ncloud > 0 .and. k > jmin(i)) then
-                  ptem = c0t(i,k) + c1
+                  ptem = c0t(i,k) + real(c1, conv_wp)
                   qlk = dq / (eta(i,k) + etah * ptem * dz)
                 else
                   qlk = dq / (eta(i,k) + etah * c0t(i,k) * dz)
                 endif
                 if(k < ktcon1(i)) then
 !                 xaa0(i) = xaa0(i) - dz * grav * qlk * etah
-                  xaa0(i) = xaa0(i) - dz * grav * qlk
+                  xaa0(i) = xaa0(i) - dz * real(grav, conv_wp) * qlk
                 endif
                 qcko(i,k) = qlk + xqrch
                 xpw = etah * c0t(i,k) * dz * qlk
@@ -2732,18 +2853,20 @@ c
             endif
             if(k >= kbcon(i) .and. k < ktcon1(i)) then
               dz1 = zo(i,k+1) - zo(i,k)
-              gamma = el2orc * qeso(i,k) / (to(i,k)**2)
+              gamma = real(el2orc, conv_wp) * qeso(i,k) / (to(i,k)**2)
               rfact =  1. + fv * cp * gamma
      &                 * to(i,k) / hvap
-              xaa0(i) = xaa0(i)
+              rfact = 1.0_conv_wp + real(fv, conv_wp) * real(cp,
+     &                conv_wp) * gamma * to(i,k) / real(hvap, conv_wp)
+              xaa0(i) = xaa0(i) +
 !    &                + dz1 * eta(i,k) * (grav / (cp * to(i,k)))
-     &                + dz1 * (grav / (cp * to(i,k)))
-     &                * xdby / (1. + gamma)
-     &                * rfact
-              val=0.
+     &                dz1 * (real(grav, conv_wp) / (real(cp, conv_wp) *
+     &                to(i,k))) * xdby / (1.0_conv_wp + gamma) *
+     &                rfact
+              val=0.0_conv_wp
               xaa0(i) = xaa0(i) +
 !    &                 dz1 * eta(i,k) * grav * fv *
-     &                 dz1 * grav * fv *
+     &                 dz1 * real(grav, conv_wp) * real(fv, conv_wp) *
      &                 max(val,(qeso(i,k) - qo(i,k)))
             endif
           endif
@@ -2761,7 +2884,7 @@ c
           hcdo(i,jmn) = heo(i,jmn)
           qcdo(i,jmn) = qo(i,jmn)
           qrcd(i,jmn) = qo(i,jmn)
-          xpwev(i) = 0.
+          xpwev(i) = 0.0_conv_wp
         endif
       enddo
 cj
@@ -2771,14 +2894,14 @@ cj
               dz = zi(i,k+1) - zi(i,k)
               if(k >= kd94(i)) then
                  tem  = xlamdet(i) * dz
-                 tem1 = 0.5 * xlamddt(i) * dz
+                 tem1 = 0.5_conv_wp * xlamddt(i) * dz
               else
                  tem  = xlamdet(i) * dz
-                 tem1 = 0.5 * (xlamd(i)+xlamddt(i)) * dz
+                 tem1 = 0.5_conv_wp * (xlamd(i)+xlamddt(i)) * dz
               endif
-              factor = 1. + tem - tem1
-              hcdo(i,k) = ((1.-tem1)*hcdo(i,k+1)+tem*0.5*
-     &                     (heo(i,k)+heo(i,k+1)))/factor
+              factor = 1.0_conv_wp + tem - tem1
+              hcdo(i,k) = ((1.0_conv_wp-tem1)*hcdo(i,k+1)+tem*
+     &                    0.5_conv_wp*(heo(i,k)+heo(i,k+1)))/factor
           endif
         enddo
       enddo
@@ -2788,17 +2911,19 @@ cj
           if (asqecflg(i) .and. k < jmin(i)) then
               dq = qeso(i,k)
               dt = to(i,k)
-              gamma    = el2orc * dq / dt**2
+              gamma    = real(el2orc, conv_wp) * dq / dt**2
               dh       = hcdo(i,k) - heso(i,k)
-              qrcd(i,k)=dq+(1./hvap)*(gamma/(1.+gamma))*dh
+              qrcd(i,k)= dq + (1.0_conv_wp / real(hvap, conv_wp)) *
+     &                   (gamma / (1.0_conv_wp+gamma)) * dh
 !             detad    = etad(i,k+1) - etad(i,k)
 cj
               dz = zi(i,k+1) - zi(i,k)
-              tem  = 0.5 * xlamdet(i) * dz
-              tem  = cq * tem
-              factor = 1. + tem
-              qcdo(i,k) = ((1.-tem)*qrcd(i,k+1)+tem*
-     &                     (qo(i,k)+qo(i,k+1)))/factor
+              tem  = 0.5_conv_wp * xlamdet(i) * dz
+              tem  = real(cq, conv_wp) * tem
+              factor = 1.0_conv_wp + tem
+              qcdo(i,k) = ((1.0_conv_wp-tem)*qrcd(i,k+1)+tem*
+     &                    (real(qo(i,k), conv_wp)+real(qo(i,k+1), 
+     &                     conv_wp)))/factor
 cj
 !             xpwd     = etad(i,k+1) * qcdo(i,k+1) -
 !    &                   etad(i,k) * qrcd(i,k)
@@ -2815,8 +2940,8 @@ c
         edtmax = edtmaxl
         if(islimsk(i) == 0) edtmax = edtmaxs
         if(asqecflg(i)) then
-          if(xpwev(i) >= 0.) then
-            edtx(i) = 0.
+          if(xpwev(i) >= 0.0_conv_wp) then
+            edtx(i) = 0.0_conv_wp
           else
             edtx(i) = -edtx(i) * xpwav(i) / xpwev(i)
             edtx(i) = min(edtx(i),edtmax)
@@ -2831,20 +2956,21 @@ c
       do k = km1, 1, -1
         do i = 1, im
           if (asqecflg(i) .and. k < jmin(i)) then
-              gamma = el2orc * qeso(i,k) / to(i,k)**2
+              gamma = real(el2orc, conv_wp) * qeso(i,k) / to(i,k)**2
               dhh = hcdo(i,k)
               dt = to(i,k)
               dg = gamma
               dh = heso(i,k)
               dz = zo(i,k) - zo(i,k+1)
 !             xaa0(i)=xaa0(i)+edtx(i)*dz*etad(i,k)
-              xaa0(i) = xaa0(i)+edtx(i)*dz
-     &                  *(grav/(cp*dt))*((dhh-dh)/(1.+dg))
-     &                  *(1.+fv*cp*dg*dt/hvap)
-              val = 0.
+              xaa0(i) = xaa0(i)+edtx(i)*dz*(real(grav, conv_wp)/
+     &                 (real(cp, conv_wp)*dt))*((dhh-dh)/(1.0_conv_wp+
+     &                 dg))*(1.0_conv_wp+real(fv, conv_wp)*real(cp,
+     &                 conv_wp)*dg*dt/real(hvap, conv_wp))
+              val = 0.0_conv_wp
 !             xaa0(i)=xaa0(i)+edtx(i)*dz*etad(i,k)
-              xaa0(i) = xaa0(i)+edtx(i)*dz
-     &                  *grav*fv*max(val,(qeso(i,k)-qo(i,k)))
+              xaa0(i) = xaa0(i)+edtx(i)*dz*real(grav, conv_wp)*real(fv,
+     &                  conv_wp)*max(val,(qeso(i,k)-qo(i,k)))
           endif
         enddo
       enddo
@@ -2932,7 +3058,7 @@ c
         if(cnvflg(i)) then
           tem = zi(i,ktcon1(i)) - zi(i,kbcon1(i))
           dtconv(i) = tem / wc(i)
-          tfac = 1. + gdx(i) / 75000.
+          tfac = 1.0_conv_wp + gdx(i) / 75000.0_conv_wp
           dtconv(i) = tfac * dtconv(i)
           dtconv(i) = max(dtconv(i),dtmin)
           dtconv(i) = min(dtconv(i),dtmax)
@@ -2943,8 +3069,8 @@ c
 !> - Calculate advective time scale (tauadv) using a mean cloud layer wind speed.
       do i= 1, im
         if(cnvflg(i)) then
-          sumx(i) = 0.
-          umean(i) = 0.
+          sumx(i) = 0.0_conv_wp
+          umean(i) = 0.0_conv_wp
         endif
       enddo
       do k = 2, km1
@@ -2952,7 +3078,8 @@ c
           if(cnvflg(i)) then
             if(k >= kbcon1(i) .and. k < ktcon1(i)) then
               dz = zi(i,k) - zi(i,k-1)
-              tem = sqrt(u1(i,k)*u1(i,k)+v1(i,k)*v1(i,k))
+              tem = sqrt(real(u1(i,k), conv_wp)*real(u1(i,k),conv_wp)+
+     &              real(v1(i,k), conv_wp)*real(v1(i,k), conv_wp))
               umean(i) = umean(i) + tem * dz
               sumx(i) = sumx(i) + dz
             endif
@@ -2962,10 +3089,10 @@ c
       do i= 1, im
         if(cnvflg(i)) then
            umean(i) = umean(i) / sumx(i)
-           umean(i) = max(umean(i), 1.)
+           umean(i) = max(umean(i), 1.0_conv_wp)
            tauadv = gdx(i) / umean(i)
            advfac(i) = tauadv / dtconv(i)
-           advfac(i) = min(advfac(i), 1.)
+           advfac(i) = min(advfac(i), 1.0_conv_wp)
         endif
       enddo
       
@@ -2976,29 +3103,48 @@ c
      &           .or. sigmab_coldstart))then
             do k = 1,km
                do i = 1,im
-                  qadv(i,k)=0.
+                  qadv(i,k)=0.0_conv_wp
                enddo
             enddo
          else
             do k = 1,km
                do i = 1,im
-                  qadv(i,k)=(q(i,k) - prevsq(i,k))*invdelt
+                  qadv(i,k)=(real(q(i,k), conv_wp) -real(prevsq(i,k),
+     &                      conv_wp))*invdelt
                enddo
             enddo
          endif
          
          do k = 1,km
             do i = 1,im
-               tmfq(i,k)=tmf(i,k,1)
+               tmfq(i,k)=real(tmf(i,k,1), conv_wp)
             enddo
          enddo
 
          flag_shallow = .false.
          flag_mid = .false.
+
+         do k=1,km
+            do i=1,im
+               sigmaout_loc(i,k) = 0.0_conv_wp
+            enddo
+         enddo
+
          call progsigma_calc(im,km,first_time_step,restart,flag_shallow,
-     &        flag_mid,del,tmfq,qmicro,dbyo1,zdqca,omega_u,zeta,hvap,
-     &        delt,qadv,kb,kbcon1,ktcon,cnvflg,betascu,betamcu,betadcu,
-     &        sigmind,sigminm,sigmins,sigmain,sigmaout,sigmab)
+     &        flag_mid,del,tmfq,real(qmicro, conv_wp),dbyo1,zdqca,
+     &        omega_u,zeta,real(hvap, conv_wp),real(delt, conv_wp),qadv,
+     &        kb,kbcon1,ktcon,cnvflg,real(betascu, conv_wp),
+     &        real(betamcu,conv_wp),real(betadcu, conv_wp),sigmind,
+     &        sigminm,sigmins,real(sigmain, conv_wp),sigmaout_loc,
+     &        sigmab)
+
+         do k = 1, km
+            do i = 1, im
+               if (cnvflg(i)) then
+                  sigmaout(i,k) = real(sigmaout_loc(i,k), kind_phys)
+               endif
+            enddo
+         enddo
       endif
 
 !> - From Han et al.'s (2017) \cite han_et_al_2017 equation 6, calculate cloud base mass flux as a function of the mean updraft velcoity for the grid sizes where the quasi-equilibrium assumption of Arakawa-Schubert is not valid any longer.
@@ -3007,9 +3153,10 @@ c
       do i= 1, im
         if(cnvflg(i) .and. .not.asqecflg(i)) then
           k = kbcon(i)
-          rho = po(i,k)*100. / (rd*to(i,k))
+          rho = po(i,k)*100.0_conv_wp / (real(rd, conv_wp)*to(i,k))
           if(progsigma)then
-             xmb(i) = advfac(i)*sigmab(i)*((-1.0*omegac(i))*gravinv)
+             xmb(i) = advfac(i)*sigmab(i)*((-1.0_conv_wp*omegac(i))*
+     &                gravinv)
           else
              xmb(i) = advfac(i)*betaw*rho*wc(i)
           endif
@@ -3024,7 +3171,7 @@ c
         if(asqecflg(i)) then
 !         fld(i)=(aa1(i)-acrt(i)*acrtfct(i))/dtconv(i)
           fld(i)=aa1(i)/dtconv(i)
-          if(fld(i) <= 0.) then
+          if(fld(i) <= 0.0_conv_wp) then
             asqecflg(i) = .false.
             cnvflg(i) = .false.
           endif
@@ -3037,7 +3184,7 @@ c
         if(asqecflg(i)) then
 c         xaa0(i) = max(xaa0(i),0.)
           xk(i) = (xaa0(i) - aa1(i)) / mbdt(i)
-          if(xk(i) >= 0.) then
+          if(xk(i) >= 0.0_conv_wp) then
             asqecflg(i) = .false.
             cnvflg(i) = .false.
           endif
@@ -3068,12 +3215,13 @@ c
 !> - For scale-aware parameterization, the updraft fraction (sigmagfm) is first computed as a function of the lateral entrainment rate at cloud base (see Han et al.'s (2017) \cite han_et_al_2017 equation 4 and 5), following the study by Grell and Freitas (2014) \cite grell_and_freitas_2014.
       do i = 1, im
         if(cnvflg(i)) then
-          tem = min(max(xlamue(i,kbcon(i)), 7.e-5), 3.e-4)
-          tem = 0.2 / tem
-          tem1 = 3.14 * tem * tem
-          sigmagfm(i) = tem1 / garea(i)
-          sigmagfm(i) = max(sigmagfm(i), 0.001)
-          sigmagfm(i) = min(sigmagfm(i), 0.999)
+          tem = min(max(xlamue(i,kbcon(i)), 7.e-5_conv_wp), 
+     &          3.e-4_conv_wp)
+          tem = 0.2_conv_wp / tem
+          tem1 = 3.14_conv_wp * tem * tem
+          sigmagfm(i) = tem1 / real(garea(i), conv_wp)
+          sigmagfm(i) = max(sigmagfm(i), 0.001_conv_wp)
+          sigmagfm(i) = min(sigmagfm(i), 0.999_conv_wp)
         endif
       enddo
 !
@@ -3082,13 +3230,16 @@ c
         if(cnvflg(i)) then
           if (gdx(i) < dxcrtuf) then
              if(progsigma)then
-                scaldfunc(i)=(1.-sigmab(i))*(1.-sigmab(i))
+                scaldfunc(i) = (1.0_conv_wp-sigmab(i)) * (1.0_conv_wp-
+     &                       sigmab(i))
              else
-                scaldfunc(i) = (1.-sigmagfm(i)) * (1.-sigmagfm(i))
+                scaldfunc(i) = (1.0_conv_wp-sigmagfm(i)) * (1.0_conv_wp-
+     &                       sigmagfm(i))
              endif
-            scaldfunc(i) = max(min(scaldfunc(i), 1.0), 0.)
+            scaldfunc(i) = max(min(scaldfunc(i), 1.0_conv_wp), 
+     &                     0.0_conv_wp)
           else
-            scaldfunc(i) = 1.0
+            scaldfunc(i) = 1.0_conv_wp
           endif
           xmb(i) = xmb(i) * scaldfunc(i)
           xmb(i) = min(xmb(i),xmbmax(i))
@@ -3109,15 +3260,16 @@ c
       do k = 1, km
         do i = 1, im
           if (cnvflg(i) .and. k <= kmax(i)) then
-            to(i,k) = t1(i,k)
-            qo(i,k) = q1(i,k)
-            uo(i,k) = u1(i,k)
-            vo(i,k) = v1(i,k)
+            to(i,k) = real(t1(i,k), conv_wp)
+            qo(i,k) = real(q1(i,k), conv_wp)
+            uo(i,k) = real(u1(i,k), conv_wp)
+            vo(i,k) = real(v1(i,k), conv_wp)
 !            qeso(i,k) = 0.01 * fpvs(t1(i,k))      ! fpvs is in pa
             qeso(i,k) = 0.01_conv_wp * 
      &                  real(fpvs(real(t1(i,k), kind_phys)), conv_wp)  
-            qeso(i,k) = eps * qeso(i,k) / (pfld(i,k) + epsm1*qeso(i,k))
-            val     =             1.e-8
+            qeso(i,k) = real(eps, conv_wp) * qeso(i,k) / (pfld(i,k) +
+     &                  real(epsm1, conv_wp) *qeso(i,k))
+            val     =   1.e-8_conv_wp
             qeso(i,k) = max(qeso(i,k), val )
           endif
         enddo
@@ -3128,7 +3280,7 @@ c
         do k = 1, km
         do i = 1, im
           if (cnvflg(i) .and. k <= kmax(i)) then
-            ctro(i,k,n) = qtr(i,k,kk)
+            ctro(i,k,n) = real(qtr(i,k,kk), conv_wp)
           endif
         enddo
         enddo
@@ -3145,17 +3297,17 @@ c
 !> - Update the temperature, specific humidity, and horiztonal wind state variables by multiplying the cloud base mass flux-normalized tendencies by the cloud base mass flux.
 !> - Accumulate column-integrated tendencies.
       do i = 1, im
-        delhbar(i) = 0.
-        delqbar(i) = 0.
-        deltbar(i) = 0.
-        delubar(i) = 0.
-        delvbar(i) = 0.
-        qcond(i) = 0.
+        delhbar(i) = 0.0_conv_wp
+        delqbar(i) = 0.0_conv_wp
+        deltbar(i) = 0.0_conv_wp
+        delubar(i) = 0.0_conv_wp
+        delvbar(i) = 0.0_conv_wp
+        qcond(i) = 0.0_conv_wp
       enddo
       if (.not.hwrf_samfdeep) then
         do n = 1, ntr
         do i = 1, im
-          delebar(i,n) = 0.
+          delebar(i,n) = 0.0_conv_wp
         enddo
         enddo
       endif
@@ -3164,16 +3316,21 @@ c
           if (cnvflg(i) .and. k <= kmax(i)) then
             if(k <= ktcon(i)) then
               tem2   = xmb(i) * dt2
-              dellat = (dellah(i,k) - hvap * dellaq(i,k)) / cp
-              t1(i,k) = t1(i,k) + tem2 * dellat
-              q1(i,k) = q1(i,k) + tem2 * dellaq(i,k)
+              dellat = (dellah(i,k) - real(hvap, conv_wp) *dellaq(i,k))/
+     &                 real(cp, conv_wp)
+              t1(i,k) = real(t1(i,k), kind_phys) +
+     &                  real(tem2 * dellat, kind_phys)
+              q1(i,k) = real(q1(i,k), kind_phys) +
+     &                  real(tem2 * dellaq(i,k), kind_phys)
 !             tem = tem2 / rcs(i)
 !             u1(i,k) = u1(i,k) + dellau(i,k) * tem
 !             v1(i,k) = v1(i,k) + dellav(i,k) * tem
-              u1(i,k) = u1(i,k) + tem2 * dellau(i,k)
-              v1(i,k) = v1(i,k) + tem2 * dellav(i,k)
-              dp = 1000. * del(i,k)
-              tem = xmb(i) * dp / grav
+              u1(i,k) = real(u1(i,k), kind_phys) +
+     &                  real(tem2 * dellau(i,k), kind_phys)
+              v1(i,k) = real(v1(i,k), kind_phys) +
+     &                  real(tem2 * dellav(i,k), kind_phys)
+              dp = 1000.0_conv_wp* del(i,k)
+              tem = xmb(i) * dp / real(grav, conv_wp)
               delhbar(i) = delhbar(i) + tem * dellah(i,k)
               delqbar(i) = delqbar(i) + tem * dellaq(i,k)
               deltbar(i) = deltbar(i) + tem * dellat
@@ -3188,22 +3345,25 @@ c
 !  positive values within the mass-flux transport layers
 !
       do i = 1,im
-        tsumn(i) = 0.
-        tsump(i) = 0.
-        rtnp(i) = 1.
+        tsumn(i) = 0.0_conv_wp
+        tsump(i) = 0.0_conv_wp
+        rtnp(i) = 1.0_conv_wp
       enddo
       do k = 1,km1
         do i = 1,im
           if(cnvflg(i) .and. k <= ktcon(i)) then
-            tem = q1(i,k) * delp(i,k) / grav
-            if(q1(i,k) < 0.) tsumn(i) = tsumn(i) + tem
-            if(q1(i,k) > 0.) tsump(i) = tsump(i) + tem
+            tem = real(q1(i,k),conv_wp)*real(delp(i,k),conv_wp)/
+     &            real(grav, conv_wp)
+            if(real(q1(i,k), conv_wp) < 0.0_conv_wp) tsumn(i)= tsumn(i)+
+     &      tem
+            if(real(q1(i,k), conv_wp) > 0.0_conv_wp) tsump(i)= tsump(i)+
+     &      tem
           endif
         enddo
       enddo
       do i = 1,im
         if(cnvflg(i)) then
-          if(tsump(i) > 0. .and. tsumn(i) < 0.) then
+          if(tsump(i) > 0.0_conv_wp .and. tsumn(i) < 0.0_conv_wp) then
             if(tsump(i) > abs(tsumn(i))) then
               rtnp(i) = tsumn(i) / tsump(i)
             else
@@ -3215,13 +3375,17 @@ c
       do k = 1,km1
         do i = 1,im
           if(cnvflg(i) .and. k <= ktcon(i)) then
-            if(rtnp(i) < 0.) then
+            if(rtnp(i) < 0.0_conv_wp) then
               if(tsump(i) > abs(tsumn(i))) then
-                if(q1(i,k) < 0.) q1(i,k) = 0.
-                if(q1(i,k) > 0.) q1(i,k) = (1.+rtnp(i))*q1(i,k)
+                if(real(q1(i,k), conv_wp) < 0.0_conv_wp) q1(i,k) =
+     &            0.0_conv_wp
+                if(real(q1(i,k), conv_wp) > 0.0_conv_wp) q1(i,k) =
+     &            (1.0_conv_wp+rtnp(i))*real(q1(i,k), conv_wp)
               else
-                if(q1(i,k) < 0.) q1(i,k) = (1.+rtnp(i))*q1(i,k)
-                if(q1(i,k) > 0.) q1(i,k) = 0.
+                if(real(q1(i,k), conv_wp) < 0.0_conv_wp) q1(i,k) =
+     &            (1.0_conv_wp+rtnp(i))*real(q1(i,k), conv_wp)
+                if(real(q1(i,k), conv_wp) > 0.0_conv_wp) q1(i,k) =
+     &            0.0_conv_wp
               endif
             endif
           endif
@@ -3237,8 +3401,9 @@ c
           if (cnvflg(i) .and. k <= kmax(i)) then
             if(k <= ktcon(i)) then
               ctr(i,k,n) = ctr(i,k,n)+dellae(i,k,n)*xmb(i)*dt2
-              dp = 1000. * del(i,k)
-              delebar(i,n)=delebar(i,n)+dellae(i,k,n)*xmb(i)*dp/grav
+              dp = 1000.0_conv_wp * del(i,k)
+              delebar(i,n)=delebar(i,n)+dellae(i,k,n)*xmb(i)*dp/
+     &                     real(grav, conv_wp)
             endif
           endif
         enddo
@@ -3248,9 +3413,9 @@ c
 !     from positive values within the mass-flux transport layers
 !
         do i = 1,im
-          tsumn(i) = 0.
-          tsump(i) = 0.
-          rtnp(i) = 1.
+          tsumn(i) = 0.0_conv_wp
+          tsump(i) = 0.0_conv_wp
+          rtnp(i) = 1.0_conv_wp
         enddo
         do k = 1,km1
           do i = 1,im
@@ -3263,16 +3428,18 @@ c
                 endif
                 tem = ctr(i,k,n) * dz
               else
-                tem = ctr(i,k,n) * delp(i,k) / grav
+                tem = ctr(i,k,n) * real(delp(i,k), conv_wp) /
+     &                real(grav, conv_wp)
+                
               endif
-              if(ctr(i,k,n) < 0.) tsumn(i) = tsumn(i) + tem
-              if(ctr(i,k,n) > 0.) tsump(i) = tsump(i) + tem
+              if(ctr(i,k,n) < 0.0_conv_wp) tsumn(i) = tsumn(i) + tem
+              if(ctr(i,k,n) > 0.0_conv_wp) tsump(i) = tsump(i) + tem
             endif
           enddo
         enddo
         do i = 1,im
           if(cnvflg(i)) then
-            if(tsump(i) > 0. .and. tsumn(i) < 0.) then
+            if(tsump(i) > 0.0_conv_wp .and. tsumn(i) < 0.0_conv_wp) then
               if(tsump(i) > abs(tsumn(i))) then
                 rtnp(i) = tsumn(i) / tsump(i)
               else
@@ -3284,13 +3451,15 @@ c
         do k = 1,km1
           do i = 1,im
             if(cnvflg(i) .and. k <= ktcon(i)) then
-              if(rtnp(i) < 0.) then
+              if(rtnp(i) < 0.0_conv_wp) then
                 if(tsump(i) > abs(tsumn(i))) then
-                  if(ctr(i,k,n)<0.) ctr(i,k,n)=0.
-                  if(ctr(i,k,n)>0.) ctr(i,k,n)=(1.+rtnp(i))*ctr(i,k,n)
+                  if(ctr(i,k,n)<0.0_conv_wp) ctr(i,k,n)=0.0_conv_wp
+                  if(ctr(i,k,n)>0.0_conv_wp) ctr(i,k,n)=(1.0_conv_wp+
+     &              rtnp(i))*ctr(i,k,n)
                 else
-                  if(ctr(i,k,n)<0.) ctr(i,k,n)=(1.+rtnp(i))*ctr(i,k,n)
-                  if(ctr(i,k,n)>0.) ctr(i,k,n)=0.
+                  if(ctr(i,k,n)<0.0_conv_wp) ctr(i,k,n)=(1.0_conv_wp+
+     &              rtnp(i))*ctr(i,k,n)
+                  if(ctr(i,k,n)>0.0_conv_wp) ctr(i,k,n)=0.0_conv_wp
                 endif
               endif
             endif
@@ -3301,7 +3470,7 @@ c
         do k = 1, km
         do i = 1, im
           if(cnvflg(i) .and. k <= ktcon(i)) then
-            qtr(i,k,kk) = ctr(i,k,n)
+            qtr(i,k,kk) = real(ctr(i,k,n), kind_phys)
           endif
         enddo
         enddo
@@ -3317,8 +3486,8 @@ c
             do i = 1, im
               if (cnvflg(i)) then
                 if(k > kb(i) .and. k < ktcon(i)) then
-                  dp = 1000. * del(i,k)
-                  wet_dep(i,k,n) = chem_pw(i,k,n)*grav/dp
+                  dp = 1000.0_conv_wp * del(i,k)
+                  wet_dep(i,k,n) = chem_pw(i,k,n)*real(grav, conv_wp)/dp
                   wet_dep(i,k,n) = wet_dep(i,k,n)*xmb(i)*dt2*dp
                 endif
               endif
@@ -3330,16 +3499,17 @@ c
             do i = 1, im
               if (cnvflg(i)) then
                 if(k > kb(i) .and. k < ktcon(i)) then
-                  dp = 1000. * del(i,k)
-                  if (qtr(i,k,kk) < 0.) then
+                  dp = 1000.0_conv_wp * del(i,k)
+                  if (real(qtr(i,k,kk), conv_wp) < 0.0_conv_wp) then  
 !   borrow negative mass from wet deposition
-                    tem = -qtr(i,k,kk)*dp
+                    tem = -real(qtr(i,k,kk), conv_wp)*dp
                     if(wet_dep(i,k,n) >= tem) then
                       wet_dep(i,k,n) = wet_dep(i,k,n) - tem
-                      qtr(i,k,kk) = 0.
+                      qtr(i,k,kk) = 0.0_conv_wp
                     else
-                      wet_dep(i,k,n) = 0.
-                      qtr(i,k,kk) = qtr(i,k,kk)+wet_dep(i,k,n)/dp
+                      wet_dep(i,k,n) = 0.0_conv_wp
+                      qtr(i,k,kk) = real(qtr(i,k,kk), kind_phys)+
+     &                              real(wet_dep(i,k,n)/dp, kind_phys)
                     endif
                   endif
                 endif
@@ -3361,8 +3531,9 @@ c
 !              qeso(i,k) = 0.01 * fpvs(t1(i,k))      ! fpvs is in pa
               qeso(i,k) = 0.01_conv_wp * 
      &                    real(fpvs(real(t1(i,k), kind_phys)), conv_wp)
-              qeso(i,k) = eps * qeso(i,k)/(pfld(i,k) + epsm1*qeso(i,k))
-              val     =             1.e-8
+              qeso(i,k) = real(eps, conv_wp) * qeso(i,k) / (pfld(i,k) +
+     &                    real(epsm1, conv_wp) * qeso(i,k))
+              val       = 1.e-8_conv_wp
               qeso(i,k) = max(qeso(i,k), val )
             endif
           endif
@@ -3371,21 +3542,21 @@ c
 c
 !> - Add up column-integrated convective precipitation by multiplying the normalized value by the cloud base mass flux.
       do i = 1, im
-        rntot(i) = 0.
-        delqev(i) = 0.
-        delq2(i) = 0.
+        rntot(i) = 0.0_conv_wp
+        delqev(i) = 0.0_conv_wp
+        delq2(i) = 0.0_conv_wp
         flg(i) = cnvflg(i)
       enddo
       do k = km, 1, -1
         do i = 1, im
           if (cnvflg(i) .and. k <= kmax(i)) then
             if(k < ktcon(i)) then
-              aup = 1.
-              if(k <= kb(i)) aup = 0.
-              adw = 1.
-              if(k >= jmin(i)) adw = 0.
+              aup = 1.0_conv_wp
+              if(k <= kb(i)) aup = 0.0_conv_wp
+              adw = 1.0_conv_wp
+              if(k >= jmin(i)) adw = 0.0_conv_wp
               rain =  aup * pwo(i,k) + adw * edto(i) * pwdo(i,k)
-              rntot(i) = rntot(i) + rain * xmb(i) * .001 * dt2
+              rntot(i) = rntot(i) + rain * xmb(i) * .001_conv_wp * dt2
             endif
           endif
         enddo
@@ -3396,43 +3567,47 @@ c
       do k = km, 1, -1
         do i = 1, im
           if (k <= kmax(i)) then
-            deltv(i) = 0.
-            delq(i) = 0.
-            qevap(i) = 0.
+            deltv(i) = 0.0_conv_wp
+            delq(i) = 0.0_conv_wp
+            qevap(i) = 0.0_conv_wp
             if(cnvflg(i) .and. k < ktcon(i)) then
-              aup = 1.
-              if(k <= kb(i)) aup = 0.
-              adw = 1.
-              if(k >= jmin(i)) adw = 0.
+              aup = 1.0_conv_wp
+              if(k <= kb(i)) aup = 0.0_conv_wp
+              adw = 1.0_conv_wp
+              if(k >= jmin(i)) adw = 0.0_conv_wp
               rain =  aup * pwo(i,k) + adw * edto(i) * pwdo(i,k)
-              rn(i) = rn(i) + rain * xmb(i) * .001 * dt2
+              rn(i) = rn(i) + rain * xmb(i) * .001_conv_wp * dt2
             endif
             if(flg(i) .and. k < ktcon(i)) then
 !             evef = edt(i) * evfact
 !             if(islimsk(i) == 1) evef=edt(i) * evfactl
 !             if(islimsk(i) == 1) evef=.07
-              qcond(i) = evef * (q1(i,k) - qeso(i,k))
-     &                 / (1. + el2orc * qeso(i,k) / t1(i,k)**2)
-              dp = 1000. * del(i,k)
-              tem = grav / dp
-              tem1 = dp / grav
-              if(rn(i) > 0. .and. qcond(i) < 0.) then
-                qevap(i) = -qcond(i) * (1.-exp(-.32*sqrt(dt2*rn(i))))
-                qevap(i) = min(qevap(i), rn(i)*1000.*tem)
-                delq2(i) = delqev(i) + .001 * qevap(i) * tem1
+              qcond(i) = real(evef, conv_wp) * (real(q1(i,k), conv_wp) -
+     &            qeso(i,k))/ (1.0_conv_wp + real(el2orc, conv_wp) *
+     &            qeso(i,k) / real(t1(i,k), conv_wp)**2)
+              dp = 1000.0_conv_wp * del(i,k)
+              tem = real(grav, conv_wp) / dp
+              tem1 = dp / real(grav, conv_wp)
+              if(rn(i) > 0.0_conv_wp .and. qcond(i) < 0.0_conv_wp) then
+                qevap(i) = -qcond(i) * (1.0_conv_wp-exp(-.32_conv_wp*
+     &                     sqrt(dt2*rn(i))))
+                qevap(i) = min(qevap(i), rn(i)*1000.0_conv_wp*tem)
+                delq2(i) = delqev(i) + .001_conv_wp * qevap(i) * tem1
               endif
-              if(rn(i) > 0. .and. qcond(i) < 0. .and.
+              if(rn(i) > 0.0_conv_wp .and. qcond(i) < 0.0_conv_wp .and.
      &           delq2(i) > rntot(i)) then
-                qevap(i) = 1000.* tem * (rntot(i) - delqev(i))
+                qevap(i) = 1000.0_conv_wp* tem * (rntot(i) - delqev(i))
                 flg(i) = .false.
               endif
-              if(rn(i) > 0. .and. qevap(i) > 0.) then
-                q1(i,k) = q1(i,k) + qevap(i)
-                t1(i,k) = t1(i,k) - elocp * qevap(i)
-                rn(i) = rn(i) - .001 * qevap(i) * tem1
+              if(rn(i) > 0.0_conv_wp .and. qevap(i) > 0.0_conv_wp) then
+                q1(i,k) = real(q1(i,k), kind_phys) + real(qevap(i),
+     &                    kind_phys)
+                t1(i,k) = real(t1(i,k), kind_phys) -
+     &                    real(elocp * qevap(i), kind_phys)
+                rn(i) = rn(i) - .001_conv_wp * qevap(i) * tem1
                 deltv(i) = - elocp*qevap(i)/dt2
-                delq(i) =  + qevap(i)/dt2
-                delqev(i) = delqev(i) + .001 * qevap(i) * tem1
+                delq(i) = qevap(i)/dt2
+                delqev(i) = delqev(i) + .001_conv_wp * qevap(i) * tem1
               endif
               delqbar(i) = delqbar(i) + delq(i) * tem1
               deltbar(i) = deltbar(i) + deltv(i) * tem1
@@ -3472,9 +3647,9 @@ c  in the event of upper level rain evaporation and lower level downdraft
 c    moistening, rn can become negative, in this case, we back out of the
 c    heating and the moistening
 c
-          if(rn(i) < 0. .and. .not.flg(i)) rn(i) = 0.
-          if(rn(i) <= 0.) then
-            rn(i) = 0.
+          if(rn(i) < 0.0_conv_wp .and. .not.flg(i)) rn(i) = 0.0_conv_wp
+          if(rn(i) <= 0.0_conv_wp) then
+            rn(i) = 0.0_conv_wp
           else
             ktop(i) = ktcon(i)
             kbot(i) = kbcon(i)
@@ -3487,13 +3662,15 @@ c
 !> - Calculate convective cloud water.
       do k = 1, km
          do i = 1, im
-            if (cnvflg(i) .and. rn(i) > 0.) then
+            if (cnvflg(i) .and. rn(i) > 0.0_conv_wp) then
                if (k >= kbcon(i) .and. k < ktcon(i)) then
                   cnvw(i,k) = cnvwt(i,k) * xmb(i) * dt2
                   if(progsigma)then
-                     cnvw(i,k) = cnvw(i,k) * cscale 
+                     cnvw(i,k) = real(cnvw(i,k), conv_wp) *
+     &                           real(cscale, conv_wp)
                   else
-                     cnvw(i,k) = cnvw(i,k) * cscale
+                     cnvw(i,k) = real(cnvw(i,k), conv_wp) *
+     &                           real(cscale, conv_wp)
                   endif
                endif
             endif
@@ -3505,11 +3682,12 @@ c
 !> - Calculate convective cloud cover, which is used when pdf-based cloud fraction is used (i.e., pdfcld=.true.).
       do k = 1, km
         do i = 1, im
-          if (cnvflg(i) .and. rn(i) > 0.) then
+          if (cnvflg(i) .and. rn(i) > 0.0_conv_wp) then
             if (k >= kbcon(i) .and. k < ktcon(i)) then
-              cnvc(i,k) = 0.04 * log(1. + 675. * eta(i,k) * xmb(i))
-              cnvc(i,k) = min(cnvc(i,k), 0.6)
-              cnvc(i,k) = max(cnvc(i,k), 0.0)
+              cnvc(i,k) = 0.04_conv_wp * log(1.0_conv_wp + 
+     &                    675.0_conv_wp * eta(i,k) * xmb(i))
+              cnvc(i,k) = min(cnvc(i,k), 0.6_conv_wp)
+              cnvc(i,k) = max(cnvc(i,k), 0.0_conv_wp)
             endif
           endif
         enddo
@@ -3522,16 +3700,21 @@ c
 !
       do k = 1, km
         do i = 1, im
-          if (cnvflg(i) .and. rn(i) > 0.) then
+          if (cnvflg(i) .and. rn(i) > 0.0_conv_wp) then
 !           if (k > kb(i) .and. k <= ktcon(i)) then
             if (k >= kbcon(i) .and. k <= ktcon(i)) then
               tem  = dellal(i,k) * xmb(i) * dt2
-              tem1 = max(0.0, min(1.0, (tcr-t1(i,k))*tcrf))
-              if (qtr(i,k,2) > -999.0) then
-                qtr(i,k,1) = qtr(i,k,1) + tem * tem1            ! ice
-                qtr(i,k,2) = qtr(i,k,2) + tem *(1.0-tem1)       ! water
+              tem1 = max(0.0_conv_wp, min(1.0_conv_wp,
+     &               (tcr-real(t1(i,k), conv_wp))*tcrf))
+              if (qtr(i,k,2) > -999.0_conv_wp) then
+                qtr(i,k,1) = real(qtr(i,k,1), kind_phys) +
+     &                       real(tem * tem1, kind_phys)  ! ice
+                qtr(i,k,2) = real(qtr(i,k,2), kind_phys) +
+     &                       real(tem * (1.0_conv_wp -tem1), kind_phys) ! water
               else
                 qtr(i,k,1) = qtr(i,k,1) + tem
+                qtr(i,k,1) = real(qtr(i,k,1), kind_phys) + 
+     &                       real(tem, kind_phys)
               endif
             endif
           endif
@@ -3543,12 +3726,12 @@ c
 !> - If convective precipitation is zero or negative, reset the updated state variables back to their original values (negating convective changes).
       do k = 1, km
         do i = 1, im
-          if(cnvflg(i) .and. rn(i) <= 0.) then
+          if(cnvflg(i) .and. rn(i) <= 0.0_conv_wp) then
             if (k <= kmax(i)) then
-              t1(i,k) = to(i,k)
-              q1(i,k) = qo(i,k)
-              u1(i,k) = uo(i,k)
-              v1(i,k) = vo(i,k)
+              t1(i,k) = real(to(i,k), kind_phys)
+              q1(i,k) = real(qo(i,k), kind_phys)
+              u1(i,k) = real(uo(i,k), kind_phys)
+              v1(i,k) = real(vo(i,k), kind_phys)
             endif
           endif
         enddo
@@ -3558,9 +3741,9 @@ c
          kk = n+2
       do k = 1, km
         do i = 1, im
-          if(cnvflg(i) .and. rn(i) <= 0.) then
+          if(cnvflg(i) .and. rn(i) <= 0.0_conv_wp) then
             if (k <= kmax(i)) then
-              qtr(i,k,kk)= ctro(i,k,n)
+              qtr(i,k,kk)= real(ctro(i,k,n), kind_phys)
             endif
           endif
         enddo
@@ -3570,9 +3753,9 @@ c
         do n = 1, ntc
           do k = 2, km1
             do i = 1, im
-              if(cnvflg(i) .and. rn(i) <= 0.) then
+              if(cnvflg(i) .and. rn(i) <= 0.0_conv_wp) then
                 if (k <= ktcon(i)) then
-                  wet_dep(i,k,n) = 0.
+                  wet_dep(i,k,n) = 0.0_conv_wp
                 endif
               endif
             enddo
@@ -3601,7 +3784,7 @@ c
 !> - Calculate the updraft convective mass flux.
       do k = 1, km
         do i = 1, im
-          if(cnvflg(i) .and. rn(i) > 0.) then
+          if(cnvflg(i) .and. rn(i) > 0.0_conv_wp) then
             if(k >= kb(i) .and. k < ktop(i)) then
               ud_mf(i,k) = eta(i,k) * xmb(i) * dt2
             endif
@@ -3610,7 +3793,7 @@ c
       enddo
 !> - save the updraft convective mass flux at cloud top.
       do i = 1, im
-        if(cnvflg(i) .and. rn(i) > 0.) then
+        if(cnvflg(i) .and. rn(i) > 0.0_conv_wp) then
            k = ktop(i)-1
            dt_mf(i,k) = ud_mf(i,k)
         endif
@@ -3618,7 +3801,7 @@ c
 !> - Calculate the downdraft convective mass flux.
       do k = 1, km
         do i = 1, im
-          if(cnvflg(i) .and. rn(i) > 0.) then
+          if(cnvflg(i) .and. rn(i) > 0.0_conv_wp) then
             if(k >= 1 .and. k <= jmin(i)) then
               dd_mf(i,k) = edto(i) * etad(i,k) * xmb(i) * dt2
             endif
@@ -3633,17 +3816,20 @@ c
 !
       do k = 2, km1
         do i = 1, im
-          if(cnvflg(i) .and. rn(i) > 0.) then
+          if(cnvflg(i) .and. rn(i) > 0.0_conv_wp) then
             if(k > kb(i) .and. k < ktop(i)) then
-              tem = 0.5 * (eta(i,k-1) + eta(i,k)) * xmb(i)
-              tem1 = pfld(i,k) * 100. / (rd * t1(i,k))
+              tem = 0.5_conv_wp * (eta(i,k-1) + eta(i,k)) * xmb(i)
+              tem1 = pfld(i,k) * 100.0_conv_wp /
+     &                   (real(rd, conv_wp) * real(t1(i,k), conv_wp))
               if(progsigma)then
                 tem2 = sigmab(i)
               else
-                tem2 = max(sigmagfm(i), betaw)
+                tem2 = max(sigmagfm(i), real(betaw, conv_wp))
               endif
               ptem = tem / (tem2 * tem1)
-              qtr(i,k,ntk)=qtr(i,k,ntk)+0.5*tem2*ptem*ptem
+              qtr(i,k,ntk)=real(qtr(i,k,ntk), kind_phys) +
+     &                    real(0.5_conv_wp * tem2 * ptem *
+     &                    ptem, kind_phys)
             endif
           endif
         enddo
@@ -3651,17 +3837,21 @@ c
 !
       do k = 2, km1
         do i = 1, im
-          if(cnvflg(i) .and. rn(i) > 0.) then
+          if(cnvflg(i) .and. rn(i) > 0.0_conv_wp) then
             if(k > 1 .and. k <= jmin(i)) then
-              tem = 0.5*edto(i)*(etad(i,k-1)+etad(i,k))*xmb(i)
-              tem1 = pfld(i,k) * 100. / (rd * t1(i,k))
+              tem = 0.5_conv_wp*edto(i)*(etad(i,k-1)+etad(i,k))*xmb(i)
+              tem1 = pfld(i,k) * 100.0_conv_wp /  
+     &               (real(rd, conv_wp) * real(t1(i,k), conv_wp))
               if(progsigma)then
                 tem2 = sigmab(i)
               else
-                tem2 = max(sigmagfm(i), betaw)
+                tem2 = max(sigmagfm(i), real(betaw, conv_wp))
               endif
               ptem = tem / (tem2 * tem1)
               qtr(i,k,ntk)=qtr(i,k,ntk)+0.5*tem2*ptem*ptem
+              qtr(i,k,ntk)=real(qtr(i,k,ntk), kind_phys) +
+     &                    real(0.5_conv_wp * tem2 * ptem *
+     &                    ptem, kind_phys)
             endif
           endif
         enddo
@@ -3675,12 +3865,13 @@ c
             QLCN(i,k)     = qtr(i,k,2) - qlcn(i,k)
             QICN(i,k)     = qtr(i,k,1) - qicn(i,k)
             cf_upi(i,k)   = cnvc(i,k)
-            w_upi(i,k)    = ud_mf(i,k)*t1(i,k)*rd /
-     &                     (dt2*max(sigmagfm(i),1.e-12)*prslp(i,k))
+            w_upi(i,k)    = ud_mf(i,k)*real(t1(i,k), conv_wp)*real(rd,
+     &                      conv_wp)/(dt2*max(sigmagfm(i),
+     &                      1.e-12_conv_wp)*real(prslp(i,k), conv_wp))
             CNV_MFD(i,k)  = ud_mf(i,k)/dt2
             CLCN(i,k)     = cnvc(i,k)
             CNV_FICE(i,k) = QICN(i,k)
-     &                    / max(1.e-10,QLCN(i,k)+QICN(i,k))
+     &                    / max(1.e-10_conv_wp,QLCN(i,k)+QICN(i,k))
           enddo
         enddo
       endif

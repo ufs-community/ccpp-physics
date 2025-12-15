@@ -1,6 +1,8 @@
 !>\file samfaerosols.F
 !!
       module samfcnv_aerosols
+      
+      use mo_conv_kind, only : conv_wp
 
       implicit none
 
@@ -23,45 +25,45 @@
 c     -- input arguments
       integer,                                      intent(in) :: im,
      &  ix, km, itc, ntc, ntr
-      real(kind=kind_phys),                         intent(in) :: delt,
+      real(kind=conv_wp),                         intent(in) :: delt,
      &  xlamde, xlamdd
       logical,              dimension(im),          intent(in) :: cnvflg
       integer,              dimension(im),          intent(in) :: jmin,
      &  kb, kmax, kd94, ktcon
-      real(kind=kind_phys), dimension(im),          intent(in) :: edto,
+      real(kind=conv_wp), dimension(im),          intent(in) :: edto,
      &  xlamd, xmb
-      real(kind=kind_phys), dimension(ntc),         intent(in) :: fscav
-      real(kind=kind_phys), dimension(im,km),       intent(in) :: c0t,
+      real(kind=conv_wp), dimension(ntc),         intent(in) :: fscav
+      real(kind=conv_wp), dimension(im,km),       intent(in) :: c0t,
      &  eta, etad, zi, xlamue, xlamud
-      real(kind=kind_phys), dimension(ix,km),       intent(in) :: delp
-      real(kind=kind_phys), dimension(ix,km,ntr+2), intent(in) :: qtr
+      real(kind=conv_wp), dimension(ix,km),       intent(in) :: delp
+      real(kind=conv_wp), dimension(ix,km,ntr+2), intent(in) :: qtr
 c     -- output arguments
-      real(kind=kind_phys), dimension(im,km,ntc),   intent(out) :: qaero
+      real(kind=conv_wp), dimension(im,km,ntc),   intent(out) :: qaero
 
 c     -- local variables
 c     -- general variables
       integer :: i, indx, it, k, kk, km1, kp1, n
-      real(kind=kind_phys) :: adw, aup, dtime_max, dv1q, dv2q, dv3q,
+      real(kind=conv_wp) :: adw, aup, dtime_max, dv1q, dv2q, dv3q,
      &  dtovdz, dz, factor, ptem, ptem1, qamax, tem, tem1
-      real(kind=kind_phys), dimension(ix,km) :: xmbp
+      real(kind=conv_wp), dimension(ix,km) :: xmbp
 c     -- chemical transport variables
-      real(kind=kind_phys), dimension(im,km,ntc) :: ctro2, ecko2, ecdo2,
+      real(kind=conv_wp), dimension(im,km,ntc) :: ctro2, ecko2, ecdo2,
      &  dellae2
 c     -- additional variables for tracers for wet deposition,
-      real(kind=kind_phys), dimension(im,km,ntc) :: chem_c, chem_pw,
+      real(kind=conv_wp), dimension(im,km,ntc) :: chem_c, chem_pw,
      &  wet_dep
 c     -- if reevaporation is enabled, uncomment lines below
 c     real(kind=kind_phys), dimension(im,ntc) :: pwav
 c     real(kind=kind_phys), dimension(im,km) :: pwdper
 c     real(kind=kind_phys), dimension(im,km,ntr) :: chem_pwd
 c     -- additional variables for fct
-      real(kind=kind_phys), dimension(im,km) :: flx_lo, totlout, clipout
+      real(kind=conv_wp), dimension(im,km) :: flx_lo, totlout, clipout
 
-      real(kind=kind_phys), parameter :: one     = 1.0_kind_phys
-      real(kind=kind_phys), parameter :: half    = 0.5_kind_phys
-      real(kind=kind_phys), parameter :: quarter = 0.25_kind_phys
-      real(kind=kind_phys), parameter :: zero    = 0.0_kind_phys
-      real(kind=kind_phys), parameter :: epsil   = 1.e-22_kind_phys    ! prevent division by zero
+      real(kind=conv_wp), parameter :: one     = 1.0_conv_wp
+      real(kind=conv_wp), parameter :: half    = 0.5_conv_wp
+      real(kind=conv_wp), parameter :: quarter = 0.25_conv_wp
+      real(kind=conv_wp), parameter :: zero    = 0.0_conv_wp
+      real(kind=conv_wp), parameter :: epsil   = 1.e-22_conv_wp    ! prevent division by zero
 
 c     -- begin
 
@@ -87,14 +89,16 @@ c     -- set work arrays
         it = n + itc - 1
         do k = 1, km
           do i = 1, im
-            if (k <= kmax(i)) qaero(i,k,n) = max(qamin, qtr(i,k,it))
+            if (k <= kmax(i)) qaero(i,k,n) = max(real(qamin, conv_wp), 
+     &                                       qtr(i,k,it))
           enddo
         enddo
       enddo
 
       do k = 1, km
         do i = 1, im
-          if (cnvflg(i)) xmbp(i,k) = g * xmb(i) / delp(i,k)
+          if (cnvflg(i)) xmbp(i,k) = real(g, conv_wp) * xmb(i) /
+     &                               real(delp(i,k), conv_wp)
         enddo
       enddo
 
@@ -168,7 +172,7 @@ c               it uses dimesnsionless scavenging coefficients (fscav),
 c               but includes henry coeffs with gas phase chemistry
 
 c               fraction fscav is going into liquid
-                chem_c(i,k,n)=fscav(n)*ecko2(i,k,n)
+                chem_c(i,k,n)=real(fscav(n), conv_wp)*ecko2(i,k,n)
 
 c               of that part is going into rain out (chem_pw)
                 tem=chem_c(i,k,n)/(one+c0t(i,k)*dz)
@@ -243,7 +247,8 @@ c
       do k=2,km1
         kk = k - 1
         do i = 1, im
-          if (kk < ktcon(i)) dtime_max = min(dtime_max,half*delp(i,kk))
+          if (kk < ktcon(i)) dtime_max = min(dtime_max,half*
+     &                                   real(delp(i,kk), conv_wp))
         enddo
       enddo
 
@@ -281,7 +286,8 @@ c                 entrainement into up and downdraft
 c                 detrainment from downdraft
      &          + (adw*edto(i)*ptem1*etad(i,k)*dv3q) ) * dz * xmbp(i,k)
 
-              wet_dep(i,k,n)=chem_pw(i,k,n)*g/delp(i,k)
+              wet_dep(i,k,n)=chem_pw(i,k,n)*real(g, conv_wp)/
+     &                       real(delp(i,k), conv_wp)
 
 c             sinks from where updraft and downdraft start
               if (k == jmin(i)+1) then
@@ -338,11 +344,12 @@ c       --- make sure low-ord fluxes don't violate positive-definiteness
           do i=1,im
             if (cnvflg(i) .and. (k <= ktcon(i))) then
 c             time step / grid spacing
-              dtovdz = g * dtime_max / abs(delp(i,k))
+              dtovdz = real(g, conv_wp) * dtime_max / 
+     &                 abs(real(delp(i,k), conv_wp))
 c             total flux out
               totlout(i,k)=max(zero,flx_lo(i,kp1))-min(zero,flx_lo(i,k))
               clipout(i,k)=min(one ,qaero(i,k,n)/max(epsil,totlout(i,k))
-     &           / (1.0001_kind_phys*dtovdz))
+     &           / (1.0001_conv_wp*dtovdz))
             endif
           enddo
         enddo
@@ -369,7 +376,8 @@ c      --- a positive-definite low-order (diffusive) solution for the subsidnce 
          kp1 = k + 1
          do i=1,im
            if (cnvflg(i) .and. (k <= ktcon(i))) then
-             dtovdz = g * dtime_max / abs(delp(i,k)) ! time step /grid spacing
+             dtovdz = real(g, conv_wp) * dtime_max / 
+     &                abs(real(delp(i,k), conv_wp)) ! time step /grid spacing
              dellae2(i,k,n) = dellae2(i,k,n)
      &         -(flx_lo(i,kp1)-flx_lo(i,k))*dtovdz/dtime_max
            endif
@@ -384,7 +392,8 @@ c     convert wet deposition to total mass deposited over dt and dp
         do k = 1, km
           do i = 1, im
             if (cnvflg(i) .and. (k < ktcon(i)))
-     &        wet_dep(i,k,n) = wet_dep(i,k,n)*xmb(i)*delt*delp(i,k)
+     &       wet_dep(i,k,n) = wet_dep(i,k,n)*xmb(i)*real(delt, conv_wp)*
+     &       real(delp(i,k), conv_wp)
           enddo
         enddo
       enddo
@@ -392,18 +401,19 @@ c     convert wet deposition to total mass deposited over dt and dp
 c     compute final aerosol concentrations
 
       do n = 1, ntc
-        do k = 1, km
-          do i = 1, im
-            if (cnvflg(i) .and. (k <= min(kmax(i),ktcon(i)))) then
-              qaero(i,k,n) = qaero(i,k,n) + dellae2(i,k,n) * delt
-              if (qaero(i,k,n) < zero) then
-c               add negative mass to wet deposition
-                wet_dep(i,k,n) = wet_dep(i,k,n)-qaero(i,k,n)*delp(i,k)
-                qaero(i,k,n) = qamin
-              endif
-            endif
-          enddo
-        enddo
+         do k = 1, km
+           do i = 1, im
+             if (cnvflg(i) .and. (k <= min(kmax(i),ktcon(i)))) then
+               qaero(i,k,n) = qaero(i,k,n) + dellae2(i,k,n) * delt
+               if (qaero(i,k,n) < zero) then
+c                 add negative mass to wet deposition
+                 wet_dep(i,k,n) = wet_dep(i,k,n) - qaero(i,k,n) * 
+     &                            delp(i,k)
+                 qaero(i,k,n) = qamin
+               endif
+             endif
+           enddo
+         enddo
       enddo
 
       return
@@ -747,7 +757,7 @@ c             time step / grid spacing
 c             total flux out
               totlout(i,k)=max(zero,flx_lo(i,kp1))-min(zero,flx_lo(i,k))
               clipout(i,k)=min(one ,qaero(i,k,n)/max(epsil,totlout(i,k))
-     &           / (1.0001_kind_phys*dtovdz))
+     &           / (1.0001_conv_wp*dtovdz))
             endif
           enddo
         enddo

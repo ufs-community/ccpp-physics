@@ -2,7 +2,7 @@
   name = GFS_DCNV_generic_pre
   type = scheme
   dependencies = ../../hooks/machine.F
-
+  dependencies = ../../CONV/SAMF/mo_conv_kind.F90
 ########################################################################
 [ccpp-arg-table]
   name = GFS_DCNV_generic_pre_run
@@ -325,3 +325,4 @@
   dimensions = ()
   type = integer
   intent = out
+
