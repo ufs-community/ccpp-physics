@@ -505,7 +505,8 @@
           psp(i)  = psp1(i)
           psp1(i) = ps(i)
         enddo
-      else                   ! two time level scheme - tp1, qp1, psp1 not used
+ ! two time level scheme - tp1, qp1, psp1 not used
+      else
         do k = 1, km
 !     write(0,*)' in gscond k=',k,' im=',im,' km=',km
           do i = 1, im

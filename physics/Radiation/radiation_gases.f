@@ -128,21 +128,34 @@
      &   VTAGGAS='NCEP-Radiation_gases     v5.1  Nov 2012 '
 !    &   VTAGGAS='NCEP-Radiation_gases     v5.0  Aug 2012 '
 
-      integer, parameter, public :: NF_VGAS = 10   ! number of gas species
-      integer, parameter         :: IMXCO2  = 24   ! input CO2 data longitude points
-      integer, parameter         :: JMXCO2  = 12   ! input CO2 data latitude points
-      integer, parameter         :: MINYEAR = 1957 ! earlist year 2D CO2 data available
+ ! number of gas species
+      integer, parameter, public :: NF_VGAS = 10
+ ! input CO2 data longitude points
+      integer, parameter         :: IMXCO2  = 24
+ ! input CO2 data latitude points
+      integer, parameter         :: JMXCO2  = 12
+ ! earlist year 2D CO2 data available
+      integer, parameter         :: MINYEAR = 1957
 
-      real (kind=kind_phys), parameter :: resco2=15.0            ! horizontal resolution in degree
-      real (kind=kind_phys), parameter :: prsco2=788.0           ! pressure limitation for 2D CO2 (mb)
-      real (kind=kind_phys)  :: raddeg                           ! rad->deg conversion
-      real (kind=kind_phys)  :: hfpi                             ! half of pi
+ ! horizontal resolution in degree
+      real (kind=kind_phys), parameter :: resco2=15.0
+ ! pressure limitation for 2D CO2 (mb)
+      real (kind=kind_phys), parameter :: prsco2=788.0
+ ! rad->deg conversion
+      real (kind=kind_phys)  :: raddeg
+ ! half of pi
+      real (kind=kind_phys)  :: hfpi
 
-      real (kind=kind_phys), parameter :: co2vmr_def = 350.0e-6  ! parameter constant for CO2 volume mixing ratio
-      real (kind=kind_phys), parameter :: n2ovmr_def = 0.31e-6   ! parameter constant for N2O volume mixing ratio
-      real (kind=kind_phys), parameter :: ch4vmr_def = 1.50e-6   ! parameter constant for CH4 volume mixing ratio
-      real (kind=kind_phys), parameter :: o2vmr_def  = 0.209     ! parameter constant for O2  volume mixing ratio
-      real (kind=kind_phys), parameter :: covmr_def  = 1.50e-8   ! parameter constant for CO  colume mixing ratio
+ ! parameter constant for CO2 volume mixing ratio
+      real (kind=kind_phys), parameter :: co2vmr_def = 350.0e-6
+ ! parameter constant for N2O volume mixing ratio
+      real (kind=kind_phys), parameter :: n2ovmr_def = 0.31e-6
+ ! parameter constant for CH4 volume mixing ratio
+      real (kind=kind_phys), parameter :: ch4vmr_def = 1.50e-6
+ ! parameter constant for O2  volume mixing ratio
+      real (kind=kind_phys), parameter :: o2vmr_def  = 0.209
+ ! parameter constant for CO  colume mixing ratio
+      real (kind=kind_phys), parameter :: covmr_def  = 1.50e-8
 ! aer 2003 value
       real (kind=kind_phys), parameter :: f11vmr_def = 3.520e-10
 ! aer 2003 value
@@ -506,7 +519,8 @@
 
 !> - co2 data section
 
-      if ( ico2flg == 0 ) return    ! use prescribed global mean co2 data
+ ! use prescribed global mean co2 data
+      if ( ico2flg == 0 ) return
       if ( ictmflg ==-1 ) return    ! use user provided co2 data
       if ( .not. ldoco2 ) return    ! no need to update co2 data
 
