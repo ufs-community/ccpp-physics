@@ -74,20 +74,20 @@
 !!  -# For the "feedback control", calculate updated values of the state variables by multiplying the cloud base mass flux and the tendencies calculated per unit cloud base mass flux from the static control.
 !!
 !!  \section samfdeep_detailed GFS samfdeepcnv Detailed Algorithm
-      subroutine samfdeepcnv_run (im,km,first_time_step,restart,        &
-     &    tmf,qmicro,itc,ntc,cliq,cp,cvap,                              &
-     &    eps,epsm1,fv,grav,hvap,rd,rv,                                 &
-     &    t0c,delt,ntk,ntr,delp,                                        &
-     &    prslp,psp,phil,tkeh,qtr,prevsq,q,q1,t1,u1,v1,fscav,           &
-     &    hwrf_samfdeep,progsigma,progomega,cldwrk,rn,kbot,ktop,kcnv,   &
-     &    islimsk,garea,dot,ncloud,hpbl,ud_mf,dd_mf,dt_mf,cnvw,cnvc,    &
-     &    QLCN, QICN, w_upi, cf_upi, CNV_MFD,                           &
-     &    CNV_DQLDT,CLCN,CNV_FICE,CNV_NDROP,CNV_NICE,mp_phys,mp_phys_mg,&
-     &    clam,c0s,c1,betal,betas,evef,pgcon,asolfac,cscale,            &
-     &    do_ca, ca_closure, ca_entr, ca_trigger, nthresh,ca_deep,      &
-     &    rainevap,sigmain,sigmaout,omegain,omegaout,betadcu,betamcu,   &
-     &    betascu,maxMF,do_mynnedmf,sigmab_coldstart,errmsg,errflg)
-
+      subroutine samfdeepcnv_run (im,km,first_time_step,restart,        
+     &    tmf,qmicro,itc,ntc,cliq,cp,cvap,                              
+     &    eps,epsm1,fv,grav,hvap,rd,rv,                                 
+     &    t0c,delt,ntk,ntr,delp,                                        
+     &    prslp,psp,phil,tkeh,qtr,prevsq,q,q1,t1,u1,v1,fscav,           
+     &    hwrf_samfdeep,progsigma,progomega,cldwrk,rn,kbot,ktop,kcnv,  
+     &    islimsk,garea,dot,ncloud,hpbl,ud_mf,dd_mf,dt_mf,cnvw,cnvc,    
+     &    QLCN, QICN, w_upi, cf_upi, CNV_MFD,                           
+     &    CNV_DQLDT,CLCN,CNV_FICE,CNV_NDROP,CNV_NICE,mp_phys,
+     &    mp_phys_mg,clam,c0s,c1,betal,betas,evef,pgcon,asolfac,
+     &    cscale,do_ca, ca_closure, ca_entr, ca_trigger, nthresh,
+     &    ca_deep,rainevap,sigmain,sigmaout,omegain,omegaout,betadcu,
+     &    betamcu,betascu,maxMF,do_mynnedmf,sigmab_coldstart,errmsg,
+     &    errflg)
 !
       use machine , only : kind_phys
       use funcphys , only : fpvs
@@ -96,47 +96,48 @@
 !
       integer, intent(in)  :: im, km, itc, ntc, ntk, ntr, ncloud
       integer, intent(in)  :: islimsk(:)
-      real(kind=kind_phys), intent(in) :: cliq, cp, cvap, eps, epsm1,   &
-     &   fv, grav, hvap, rd, rv, t0c
+      real(kind=kind_phys), intent(in) :: cliq, cp, cvap, eps,          
+     &   epsm1, fv, grav, hvap, rd, rv, t0c
       real(kind=kind_phys), intent(in) ::  delt, cscale
-      real(kind=kind_phys), intent(in) :: psp(:), delp(:,:),            &
+      real(kind=kind_phys), intent(in) :: psp(:), delp(:,:),            
      &   prslp(:,:),  garea(:), hpbl(:), dot(:,:), phil(:,:) 
       real(kind=kind_phys), dimension(:), intent(in) :: fscav
-      logical, intent(in)  :: first_time_step,restart,hwrf_samfdeep,    &
+      logical, intent(in)  :: first_time_step,restart,hwrf_samfdeep,    
      &     progsigma,progomega,do_mynnedmf,sigmab_coldstart
-      real(kind=kind_phys), intent(in) :: nthresh,betadcu,betamcu,      &
+      real(kind=kind_phys), intent(in) :: nthresh,betadcu,betamcu,      
      &                                    betascu
       real(kind=kind_phys), intent(in), optional :: ca_deep(:)
-      real(kind=kind_phys), intent(in), optional :: sigmain(:,:),       &
+      real(kind=kind_phys), intent(in), optional :: sigmain(:,:),       
      &     qmicro(:,:),  prevsq(:,:), omegain(:,:)
       real(kind=kind_phys), intent(in) :: tmf(:,:,:),q(:,:)
-      real(kind=kind_phys), dimension (:), intent(in), optional :: maxMF
+      real(kind=kind_phys), dimension (:), intent(in), 
+     &   optional :: maxMF
       real(kind=kind_phys), intent(out) :: rainevap(:)
-      real(kind=kind_phys), intent(inout), optional :: sigmaout(:,:),     &
+      real(kind=kind_phys), intent(inout), optional :: sigmaout(:,:),   
      &     omegaout(:,:)
       logical, intent(in)  :: do_ca,ca_closure,ca_entr,ca_trigger
       integer, intent(inout)  :: kcnv(:)
       ! DH* TODO - check dimensions of qtr, ntr+2 correct?  *DH
-      real(kind=kind_phys), intent(inout) ::   qtr(:,:,:),              &
-     &   q1(:,:), t1(:,:),   u1(:,:), v1(:,:),                          &
+      real(kind=kind_phys), intent(inout) ::   qtr(:,:,:),              
+     &   q1(:,:), t1(:,:),   u1(:,:), v1(:,:),                          
      &   cnvw(:,:),  cnvc(:,:), tkeh(:,:)
 
       integer, intent(out) :: kbot(:), ktop(:)
-      real(kind=kind_phys), intent(out) :: cldwrk(:),                   &
-     &   rn(:),                                                         &
+      real(kind=kind_phys), intent(out) :: cldwrk(:),                   
+     &   rn(:),                                                         
      &   dd_mf(:,:), dt_mf(:,:)
       real(kind=kind_phys), intent(out) :: ud_mf(:,:)
       ! GJF* These variables are conditionally allocated depending on whether the
       !     Morrison-Gettelman microphysics is used, so they must be declared 
       !     using assumed shape.
-      real(kind=kind_phys), dimension(:,:), intent(inout), optional ::  &
-     &   qlcn, qicn, w_upi, cnv_mfd, cnv_dqldt, clcn                    &
+      real(kind=kind_phys), dimension(:,:), intent(inout), optional ::  
+     &   qlcn, qicn, w_upi, cnv_mfd, cnv_dqldt, clcn                    
      &,  cnv_fice, cnv_ndrop, cnv_nice, cf_upi
       ! *GJF
       integer, intent(in) :: mp_phys, mp_phys_mg
 
-      real(kind=kind_phys), intent(in) :: clam,  c0s,  c1,              &
-     &                     betal,   betas,   asolfac,                   &
+      real(kind=kind_phys), intent(in) :: clam,  c0s,  c1,              
+     &                     betal,   betas,   asolfac,                   
      &                     evef,  pgcon
       character(len=*), intent(out) :: errmsg
       integer,          intent(out) :: errflg
@@ -250,7 +251,7 @@ c  physical parameters
       parameter(clamca=0.03_conv_wp)
       parameter(dtke=tkemx-tkemn)
       parameter(cthk=200.0_conv_wp,dthk=25.0_conv_wp,
-     &          sfclfac=0.2_conv_wp,rhcrt=0.75)
+     &          sfclfac=0.2_conv_wp,rhcrt=0.75_conv_wp)
       parameter(cinpcrmx=180.0_conv_wp,cinpcrmn=120._conv_wp)
 !     parameter(cinacrmx=-120.,cinacrmn=-120.)
       parameter(cinacrmx=-120.0_conv_wp,cinacrmn=-80.0_conv_wp)
@@ -330,7 +331,7 @@ c    &            .743,.813,.886,.947,1.138,1.377,1.896/
       invdelt = 1.0_conv_wp/real(delt, kind=conv_wp)
 
       elocp = real(hvap, kind=conv_wp)/real(cp, kind=conv_wp)
-      el2orc = (real(hvap, kind=conv_wp)*real(hvap, kind=conv_wp))/
+      el2orc = real(hvap, kind=conv_wp)*real(hvap, kind=conv_wp)/
      &         (real(rv, kind=conv_wp)*real(cp, kind=conv_wp))
 
       fact1 = (real(cvap, kind=conv_wp)-real(cliq, kind=conv_wp))/
@@ -363,9 +364,15 @@ c-----------------------------------------------------------------------
 c
 c  initialize arrays
 c
-      chem_c  = 0.0_conv_wp
-      chem_pw = 0.0_conv_wp
-      wet_dep = 0.0_conv_wp
+      do n = 1, ntc
+        do k = 1, km
+          do i = 1, im
+            chem_c(i, k, n) = 0.0_conv_wp
+            chem_pw(i, k, n) = 0.0_conv_wp
+            wet_dep(i, k, n) = 0.0_conv_wp
+          enddo
+        enddo
+      enddo
 !
       do i=1,im
         cnvflg(i) = .true.
@@ -688,9 +695,8 @@ c
       do k = 1, km
         do i=1,im
           if (k <= kmax(i)) then
-!            qeso(i,k) = 0.01 * fpvs(to(i,k))      ! fpvs is in pa
             qeso(i,k) = 0.01_conv_wp * 
-     &                  real(fpvs(real(to(i,k), kind_phys)), conv_wp) 
+     &                  real(fpvs(real(to(i,k), kind_phys)), conv_wp) ! fpvs is in pa
             qeso(i,k) = real(eps, conv_wp) * qeso(i,k) / (pfld(i,k) +
      &                  real(epsm1, conv_wp) * qeso(i,k))
             val1      = 1.e-8_conv_wp
@@ -763,9 +769,8 @@ c
           if (k <= kmax(i)-1) then
             dz = .5_conv_wp * (zo(i,k+1) - zo(i,k))
             dp = .5_conv_wp * (pfld(i,k+1) - pfld(i,k))
-!            es      = 0.01 * fpvs(to(i,k+1))      ! fpvs is in pa
             es = 0.01_conv_wp * 
-     &           real(fpvs(real(to(i,k+1), kind_phys)), conv_wp) 
+     &           real(fpvs(real(to(i,k+2), kind_phys)), conv_wp) ! fpvs is in pa
             pprime  = pfld(i,k+1) + real(epsm1, conv_wp) * es
             qs      = real(eps, conv_wp) * es / pprime
             dqsdp   = - qs / pprime
@@ -789,9 +794,8 @@ c
       do k = 1, km1
         do i=1,im
           if (k <= kmax(i)-1) then
-!            qeso(i,k) = 0.01 * fpvs(to(i,k))      ! fpvs is in pa
             qeso(i,k) = 0.01_conv_wp * 
-     &                  real(fpvs(real(to(i,k), kind_phys)), conv_wp)
+     &                  real(fpvs(real(to(i,k), kind_phys)), conv_wp) ! fpvs is in pa
             qeso(i,k) = real(eps, conv_wp) * qeso(i,k) / (po(i,k) + 
      &                  real(epsm1, conv_wp) * qeso(i,k))
             val1      = 1.e-8_conv_wp
@@ -807,8 +811,8 @@ c
             heso(i,k) = .5_conv_wp * real(grav, conv_wp) * (zo(i,k) + 
      &                  zo(i,k+1)) + real(cp, conv_wp) * to(i,k) +
      &                  real(hvap, conv_wp) * qeso(i,k)
-            uo(i,k)   = .5_conv_wp * uo(i,k) + uo(i,k+1)
-            vo(i,k)   = .5_conv_wp * vo(i,k) + vo(i,k+1)
+            uo(i,k)   = .5_conv_wp * (uo(i,k) + uo(i,k+1))
+            vo(i,k)   = .5_conv_wp * (vo(i,k) + vo(i,k+1))
           endif
         enddo
       enddo
@@ -1151,8 +1155,8 @@ c
       enddo
       do k = 2, km1
        do i=1,im
-         if(cnvflg(i).and.                                              &
-     &      (k > kbcon(i) .and. k < kmax(i))) then
+         if(cnvflg(i)                                              
+     &     .and. (k > kbcon(i) .and. k < kmax(i))) then
              xlamue(i,k) = xlamx(i)
          endif
        enddo
@@ -1218,7 +1222,7 @@ c
           if(cnvflg(i) .and.
      &       (k > kbcon(i) .and. k < kmax(i))) then
               tentr(i,k)=xlamue(i,k)*fent1(i,k)
-              tem = real(cxlamet(i),conv_wp)*frh(i,k)*fent2(i,k)    
+              tem = real(cxlamet(i),conv_wp)*frh(i,k)*fent2(i,k)
               xlamue(i,k) = xlamue(i,k)*fent1(i,k) + tem
               tem1 = real(cxlamdt(i),conv_wp) * frh(i,k)
               xlamud(i,k) = xlamud(i,k) + tem1
@@ -1360,9 +1364,9 @@ c
                    tem  = 0.25_conv_wp * (xlamue(i,k)+xlamue(i,k-1))*dz
                    tem  = cq * tem
                    factor = 1.0_conv_wp + tem
-                   ecko(i,k,kk) = ((1.0_conv_wp - tem) * ecko(i,k-1,kk)+
-     &                           tem * (ctro(i,k,kk) + ctro(i,k-1,kk)))/
-     &                           factor
+                   ecko(i,k,kk) = ((1.0_conv_wp - tem) * ecko(i,k-1,kk)
+     &                         + tem * (ctro(i,k,kk) + ctro(i,k-1,kk)))
+     &                         / factor
                    ercko(i,k,kk) = ecko(i,k,kk)
                    chem_c(i,k,n) = real(fscav(n), conv_wp) *ecko(i,k,kk)
                    tem = chem_c(i,k,n) / (1.0_conv_wp + c0t(i,k) * dz)
@@ -1685,10 +1689,13 @@ c
      &                     real(fv, conv_wp) * max(val,(qeso(i,k) -
      &                     qo(i,k)))
                 drag(i,k) = max(xlamue(i,k),xlamud(i,k))
+!
                 tem = ((uo(i,k) - uo(i,k-1))/dz)**2
                 tem = tem + ((vo(i,k) - vo(i,k-1))/dz)**2
                 wush(i,k) = real(csmf, conv_wp) * sqrt(tem)
-              endif
+! 
+               endif
+!
             endif
           endif
         enddo
@@ -2047,7 +2054,7 @@ c
           k = ktcon(i) - 1
           gamma = real(el2orc, conv_wp) * qeso(i,k) / (to(i,k)**2)
           qrch = qeso(i,k) + gamma * dbyo(i,k) / (real(hvap, conv_wp) * 
-     &           (1.0_conv_wp + gamma)) 
+     &           (1.0_conv_wp + gamma))
           dq = qcko(i,k) - qrch
 c
 c  check if there is excess moisture to release latent heat
@@ -2710,9 +2717,8 @@ c
       do k = 1, km
         do i = 1, im
           if(asqecflg(i) .and. k <= kmax(i)) then
-!            qeso(i,k) = 0.01 * fpvs(to(i,k))      ! fpvs is in pa
             qeso(i,k) = 0.01_conv_wp * 
-     &                  real(fpvs(real(to(i,k), kind_phys)), conv_wp)
+     &                  real(fpvs(real(to(i,k), kind_phys)), conv_wp) ! fpvs is in pa
             qeso(i,k) = real(eps, conv_wp) * qeso(i,k) / (pfld(i,k) +
      &                  real(epsm1, conv_wp)*qeso(i,k))
             val       = 1.e-8_conv_wp
@@ -2730,9 +2736,8 @@ c
           if(asqecflg(i) .and. k <= kmax(i)-1) then
             dz = .5_conv_wp * (zo(i,k+1) - zo(i,k))
             dp = .5_conv_wp * (pfld(i,k+1) - pfld(i,k))
-!            es = 0.01 * fpvs(to(i,k+1))      ! fpvs is in pa
             es = 0.01_conv_wp * 
-     &           real(fpvs(real(to(i,k+1), kind_phys)), conv_wp) 
+     &           real(fpvs(real(to(i,k+1), kind_phys)), conv_wp) ! fpvs is in pa
             pprime = pfld(i,k+1) + real(epsm1, conv_wp) * es
             qs = real(eps, conv_wp) * es / pprime
             dqsdp = - qs / pprime
@@ -2752,9 +2757,8 @@ c
       do k = 1, km1
         do i = 1, im
           if(asqecflg(i) .and. k <= kmax(i)-1) then
-!            qeso(i,k) = 0.01 * fpvs(to(i,k))      ! fpvs is in pa
             qeso(i,k) = 0.01_conv_wp * 
-     &                  real(fpvs(real(to(i,k), kind_phys)), conv_wp)
+     &                  real(fpvs(real(to(i,k), kind_phys)), conv_wp) ! fpvs is in pa
             qeso(i,k) = real(eps, conv_wp) * qeso(i,k) / (po(i,k) +
      &                  real(epsm1, conv_wp) * qeso(i,k))
             val1      = 1.e-8_conv_wp
@@ -2854,8 +2858,6 @@ c
             if(k >= kbcon(i) .and. k < ktcon1(i)) then
               dz1 = zo(i,k+1) - zo(i,k)
               gamma = real(el2orc, conv_wp) * qeso(i,k) / (to(i,k)**2)
-              rfact =  1. + fv * cp * gamma
-     &                 * to(i,k) / hvap
               rfact = 1.0_conv_wp + real(fv, conv_wp) * real(cp,
      &                conv_wp) * gamma * to(i,k) / real(hvap, conv_wp)
               xaa0(i) = xaa0(i) +
@@ -3264,9 +3266,8 @@ c
             qo(i,k) = real(q1(i,k), conv_wp)
             uo(i,k) = real(u1(i,k), conv_wp)
             vo(i,k) = real(v1(i,k), conv_wp)
-!            qeso(i,k) = 0.01 * fpvs(t1(i,k))      ! fpvs is in pa
             qeso(i,k) = 0.01_conv_wp * 
-     &                  real(fpvs(real(t1(i,k), kind_phys)), conv_wp)  
+     &                  real(fpvs(real(t1(i,k), kind_phys)), conv_wp) ! fpvs is in pa
             qeso(i,k) = real(eps, conv_wp) * qeso(i,k) / (pfld(i,k) +
      &                  real(epsm1, conv_wp) *qeso(i,k))
             val     =   1.e-8_conv_wp
@@ -3500,7 +3501,7 @@ c
               if (cnvflg(i)) then
                 if(k > kb(i) .and. k < ktcon(i)) then
                   dp = 1000.0_conv_wp * del(i,k)
-                  if (real(qtr(i,k,kk), conv_wp) < 0.0_conv_wp) then  
+                  if (real(qtr(i,k,kk), conv_wp) < 0.0_conv_wp) then
 !   borrow negative mass from wet deposition
                     tem = -real(qtr(i,k,kk), conv_wp)*dp
                     if(wet_dep(i,k,n) >= tem) then
@@ -3528,9 +3529,8 @@ c
         do i = 1, im
           if (cnvflg(i) .and. k <= kmax(i)) then
             if(k <= ktcon(i)) then
-!              qeso(i,k) = 0.01 * fpvs(t1(i,k))      ! fpvs is in pa
               qeso(i,k) = 0.01_conv_wp * 
-     &                    real(fpvs(real(t1(i,k), kind_phys)), conv_wp)
+     &                    real(fpvs(real(t1(i,k), kind_phys)), conv_wp) ! fpvs is in pa
               qeso(i,k) = real(eps, conv_wp) * qeso(i,k) / (pfld(i,k) +
      &                    real(epsm1, conv_wp) * qeso(i,k))
               val       = 1.e-8_conv_wp
@@ -3710,9 +3710,9 @@ c
                 qtr(i,k,1) = real(qtr(i,k,1), kind_phys) +
      &                       real(tem * tem1, kind_phys)  ! ice
                 qtr(i,k,2) = real(qtr(i,k,2), kind_phys) +
-     &                       real(tem * (1.0_conv_wp -tem1), kind_phys) ! water
+     &                       real(tem * 
+     &                       (1.0_conv_wp -tem1), kind_phys) ! water
               else
-                qtr(i,k,1) = qtr(i,k,1) + tem
                 qtr(i,k,1) = real(qtr(i,k,1), kind_phys) + 
      &                       real(tem, kind_phys)
               endif
@@ -3848,7 +3848,6 @@ c
                 tem2 = max(sigmagfm(i), real(betaw, conv_wp))
               endif
               ptem = tem / (tem2 * tem1)
-              qtr(i,k,ntk)=qtr(i,k,ntk)+0.5*tem2*ptem*ptem
               qtr(i,k,ntk)=real(qtr(i,k,ntk), kind_phys) +
      &                    real(0.5_conv_wp * tem2 * ptem *
      &                    ptem, kind_phys)
