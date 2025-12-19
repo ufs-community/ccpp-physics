@@ -110,7 +110,7 @@
       real(kind=kind_phys), intent(in), optional :: sigmain(:,:),       
      &     qmicro(:,:),  prevsq(:,:), omegain(:,:)
       real(kind=kind_phys), intent(in) :: tmf(:,:,:),q(:,:)
-      real(kind=kind_phys), dimension (:), intent(in), 
+      real(kind=kind_phys), dimension (:), intent(in),
      &   optional :: maxMF
       real(kind=kind_phys), intent(out) :: rainevap(:)
       real(kind=kind_phys), intent(inout), optional :: sigmaout(:,:),   
@@ -234,7 +234,7 @@ c  physical parameters
 !     parameter(elocp=hvap/cp,el2orc=hvap*hvap/(rv*cp))
 !     parameter(c0s=.002,c1=.002,d0=.01)
 !     parameter(d0=.01)
-      parameter(d0=.001_conv_wp)
+      parameter(d0=.001)
 !     parameter(c0l=c0s*asolfac)
 !
 ! asolfac: aerosol-aware parameter based on Lim (2011)
@@ -299,10 +299,8 @@ c  cloud water
 !  variables for Total Variation Diminishing (TVD) flux-limiter scheme
 !     on environmental subsidence and uplifting
 !
-!      real(kind=kind_phys) q_diff(im,0:km-1), e_diff(im,0:km-1,ntr),
-!     &                     flxtvd(im,0:km-1)
-      real(kind=conv_wp) :: q_diff(im,0:km), flxtvd(im,0:km)
-      real(kind=conv_wp) :: e_diff(im,0:km,ntr)
+      real(kind=kind_phys) q_diff(im,0:km-1), e_diff(im,0:km-1,ntr),
+     &                     flxtvd(im,0:km-1)
       real(kind=conv_wp) rrkp, phkp
       real(kind=conv_wp) tsumn(im), tsump(im), rtnp(im)
 !
@@ -364,15 +362,9 @@ c-----------------------------------------------------------------------
 c
 c  initialize arrays
 c
-      do n = 1, ntc
-        do k = 1, km
-          do i = 1, im
-            chem_c(i, k, n) = 0.0_conv_wp
-            chem_pw(i, k, n) = 0.0_conv_wp
-            wet_dep(i, k, n) = 0.0_conv_wp
-          enddo
-        enddo
-      enddo
+      chem_c  = 0.0_conv_wp
+      chem_pw = 0.0_conv_wp
+      wet_dep = 0.0_conv_wp
 !
       do i=1,im
         cnvflg(i) = .true.
@@ -413,32 +405,15 @@ c
         rainevap(i) = 0.0_conv_wp
         omegac(i)=0.0_conv_wp
         gdx(i) = sqrt(real(garea(i), kind=conv_wp))
-        umean(i) = 0.0_conv_wp
-        deltv(i) = 0.0_conv_wp
-        delq(i) = 0.0_conv_wp
-        qevap(i) = 0.0_conv_wp
       enddo
 
       do k=1,km
         do i=1,im
           xlamud(i,k) = 0.0_conv_wp
           xlamue(i,k) = 0.0_conv_wp
-          qeso(i,k) = 0.0_conv_wp
-          qadv(i,k) = 0.0_conv_wp
-          tmfq(i,k) = 0.0_conv_wp
-          flxtvd(i,k) = 0.0_conv_wp
-          q_diff(i,k) = 0.0_conv_wp
         enddo
       enddo
 !
-      do n = 1, ntr
-        do k = 0, km
-           do i = 1, im
-              e_diff(i,k,n) = 0.0_conv_wp
-           enddo
-        enddo
-      enddo
-
       if (hwrf_samfdeep) then
         do i=1,im
           scaldfunc(i)=-1.0_conv_wp
@@ -598,53 +573,40 @@ c
 !>  - Convert prsl from centibar to millibar, set normalized mass fluxes to 1, cloud properties to 0, and save model state variables (after advection/turbulence).
       do k = 1, km
         do i = 1, im
-          pfld(i,k)  = 0.0_conv_wp
-          eta(i,k)   = 1.0_conv_wp  
-          etad(i,k)  = 1.0_conv_wp 
-          fent1(i,k) = 1.0_conv_wp  
-          fent2(i,k) = 1.0_conv_wp  
-          
-          rh(i,k)    = 0.0_conv_wp
-          frh(i,k)   = 0.0_conv_wp
-          hcko(i,k)  = 0.0_conv_wp
-          qcko(i,k)  = 0.0_conv_wp
-          qrcko(i,k) = 0.0_conv_wp
-          ucko(i,k)  = 0.0_conv_wp
-          vcko(i,k)  = 0.0_conv_wp
-          hcdo(i,k)  = 0.0_conv_wp
-          qcdo(i,k)  = 0.0_conv_wp
-          ucdo(i,k)  = 0.0_conv_wp
-          vcdo(i,k)  = 0.0_conv_wp
-          qrcd(i,k)  = 0.0_conv_wp
-          qrcdo(i,k) = 0.0_conv_wp
-          dbyo(i,k)  = 0.0_conv_wp
-          pwo(i,k)   = 0.0_conv_wp
-          pwdo(i,k)  = 0.0_conv_wp
-          dellal(i,k)= 0.0_conv_wp
-          dellah(i,k) = 0.0_conv_wp
-          dellaq(i,k) = 0.0_conv_wp
-          dellau(i,k) = 0.0_conv_wp
-          dellav(i,k) = 0.0_conv_wp
-
-          to(i,k)    = 0.0_conv_wp
-          qo(i,k)    = 0.0_conv_wp
-          uo(i,k)    = 0.0_conv_wp
-          vo(i,k)    = 0.0_conv_wp
-          
-          wu2(i,k)   = 0.0_conv_wp
-          buo(i,k)   = 0.0_conv_wp
-          wush(i,k)  = 0.0_conv_wp
-          drag(i,k)  = 0.0_conv_wp
-          cnvwt(i,k) = 0.0_conv_wp
-
           if (k <= kmax(i)) then
-            pfld(i,k) = prsl(i,k) * 10.0_conv_wp
-            
+            pfld(i,k) = prsl(i,k) * 10.0
+            eta(i,k)  = 1.0_conv_wp
+            fent1(i,k)= 1.0_conv_wp
+            fent2(i,k)= 1.0_conv_wp
+            rh(i,k)   = 0.0_conv_wp
+            frh(i,k)  = 0.0_conv_wp
+            hcko(i,k) = 0.0_conv_wp
+            qcko(i,k) = 0.0_conv_wp
+            qrcko(i,k)= 0.0_conv_wp
+            ucko(i,k) = 0.0_conv_wp
+            vcko(i,k) = 0.0_conv_wp
+            etad(i,k) = 1.0_conv_wp
+            hcdo(i,k) = 0.0_conv_wp
+            qcdo(i,k) = 0.0_conv_wp
+            ucdo(i,k) = 0.0_conv_wp
+            vcdo(i,k) = 0.0_conv_wp
+            qrcd(i,k) = 0.0_conv_wp
+            qrcdo(i,k)= 0.0_conv_wp
+            dbyo(i,k) = 0.0_conv_wp
+            pwo(i,k)  = 0.0_conv_wp
+            pwdo(i,k) = 0.0_conv_wp
+            dellal(i,k) = 0.0_conv_wp
             to(i,k)   = real(t1(i,k), conv_wp)
             qo(i,k)   = real(q1(i,k), conv_wp)
             uo(i,k)   = real(u1(i,k), conv_wp)
             vo(i,k)   = real(v1(i,k), conv_wp)
-            
+!           uo(i,k)   = u1(i,k) * rcs(i)
+!           vo(i,k)   = v1(i,k) * rcs(i)
+            wu2(i,k)  = 0.0_conv_wp
+            buo(i,k)  = 0.0_conv_wp
+            wush(i,k) = 0.0_conv_wp
+            drag(i,k) = 0.0_conv_wp
+            cnvwt(i,k)= 0.0_conv_wp
           endif
         enddo
       enddo
@@ -661,22 +623,6 @@ c
 !
 !  initialize tracer variables
 !
-      do n = 1, ntr
-         do i = 1, im
-            delebar(i,n) = 0.0_conv_wp
-         enddo
-         do k = 1, km
-            do i = 1, im
-               dellae(i,k,n) = 0.0_conv_wp
-               ctr(i,k,n)    = 0.0_conv_wp
-               ctro(i,k,n)   = 0.0_conv_wp
-               ecko(i,k,n)   = 0.0_conv_wp
-               ercko(i,k,n)  = 0.0_conv_wp
-               ecdo(i,k,n)   = 0.0_conv_wp
-            enddo
-         enddo
-      enddo
-      
       if(.not.hwrf_samfdeep) then
       do n = 3, ntr+2
         kk = n-2
@@ -685,6 +631,9 @@ c
             if (k <= kmax(i)) then
               ctr(i,k,kk)  = real(qtr(i,k,n), conv_wp)
               ctro(i,k,kk) = real(qtr(i,k,n), conv_wp)
+              ecko(i,k,kk) = 0.0_conv_wp
+              ercko(i,k,kk) = 0.0_conv_wp
+              ecdo(i,k,kk) = 0.0_conv_wp
             endif
           enddo
         enddo
@@ -1894,12 +1843,14 @@ c
      &        kbcon1,ktcon,real(omegain, conv_wp),real(delt, conv_wp),
      &        del,zi,cnvflg,omegaout_loc,real(grav, conv_wp),buo,drag,
      &        wush,tentr,real(bb1, conv_wp),real(bb2, conv_wp))      
+         if (present(omegaout)) then
+            omegaout(:,:) = real(omegaout_loc(:,:), kind_phys)
+         endif
          do k = 1, km
             do i = 1, im
                if (cnvflg(i)) then
                   if(k > kbcon1(i) .and. k < ktcon(i)) then
-                     omegaout(i,k) = real(omegaout_loc(i,k), kind_phys)
-                     omega_u(i,k)=real(omegaout(i,k), conv_wp)
+                     omega_u(i,k)=omegaout_loc(i,k)
                      omega_u(i,k)=MAX(omega_u(i,k),-80.0_conv_wp)
 !     Convert to m/s for use in convective time-scale:
                      rho = po(i,k)*100.0_conv_wp/(real(rd, conv_wp)*
@@ -2246,7 +2197,6 @@ c
      &                     (to(i,k)**2)
               qrcdo(i,k) = qeso(i,k)+(1.0_conv_wp/real(hvap, conv_wp))*
      &                     (gamma/(1.0_conv_wp+gamma))*dbyo(i,k)
-!
 !             detad      = etad(i,k+1) - etad(i,k)
 cj
               dz = zi(i,k+1) - zi(i,k)
@@ -3140,13 +3090,9 @@ c
      &        sigminm,sigmins,real(sigmain, conv_wp),sigmaout_loc,
      &        sigmab)
 
-         do k = 1, km
-            do i = 1, im
-               if (cnvflg(i)) then
-                  sigmaout(i,k) = real(sigmaout_loc(i,k), kind_phys)
-               endif
-            enddo
-         enddo
+         if (present(sigmaout)) then
+            sigmaout(:,:) = real(sigmaout_loc(:,:), kind_phys)
+         endif
       endif
 
 !> - From Han et al.'s (2017) \cite han_et_al_2017 equation 6, calculate cloud base mass flux as a function of the mean updraft velcoity for the grid sizes where the quasi-equilibrium assumption of Arakawa-Schubert is not valid any longer.
