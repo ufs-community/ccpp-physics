@@ -722,7 +722,7 @@ c
           if (k <= kmax(i)-1) then
             dz = .5_conv_wp * (zo(i,k+1) - zo(i,k))
             dp = .5_conv_wp * (pfld(i,k+1) - pfld(i,k))
-            es = 0.01_conv_wp * real(fpvs(real(to(i,k+2),
+            es = 0.01_conv_wp * real(fpvs(real(to(i,k+1),
      &           kind=kind_phys)), kind=conv_wp) ! fpvs is in pa
             pprime  = pfld(i,k+1) + real(epsm1, kind=conv_wp) * es
             qs      = real(eps, kind=conv_wp) * es / pprime
@@ -1467,7 +1467,7 @@ c
           val2 = 1.0_conv_wp
           tem = min(tem,val2)
           tem = 1.0_conv_wp - tem
-          tem = 0.5_conv_wp*(real(cinacrmx, kind=conv_wp)
+          tem1 = 0.5_conv_wp*(real(cinacrmx, kind=conv_wp)
      &         -  real(cinacrmn, kind=conv_wp))
           cinacr = real(cinacrmx, kind=conv_wp) - tem * tem1
           if(cina(i) < cinacr) cnvflg(i) = .false.
