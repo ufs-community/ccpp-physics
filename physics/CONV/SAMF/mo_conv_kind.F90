@@ -1,21 +1,21 @@
-!> This module provides the Fortran KIND parameters for REAL variables in the SAMF scheme.
+!> This module provides the Fortran KIND parameters for REAL variables 
+!! in the SAMF scheme, synchronized with the model's machine definitions.
 module mo_conv_kind
-!  use, intrinsic :: iso_c_binding, only: c_float, c_double
-  use machine, only: kind_phys
+  use machine, only : kind_phys, kind_sngl_prec, kind_dbl_prec
   implicit none
   public
 
-  ! Define standard single and double precision kinds
-!  integer, parameter :: dp = c_double, sp = c_float
+  ! Define standard single and double precision kinds from machine module
+  integer, parameter :: sp = kind_sngl_prec  ! 4
+  integer, parameter :: dp = kind_dbl_prec  ! 8
 
-  integer, parameter :: conv_wp = kind_phys
-
-  ! Floating point working precision
-  ! This is controlled by the -DSAMFDEEP_USE_SP macro
+  ! Floating point working precision (conv_wp)
+  ! 1. If SAMFDEEP_USE_SP is defined, force 4-byte precision for SAMF.
+  ! 2. Otherwise, match kind_phys to ensure B4B with the legacy model.
 #ifdef SAMFDEEP_USE_SP
-!  integer, parameter :: conv_wp = sp
+  integer, parameter :: conv_wp = sp
 #else
-!  integer, parameter :: conv_wp = dp
+  integer, parameter :: conv_wp = kind_phys
 #endif
 
 end module mo_conv_kind

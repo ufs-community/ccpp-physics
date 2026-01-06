@@ -3,6 +3,8 @@
 
     module GFS_DCNV_generic_post
 
+    use mo_conv_kind, only : conv_wp
+
     contains
 
 !> \section arg_table_GFS_DCNV_generic_post_run Argument Table
@@ -68,15 +70,15 @@
             do i=1,im
               cnvw_phy_f3d(i,k) = cnvw(i,k)
               cnvc_phy_f3d(i,k) = cnvc(i,k)
-              cnvw(i,k)         = 0.0
-              cnvc(i,k)         = 0.0
+              cnvw(i,k)         = 0.0_conv_wp
+              cnvc(i,k)         = 0.0_conv_wp
             enddo
           enddo
         elseif (npdf3d == 0 .and. ncnvcld3d == 1) then
           do k=1,levs
             do i=1,im
               cnvw_phy_f3d(i,k) = cnvw(i,k)
-              cnvw(i,k)         = 0.0
+              cnvw(i,k)         = 0.0_conv_wp
             enddo
           enddo
         endif
@@ -94,17 +96,17 @@
         if (ldiag3d .and. flag_for_dcnv_generic_tend) then
           idtend=dtidx(index_of_temperature,index_of_process_dcnv)
           if(idtend>=1) then
-            dtend(:,:,idtend) = dtend(:,:,idtend) + (gt0-save_t)*frain
+            dtend(:,:,idtend) = dtend(:,:,idtend) + (gt0 - save_t) * frain
           endif
 
           idtend=dtidx(index_of_x_wind,index_of_process_dcnv)
           if(idtend>=1) then
-            dtend(:,:,idtend) = dtend(:,:,idtend) + (gu0-save_u)*frain
+            dtend(:,:,idtend) = dtend(:,:,idtend) + (gu0 - save_u) * frain
           endif
 
           idtend=dtidx(index_of_y_wind,index_of_process_dcnv)
           if(idtend>=1) then
-            dtend(:,:,idtend) = dtend(:,:,idtend) + (gv0-save_v)*frain
+            dtend(:,:,idtend) = dtend(:,:,idtend) + (gv0 - save_v) * frain
           endif
 
           if (cscnv .or. satmedmf .or. trans_trac .or. ras) then
@@ -119,7 +121,7 @@
                    tracers = tracers + 1
                    idtend = dtidx(100+n,index_of_process_dcnv)
                    if(idtend>0) then
-                      dtend(:,:,idtend) = dtend(:,:,idtend) + clw(:,:,tracers)-save_q(:,:,n) * frain
+                     dtend(:,:,idtend) = dtend(:,:,idtend) + (clw(:,:,tracers) - save_q(:,:,n)) * frain
                    endif
                 endif
              enddo
@@ -127,7 +129,7 @@
             do n=2,ntrac
                idtend = dtidx(100+n,index_of_process_dcnv)
                if(idtend>0) then
-                  dtend(:,:,idtend) = dtend(:,:,idtend) + (gq0(:,:,n)-save_q(:,:,n))*frain
+                  dtend(:,:,idtend) = dtend(:,:,idtend) + (gq0(:,:,n) - save_q(:,:,n)) * frain
                endif
             enddo
           endif
