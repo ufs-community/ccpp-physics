@@ -219,7 +219,7 @@ subroutine noahmpdrv_timestep_init (itime, fhour, delt, km,  ncols,         &
   endif
 
   if(Land_IAU_Control%me == Land_IAU_Control%mpi_root) then 
-    print*, "adding land iau increments CSD-edited" 
+    print*, "adding land iau increments"
   endif
 
   if (Land_IAU_Control%lsoil .ne. km) then
@@ -259,9 +259,9 @@ subroutine noahmpdrv_timestep_init (itime, fhour, delt, km,  ncols,         &
   call calculate_landinc_mask(weasd, vegtype, soiltyp, lensfc, isice_table, mask_tile)  
                               
   dz(1) = -zsoil(1)
-  do k = 2, km 
-        dz(k) = -zsoil(k) + zsoil(k-1) 
-  enddo 
+  do k = 2, km
+        dz(k) = -zsoil(k) + zsoil(k-1)
+  enddo
   !IAU increments are in units of 1/sec
   ij_loop : do ij = 1, lensfc
     ! mask: 1  - soil, 2 - snow, 0 - land-ice, -1 - not land
@@ -269,14 +269,12 @@ subroutine noahmpdrv_timestep_init (itime, fhour, delt, km,  ncols,         &
      
       soil_freeze=.false.
       soil_ice=.false.
-      do k = 1, lsoil_incr 
+      do k = 1, lsoil_incr
         if ( stc(ij,k) < con_t0c)  soil_freeze=.true.
         if ( smc(ij,k) - slc(ij,k) > 0.001 )  soil_ice=.true.
 
         if (Land_IAU_Control%upd_stc) then
-          if (k==1) then
-              stc_updated(ij) = 1
-          endif
+          if (k==1) stc_updated(ij) = 1
           stc(ij,k) = stc(ij,k) + stc_inc_flat(ij,k)*delt
         endif
 
