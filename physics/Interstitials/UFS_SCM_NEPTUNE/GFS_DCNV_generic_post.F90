@@ -121,7 +121,7 @@
                    tracers = tracers + 1
                    idtend = dtidx(100+n,index_of_process_dcnv)
                    if(idtend>0) then
-                     dtend(:,:,idtend) = dtend(:,:,idtend) + (clw(:,:,tracers) - save_q(:,:,n)) * frain
+                     dtend(:,:,idtend) = dtend(:,:,idtend) + clw(:,:,tracers) - save_q(:,:,n) * frain
                    endif
                 endif
              enddo
