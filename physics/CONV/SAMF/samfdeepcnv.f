@@ -45,7 +45,7 @@
 !! well as the convective cloud top height. The dynamic control is the
 !! determination of the potential energy available for convection to "consume",
 !! or how primed the large-scale environment is for convection to occur due to
-!! changes by the dyanmics of the host model. The feedback control is the
+!! changes by the dynamics of the host model. The feedback control is the
 !! determination of how the parameterized convection changes the large-scale
 !! environment (the host model state variables) given the changes to the state
 !! variables per unit cloud base mass flux calculated in the static control
@@ -53,7 +53,7 @@
 !! control.
 !!
 !! For grid sizes smaller than threshold value, the cloud base mass flux in the
-!! SAMF scheme is determined by the cumulus updraft velocity averaged ove the
+!! SAMF scheme is determined by the cumulus updraft velocity averaged over the
 !! whole cloud depth (Han et al. (2017) \cite han_et_al_2017 ), which in turn, determines changes
 !! of the large-scale environment due to the cumulus convection.
 !!
@@ -69,7 +69,7 @@
 !!        + 1) Using the updated temperature and moisture profiles that were modified by the convection on a short time-scale, recalculate the total cloud work function to determine the change in the cloud work function due to convection, or the stabilizing effect of the cumulus.
 !!        + 2) For the "dynamic control", using a reference cloud work function, estimate the change in cloud work function due to the large-scale dynamics. Following the quasi-equilibrium assumption, calculate the cloud base mass flux required to keep the large-scale convective destabilization in balance with the stabilization effect of the convection.
 !!  -# For grid sizes smaller than the threshold value (currently 8 km):
-!!        + 1) compute the cloud base mass flux using the cumulus updraft velocity averaged ove the whole cloud depth.
+!!        + 1) compute the cloud base mass flux using the cumulus updraft velocity averaged over the whole cloud depth.
 !!  -# For scale awareness, the updraft fraction (sigma) is obtained as a function of cloud base entrainment. Then, the final cloud base mass flux is obtained by the original mass flux multiplied by the (1-sigma) 2.
 !!  -# For the "feedback control", calculate updated values of the state variables by multiplying the cloud base mass flux and the tendencies calculated per unit cloud base mass flux from the static control.
 !!
