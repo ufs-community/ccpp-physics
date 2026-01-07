@@ -124,6 +124,32 @@ if(SCHEMES_DYNAMICS)
   list(REMOVE_ITEM SCHEMES ${SCHEMES_DYNAMICS})
 endif()
 
+# Define files that support 32-bit compilation
+set(SCHEME_NAMES_SAMF_SP mo_conv_kind.F90
+                         samfdeepcnv.f
+                         samfaerosols.F
+                         progomega_calc.f90
+                         progsigma_calc.f90)
+
+set(SCHEMES_SAMFDEEP)
+
+# Find full paths in the main SCHEMES list
+foreach(NAME IN LISTS SCHEME_NAMES_SAMF_SP)
+    set(TMP_LIST ${SCHEMES})
+    list(FILTER TMP_LIST INCLUDE REGEX ".*${NAME}$")
+    list(APPEND SCHEMES_SAMFDEEP ${TMP_LIST})
+endforeach()
+
+# Apply Custom Flags (-DSAMFDEEP_USE_SP) and Remove from General List
+if(SCHEMES_SAMFDEEP)
+    list(REMOVE_ITEM SCHEMES ${SCHEMES_SAMFDEEP})
+
+    # Apply flags defined in upper-level CMake (${CMAKE_Fortran_FLAGS_SAMFDEEP})
+    # And specifically add -DSAMFDEEP_USE_SP to trigger the switch in mo_conv_kind.F90
+    SET_PROPERTY(SOURCE ${SCHEMES_SAMFDEEP}
+                 APPEND_STRING PROPERTY COMPILE_FLAGS " ${CMAKE_Fortran_FLAGS_SAMFDEEP} ${OpenMP_Fortran_FLAGS}")
+endif()
+
 # Remove files that need to be compiled without OpenMP from list
 # of files with standard compiler flags, and assign no-OpenMP flags
 if(SCHEMES_OPENMP_OFF)
@@ -184,7 +210,7 @@ endif()
 
 set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_INCLUDEDIR})
 
-add_library(ccpp_physics STATIC ${SCHEMES} ${SCHEMES_OPENMP_OFF} ${SCHEMES_DYNAMICS} ${CAPS})
+add_library(ccpp_physics STATIC ${SCHEMES_SAMFDEEP} ${SCHEMES} ${SCHEMES_OPENMP_OFF} ${SCHEMES_DYNAMICS} ${CAPS})
 
 set_target_properties(ccpp_physics PROPERTIES VERSION ${PROJECT_VERSION}
                                      SOVERSION ${PROJECT_VERSION_MAJOR})
