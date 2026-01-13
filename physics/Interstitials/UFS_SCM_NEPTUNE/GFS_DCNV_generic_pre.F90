@@ -3,7 +3,6 @@
 
       module GFS_DCNV_generic_pre
 
-      use mo_conv_kind, only : conv_wp 
 
       contains
 
@@ -39,7 +38,6 @@
       character(len=*), intent(out) :: errmsg
       integer, intent(out) :: errflg
       logical, intent(in) :: cscnv, satmedmf, trans_trac, ras
-      real(kind=conv_wp), parameter :: zero    = 0.0_conv_wp 
       real(kind=kind_phys), dimension(:,:,:), intent(in) :: clw
 
       integer :: i, k, n, tracers

@@ -19,6 +19,7 @@
         cscnv, satmedmf, trans_trac, ras, errmsg, errflg)
 
       use machine,               only: kind_phys
+      use mo_conv_kind,          only: conv_wp
 
       implicit none
 
@@ -34,19 +35,19 @@
       real(kind=kind_phys), intent(inout), optional :: dtend(:,:,:)
       integer, intent(in) :: dtidx(:,:)
       integer, intent(in) :: index_of_temperature, index_of_x_wind, index_of_y_wind, index_of_process_scnv
-      real(kind=kind_phys), dimension(:,:,:), intent(in) :: clw
+      real(kind=conv_wp), dimension(:,:,:), intent(in) :: clw
 
       ! Post code for SAS/SAMF
       integer, intent(in) :: npdf3d, num_p3d, ncnvcld3d
       logical, intent(in) :: shcnvcw
-      real(kind=kind_phys), dimension(:), intent(in) :: rain1
-      real(kind=kind_phys), dimension(:, :), intent(in) :: cnvw, cnvc
+      real(kind=conv_wp), dimension(:), intent(in) :: rain1
+      real(kind=conv_wp), dimension(:, :), intent(in) :: cnvw, cnvc
       real(kind=kind_phys), dimension(:), intent(inout) :: rainc, cnvprcp
       ! The following arrays may not be allocated, depending on certain flags and microphysics schemes.
       ! Since Intel 15 crashes when passing unallocated arrays to arrays defined with explicit shape,
       ! use assumed-shape arrays. Note that Intel 18 and GNU 6.2.0-8.1.0 tolerate explicit-shape arrays
       ! as long as these do not get used when not allocated.
-      real(kind=kind_phys), dimension(:,:), intent(inout), optional :: cnvw_phy_f3d, cnvc_phy_f3d
+      real(kind=conv_wp), dimension(:,:), intent(inout), optional :: cnvw_phy_f3d, cnvc_phy_f3d
       integer, intent(in) :: imfshalcnv, imfshalcnv_sas, imfshalcnv_samf
       logical, intent(in) :: cscnv, satmedmf, trans_trac, ras
 
@@ -62,7 +63,7 @@
 
       if (imfshalcnv==imfshalcnv_sas .or. imfshalcnv==imfshalcnv_samf) then
         do i=1,im
-          rainc(i) = rainc(i) + frain * rain1(i)
+          rainc(i) = rainc(i) + frain * real(rain1(i), kind=kind_phys)
         enddo
 ! 'cnvw' and 'cnvc' are set to zero before computation starts:
         if (shcnvcw .and. num_p3d == 4 .and. npdf3d == 3) then
@@ -107,7 +108,7 @@
                    tracers = tracers + 1
                    idtend = dtidx(100+n,index_of_process_scnv)
                    if(idtend>0) then
-                      dtend(:,:,idtend) = dtend(:,:,idtend) + clw(:,:,tracers)-save_q(:,:,n) * frain
+                      dtend(:,:,idtend) = dtend(:,:,idtend) + (real(clw(:,:,tracers),kind=kind_phys) - save_q(:,:,n)) * frain
                    endif
                 endif
              enddo

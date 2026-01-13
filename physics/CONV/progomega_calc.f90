@@ -24,8 +24,6 @@
    subroutine progomega_calc(first_time_step,flag_restart,im,km,kbcon1,ktcon,omegain,delt,del, &
         zi,cnvflg,omegaout,grav,buo,drag,wush,tentr,bb1,bb2)
      
-     use machine,  only : kind_phys
-     use funcphys, only : fpvs  
      implicit none
 
      integer, intent(in)  :: im, km

@@ -10,9 +10,9 @@ module mo_conv_kind
   integer, parameter :: dp = kind_dbl_prec  ! 8
 
   ! Floating point working precision (conv_wp)
-  ! 1. If SAMFDEEP_USE_SP is defined, force 4-byte precision for SAMF.
+  ! 1. If SAMFCNV_USE_SP is defined, force 4-byte precision for SAMF.
   ! 2. Otherwise, match kind_phys to ensure B4B with the legacy model.
-#ifdef SAMFDEEP_USE_SP
+#ifdef SAMFCNV_USE_SP
   integer, parameter :: conv_wp = sp
 #else
   integer, parameter :: conv_wp = kind_phys

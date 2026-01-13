@@ -130,27 +130,27 @@ endif()
 # Define files that support 32-bit compilation
 set(SCHEME_NAMES_SAMF_SP mo_conv_kind.F90
                          samfdeepcnv.f
+			 samfshalcnv.f
                          samfaerosols.F
                          progomega_calc.f90
                          progsigma_calc.f90)
-
-set(SCHEMES_SAMFDEEP)
+set(SCHEMES_SAMFCNV)
 
 # Find full paths in the main SCHEMES list
 foreach(NAME IN LISTS SCHEME_NAMES_SAMF_SP)
     set(TMP_LIST ${SCHEMES})
     list(FILTER TMP_LIST INCLUDE REGEX ".*${NAME}$")
-    list(APPEND SCHEMES_SAMFDEEP ${TMP_LIST})
+    list(APPEND SCHEMES_SAMFCNV ${TMP_LIST})
 endforeach()
 
-# Apply Custom Flags (-DSAMFDEEP_USE_SP) and Remove from General List
-if(SCHEMES_SAMFDEEP)
-    list(REMOVE_ITEM SCHEMES ${SCHEMES_SAMFDEEP})
+# Apply Custom Flags (-DSAMFCNV_USE_SP) and Remove from General List
+if(SCHEMES_SAMFCNV)
+	list(REMOVE_ITEM SCHEMES ${SCHEMES_SAMFCNV})
 
-    # Apply flags defined in upper-level CMake (${CMAKE_Fortran_FLAGS_SAMFDEEP})
-    # And specifically add -DSAMFDEEP_USE_SP to trigger the switch in mo_conv_kind.F90
-    SET_PROPERTY(SOURCE ${SCHEMES_SAMFDEEP}
-                 APPEND_STRING PROPERTY COMPILE_FLAGS " ${CMAKE_Fortran_FLAGS_SAMFDEEP} ${OpenMP_Fortran_FLAGS}")
+# Apply flags defined in upper-level CMake (${CMAKE_Fortran_FLAGS_SAMFCNV})
+# And specifically add -DSAMFCNV_USE_SP to trigger the switch in mo_conv_kind.F90
+SET_PROPERTY(SOURCE ${SCHEMES_SAMFCNV}
+	APPEND_STRING PROPERTY COMPILE_FLAGS " ${CMAKE_Fortran_FLAGS_SAMFCNV} ${OpenMP_Fortran_FLAGS}")
 endif()
 
 # Remove files that need to be compiled with different flags for RTE-RRTMGP from list

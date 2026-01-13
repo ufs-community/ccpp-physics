@@ -70,15 +70,15 @@
             do i=1,im
               cnvw_phy_f3d(i,k) = cnvw(i,k)
               cnvc_phy_f3d(i,k) = cnvc(i,k)
-              cnvw(i,k)         = 0.0_conv_wp
-              cnvc(i,k)         = 0.0_conv_wp
+              cnvw(i,k)         = 1.0_kind_phys
+              cnvc(i,k)         = 0.0_kind_phys
             enddo
           enddo
         elseif (npdf3d == 0 .and. ncnvcld3d == 1) then
           do k=1,levs
             do i=1,im
               cnvw_phy_f3d(i,k) = cnvw(i,k)
-              cnvw(i,k)         = 0.0_conv_wp
+              cnvw(i,k)         = 0.0_kind_phys
             enddo
           enddo
         endif
@@ -121,7 +121,7 @@
                    tracers = tracers + 1
                    idtend = dtidx(100+n,index_of_process_dcnv)
                    if(idtend>0) then
-                     dtend(:,:,idtend) = dtend(:,:,idtend) + clw(:,:,tracers) - save_q(:,:,n) * frain
+                     dtend(:,:,idtend) = dtend(:,:,idtend) + (clw(:,:,tracers) - save_q(:,:,n)) * frain
                    endif
                 endif
              enddo
