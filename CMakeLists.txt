@@ -150,7 +150,7 @@ if(SCHEMES_SAMFCNV)
 # Apply flags defined in upper-level CMake (${CMAKE_Fortran_FLAGS_SAMFCNV})
 # And specifically add -DSAMFCNV_USE_SP to trigger the switch in mo_conv_kind.F90
 SET_PROPERTY(SOURCE ${SCHEMES_SAMFCNV}
-	APPEND_STRING PROPERTY COMPILE_FLAGS " ${CMAKE_Fortran_FLAGS_SAMFCNV} ${OpenMP_Fortran_FLAGS}")
+	     APPEND_STRING PROPERTY COMPILE_FLAGS " ${CMAKE_Fortran_FLAGS_SAMFCNV} ${OpenMP_Fortran_FLAGS}")
 endif()
 
 # Remove files that need to be compiled with different flags for RTE-RRTMGP from list

@@ -70,7 +70,7 @@
             do i=1,im
               cnvw_phy_f3d(i,k) = cnvw(i,k)
               cnvc_phy_f3d(i,k) = cnvc(i,k)
-              cnvw(i,k)         = 1.0_kind_phys
+              cnvw(i,k)         = 0.0_kind_phys
               cnvc(i,k)         = 0.0_kind_phys
             enddo
           enddo
