@@ -1,15 +1,15 @@
-!>\file funcphys.f90 
+!>\file funcphys.f90
 !! This file includes API for basic thermodynamic physics.
 
 !>\defgroup func_phys GFS Physics Function Module
 !! This module provides API for computing basic thermodynamic physics
-!! functions. 
+!! functions.
 
 !> This module provides an Application Program Interface (API) for computing
 !! basic thermodynamic physics functions, in particular:
 !! -# saturation vapor pressure as a function of temperature;
 !! -# dewpoint temperature as a function of vapor pressure;
-!! -# equivalent potential temperature as a function of temperature and 
+!! -# equivalent potential temperature as a function of temperature and
 !! scaled pressure to the kappa power;
 !! -# temperature and specific humidity along a moist adiabat as functions
 !! of equivalent potential temperature and scaled pressure to the kappa power;
@@ -18,7 +18,7 @@
 !! and dewpoint depression.
 !!
 !! The entry points required to set up lookup tables start with a "g".
-!! All the other entry points are functions starting with an "f" or 
+!! All the other entry points are functions starting with an "f" or
 !! are subroutines starting with an "s". These other functions and subroutines
 !! are elemental; that is, they return a scalar if they are passed only scalars,
 !! but they return an array if they are passed an array. These other functions
@@ -261,7 +261,6 @@ module funcphys
 !
 !$$$
   use machine,only:kind_phys,r8=>kind_dbl_prec,r4=>kind_sngl_prec
-  use physcons
   implicit none
   private
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -270,7 +269,29 @@ module funcphys
   integer,public,parameter:: krealfp=kind_phys          !< Integer parameter kind or length of reals
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ! Private Variables
-  real(krealfp),parameter:: psatb=con_psat*1.e-5
+  real(krealfp) :: con_rd    = 1.0e30_krealfp
+  real(krealfp) :: con_rv    = 1.0e30_krealfp
+  real(krealfp) :: con_cp    = 1.0e30_krealfp
+  real(krealfp) :: con_cvap  = 1.0e30_krealfp
+  real(krealfp) :: con_cliq  = 1.0e30_krealfp
+  real(krealfp) :: con_csol  = 1.0e30_krealfp
+  real(krealfp) :: con_hvap  = 1.0e30_krealfp
+  real(krealfp) :: con_hfus  = 1.0e30_krealfp
+  real(krealfp) :: con_psat  = 1.0e30_krealfp
+  real(krealfp) :: con_ttp   = 1.0e30_krealfp
+  real(krealfp) :: con_rocp  = 1.0e30_krealfp
+  real(krealfp) :: con_cpor  = 1.0e30_krealfp
+  real(krealfp) :: con_eps   = 1.0e30_krealfp
+  real(krealfp) :: con_dldt  = 1.0e30_krealfp
+  real(krealfp) :: con_xpona = 1.0e30_krealfp
+  real(krealfp) :: con_xponb = 1.0e30_krealfp
+  real(krealfp) :: dldti     = 1.0e30_krealfp
+  real(krealfp) :: heati     = 1.0e30_krealfp
+  real(krealfp) :: xponai    = 1.0e30_krealfp
+  real(krealfp) :: xponbi    = 1.0e30_krealfp
+  real(krealfp) :: tliq      = 1.0e30_krealfp
+  real(krealfp) :: tice      = 1.0e30_krealfp
+  real(krealfp) :: psatb     = 1.0e30_krealfp
   integer,parameter:: nxpvsl=7501
   real(krealfp) c1xpvsl,c2xpvsl,tbpvsl(nxpvsl)
   integer,parameter:: nxpvsi=7501
@@ -310,10 +331,10 @@ module funcphys
   public gfuncphys
 
   interface fpvsl
-     module procedure fpvsl_r4, fpvsl_r8 
+     module procedure fpvsl_r4, fpvsl_r8
   end interface fpvsl
   interface fpvsi
-     module procedure fpvsi_r4, fpvsi_r8 
+     module procedure fpvsi_r4, fpvsi_r8
   end interface fpvsi
 contains
 !-------------------------------------------------------------------------------
@@ -369,7 +390,7 @@ contains
 !> This funtion computes saturation vapor pressure from the temperature.
 !! A linear interpolation is done between values in a lookup table computed
 !! in gpvsl(). See documentation for fpvslx() for details. Input values
-!! outside table range are reset to table extrema. 
+!! outside table range are reset to table extrema.
 !>\author N phillips
 
   elemental function fpvsl_r4(t)
@@ -461,8 +482,8 @@ contains
 
 
 !-------------------------------------------------------------------------------
-!> This function computes saturation vapor pressure from the temperature. 
-!! A quadratic interpolation is done between values in a lookup table 
+!> This function computes saturation vapor pressure from the temperature.
+!! A quadratic interpolation is done between values in a lookup table
 !! computed in gpvsl(). See documentaion for fpvslx() for details.
 !! Input values outside table range are reset to table extrema.
   elemental function fpvslq(t)
@@ -516,7 +537,7 @@ contains
 !> This function exactly computes saturation vapor pressure from temperature.
 !! The water model assumes a perfect gas, constant specific heats
 !! for gas and liquid, and neglects the volume of the liquid.
-!! The model does account for the variation of the latent heat 
+!! The model does account for the variation of the latent heat
 !! of condensation with temperature. The ice option is not included.
 !! The Clausius-Clapeyron equation is integrated from the triple point
 !! to get the formula:
@@ -563,21 +584,17 @@ contains
     implicit none
     real(krealfp) fpvslx
     real(krealfp),intent(in):: t
-    real(krealfp),parameter:: dldt=con_cvap-con_cliq
-    real(krealfp),parameter:: heat=con_hvap
-    real(krealfp),parameter:: xpona=-dldt/con_rv
-    real(krealfp),parameter:: xponb=-dldt/con_rv+heat/(con_rv*con_ttp)
     real(krealfp) tr
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     tr=con_ttp/t
-    fpvslx=con_psat*(tr**xpona)*exp(xponb*(1.-tr))
+    fpvslx=con_psat*(tr**con_xpona)*exp(con_xponb*(1.-tr))
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   end function
 !-------------------------------------------------------------------------------
-!> This subroutine computes saturation vapor pressure table as a function of 
+!> This subroutine computes saturation vapor pressure table as a function of
 !! temperature for the table lookup function fpvsi(). Exact saturation vapor
 !! pressures are calculated in subprogram fpvsix(). The current implementation
-!! computes a table with a length of 7501 for temperatures ranging from 180. 
+!! computes a table with a length of 7501 for temperatures ranging from 180.
 !! to 330. Kelvin.
 !>\author N Phillips
   subroutine gpvsi
@@ -626,7 +643,7 @@ contains
   end subroutine
 !-------------------------------------------------------------------------------
 !> This function computes saturation vapor pressure from the temperature.
-!! A linear interpolation is done between values in a lookup table 
+!! A linear interpolation is done between values in a lookup table
 !! computed in gpvsi(). See documentation for fpvsix() for details.
 !! Input values outside table range are reset to table extrema.
 !>\author N Phillips
@@ -777,10 +794,10 @@ contains
 !! The water model assumes a perfect gas, constant specific heats
 !! for gas and ice, and neglects the volume of the ice. The model does
 !! account for the variation of the latent heat of condensation with temperature.
-!! The liquid option is not included. The Clausius- Clapeyron equation is 
+!! The liquid option is not included. The Clausius- Clapeyron equation is
 !! integrated from the triple point to get the formula:
 !!\n pvsi=con_psat*(tr**xa)*exp(xb*(1.-tr))
-!!\n where tr is ttp/t and other values are physical constants. 
+!!\n where tr is ttp/t and other values are physical constants.
 !! This function should be expanded inline in the calling routine.
 !>\param[in]  t        real, temperature in Kelvin
 !\param[out] fpvsix   real, saturation vapor pressure in Pascals
@@ -822,14 +839,10 @@ contains
     implicit none
     real(krealfp) fpvsix
     real(krealfp),intent(in):: t
-    real(krealfp),parameter:: dldt=con_cvap-con_csol
-    real(krealfp),parameter:: heat=con_hvap+con_hfus
-    real(krealfp),parameter:: xpona=-dldt/con_rv
-    real(krealfp),parameter:: xponb=-dldt/con_rv+heat/(con_rv*con_ttp)
     real(krealfp) tr
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     tr=con_ttp/t
-    fpvsix=con_psat*(tr**xpona)*exp(xponb*(1.-tr))
+    fpvsix=con_psat*(tr**xponai)*exp(xponbi*(1.-tr))
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   end function
 !-------------------------------------------------------------------------------
@@ -837,7 +850,7 @@ contains
 !! temperature for the table lookup function fpvs().
 !! Exact saturation vapor pressures are calculated in subprogram fpvsx().
 !! The current implementation computes a table with a length
-!! of 7501 for temperatures ranging from 180. to 330. Kelvin. 
+!! of 7501 for temperatures ranging from 180. to 330. Kelvin.
   subroutine gpvs
 !$$$     Subprogram Documentation Block
 !
@@ -1047,26 +1060,16 @@ contains
     implicit none
     real(krealfp) fpvsx
     real(krealfp),intent(in):: t
-    real(krealfp),parameter:: tliq=con_ttp
-    real(krealfp),parameter:: tice=con_ttp-20.0
-    real(krealfp),parameter:: dldtl=con_cvap-con_cliq
-    real(krealfp),parameter:: heatl=con_hvap
-    real(krealfp),parameter:: xponal=-dldtl/con_rv
-    real(krealfp),parameter:: xponbl=-dldtl/con_rv+heatl/(con_rv*con_ttp)
-    real(krealfp),parameter:: dldti=con_cvap-con_csol
-    real(krealfp),parameter:: heati=con_hvap+con_hfus
-    real(krealfp),parameter:: xponai=-dldti/con_rv
-    real(krealfp),parameter:: xponbi=-dldti/con_rv+heati/(con_rv*con_ttp)
     real(krealfp) tr,w,pvl,pvi
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     tr=con_ttp/t
     if(t.ge.tliq) then
-      fpvsx=con_psat*(tr**xponal)*exp(xponbl*(1.-tr))
+      fpvsx=con_psat*(tr**con_xpona)*exp(con_xponb*(1.-tr))
     elseif(t.lt.tice) then
       fpvsx=con_psat*(tr**xponai)*exp(xponbi*(1.-tr))
     else
       w=(t-tice)/(tliq-tice)
-      pvl=con_psat*(tr**xponal)*exp(xponbl*(1.-tr))
+      pvl=con_psat*(tr**con_xpona)*exp(con_xponb*(1.-tr))
       pvi=con_psat*(tr**xponai)*exp(xponbi*(1.-tr))
       fpvsx=w*pvl+(1.-w)*pvi
     endif
@@ -1335,18 +1338,14 @@ contains
     real(krealfp) ftdplxg
     real(krealfp),intent(in):: tg,pv
     real(krealfp),parameter:: terrm=1.e-6
-    real(krealfp),parameter:: dldt=con_cvap-con_cliq
-    real(krealfp),parameter:: heat=con_hvap
-    real(krealfp),parameter:: xpona=-dldt/con_rv
-    real(krealfp),parameter:: xponb=-dldt/con_rv+heat/(con_rv*con_ttp)
     real(krealfp) t,tr,pvt,el,dpvt,terr
     integer i
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     t=tg
     do i=1,100
       tr=con_ttp/t
-      pvt=con_psat*(tr**xpona)*exp(xponb*(1.-tr))
-      el=heat+dldt*(t-con_ttp)
+      pvt=con_psat*(tr**con_xpona)*exp(con_xponb*(1.-tr))
+      el=con_hvap+con_dldt*(t-con_ttp)
       dpvt=el*pvt/(con_rv*t**2)
       terr=(pvt-pv)/dpvt
       t=t-terr
@@ -1625,18 +1624,14 @@ contains
     real(krealfp) ftdpixg
     real(krealfp),intent(in):: tg,pv
     real(krealfp),parameter:: terrm=1.e-6
-    real(krealfp),parameter:: dldt=con_cvap-con_csol
-    real(krealfp),parameter:: heat=con_hvap+con_hfus
-    real(krealfp),parameter:: xpona=-dldt/con_rv
-    real(krealfp),parameter:: xponb=-dldt/con_rv+heat/(con_rv*con_ttp)
     real(krealfp) t,tr,pvt,el,dpvt,terr
     integer i
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     t=tg
     do i=1,100
       tr=con_ttp/t
-      pvt=con_psat*(tr**xpona)*exp(xponb*(1.-tr))
-      el=heat+dldt*(t-con_ttp)
+      pvt=con_psat*(tr**xponai)*exp(xponbi*(1.-tr))
+      el=heati+dldti*(t-con_ttp)
       dpvt=el*pvt/(con_rv*t**2)
       terr=(pvt-pv)/dpvt
       t=t-terr
@@ -1925,16 +1920,6 @@ contains
     real(krealfp) ftdpxg
     real(krealfp),intent(in):: tg,pv
     real(krealfp),parameter:: terrm=1.e-6
-    real(krealfp),parameter:: tliq=con_ttp
-    real(krealfp),parameter:: tice=con_ttp-20.0
-    real(krealfp),parameter:: dldtl=con_cvap-con_cliq
-    real(krealfp),parameter:: heatl=con_hvap
-    real(krealfp),parameter:: xponal=-dldtl/con_rv
-    real(krealfp),parameter:: xponbl=-dldtl/con_rv+heatl/(con_rv*con_ttp)
-    real(krealfp),parameter:: dldti=con_cvap-con_csol
-    real(krealfp),parameter:: heati=con_hvap+con_hfus
-    real(krealfp),parameter:: xponai=-dldti/con_rv
-    real(krealfp),parameter:: xponbi=-dldti/con_rv+heati/(con_rv*con_ttp)
     real(krealfp) t,tr,w,pvtl,pvti,pvt,ell,eli,el,dpvt,terr
     integer i
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1942,8 +1927,8 @@ contains
     do i=1,100
       tr=con_ttp/t
       if(t.ge.tliq) then
-        pvt=con_psat*(tr**xponal)*exp(xponbl*(1.-tr))
-        el=heatl+dldtl*(t-con_ttp)
+        pvt=con_psat*(tr**con_xpona)*exp(con_xponb*(1.-tr))
+        el=con_hvap+con_dldt*(t-con_ttp)
         dpvt=el*pvt/(con_rv*t**2)
       elseif(t.lt.tice) then
         pvt=con_psat*(tr**xponai)*exp(xponbi*(1.-tr))
@@ -1951,10 +1936,10 @@ contains
         dpvt=el*pvt/(con_rv*t**2)
       else
         w=(t-tice)/(tliq-tice)
-        pvtl=con_psat*(tr**xponal)*exp(xponbl*(1.-tr))
+        pvtl=con_psat*(tr**con_xpona)*exp(con_xponb*(1.-tr))
         pvti=con_psat*(tr**xponai)*exp(xponbi*(1.-tr))
         pvt=w*pvtl+(1.-w)*pvti
-        ell=heatl+dldtl*(t-con_ttp)
+        ell=con_hvap+con_dldt*(t-con_ttp)
         eli=heati+dldti*(t-con_ttp)
         dpvt=(w*ell*pvtl+(1.-w)*eli*pvti)/(con_rv*t**2)
       endif
@@ -2541,7 +2526,7 @@ contains
 !>\param[in]  tg   real, guess parcel temperature in Kelvin
 !>\param[in]  the  real, equivalent potential temperature in Kelvin
 !>\param[in]  pk   real, pressure over 1e5 Pa to the kappa power
-!>\param[out] tma  real, parcel temperature in Kelvin 
+!>\param[out] tma  real, parcel temperature in Kelvin
 !>\param[out] qma  real, parcel specific humidity in kg/kg
   subroutine stmaxg(tg,the,pk,tma,qma)
 !$$$     Subprogram Documentation Block
@@ -2776,7 +2761,7 @@ contains
 !! using a rational weighted chebyshev approximation.
 !! The numerator is of order 2 and the denominator is of order 4.
 !! The pressure range is 40000-110000 Pa and kappa is defined in fpkapx().
-!>\param[in]   p        real, surface pressure in Pascals p should be in the 
+!>\param[in]   p        real, surface pressure in Pascals p should be in the
 !! range 40000 to 110000
 !\param[out]  fpkapo   real, p over 1e5 Pa to the kappa power
   function fpkapo(p)
@@ -3390,7 +3375,8 @@ contains
 !! set up for computing saturation vapor pressure, dewpoint temperature,
 !! equivalent potential temperature, moist adiabatic temperature and humidity,
 !! pressure to the kappa, and lifting condensation level temperature.
-  subroutine gfuncphys
+  subroutine gfuncphys(con_rd_in, con_rv_in, con_cp_in, con_cvap_in, con_cliq_in, &
+                       con_csol_in, con_hvap_in, con_hfus_in, con_psat_in, con_ttp_in)
 !$$$     Subprogram Documentation Block
 !
 ! Subprogram: gfuncphys    Compute all physics function tables
@@ -3424,7 +3410,37 @@ contains
 !
 !$$$
     implicit none
+    real(krealfp), intent(in) :: con_rd_in, con_rv_in, con_cp_in
+    real(krealfp), intent(in) :: con_cvap_in, con_cliq_in, con_csol_in
+    real(krealfp), intent(in) :: con_hvap_in, con_hfus_in
+    real(krealfp), intent(in) :: con_psat_in, con_ttp_in
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    con_rd = con_rd_in
+    con_rv = con_rv_in
+    con_cp = con_cp_in
+    con_cvap = con_cvap_in
+    con_cliq = con_cliq_in
+    con_csol = con_csol_in
+    con_hvap = con_hvap_in
+    con_hfus = con_hfus_in
+    con_psat = con_psat_in
+    con_ttp = con_ttp_in
+
+    con_rocp = con_rd/con_cp
+    con_cpor = con_cp/con_rd
+    con_eps = con_rd/con_rv
+    con_dldt = con_cvap-con_cliq
+    con_xpona = -con_dldt/con_rv
+    con_xponb = con_xpona+con_hvap/(con_rv*con_ttp)
+
+    dldti = con_cvap-con_csol
+    heati = con_hvap+con_hfus
+    xponai = -dldti/con_rv
+    xponbi = xponai+heati/(con_rv*con_ttp)
+    tliq = con_ttp
+    tice = con_ttp-20.0_krealfp
+    psatb = con_psat*1.0e-5_krealfp
+
     call gpvsl
     call gpvsi
     call gpvs
