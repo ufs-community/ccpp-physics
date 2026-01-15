@@ -25,6 +25,9 @@
            sigmind,sigminm,sigmins,sigmain,sigmaout,sigmab)
 !                                                           
 !                                                                                                                                             
+      use machine,  only : kind_phys
+      use funcphys, only : fpvs
+
       implicit none
 
 !     intent in
