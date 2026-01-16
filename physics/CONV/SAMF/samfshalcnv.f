@@ -156,7 +156,7 @@ cc
       real(kind=conv_wp) gravinv,dxcrtas,invdelt,sigmind,sigmins,
      &                     sigminm
       
-      ! --- [New] Local 32-bit arrays for External Calls ---
+!  local 32-bit arrays for external calls ---
       real(kind=conv_wp) :: omegain_loc(im,km), omegaout_loc(im,km)
       real(kind=conv_wp) :: sigmain_loc(im,km), sigmaout_loc(im,km)
       real(kind=conv_wp) :: qmicro_loc(im,km)
@@ -212,8 +212,8 @@ c  cloud water
      &                     qrcko(im,km),    ecko(im,km,ntr),
      &                     ercko(im,km,ntr), eta(im,km),
      &                     zi(im,km),      pwo(im,km),     c0t(im,km),
-     &                     sumx(im),        tx1(im),        cnvwt(im,km)
-     &,                    rhbar(im)
+     &                     sumx(im),      tx1(im),        cnvwt(im,km),
+     &                     rhbar(im)
 !
 !  variables for Total Variation Diminishing (TVD) flux-limiter scheme
 !      on environmental subsidence and uplifting
@@ -433,7 +433,8 @@ c
 !>  - Calculate hydrostatic height at layer centers assuming a flat surface (no terrain) from the geopotential.
       do k = 1, km
         do i=1,im
-          zo(i,k) = real(phil(i,k), kind=conv_wp) * gravinv
+          zo(i,k) = real(phil(i,k), kind=conv_wp) 
+     &            / real(grav, kind=conv_wp)
         enddo
       enddo
 !>  - Calculate interface height
@@ -1490,13 +1491,16 @@ c
       enddo
       endif
 !
-      if (progomega) then
-         
+      if (progomega) then      
+         do k = 1, km
+            do i = 1, im
+               omegain_loc(i,k)  = 0.0_conv_wp
+               omegaout_loc(i,k) = 0.0_conv_wp
+            enddo
+         enddo
+
          if(present(omegain)) then
             omegain_loc = real(omegain, kind=conv_wp)
-         endif
-         if(present(omegaout)) then
-            omegaout_loc = 0._conv_wp ! Initialize
          endif
 
          call progomega_calc(first_time_step,restart,im,km,kbcon1,ktcon,
@@ -1980,8 +1984,9 @@ c
           if(cnvflg(i)) then
             if(k >= kbcon1(i) .and. k < ktcon1(i)) then
               dz = zi(i,k) - zi(i,k-1)
-              tem = sqrt(real(u1(i,k),kind=conv_wp)**2 
-     &            + real(v1(i,k),kind=conv_wp)**2)
+              tem = sqrt(real(u1(i,k),kind=conv_wp)*real(u1(i,k),
+     &              kind=conv_wp) + real(v1(i,k),kind=conv_wp)
+     &             *real(v1(i,k),kind=conv_wp))
               umean(i) = umean(i) + tem * dz
               sumx(i) = sumx(i) + dz
             endif
@@ -2003,6 +2008,13 @@ c      updraft velcoity
 c
 !> - From Bengtsson et al. (2022) \cite Bengtsson_2022 prognostic closure scheme, equation 8, call progsigma_calc() to compute updraft area fraction based on a moisture budget
       if(progsigma)then
+         do k = 1, km
+            do i = 1, im
+               qmicro_loc(i,k)   = 0.0_conv_wp
+               sigmain_loc(i,k)  = 0.0_conv_wp
+               sigmaout_loc(i,k) = 0.0_conv_wp
+            enddo
+         enddo     
 !      Initial computations, dynamic q-tendency
          if(first_time_step .and. .not.restart)then
             do k = 1,km
@@ -2030,7 +2042,6 @@ c
          
          if(present(qmicro)) qmicro_loc = real(qmicro, kind=conv_wp)
          if(present(sigmain)) sigmain_loc = real(sigmain, kind=conv_wp)
-         if(present(sigmaout)) sigmaout_loc = 0._conv_wp ! or init
 
          call progsigma_calc(im,km,first_time_step,restart,flag_shallow,
      &        flag_mid,del,tmfq,qmicro_loc,dbyo1,zdqca,omega_u,zeta,
@@ -2149,17 +2160,13 @@ c
             if(k > kb(i) .and. k <= ktcon(i)) then
               dellat = (dellah(i,k) - real(hvap, kind=conv_wp) 
      &               * dellaq(i,k)) / real(cp, kind=conv_wp)
-              t1(i,k) = real(t1(i,k), kind=kind_phys) + real(dellat 
-     &                * xmb(i) * dt2, kind=kind_phys)
-              q1(i,k) = real(q1(i,k), kind=kind_phys) + real(dellaq(i,k)
-     &                * xmb(i) * dt2, kind=kind_phys)
+              t1(i,k) = t1(i,k) + dellat * xmb(i) * dt2
+              q1(i,k) = q1(i,k) + dellaq(i,k) * xmb(i) * dt2
 !              tem = 1./rcs(i)
 !              u1(i,k) = u1(i,k) + dellau(i,k) * xmb(i) * dt2 * tem
 !              v1(i,k) = v1(i,k) + dellav(i,k) * xmb(i) * dt2 * tem
-              u1(i,k) = real(u1(i,k), kind=kind_phys) + real(dellau(i,k)
-     &                * xmb(i) * dt2, kind=kind_phys)
-              v1(i,k) = real(v1(i,k), kind=kind_phys) + real(dellav(i,k)
-     &                * xmb(i) * dt2, kind=kind_phys)
+              u1(i,k) = u1(i,k) + dellau(i,k) * xmb(i) * dt2
+              v1(i,k) = v1(i,k) + dellav(i,k) * xmb(i) * dt2
               dp = 1000._conv_wp * del(i,k)
               tem = xmb(i) * dp / real(grav, kind=conv_wp)
               delhbar(i) = delhbar(i) + tem * dellah(i,k)
@@ -2255,19 +2262,22 @@ c
         enddo
         do k = 1,km1
           do i = 1,im
-            if(cnvflg(i) .and. k <= ktcon(i)) then
-              if(n == indx) then
-                if(k > 1) then
-                  dz = zi(i,k) - zi(i,k-1)
+            if (cnvflg(i)) then
+              if(k > kb(i) .and. k <= ktcon(i)) then
+                if(n == indx) then
+                  if(k > 1) then
+                    dz = zi(i,k) - zi(i,k-1)
+                  else
+                    dz = zi(i,k)
+                  endif
+                  tem = ctr(i,k,n) * dz
                 else
-                  dz = zi(i,k)
+                  tem = ctr(i,k,n) * delp(i,k) / real(grav, 
+     &                  kind=conv_wp)
                 endif
-                tem = ctr(i,k,n) * dz
-              else
-                tem = ctr(i,k,n) * delp(i,k) / real(grav, kind=conv_wp)
-              endif
-              if(ctr(i,k,n) < 0._conv_wp) tsumn(i) = tsumn(i) + tem
-              if(ctr(i,k,n) > 0._conv_wp) tsump(i) = tsump(i) + tem
+                if(ctr(i,k,n) < 0._conv_wp) tsumn(i) = tsumn(i) + tem
+                if(ctr(i,k,n) > 0._conv_wp) tsump(i) = tsump(i) + tem
+              endif  
             endif
           enddo
         enddo
