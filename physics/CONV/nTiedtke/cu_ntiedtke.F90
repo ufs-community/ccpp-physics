@@ -169,7 +169,7 @@ contains
 !=================================================================================================================
 !     level 1 subroutine 'cu_ntiedkte_run'
       subroutine cu_ntiedtke_run(pu,pv,pt,pqv,tdi,qvdi,pqvf,ptf,clw,poz,pzz,prsl,prsi,pomg, &
-                                 evap,hfx,zprecc,lmask,lq,km,dt,dx,kbot,ktop,kcnv, &
+                                 evap,hfx,zprecc,lmask,scale_fac_opt,lq,km,dt,dx,kbot,ktop,kcnv, &
                                  ktrac,ud_mf,dd_mf,dt_mf,cnvw,cnvc,errmsg,errflg)
 !=================================================================================================================
 !  this is the interface between the model and the mass flux convection module
@@ -200,6 +200,7 @@ contains
 !
       implicit none
 !--- input arguments:
+      integer, intent(in) :: scale_fac_opt
       integer, intent(in) :: lq, km, ktrac
       integer, intent(in), dimension(:) :: lmask
 
@@ -256,13 +257,23 @@ contains
 !
       dxref = 15000.
       do j=1,lq
-      if (dx(j).lt.dxref) then
-          scale_fac(j) = (1.06133+log(dxref/dx(j)))**3
-          scale_fac2(j) = scale_fac(j)**0.5
-      else
-          scale_fac(j) = 1.+1.33e-5*dx(j)
-          scale_fac2(j) = 1.
-      end if
+        if (scale_fac_opt == 1) then
+          if (dx(j).lt.dxref) then
+            scale_fac(j) = (1.06133+log(dxref/dx(j)))**2
+            scale_fac2(j) = scale_fac(j)
+          else
+            scale_fac(j) = 1.+1.33e-5*dx(j)
+            scale_fac2(j) = 1.
+          end if
+        else 
+          if (dx(j).lt.dxref) then
+            scale_fac(j) = (1.06133+log(dxref/dx(j)))**3
+            scale_fac2(j) = scale_fac(j)**0.5
+          else
+            scale_fac(j) = 1.+1.33e-5*dx(j)
+            scale_fac2(j) = 1.
+          end if
+        end if
       end do
 !
 !  masv flux diagnostics.
