@@ -14,7 +14,6 @@ module dust_fengsha_mod
   use dust_data_mod,   only : ndust, reff_dust, lo_dust, up_dust, &
                               dust_calcdrag, dust_moist_opt, dust_alpha, dust_gamma, &
                               dust_moist_correction, dust_drylimit_factor, &
-                              rho_soil, rho_water, fengsha_params_type, &
                               p_dust_1, p_dust_2, p_dust_3, p_dust_4, p_dust_5, &
                               p_edust1, p_edust2, p_edust3, p_edust4, p_edust5
 
@@ -23,6 +22,25 @@ module dust_fengsha_mod
   private
 
   public :: gocart_dust_fengsha_driver
+
+  ! -- unified densities for FENGSHA
+  real(kind_phys), parameter :: rho_soil = 2650.0_kind_phys
+  real(kind_phys), parameter :: rho_water = 1000.0_kind_phys
+
+  ! -- FENGSHA parameters
+  type :: fengsha_params_type
+     real(kind_phys) :: mmd_dust = 3.4e-6_kind_phys     !< median mass diameter (m)
+     real(kind_phys) :: gsd_dust = 3.0_kind_phys        !< geom. std deviation
+     real(kind_phys) :: lambda = 12.0e-6_kind_phys      !< crack propagation length (m)
+     real(kind_phys) :: cv = 12.62e-6_kind_phys         !< normalization constant
+     real(kind_phys) :: z0s = 1.0e-4_kind_phys          !< Surface roughness for ideal bare surface (m)
+     real(kind_phys) :: clay_thresh = 0.2_kind_phys     !< clay fraction threshold
+     real(kind_phys) :: cmb = 1.0_kind_phys             !< constant of proportionality
+     real(kind_phys) :: kvhmax = 2.0e-4_kind_phys       !< max vertical to horizontal flux ratio
+     real(kind_phys) :: frozen_soil_thresh = 268.0_kind_phys !< frozen soil threshold (K)
+     real(kind_phys) :: znt_limit = 0.2_kind_phys       !< roughness length limit (m)
+     real(kind_phys) :: snow_limit = 0.0_kind_phys      !< snow depth limit (m)
+  end type fengsha_params_type
 
   !> Parameter set for FENGSHA scheme
   type(fengsha_params_type), parameter :: fparams = fengsha_params_type()

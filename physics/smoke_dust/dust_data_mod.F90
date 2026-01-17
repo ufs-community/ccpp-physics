@@ -63,25 +63,6 @@ module dust_data_mod
        0.45,    & ! Clay            - 12
        9999.0 /)   ! Other           - 13
 
-  ! -- unified densities
-  real(kind_phys), parameter :: rho_soil = 2650.0_kind_phys
-  real(kind_phys), parameter :: rho_water = 1000.0_kind_phys
-
-  ! -- FENGSHA parameters
-  type :: fengsha_params_type
-     real(kind_phys) :: mmd_dust = 3.4e-6_kind_phys     !< median mass diameter (m)
-     real(kind_phys) :: gsd_dust = 3.0_kind_phys        !< geom. std deviation
-     real(kind_phys) :: lambda = 12.0e-6_kind_phys      !< crack propagation length (m)
-     real(kind_phys) :: cv = 12.62e-6_kind_phys         !< normalization constant
-     real(kind_phys) :: z0s = 1.0e-4_kind_phys          !< Surface roughness for ideal bare surface (m)
-     real(kind_phys) :: clay_thresh = 0.2_kind_phys     !< clay fraction threshold
-     real(kind_phys) :: cmb = 1.0_kind_phys             !< constant of proportionality
-     real(kind_phys) :: kvhmax = 2.0e-4_kind_phys       !< max vertical to horizontal flux ratio
-     real(kind_phys) :: frozen_soil_thresh = 268.0_kind_phys !< frozen soil threshold (K)
-     real(kind_phys) :: znt_limit = 0.2_kind_phys       !< roughness length limit (m)
-     real(kind_phys) :: snow_limit = 0.0_kind_phys      !< snow depth limit (m)
-  end type fengsha_params_type
-
   ! -- FENGSHA uses precalculated drag partition
   integer, parameter :: dust_calcdrag = 1
   ! -- FENGSHA dust moisture parameterization 1:fecan  -  2:shao 
