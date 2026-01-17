@@ -24,6 +24,7 @@ module dust_fengsha_mod
 
   public :: gocart_dust_fengsha_driver
 
+  !> Parameter set for FENGSHA scheme
   type(fengsha_params_type), parameter :: fparams = fengsha_params_type()
 
 contains
@@ -31,6 +32,48 @@ contains
   !> \brief Driver for the GOCART FENGSHA dust emission scheme
   !! \section arg_table_gocart_dust_fengsha_driver Arguments
   !! \htmlinclude gocart_dust_fengsha_driver.html
+  !! \param[in] dt physics time step (s)
+  !! \param[inout] chem constituent mixing ratio (kg kg-1)
+  !! \param[in] rho_phy air density (kg m-3)
+  !! \param[in] smois volumetric soil moisture (m3 m-3)
+  !! \param[in] stemp soil temperature (K)
+  !! \param[in] p8w air pressure at interfaces (Pa)
+  !! \param[in] ssm sediment supply map (none)
+  !! \param[in] isltyp dominant soil type (index)
+  !! \param[in] snowh snow depth (m)
+  !! \param[in] xland land mask (1 for land, 2 for water)
+  !! \param[in] area grid cell area (m2)
+  !! \param[in] g gravitational acceleration (m s-2)
+  !! \param[inout] emis_dust optional dust emission flux (kg m-2 s-1)
+  !! \param[in] ust friction velocity (m s-1)
+  !! \param[in] znt surface roughness length (m)
+  !! \param[in] clay clay fraction (none)
+  !! \param[in] sand sand fraction (none)
+  !! \param[in] rdrag drag partition correction (none)
+  !! \param[in] uthr dry threshold velocity (m s-1)
+  !! \param[in] num_emis_dust number of dust bins
+  !! \param[in] num_chem number of chemistry tracers
+  !! \param[in] num_soil_layers number of soil layers
+  !! \param[in] ids horizontal dimension start index
+  !! \param[in] ide horizontal dimension end index
+  !! \param[in] jds horizontal dimension 2 start index
+  !! \param[in] jde horizontal dimension 2 end index
+  !! \param[in] kds vertical dimension start index
+  !! \param[in] kde vertical dimension end index
+  !! \param[in] ims horizontal dimension ims
+  !! \param[in] ime horizontal dimension ime
+  !! \param[in] jms horizontal dimension 2 jms
+  !! \param[in] jme horizontal dimension 2 jme
+  !! \param[in] kms vertical dimension kms
+  !! \param[in] kme vertical dimension kme
+  !! \param[in] its horizontal dimension its
+  !! \param[in] ite horizontal dimension ite
+  !! \param[in] jts horizontal dimension 2 jts
+  !! \param[in] jte horizontal dimension 2 jte
+  !! \param[in] kts vertical dimension kts
+  !! \param[in] kte vertical dimension kte
+  !! \param[out] errmsg ccpp error message
+  !! \param[out] errflg ccpp error code
   subroutine gocart_dust_fengsha_driver(dt,              &
        chem,rho_phy,smois,stemp,p8w,ssm,                 &
        isltyp,snowh,xland,area,g,emis_dust,              &
@@ -199,13 +242,27 @@ contains
   end subroutine gocart_dust_fengsha_driver
 
 
+  !> \brief Evaluates the source of each dust particle size bin
+  !! \param[in] nmx number of dust bins
+  !! \param[in] dt1 time step (s)
+  !! \param[inout] tc total concentration of dust (kg kg-1)
+  !! \param[in] ustar friction velocity (m s-1)
+  !! \param[in] massfrac fraction of mass in each of 3 soil classes
+  !! \param[in] erod fraction of erodible grid cell
+  !! \param[in] dxy grid cell area (m2)
+  !! \param[in] smois volumetric soil moisture (m3 m-3)
+  !! \param[in] airden density of air (kg m-3)
+  !! \param[in] airmas mass of air for each grid box (kg)
+  !! \param[out] bems source of each dust type (ug m-2 s-1)
+  !! \param[in] g0 gravitational acceleration (m s-2)
+  !! \param[in] alpha scaling factor
+  !! \param[in] gamma scaling factor
+  !! \param[in] R drag partition
+  !! \param[in] uthres dry threshold velocity (m s-1)
   subroutine source_dust(nmx, dt1, tc, ustar, massfrac, &
                   erod, dxy, smois, airden, airmas, bems, g0, alpha, gamma, &
                   R, uthres)
 
-    ! ****************************************************************************
-    ! *  Evaluate the source of each dust particles size bin by soil emission
-    ! ****************************************************************************
     integer,            intent(in)    :: nmx
     real(kind_phys),    intent(in)    :: dt1
     real(kind_phys),    intent(in)    :: ustar
@@ -275,6 +332,9 @@ contains
   end subroutine source_dust
 
 
+  !> \brief Calculates the MacKinnon et al. 2004 Drag Partition Correction
+  !! \param[in] z0 surface roughness length (m)
+  !! \param[out] R drag partition correction
   subroutine fengsha_drag(z0, R)
     real(kind_phys), intent(in)  :: z0
     real(kind_phys), intent(out) :: R
@@ -285,6 +345,20 @@ contains
 
   end subroutine fengsha_drag
 
+  !> \brief Computes dust emissions using NOAA/ARL FENGSHA model
+  !! \param[in] slc volumetric soil moisture fraction
+  !! \param[in] clay fractional clay content
+  !! \param[in] sand fractional sand content
+  !! \param[in] silt fractional silt content
+  !! \param[in] ssm erosion map
+  !! \param[in] rdrag drag partition
+  !! \param[in] airdens air density at lowest level (kg m-3)
+  !! \param[in] ustar friction velocity (m s-1)
+  !! \param[in] uthrs threshold velocity (m s-1)
+  !! \param[in] alpha scaling factor
+  !! \param[in] gamma scaling factor
+  !! \param[in] grav gravitational acceleration (m s-2)
+  !! \param[inout] emissions total surface emissions (kg m-2 s-1)
   subroutine DustEmissionFENGSHA(slc, clay, sand, silt,  &
                                   ssm, rdrag, airdens, ustar, uthrs, alpha, gamma, &
                                   grav, emissions)
@@ -344,6 +418,10 @@ contains
 
   end subroutine DustEmissionFENGSHA
 
+  !> \brief Convert soil moisture fraction from volumetric to gravimetric
+  !! \param[in] vsoil volumetric soil moisture fraction
+  !! \param[in] sandfrac fractional sand content
+  !! \return gravimetric soil moisture fraction
   function soilMoistureConvertVol2Grav(vsoil, sandfrac) result(res)
     real(kind_phys), intent(in) :: vsoil       ! volumetric soil moisture fraction [1]
     real(kind_phys), intent(in) :: sandfrac    ! fractional sand content [1]
@@ -359,6 +437,11 @@ contains
 
   end function soilMoistureConvertVol2Grav
 
+  !> \brief Compute correction factor to account for Fecan soil moisture
+  !! \param[in] slc liquid water content of top soil layer
+  !! \param[in] sand fractional sand content
+  !! \param[in] clay fractional clay content
+  !! \return correction factor
   function moistureCorrectionFecan(slc, sand, clay) result(res)
     real(kind_phys), intent(in) :: slc     ! liquid water content of top soil layer
     real(kind_phys), intent(in) :: sand    ! fractional sand content
@@ -379,6 +462,9 @@ contains
 
   end function moistureCorrectionFecan
 
+  !> \brief Compute correction factor to account for Shao soil moisture
+  !! \param[in] slc liquid water content of top soil layer
+  !! \return correction factor
   function moistureCorrectionShao(slc) result(res)
     real(kind_phys), intent(in) :: slc
     real(kind_phys)             :: res
@@ -391,6 +477,9 @@ contains
 
   end function moistureCorrectionShao
 
+  !> \brief Computes the vertical-to-horizontal dust flux ratio
+  !! \param[in] clay fractional clay content
+  !! \return flux ratio
   function DustFluxV2HRatioMB95(clay) result(res)
     real(kind_phys), intent(in) :: clay      ! fractional clay content
     real(kind_phys)             :: res
