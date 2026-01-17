@@ -27,3 +27,6 @@ set_target_properties(test_dust_fengsha PROPERTIES
 if(OpenMP_Fortran_FOUND)
     target_link_libraries(test_dust_fengsha PUBLIC OpenMP::OpenMP_Fortran)
 endif()
+
+enable_testing()
+add_test(NAME run_fengsha_test COMMAND test_dust_fengsha)
