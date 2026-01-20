@@ -427,7 +427,7 @@ contains
       ccn_m(i) = 0.
 
       ! set aod and ccn
-      if ((flag_init .and. .not.flag_restart) .or. gf_coldstart) then
+      if ((flag_init) .and. (.not.flag_restart .or. gf_coldstart)) then
         aod_gf(i)=aodc0
       else
         if((cactiv(i).eq.0) .and. (cactiv_m(i).eq.0))then

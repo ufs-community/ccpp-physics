@@ -2939,7 +2939,8 @@ c
          flag_shallow = .false.
          flag_mid = .false.
          call progsigma_calc(im,km,first_time_step,restart,flag_shallow,
-     &        flag_mid,del,tmfq,qmicro,dbyo1,zdqca,omega_u,zeta,hvap,
+     &        flag_mid,sigmab_coldstart,del,tmfq,qmicro,dbyo1,zdqca,
+     &        omega_u,zeta,hvap,
      &        delt,qadv,kbcon1,ktcon,cnvflg,betascu,betamcu,betadcu,
      &        sigmind,sigminm,sigmins,sigmain,sigmaout,sigmab)
       endif

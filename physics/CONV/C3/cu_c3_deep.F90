@@ -100,6 +100,7 @@ contains
               ,betascu       &  ! Tuning parameter for shallow clouds
               ,betamcu       &  ! Tuning parameter for mid-level clouds
               ,betadcu       &  ! Tuning parameter for deep clouds
+              ,sigmab_coldstart & ! whether cold start variables when initializating sigmab
               ,sigmain       &  ! input area fraction after advection
               ,sigmaout      &  ! updated prognostic area fraction
               ,z1            &  ! terrain
@@ -377,7 +378,7 @@ contains
 
      integer,  dimension (its:), intent(inout) :: ierr
      integer,  dimension (its:), intent(in) :: csum
-     logical, intent(in) :: do_ca, progsigma
+     logical, intent(in) :: do_ca, progsigma,sigmab_coldstart
      logical, intent(in) :: flag_init, flag_restart
 !$acc declare copy(ierr) copyin(csum)
      integer                              ::                             &
@@ -2013,7 +2014,7 @@ contains
             endif
          enddo
          call progsigma_calc(itf,ktf,flag_init,flag_restart,flag_shallow,  &
-              flag_mid,del,tmf,qmicro,dbyo1,zdqca,omega_u,zeta,xlv,dtime,  &
+              flag_mid,sigmab_coldstart,del,tmf,qmicro,dbyo1,zdqca,omega_u,zeta,xlv,dtime,  &
               forceqv_spechum,kbcon,ktop,cnvflg,betascu,betamcu,betadcu,   &
               sigmind,sigminm,sigmins,sigmain,sigmaout,sigmab)        
       endif

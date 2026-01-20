@@ -71,7 +71,7 @@ contains
                do_ca,progsigma,cactiv,cactiv_m,g,cp,fv,r_d,xlv,r_v,forcet,      &
                forceqv_spechum,phil,delp,raincv,tmf,qmicro,sigmain,             &
                betascu,betamcu,betadcu,qv_spechum,t,cld1d,us,vs,t2di,w,         &
-               qv2di_spechum,p2di,psuri,                                        &
+               qv2di_spechum,p2di,psuri,sigmab_coldstart,                       &
                hbot,htop,kcnv,xland,hfx2,qfx2,aod_gf,cliw,clcw,ca_deep,rainevap,&
                pbl,ud_mf,dd_mf,dt_mf,cnvw_moist,cnvc,imfshalcnv,                &
                flag_for_scnv_generic_tend,flag_for_dcnv_generic_tend,           &
@@ -110,7 +110,7 @@ contains
         do_ca
    real (kind=kind_phys), intent(in) :: g,cp,fv,r_d,xlv,r_v,betascu,betamcu,betadcu
    logical, intent(in   ) :: ldiag3d
-   logical, intent(in   ) :: progsigma
+   logical, intent(in   ) :: progsigma,sigmab_coldstart
    real(kind=kind_phys), intent(inout)                      :: dtend(:,:,:)
 !$acc declare copy(dtend)
    integer, intent(in)                                      :: dtidx(:,:), &
@@ -681,7 +681,7 @@ contains
 ! Prog closure
                          flag_init, flag_restart,fv,r_d,delp,tmfq,qmicro,        &
                          forceqv_spechum,betascu,betamcu,betadcu,sigmain,        &
-                         sigmaout,progsigma,dx,                                  &
+                         sigmaout,progsigma,sigmab_coldstart,dx,                 &
 ! output tendencies
                          outts,outqs,outqcs,outus,outvs,cnvwt,prets,cupclws,     &
 ! dimesnional variables
@@ -729,6 +729,7 @@ contains
               ,betascu       &
               ,betamcu       &
               ,betadcu       &
+              ,sigmab_coldstart &
               ,sigmain       &
               ,sigmaout      &
               ,ter11         &
@@ -823,6 +824,7 @@ contains
               ,betascu       &
               ,betamcu       &
               ,betadcu       &
+              ,sigmab_coldstart &
               ,sigmain       &
               ,sigmaout      &
               ,ter11         &
