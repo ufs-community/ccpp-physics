@@ -1,5 +1,7 @@
 !> \file clm_lake.f90
 !!  Contains code related to the CLM lake model
+
+!> This module contains the CLM Lake model.
 !!
 !! This lake scheme was taken from module_sf_lake in WRF 4.3.1, and
 !! modified for CCPP by Sam Trahan in June 2022.
@@ -17,7 +19,6 @@
 !! can be used with any land surface scheme embedded in WRF. The lake scheme 
 !! developments and evaluations were included in Subin et al. (2012) \cite Subin_2012 
 !! and Gu et al. (2015) \cite Gu2015 . 
-
 MODULE clm_lake
   
     use machine,               only: kind_phys, kind_dbl_prec
@@ -267,6 +268,7 @@ MODULE clm_lake
          ! Configuration and initialization:
          iopt_lake, iopt_lake_clm, min_lakeice, lakedepth_default, use_lakedepth, &
          dtp, use_lake_model, clm_lake_initialized, frac_grid, frac_ice, lkm,     &
+         use_cdeps_data, mask_dat,                                                &
 
          ! Atmospheric model state inputs:
          tg3, pgr, zlvl, gt0, prsi, phii, qvcurr, gu0, gv0, xlat_d, xlon_d,       &
@@ -317,7 +319,9 @@ MODULE clm_lake
     LOGICAL, INTENT(IN) :: use_lakedepth
     INTEGER, DIMENSION(:), INTENT(IN) :: use_lake_model
     REAL(KIND_PHYS), INTENT(INOUT) :: clm_lake_initialized(:)
-    LOGICAL, INTENT(IN) :: frac_grid, frac_ice
+    LOGICAL, INTENT(IN) :: frac_grid, frac_ice, use_cdeps_data
+    REAL(KIND_PHYS), INTENT(IN), OPTIONAL :: mask_dat(:)
+
 
     !
     ! Atmospheric model state inputs:
@@ -325,7 +329,9 @@ MODULE clm_lake
     REAL(KIND_PHYS), DIMENSION(:), INTENT(IN):: &
          tg3, pgr, zlvl, qvcurr, xlat_d, xlon_d, ch, cm, &
          dlwsfci, dswsfci, oro_lakedepth, wind, &
-         rainncprv, raincprv, t1, qv1, prsl1
+         t1, qv1, prsl1
+    REAL(KIND_PHYS), DIMENSION(:), INTENT(IN) :: &
+         rainncprv, raincprv
     REAL(KIND_PHYS), DIMENSION(:,:), INTENT(in) :: gu0, gv0, prsi, gt0, phii
     LOGICAL, DIMENSION(:), INTENT(IN) :: flag_iter
     LOGICAL, DIMENSION(:), INTENT(INOUT) :: flag_lakefreeze
@@ -340,25 +346,26 @@ MODULE clm_lake
          ep1d_water,   ep1d_ice,   tsurf_water, tsurf_ice, tsfc_wat, tisfc, tsfc, &
          weasdi,       snodi,      hice,        qss_water, qss_ice,               &
          cmm_water,    cmm_ice,    chh_water,   chh_ice,                          &
-         uustar_water, uustar_ice, lake_t_snow, albedo,    zorlw,                 &
-         zorli,        lake_t2m,   lake_q2m,    weasd,     snowd,    fice
+         uustar_water, uustar_ice, zorlw,       zorli,     weasd,    snowd, fice
+    REAL(KIND_PHYS), DIMENSION(:), INTENT(INOUT)  ::                              &
+         lake_t_snow, albedo, lake_t2m, lake_q2m
     LOGICAL, INTENT(INOUT) :: icy(:)
 
     !
     ! Lake model internal state stored by caller:
     !
-    INTEGER, DIMENSION( : ), INTENT(INOUT)    :: salty
-    INTEGER, DIMENSION( : ), INTENT(INOUT)    :: cannot_freeze
+    INTEGER, DIMENSION( : ), INTENT(INOUT) :: salty
+    INTEGER, DIMENSION( : ), INTENT(INOUT) :: cannot_freeze
 
-    real(kind_phys),           dimension(: )                ,intent(inout)  :: savedtke12d,    &
+    real(kind_phys),           dimension(: )      ,intent(inout)            :: savedtke12d,    &
                                                                                snowdp2d,       &    
                                                                                h2osno2d,       &    
                                                                                snl2d,          &    
                                                                                t_grnd2d
     
-    real(kind_phys),    dimension( :,: )           ,INTENT(inout)  :: t_lake3d,       &    
+    real(kind_phys),    dimension( :,: ),  INTENT(inout)  :: t_lake3d,       &    
                                                                                   lake_icefrac3d
-    real(kind_phys),    dimension( :,-nlevsnow+1: )  ,INTENT(inout)  :: t_soisno3d,     &    
+    real(kind_phys),    dimension( :,-nlevsnow+1: )  ,INTENT(inout)            :: t_soisno3d,     &    
                                                                                   h2osoi_ice3d,   &    
                                                                                   h2osoi_liq3d,   &    
                                                                                   h2osoi_vol3d,   &    
@@ -366,8 +373,8 @@ MODULE clm_lake
                                                                                   dz3d 
     real(kind_phys),    dimension( :,-nlevsnow+0: )  ,INTENT(inout)  :: zi3d    
 
-    REAL(KIND_PHYS),           DIMENSION( : )  ,INTENT(INOUT)  :: clm_lakedepth
-    REAL(KIND_PHYS),           DIMENSION( : )  ,INTENT(INOUT)  :: input_lakedepth
+    REAL(KIND_PHYS),           DIMENSION( : )  ,INTENT(INOUT) :: clm_lakedepth
+    REAL(KIND_PHYS),           DIMENSION( : )  ,INTENT(INOUT) :: input_lakedepth
 
     !
     ! Error reporting:
@@ -603,7 +610,7 @@ MODULE clm_lake
             enddo
             do k = -nlevsnow+1,nlevsoil
                t_soisno(c,k)      = t_soisno3d(i,k)
-	       h2osoi_ice(c,k)    = h2osoi_ice3d(i,k)
+               h2osoi_ice(c,k)    = h2osoi_ice3d(i,k)
                h2osoi_liq(c,k)    = h2osoi_liq3d(i,k)
                h2osoi_vol(c,k)    = h2osoi_vol3d(i,k)
                z(c,k)             = z3d(i,k)
@@ -674,20 +681,20 @@ MODULE clm_lake
             savedtke12d(i)         = savedtke1(c)
             snowdp2d(i)            = snowdp(c)
             h2osno2d(i)            = h2osno(c)
-	    snl2d(i)               = snl(c)
+            snl2d(i)               = snl(c)
             t_grnd2d(i)            = t_grnd(c)
             do k = 1,nlevlake
                t_lake3d(i,k)       = t_lake(c,k)
-	       lake_icefrac3d(i,k) = lake_icefrac(c,k)
+               lake_icefrac3d(i,k) = lake_icefrac(c,k)
             enddo
-	    do k = -nlevsnow+1,nlevsoil
-	       z3d(i,k)            = z(c,k)
-	       dz3d(i,k)           = dz(c,k) 
-	       t_soisno3d(i,k)     = t_soisno(c,k)
-	       h2osoi_liq3d(i,k)   = h2osoi_liq(c,k)
-	       h2osoi_ice3d(i,k)   = h2osoi_ice(c,k)
+            do k = -nlevsnow+1,nlevsoil
+               z3d(i,k)            = z(c,k)
+               dz3d(i,k)           = dz(c,k)
+               t_soisno3d(i,k)     = t_soisno(c,k)
+               h2osoi_liq3d(i,k)   = h2osoi_liq(c,k)
+               h2osoi_ice3d(i,k)   = h2osoi_ice(c,k)
                h2osoi_vol3d(i,k)   = h2osoi_vol(c,k)
-	   enddo
+           enddo
            do k = -nlevsnow+0,nlevsoil
                zi3d(i,k)           = zi(c,k)
            enddo
@@ -708,16 +715,27 @@ MODULE clm_lake
                 hflx_wat(i)     = eflx_sh_tot(c)/(rho0*cpair) ! kinematic_surface_upward_sensible_heat_flux_over_water
                 gflx_wat(I)     = eflx_gnet(c)              ![W/m/m]   upward_heat_flux_in_soil_over_water
                 ep1d_water(i)   = eflx_lh_tot(c)            ![W/m/m]   surface_upward_potential_latent_heat_flux_over_water
-                tsurf_water(I)  = t_grnd(c)                 ![K]       surface skin temperature after iteration over water
-                tsurf_ice(i)    = t_grnd(c)                 ! surface_skin_temperature_after_iteration_over_ice
-                tsfc_wat(i)     = t_grnd(c)                 ![K]       surface skin temperature over water
-                tisfc(i)        = t_grnd(c)
+                !don't overwrite surface skin temperature over ice, sea ice area fraction, skin temperature over water when using CDEPS inline over the mask
+                if (use_cdeps_data) then
+                  if (mask_dat(i) <= 0.0) then
+                    tsfc_wat(i)     = t_grnd(c)                 ![K]       surface skin temperature over water
+                    tisfc(i)        = t_grnd(c)
+                    fice(i)         = lake_icefrac3d(i,1)       ! sea_ice_area_fraction_of_sea_area_fraction
+                    tsurf_water(I)  = t_grnd(c)                 ![K]       surface skin temperature after iteration over water
+                    tsurf_ice(i)    = t_grnd(c)                 ! surface_skin_temperature_after_iteration_over_ice
+                  endif
+                else
+                  tsfc_wat(i)     = t_grnd(c)                 ![K]       surface skin temperature over water
+                  tisfc(i)        = t_grnd(c)
+                  fice(i)         = lake_icefrac3d(i,1)       ! sea_ice_area_fraction_of_sea_area_fraction
+                  tsurf_water(I)  = t_grnd(c)                 ![K]       surface skin temperature after iteration over water
+                  tsurf_ice(i)    = t_grnd(c)                 ! surface_skin_temperature_after_iteration_over_ice
+                endif
                 tsfc(i)         = t_grnd(c)
                 lake_t2m(I)     = t_ref2m(c)                ![K]       temperature_at_2m_from_clm_lake
                 lake_q2m(I)     = q_ref2m(c)                ! [frac] specific_humidity_at_2m_from_clm_lake
                 albedo(i)       = ( 0.6 * lake_icefrac3d(i,1) ) + &  ! mid_day_surface_albedo_over_lake
                                   ( (1.0-lake_icefrac3d(i,1)) * 0.08)
-                fice(i)         = lake_icefrac3d(i,1)       ! sea_ice_area_fraction_of_sea_area_fraction
                 !uustar_water(i) = ustar_out(c)              ! surface_friction_velocity_over_water
                 zorlw(i) = z0mg(c)                          ! surface_roughness_length_over_water
 
@@ -753,8 +771,16 @@ MODULE clm_lake
 !                    uustar_ice(i) = uustar_water(i)           ! surface_friction_velocity_over_ice
                   endif
 
-                  tsurf_ice(i)  = t_grnd(c)                 ! surface_skin_temperature_after_iteration_over_ice
-                  tisfc(i)      = t_grnd(c)                 ! surface_skin_temperature_over_ice
+                  !don't overwrite surface skin temperature over ice when using CDEPS inline over the mask
+                  if (use_cdeps_data) then
+                    if (mask_dat(i) <= 0.0) then
+                      tisfc(i)        = t_grnd(c)
+                      tsurf_ice(i)  = t_grnd(c)                 ! surface_skin_temperature_after_iteration_over_ice
+                    endif
+                  else
+                    tisfc(i)        = t_grnd(c)
+                    tsurf_ice(i)  = t_grnd(c)                 ! surface_skin_temperature_after_iteration_over_ice
+                  endif
                   tsfc(i)       = t_grnd(c)                 ! surface_skin_temperature_over_ice
                   weasdi(i)     = h2osno(c)                 ! water_equivalent_accumulated_snow_depth_over_ice
                   snodi(i)      = snowdp(c)*1.e3            ! surface_snow_thickness_water_equivalent_over_ice
@@ -773,12 +799,25 @@ MODULE clm_lake
                   zorli(i) = z0mg(c)                        ! surface_roughness_length_over_ice
 
                   ! Assume that, if a layer has ice, the entire layer thickness is ice.
-                  hice(I) = 0                               ! sea_ice_thickness
-                  do k=1,nlevlake
-                    if(lake_icefrac3d(i,k)>0) then
-                      hice(i) = hice(i) + dz_lake(c,k)
+                  !don't overwrite sea ice thickness when using CDEPS inline over the mask
+                  if (use_cdeps_data) then
+                    if (mask_dat(i) <= 0.0) then
+                      hice(I) = 0                               ! sea_ice_thickness
+                      do k=1,nlevlake
+                        if(lake_icefrac3d(i,k)>0) then
+                          hice(i) = hice(i) + dz_lake(c,k)
+                        endif
+                      end do
                     endif
-                  end do
+                  else
+                    hice(I) = 0                               ! sea_ice_thickness
+                    do k=1,nlevlake
+                      if(lake_icefrac3d(i,k)>0) then
+                        hice(i) = hice(i) + dz_lake(c,k)
+                      endif
+                    end do
+                  endif
+                  
                 else ! Not an ice point
                   ! On non-icy lake points, set variables relevant to
                   ! lake ice to reasonable defaults.  Let LSM fill in
@@ -788,17 +827,40 @@ MODULE clm_lake
                   snodi(i) = 0
                   weasd(i) = 0
                   snowd(i) = 0
-                  tisfc(i) = t_grnd(c)
-                  tsurf_ice(i) = tisfc(i)
+                  !don't overwrite surface skin temperature over ice when using CDEPS inline over the mask
+                  if (use_cdeps_data) then
+                    if (mask_dat(i) <= 0.0) then
+                      tisfc(i)        = t_grnd(c)
+                      tsurf_ice(i)    = tisfc(i)
+                    endif
+                  else
+                    tisfc(i)        = t_grnd(c)
+                    tsurf_ice(i) = tisfc(i)
+                  endif
                   tsfc(i) = t_grnd(c)
-                  hice(i) = 0
-                  fice(i) = 0
+                  !don't overwrite sea ice thickness when using CDEPS inline over the mask
+                  if (use_cdeps_data) then
+                    if (mask_dat(i) <= 0.0) then
+                      hice(i) = 0
+                      fice(i) = 0
+                    endif
+                  else
+                    hice(i) = 0
+                    fice(i) = 0
+                  endif
                 endif ice_point
 
                 if(snl2d(i)<0) then
                   ! If there is snow, ice surface temperature should be snow temperature.
                   lake_t_snow(i) = t_grnd(c)                ! surface_skin_temperature_over_ice
-                  tisfc(i) = lake_t_snow(i)                 ! temperature_of_snow_on_lake
+                  !don't overwrite surface skin temperature over ice when using CDEPS inline over the mask
+                  if (use_cdeps_data) then
+                    if (mask_dat(i) <= 0.0) then
+                      tisfc(i) = lake_t_snow(i)                 ! temperature_of_snow_on_lake
+                    endif
+                  else
+                    tisfc(i) = lake_t_snow(i)                 ! temperature_of_snow_on_lake
+                  endif
                   snow_points = snow_points+1
                 else
                   lake_t_snow(i) = -9999
@@ -2301,7 +2363,7 @@ SUBROUTINE ShalLakeTemperature(t_grnd,h2osno,sabg,dz,dz_lake,z,zi,           & !
                     ! unlike eflx_gnet
           if(abs(errsoi(c)) > .001_kind_lake) then ! 1.e-5_kind_lake) then
              WRITE( message,* )'Primary soil energy conservation error in shlake &
-                                column during Tridiagonal Solution,', 'error (W/m^2):', c, errsoi(c) 
+                                &column during Tridiagonal Solution,', 'error (W/m^2):', c, errsoi(c) 
              errmsg=trim(message)
              errflg=1
              return
@@ -5374,42 +5436,39 @@ if_pergro: if (PERGRO) then
 
   INTEGER , INTENT (IN)    :: im, me, master, km, kdt
   REAL(KIND_PHYS),     INTENT(IN)  :: min_lakeice, fhour
-  REAL(KIND_PHYS), DIMENSION(IM), INTENT(INOUT)::   FICE, hice
-  REAL(KIND_PHYS), DIMENSION(IM), INTENT(IN)::   TG3, xlat_d, xlon_d
-  REAL(KIND_PHYS), DIMENSION(IM), INTENT(IN)::     tsfc
-  REAL(KIND_PHYS), DIMENSION(IM)  ,INTENT(INOUT)  :: clm_lake_initialized
-  integer, dimension(IM), intent(in) :: use_lake_model
-  !INTEGER , INTENT (IN) :: lakeflag
-  !INTEGER , INTENT (INOUT) :: lake_depth_flag
+  REAL(KIND_PHYS), DIMENSION(:), INTENT(INOUT)::   FICE, hice
+  REAL(KIND_PHYS), DIMENSION(:), INTENT(IN)::   TG3, xlat_d, xlon_d
+  REAL(KIND_PHYS), DIMENSION(:), INTENT(IN)::     tsfc
+  REAL(KIND_PHYS), DIMENSION(:)  ,INTENT(INOUT)  :: clm_lake_initialized
+  integer, dimension(:), intent(in) :: use_lake_model
   LOGICAL, INTENT (IN) ::   use_lakedepth
 
-  INTEGER, DIMENSION(IM), INTENT(IN)       :: ISLTYP
-  REAL(KIND_PHYS),    DIMENSION(IM), INTENT(INOUT)    :: snowd,weasd
-  REAL(kind_phys),    DIMENSION(IM,KM), INTENT(IN)       :: gt0, prsi
+  INTEGER, DIMENSION(:), INTENT(IN)       :: ISLTYP
+  REAL(KIND_PHYS),    DIMENSION(:), INTENT(INOUT)    :: snowd,weasd
+  REAL(kind_phys),    DIMENSION(:,:), INTENT(IN)       :: gt0
+  REAL(kind_phys),    DIMENSION(:,:), INTENT(IN)     :: prsi
   real(kind_phys),    intent(in)                                      :: lakedepth_default
 
-  real(kind_phys),    dimension(IM),intent(inout)                      :: clm_lakedepth
-  real(kind_phys),    dimension(IM),intent(inout)                      :: input_lakedepth
-  real(kind_phys),    dimension(IM),intent(in)                         :: oro_lakedepth
-  real(kind_phys),    dimension(IM),intent(out)                        :: savedtke12d
-  real(kind_phys),    dimension(IM),intent(out)                        :: snowdp2d,       &
+  real(kind_phys),    dimension(:),intent(inout)                          :: clm_lakedepth
+  real(kind_phys),    dimension(:),intent(inout)                          :: input_lakedepth
+  real(kind_phys),    dimension(:),intent(in)                             :: oro_lakedepth
+  real(kind_phys),    dimension(:),intent(out)                            :: savedtke12d
+  real(kind_phys),    dimension(:),intent(out)                            :: snowdp2d,       &
                                                                              h2osno2d,       &
                                                                              snl2d,          &
                                                                              t_grnd2d
                                                                               
-  real(kind_phys),    dimension(IM,nlevlake),INTENT(out)                  :: t_lake3d,       &
+  real(kind_phys),    dimension(:,:),INTENT(out)                          :: t_lake3d,       &
                                                                              lake_icefrac3d
-  real(kind_phys),    dimension(IM,-nlevsnow+1:nlevsoil ),INTENT(out)     :: t_soisno3d,     &
+  real(kind_phys),    dimension(:,-nlevsnow+1:),INTENT(out)               :: t_soisno3d,     &
                                                                              h2osoi_ice3d,   &
                                                                              h2osoi_liq3d,   &
                                                                              h2osoi_vol3d,   &
                                                                              z3d,            &
                                                                              dz3d
 
-  real(kind_phys),    dimension( IM,-nlevsnow+0:nlevsoil ),INTENT(out)   :: zi3d            
+  real(kind_phys),    dimension(:,-nlevsnow+0:),INTENT(out)   :: zi3d            
 
-  !LOGICAL, DIMENSION( : ),intent(out)                      :: lake
-  !REAL(KIND_PHYS), OPTIONAL,    DIMENSION( : ), INTENT(IN)    ::  lake_depth ! no separate variable for this in CCPP
 
   integer  :: n,i,j,k,ib,lev,bottom      ! indices
   real(kind_lake),dimension(1:im )    :: bd2d               ! bulk density of dry soil material [kg/m^3]
@@ -5625,7 +5684,7 @@ if_pergro: if (PERGRO) then
      ! initial t_soisno3d
      ! in snow
      if(snowdp2d(i) > 0.) then
-       do k = snl2d(i)+1, 0
+       do k = nint(snl2d(i))+1, 0
          t_soisno3d(i,k) =min(tfrz,tsfc(i))
        enddo
      endif

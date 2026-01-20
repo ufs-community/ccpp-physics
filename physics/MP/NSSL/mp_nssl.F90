@@ -3,7 +3,8 @@
 
 
 !>\defgroup nsslmp NSSL MP Module
-!! This module contains the front end to NSSL microphysics scheme.
+
+!> This module contains the front end to NSSL microphysics scheme.
 module mp_nssl
 
     use machine, only : kind_phys
@@ -27,8 +28,8 @@ module mp_nssl
 !! \htmlinclude mp_nssl_init.html
 !!
     subroutine mp_nssl_init(ncol, nlev, errflg, errmsg, threads, restart, &
-                              mpirank, mpiroot,mpicomm,                   &
-                              qc, qr, qi, qs, qh,                         &
+                              fn_nml, input_nml_file, mpirank, mpiroot,   &
+                              mpicomm, qc, qr, qi, qs, qh,                &
                               ccw, crw, cci, csw, chw, vh,                &
                               con_g, con_rd, con_cp, con_rv,              &
                               con_t0c, con_cliq, con_csol, con_eps,       &
@@ -39,9 +40,7 @@ module mp_nssl
                               
 
         use module_mp_nssl_2mom, only: nssl_2mom_init, nssl_2mom_init_const
-#ifdef MPI 
-        use mpi
-#endif
+        use mpi_f08
 
         implicit none
 
@@ -51,12 +50,14 @@ module mp_nssl
          integer,                   intent(  out) :: errflg
          integer,                   intent(in)    :: threads
          logical,                   intent(in)    :: restart
+         character(len=*),          intent(in)    :: fn_nml
+         character(len=*),          intent(in)    :: input_nml_file(:)
          real(kind_phys), intent(in) :: con_g, con_rd, con_cp, con_rv, &
                              con_t0c, con_cliq, con_csol, con_eps
 
          integer,                   intent(in)    :: mpirank
          integer,                   intent(in)    :: mpiroot
-         integer,                   intent(in)    :: mpicomm
+         type(MPI_Comm),            intent(in)    :: mpicomm
          integer,                   intent(in)    :: imp_physics
          integer,                   intent(in)    :: imp_physics_nssl
          real(kind_phys),           intent(in)    :: nssl_cccn, nssl_alphah, nssl_alphahl
@@ -82,7 +83,6 @@ module mp_nssl
          real(kind_phys), parameter :: qmin = 1.e-12
          integer :: ierr
          logical :: missing_vars = .False.
-         
 
  ! Initialize the CCPP error handling variables
         errflg = 0
@@ -156,11 +156,14 @@ module mp_nssl
 
 !           write(0,*) 'call nssl_2mom_init'
          CALL nssl_2mom_init(ims,ime, jms,jme, kms,kme,nssl_params,ipctmp=ipc,mixphase=0,   &
-                ihvol=ihailv,nssl_ehw0=nssl_ehw0,nssl_ehlw0=nssl_ehlw0,errmsg=errmsg,       &
+                namelist_filename=fn_nml,internal_nml=input_nml_file,                       &
+                ihvol=ihailv,nssl_ehw0=nssl_ehw0,                                           &
+                nssl_ehlw0=nssl_ehlw0,errmsg=errmsg,                                        &
                 nssl_alphar=nssl_alphar,                                                    &
                 nssl_alphah=nssl_alphah,                                                    &
                 nssl_alphahl=nssl_alphahl,                                                  &
                 nssl_cccn=nssl_cccn,                                                        &
+                nssl_ccn_on=nssl_ccn_on,                                                    &
                 errflg=errflg,myrank=mpirank,mpiroot=mpiroot)
 
          ! For restart runs, the init is done here
@@ -174,9 +177,7 @@ module mp_nssl
           IF ( .not. missing_vars .and. Any( qr > qmin .and. crw == 0.0 ) ) missing_vars = .true.
           IF ( .not. missing_vars .and. Any( qh > qmin .and. (chw == 0.0 .or. vh == 0.0) ) ) missing_vars = .true.
           
-#ifdef MPI 
           call MPI_Allreduce(missing_vars, missing_vars_global, 1, MPI_LOGICAL, MPI_LOR, mpicomm, ierr)
-#endif
 
            is_initialized = .true.
            return
@@ -224,25 +225,25 @@ module mp_nssl
          ! Hydrometeors
          logical,                   intent(in   ) :: convert_dry_rho
          real(kind_phys),           intent(inout) :: spechum(:,:) !(1:ncol,1:nlev)
-         real(kind_phys),           intent(inout) :: cccn(:,:) !(1:ncol,1:nlev)
-         real(kind_phys),           intent(inout) :: cccna(:,:) !(1:ncol,1:nlev)
+         real(kind_phys),           intent(inout), optional :: cccn(:,:) !(1:ncol,1:nlev)
+         real(kind_phys),           intent(inout), optional :: cccna(:,:) !(1:ncol,1:nlev)
          real(kind_phys),           intent(inout) :: qc (:,:) !(1:ncol,1:nlev)
          real(kind_phys),           intent(inout) :: qr (:,:) !(1:ncol,1:nlev)
          real(kind_phys),           intent(inout) :: qi (:,:) !(1:ncol,1:nlev)
          real(kind_phys),           intent(inout) :: qs (:,:) !(1:ncol,1:nlev)
          real(kind_phys),           intent(inout) :: qh (:,:) !(1:ncol,1:nlev) graupel
-         real(kind_phys),           intent(inout) :: qhl(:,:) !(1:ncol,1:nlev) hail
+         real(kind_phys),           intent(inout), optional :: qhl(:,:) !(1:ncol,1:nlev) hail
          real(kind_phys),           intent(inout) :: ccw(:,:) !(1:ncol,1:nlev)
          real(kind_phys),           intent(inout) :: crw(:,:) !(1:ncol,1:nlev)
          real(kind_phys),           intent(inout) :: cci(:,:) !(1:ncol,1:nlev)
          real(kind_phys),           intent(inout) :: csw(:,:) !(1:ncol,1:nlev)
          real(kind_phys),           intent(inout) :: chw(:,:) !(1:ncol,1:nlev) graupel number 
-         real(kind_phys),           intent(inout) :: chl(:,:) !(1:ncol,1:nlev) hail number
+         real(kind_phys),           intent(inout), optional :: chl(:,:) !(1:ncol,1:nlev) hail number
          real(kind_phys),           intent(inout) :: vh (:,:) !(1:ncol,1:nlev) graupel volume 
-         real(kind_phys),           intent(inout) :: vhl(:,:) !(1:ncol,1:nlev) hail volume
-         real(kind_phys),           intent(inout) :: zrw(:,:) !(1:ncol,1:nlev) rain reflectivity
-         real(kind_phys),           intent(inout) :: zhw(:,:) !(1:ncol,1:nlev) graupel reflectivity
-         real(kind_phys),           intent(inout) :: zhl(:,:) !(1:ncol,1:nlev) hail reflectivity
+         real(kind_phys),           intent(inout), optional :: vhl(:,:) !(1:ncol,1:nlev) hail volume
+         real(kind_phys),           intent(inout), optional :: zrw(:,:) !(1:ncol,1:nlev) rain reflectivity
+         real(kind_phys),           intent(inout), optional :: zhw(:,:) !(1:ncol,1:nlev) graupel reflectivity
+         real(kind_phys),           intent(inout), optional :: zhl(:,:) !(1:ncol,1:nlev) hail reflectivity
          ! State variables and timestep information
          real(kind_phys),           intent(inout) :: tgrs (:,:) !(1:ncol,1:nlev)
          real(kind_phys),           intent(in   ) :: prsl (:,:) !(1:ncol,1:nlev)
@@ -262,10 +263,10 @@ module mp_nssl
          logical,                   intent(in   ) :: do_radar_ref, first_time_step
          logical,                   intent(in)    :: restart
          ! Cloud effective radii
-         real(kind_phys),  intent(inout) :: re_cloud(:,:) ! (1:ncol,1:nlev)
-         real(kind_phys),  intent(inout) :: re_ice(:,:) ! (1:ncol,1:nlev)
-         real(kind_phys),  intent(inout) :: re_snow(:,:) ! (1:ncol,1:nlev)
-         real(kind_phys),  intent(inout) :: re_rain(:,:) ! (1:ncol,1:nlev)
+         real(kind_phys),  intent(inout), optional :: re_cloud(:,:) ! (1:ncol,1:nlev)
+         real(kind_phys),  intent(inout), optional :: re_ice(:,:) ! (1:ncol,1:nlev)
+         real(kind_phys),  intent(inout), optional :: re_snow(:,:) ! (1:ncol,1:nlev)
+         real(kind_phys),  intent(inout), optional :: re_rain(:,:) ! (1:ncol,1:nlev)
          integer, intent(in) :: nleffr, nieffr, nseffr, nreffr
          integer,                   intent(in)    :: imp_physics
          integer,                   intent(in)    :: imp_physics_nssl

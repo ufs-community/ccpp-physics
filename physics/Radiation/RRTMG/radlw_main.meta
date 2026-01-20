@@ -363,6 +363,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [cld_lwp]
   standard_name = cloud_liquid_water_path
   long_name = cloud liquid water path

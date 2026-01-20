@@ -120,7 +120,7 @@ contains
       real(kind=kind_phys),dimension(im),intent(out) :: zobl, zogw, zlwb, tau_ogw
       
       character(len=*), intent(out) :: errmsg
-      integer,          intent(out) :: errflg		    
+      integer,          intent(out) :: errflg
 !
 ! 
 ! locals vars for SSO
@@ -222,7 +222,8 @@ contains
         dusfc(i)    = 0.0
         dvsfc(i)    = 0.0
         ipt(i) = 0 
-      enddo     
+      enddo
+      zlwb(:) = 0.0
  
 ! ----  for lm and gwd calculation points
 !cires_ugwp_initialize.F90:      real, parameter :: hpmax=2400.0, hpmin=25.0  
@@ -1008,13 +1009,12 @@ contains
         endif
        endif
        
-      return
       end subroutine orogw_v1 
 !
 !      
      subroutine ugwp_tofd1d(levs, con_cp, dtp, sigflt, zsurf, zpbl,  u, v, &
                             zmid, utofd, vtofd, epstofd, krf_tofd)
-			    
+
       use machine ,       only : kind_phys 
       use ugwp_oro_init,  only : n_tofd, const_tofd, ze_tofd, a12_tofd, ztop_tofd
 !

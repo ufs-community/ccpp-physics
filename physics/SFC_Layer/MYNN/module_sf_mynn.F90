@@ -3,6 +3,8 @@
 !WRF:MODEL_LAYER:PHYSICS
 !
 !>\ingroup mynn_sfc
+!> This module contain routines to calculate stability parameters, kinematic siscosity
+!! in MYNN surface layer scheme
 MODULE module_sf_mynn
 
 !-------------------------------------------------------------------
@@ -284,7 +286,7 @@ CONTAINS
                                                         th3d,pi3d
 
       !GJF: This array must be assumed-shape since it is conditionally-allocated
-      REAL(kind_phys), DIMENSION( :,: ),                           &
+      REAL(kind_phys), DIMENSION( :,: ), OPTIONAL,                 &
                             INTENT(IN) ::         pattern_spp_sfc
 !===================================
 ! 2D VARIABLES
@@ -304,22 +306,22 @@ CONTAINS
       REAL(kind_phys), DIMENSION( ims:ime )                      , &
                             INTENT(INOUT)          ::    HFLX,HFX, &
                                                          QFLX,QFX, &
-                                                               LH, &
-                                                         MOL,RMOL, &
+                                                             RMOL, &
                                                              QSFC, &
                                                               QGH, &
                                                               ZNT, &
-                                                              ZOL, &
-                                                             USTM, &
                                                               CPM, &
-                                                             CHS2, &
-                                                             CQS2, &
                                                               CHS, &
                                                                CH, &
                                                         FLHC,FLQC, &
                                                       GZ1OZ0,WSPD, &
                                                         PSIM,PSIH, &
-                                                            WSTAR
+                                                        USTM,CHS2, &
+                                                        CQS2, WSTAR
+      REAL(kind_phys), DIMENSION( ims:ime ),                       &
+                            INTENT(INOUT)          ::          LH, &
+                                                              ZOL, &
+                                                              MOL
 
       LOGICAL, DIMENSION( ims:ime ), INTENT(IN)    ::              &
 &                             wet,  dry,  icy,  flag_iter
@@ -607,19 +609,21 @@ CONTAINS
                                                              RMOL
       REAL(kind_phys), DIMENSION( ims:ime ),                       &
                             INTENT(INOUT)           ::  HFLX,QFLX, &
-                                                           LH,MOL, &
                                                          QGH,QSFC, &
                                                               ZNT, &
-                                                              ZOL, &
                                                               CPM, &
-                                                        CHS2,CQS2, &
                                                            CHS,CH, &
                                                         FLHC,FLQC, &
                                                            GZ1OZ0, &
                                                              WSPD, &
                                                              PSIM, &
                                                              PSIH, &
-                                                             USTM
+                                                             USTM, &
+                                                        CHS2,CQS2
+      REAL(kind_phys), DIMENSION( ims:ime ),                       &
+                            INTENT(INOUT)           ::        MOL, &
+                                                              ZOL, &
+                                                               LH
 
       LOGICAL, DIMENSION( ims:ime ), INTENT(IN)    ::              &
      &                wet,     dry,     icy,    flag_iter
@@ -656,8 +660,9 @@ CONTAINS
 !--------------------------------------------
 !JOE-additinal output
       REAL(kind_phys), DIMENSION( ims:ime ),                       &
-     &                      INTENT(OUT)            ::       wstar, &
-     &                                                      qstar
+     &                      INTENT(OUT)            ::       qstar, &
+                                                            wstar
+
 !JOE-end
 
 ! CCPP error handling
@@ -1340,6 +1345,8 @@ CONTAINS
           ELSEIF ( ISFTCFLX .EQ. 4 ) THEN
              !GFS zt formulation
              CALL GFS_zt_wat(ZT_wat(i),ZNTstoch_wat(i),restar,WSPD(i),ZA(i),sfc_z0_type,device_errmsg,device_errflg)
+             if(errflg/=0) return
+
              ZQ_wat(i)=ZT_wat(i)
           ENDIF
        ELSE
@@ -2625,8 +2632,6 @@ END SUBROUTINE SFCLAY1D_mynn
 
        ENDIF
 
-       return
-
    END SUBROUTINE zilitinkevich_1995
 !--------------------------------------------------------------------
 !>\ingroup mynn_sfc
@@ -2658,8 +2663,6 @@ END SUBROUTINE SFCLAY1D_mynn
        Z_0 = MAX( Z_0, 1.27e-7_kind_phys)  !These max/mins were suggested by
        Z_0 = MIN( Z_0, 2.85e-3_kind_phys)  !Davis et al. (2008)
 
-       return
-
    END SUBROUTINE davis_etal_2008
 !--------------------------------------------------------------------
 !>\ingroup mynn_sfc
@@ -2684,8 +2687,6 @@ END SUBROUTINE SFCLAY1D_mynn
        Z_0 = MAX( Z_0, 1.27e-7_kind_phys)  !These max/mins were suggested by
        Z_0 = MIN( Z_0, 2.85e-3_kind_phys)  !Davis et al. (2008)
 
-       return
-
    END SUBROUTINE Taylor_Yelland_2001
 !--------------------------------------------------------------------
 !>\ingroup mynn_sfc
@@ -2708,8 +2709,6 @@ END SUBROUTINE SFCLAY1D_mynn
        Z_0 = CZC*ustar*ustar*g_inv + (0.11*visc/MAX(ustar,0.05_kind_phys))
        Z_0 = MAX( Z_0, 1.27e-7_kind_phys)  !These max/mins were suggested by
        Z_0 = MIN( Z_0, 2.85e-3_kind_phys)  !Davis et al. (2008)
-
-       return
 
    END SUBROUTINE charnock_1955
 !--------------------------------------------------------------------
@@ -2735,8 +2734,6 @@ END SUBROUTINE SFCLAY1D_mynn
        Z_0 = CZC*ustar*ustar*g_inv + (0.11*visc/MAX(ustar,0.07_kind_phys))
        Z_0 = MAX( Z_0, 1.27e-7_kind_phys)  !These max/mins were suggested by
        Z_0 = MIN( Z_0, 2.85e-3_kind_phys)  !Davis et al. (2008)
-
-       return
 
    END SUBROUTINE edson_etal_2013
 !--------------------------------------------------------------------
@@ -2768,8 +2765,6 @@ END SUBROUTINE SFCLAY1D_mynn
           Zq = Z_0/(e**2.)      !taken from Garratt (1980,1992)
           Zt = Zq
        ENDIF
-
-       return
 
     END SUBROUTINE garratt_1992
 !--------------------------------------------------------------------
@@ -2817,8 +2812,6 @@ END SUBROUTINE SFCLAY1D_mynn
        Zq = MIN(Zt,1.0e-4_kind_phys)
        Zq = MAX(Zt,2.0e-9_kind_phys)
 
-       return
-
     END SUBROUTINE fairall_etal_2003
 !--------------------------------------------------------------------
 !>\ingroup mynn_sfc
@@ -2845,8 +2838,6 @@ END SUBROUTINE SFCLAY1D_mynn
           Zt = MAX(Zt,2.0e-9_kind_phys)
           Zq = MAX(Zt,2.0e-9_kind_phys)
        ENDIF
-
-       return
 
     END SUBROUTINE fairall_etal_2014
 !--------------------------------------------------------------------
@@ -2903,8 +2894,6 @@ END SUBROUTINE SFCLAY1D_mynn
 
        Zt = MIN(Zt, Z_0/2.0)
        Zq = MIN(Zq, Z_0/2.0)
-
-       return
 
     END SUBROUTINE Yang_2008
 !--------------------------------------------------------------------
@@ -3104,7 +3093,7 @@ END SUBROUTINE SFCLAY1D_mynn
             else if (sfc_z0_type == 7) then
               call znot_t_v7(wind10m, ztmax)   ! 10-m wind,m/s, ztmax(m)
             else if (sfc_z0_type > 0) then
-              write(0,*)'no option for sfc_z0_type=',sfc_z0_type
+              write(0,*)'not a valid option for sfc_z0_type=',sfc_z0_type
 !              errflg = 1
 !              errmsg = 'ERROR(GFS_zt_wat): sfc_z0_type not valid.'
               device_errflg = 1
@@ -3167,19 +3156,18 @@ END SUBROUTINE SFCLAY1D_mynn
       END SUBROUTINE znot_m_v6
 !--------------------------------------------------------------------
 !>\ingroup mynn_sfc
-!!
-      SUBROUTINE znot_t_v6(uref, znott)
-
-      !$acc routine seq
-      IMPLICIT NONE
-!> Calculate scalar roughness over water with input 10-m wind
+!> Calculate scalar roughness over water with input 10-m wind 
 !! For low-to-moderate winds, try to match the Ck-U10 relationship from COARE algorithm
 !! For high winds, try to retain the Ck-U10 relationship of FY2015 HWRF
 !!
 !!\author Bin Liu, NOAA/NCEP/EMC 2017
-!
+!   
 ! uref(m/s)   :   wind speed at 10-m height
 ! znott(meter):   scalar roughness scale over water
+      SUBROUTINE znot_t_v6(uref, znott)
+
+      !$acc routine seq
+      IMPLICIT NONE
 !
       REAL(kind_phys), INTENT(IN) :: uref
       REAL(kind_phys), INTENT(OUT):: znott
@@ -3234,17 +3222,16 @@ END SUBROUTINE SFCLAY1D_mynn
 
 !-------------------------------------------------------------------
 !>\ingroup mynn_sfc
-!!
-      SUBROUTINE znot_m_v7(uref, znotm)
-
-      !$acc routine seq
-      IMPLICIT NONE
 !> Calculate areodynamical roughness over water with input 10-m wind
 !! For low-to-moderate winds, try to match the Cd-U10 relationship from COARE V3.5 (Edson et al. 2013)
 !! For high winds, try to fit available observational data
 !! Comparing to znot_t_v6, slightly decrease Cd for higher wind speed
-!!
+!!   
 !!\author Bin Liu, NOAA/NCEP/EMC 2018
+      SUBROUTINE znot_m_v7(uref, znotm)
+
+      !$acc routine seq
+      IMPLICIT NONE
 !
 ! uref(m/s)   :   wind speed at 10-m height
 ! znotm(meter):   areodynamical roughness scale over water
@@ -3284,17 +3271,16 @@ END SUBROUTINE SFCLAY1D_mynn
       END SUBROUTINE znot_m_v7
 !--------------------------------------------------------------------
 !>\ingroup mynn_sfc
-!!
-      SUBROUTINE znot_t_v7(uref, znott)
-
-      !$acc routine seq
-      IMPLICIT NONE
 !> Calculate scalar roughness over water with input 10-m wind
 !! For low-to-moderate winds, try to match the Ck-U10 relationship from COARE algorithm
 !! For high winds, try to retain the Ck-U10 relationship of FY2015 HWRF
 !! To be compatible with the slightly decreased Cd for higher wind speed
-!!
+!!    
 !!\author Bin Liu, NOAA/NCEP/EMC 2018
+      SUBROUTINE znot_t_v7(uref, znott)
+
+      !$acc routine seq
+      IMPLICIT NONE
 !
 ! uref(m/s)   :   wind speed at 10-m height
 ! znott(meter):   scalar roughness scale over water
@@ -3400,8 +3386,6 @@ END SUBROUTINE SFCLAY1D_mynn
 
        ENDIF
 
-       return
-
     END SUBROUTINE Andreas_2002
 !--------------------------------------------------------------------
 !>\ingroup mynn_sfc
@@ -3435,8 +3419,6 @@ END SUBROUTINE SFCLAY1D_mynn
           psi_h = 2.*LOG((1.+y)/(1.+y0))
 
        ENDIF
-
-       return
 
     END SUBROUTINE PSI_Hogstrom_1996
 !--------------------------------------------------------------------
@@ -3475,8 +3457,6 @@ END SUBROUTINE SFCLAY1D_mynn
 
        ENDIF
 
-       return
-
     END SUBROUTINE PSI_DyerHicks
 !--------------------------------------------------------------------
 !>\ingroup mynn_sfc
@@ -3505,8 +3485,6 @@ END SUBROUTINE SFCLAY1D_mynn
                   b*(zL - (c/d))*exp(-d*zL) + (b*c/d) -1.)
 
        ENDIF
-
-       return
 
     END SUBROUTINE PSI_Beljaars_Holtslag_1991
 !--------------------------------------------------------------------
@@ -3537,8 +3515,6 @@ END SUBROUTINE SFCLAY1D_mynn
 
        ENDIF
 
-       return
-
     END SUBROUTINE PSI_Zilitinkevich_Esau_2007
 !--------------------------------------------------------------------
 !>\ingroup mynn_sfc
@@ -3568,8 +3544,6 @@ END SUBROUTINE SFCLAY1D_mynn
           psi_h = -(4.7/0.74)*zL
 
        ENDIF
-
-       return
 
     END SUBROUTINE PSI_Businger_1971
 !--------------------------------------------------------------------
@@ -3602,8 +3576,6 @@ END SUBROUTINE SFCLAY1D_mynn
 
        ENDIF
 
-       return
-
     END SUBROUTINE PSI_Suselj_Sood_2010
 !--------------------------------------------------------------------
 !>\ingroup mynn_sfc
@@ -3620,8 +3592,6 @@ END SUBROUTINE SFCLAY1D_mynn
                -6.1*LOG(z0L + (1.+ z0L**2.5)**0.4)
        psih1 = -5.5*log(zL + (1.+ zL**1.1)**0.90909090909)  &
                -5.5*log(z0L + (1.+ z0L**1.1)**0.90909090909)
-
-       return
 
     END SUBROUTINE PSI_CB2005
 !--------------------------------------------------------------------
@@ -3686,8 +3656,6 @@ END SUBROUTINE SFCLAY1D_mynn
           zL = MAX(zL,1._kind_phys)
        ENDIF
 
-       return
-
     END SUBROUTINE Li_etal_2010
 !-------------------------------------------------------------------
 !>\ingroup mynn_sfc
@@ -3743,7 +3711,6 @@ END SUBROUTINE SFCLAY1D_mynn
          !print*,"SUCCESS,n=",n," Ri=",ri," z0=",z0
       endif
 
-      return
       end function
 !-------------------------------------------------------------------
       REAL(kind_phys) function zolri2(zol2,ri2,za,z0,zt,psi_opt)
@@ -3784,7 +3751,6 @@ END SUBROUTINE SFCLAY1D_mynn
       zolri2=zol2*psit2/psix2**2 - ri2
       !print*,"  target ri=",ri2," est ri=",zol2*psit2/psix2**2
 
-      return
       end function
 !====================================================================
 
@@ -3861,7 +3827,6 @@ END SUBROUTINE SFCLAY1D_mynn
          !print*,"SUCCESS,n=",n," Ri=",ri," z0=",z0
       endif
 
-      return
       end function
 !====================================================================
 !>\ingroup mynn_sfc
@@ -3921,7 +3886,6 @@ END SUBROUTINE SFCLAY1D_mynn
         !psim_stable_full=-6.1*log(zolf+(1+zolf**2.5)**(1./2.5))
         psim_stable_full=-6.1*log(zolf+(1+zolf**2.5)**0.4)
 
-        return
    end function
 
 !>\ingroup mynn_sfc
@@ -3932,7 +3896,6 @@ END SUBROUTINE SFCLAY1D_mynn
         !psih_stable_full=-5.3*log(zolf+(1+zolf**1.1)**(1./1.1))
         psih_stable_full=-5.3*log(zolf+(1+zolf**1.1)**0.9090909090909090909)
 
-        return
    end function
 
 !>\ingroup mynn_sfc
@@ -3951,7 +3914,6 @@ END SUBROUTINE SFCLAY1D_mynn
 
         psim_unstable_full=(psimk+zolf**2*(psimc))/(1+zolf**2.)
 
-        return
    end function
 
 !>\ingroup mynn_sfc
@@ -3969,7 +3931,6 @@ END SUBROUTINE SFCLAY1D_mynn
 
         psih_unstable_full=(psihk+zolf**2*(psihc))/(1+zolf**2)
 
-        return
    end function
 
 ! ==================================================================
@@ -3986,7 +3947,6 @@ END SUBROUTINE SFCLAY1D_mynn
         aa     = sqrt(1. + alpha4 * zolf)
         psim_stable_full_gfs  = -1.*aa + log(aa + 1.)
 
-        return
    end function
 
 !>\ingroup mynn_sfc
@@ -4000,7 +3960,6 @@ END SUBROUTINE SFCLAY1D_mynn
         bb     = sqrt(1. + alpha4 * zolf)
         psih_stable_full_gfs  = -1.*bb + log(bb + 1.)
 
-        return
    end function
 
 !>\ingroup mynn_sfc
@@ -4021,7 +3980,6 @@ END SUBROUTINE SFCLAY1D_mynn
            psim_unstable_full_gfs  = log(hl1) + 2. * sqrt(tem1) - .8776
         end if
 
-        return
    end function
 
 !>\ingroup mynn_sfc
@@ -4042,7 +4000,6 @@ END SUBROUTINE SFCLAY1D_mynn
            psih_unstable_full_gfs  = log(hl1) + .5 * tem1 + 1.386
         end if
 
-        return
    end function
 
 !>\ingroup mynn_sfc
@@ -4064,7 +4021,6 @@ END SUBROUTINE SFCLAY1D_mynn
            endif
         endif
 
-      return
    end function
 
 !>\ingroup mynn_sfc
@@ -4085,7 +4041,6 @@ END SUBROUTINE SFCLAY1D_mynn
            endif
         endif
 
-      return
    end function
 
 !>\ingroup mynn_sfc
@@ -4106,7 +4061,6 @@ END SUBROUTINE SFCLAY1D_mynn
            endif
         endif
 
-      return
    end function
 
 !>\ingroup mynn_sfc
@@ -4127,7 +4081,6 @@ END SUBROUTINE SFCLAY1D_mynn
            endif
         endif
 
-      return
    end function
 !========================================================================
 

@@ -3,7 +3,7 @@
 
 !>\ingroup aathompson
 
-!! This module computes the moisture tendencies of water vapor,
+!> This module computes the moisture tendencies of water vapor,
 !! cloud droplets, rain, cloud ice (pristine), snow, and graupel.
 !! Prior to WRFv2.2 this code was based on Reisner et al (1998), but
 !! few of those pieces remain.  A complete description is now found in
@@ -62,9 +62,7 @@ module module_mp_thompson
    use machine, only: wp => kind_phys, sp => kind_sngl_prec, dp => kind_dbl_prec
    use module_mp_radar
 
-#ifdef MPI
-   use mpi
-#endif
+   use mpi_f08
 
    implicit none
 
@@ -92,10 +90,17 @@ module module_mp_thompson
 !.. droplet concentration and nu_c is also variable depending on local
 !.. droplet number concentration.
    !real(wp), parameter :: Nt_c = 100.e6
-   real(wp), parameter :: Nt_c_o = 50.e6
-   real(wp), parameter :: Nt_c_l = 100.e6
    real(wp), parameter, private :: Nt_c_max = 1999.e6
 
+   ! Tuning parameters
+   real(wp)            :: Nt_c_l = 150.e6   ! Cloud number concentration over land (set in thompson_init)
+   real(wp)            :: Nt_c_o = 50.e6    ! Cloud number concentration over ocean (set in thompson_init)
+   real(wp)            :: av_i
+   real(wp)            :: xnc_max = 1000.e3
+   real(wp)            :: ssati_min = 0.15
+   real(wp)            :: Nt_i_max = 4999.e3_dp
+   real(wp)            :: rr_min = 1000.0
+   
 !..Declaration of constants for assumed CCN/IN aerosols when none in
 !.. the input data.  Look inside the init routine for modifications
 !.. due to surface land-sea points or vegetation characteristics.
@@ -146,12 +151,12 @@ module module_mp_thompson
    real(wp), parameter, private :: av_r = 4854.0
    real(wp), parameter, private :: bv_r = 1.0
    real(wp), parameter, private :: fv_r = 195.0
-   real(wp), parameter, private :: av_s = 40.0
-   real(wp), parameter, private :: bv_s = 0.55
+   real(wp), parameter          :: av_s = 40.0
+   real(wp), parameter          :: bv_s = 0.55
    real(wp), parameter, private :: fv_s = 100.0
    real(wp), parameter, private :: av_g = 442.0
    real(wp), parameter, private :: bv_g = 0.89
-   real(wp), parameter, private :: bv_i = 1.0
+   real(wp), parameter          :: bv_i = 1.0
    real(wp), parameter, private :: av_c = 0.316946E8
    real(wp), parameter, private :: bv_c = 2.0
 
@@ -216,7 +221,7 @@ module module_mp_thompson
    real(wp), parameter, private :: xm0i = R1
    real(wp), parameter, private :: D0c = 1.e-6
    real(wp), parameter, private :: D0r = 50.e-6
-   real(wp), parameter, private :: D0s = 300.e-6
+   real(wp), parameter          :: D0s = 300.e-6
    real(wp), parameter, private :: D0g = 350.e-6
    real(wp), private :: D0i, xm0s, xm0g
 
@@ -419,7 +424,7 @@ module module_mp_thompson
    real(wp) :: t1_qs_me, t2_qs_me, t1_qg_me, t2_qg_me
 
 !..MPI communicator
-   integer :: mpi_communicator
+      TYPE(MPI_Comm):: mpi_communicator
 
 !..Write tables with master MPI task after computing them in thompson_init
    logical :: thompson_table_writer
@@ -446,7 +451,8 @@ module module_mp_thompson
 
          logical, intent(in) :: is_aerosol_aware_in
          logical, intent(in) :: merra2_aerosol_aware_in
-         integer, intent(in) :: mpicomm, mpirank, mpiroot
+         type(MPI_Comm), intent(in) :: mpicomm
+         integer, intent(in) :: mpirank, mpiroot
          integer, intent(In) :: threads
          character(len=*), intent(inout) :: errmsg
          integer,          intent(inout) :: errflg
@@ -455,7 +461,7 @@ module module_mp_thompson
          logical:: micro_init
          real(wp) :: stime, etime
          logical, parameter :: precomputed_tables = .FALSE.
-
+         
 ! Set module derived constants
          am_r = PI*rho_w/6.0
          am_g = PI*rho_g/6.0
@@ -1059,9 +1065,9 @@ module module_mp_thompson
                            re_cloud, re_ice, re_snow
          real(wp), dimension(ims:ime, kms:kme, jms:jme), intent(inout):: pfils, pflls
          integer, intent(in) :: rand_perturb_on, kme_stoch, n_var_spp
-         real(wp), dimension(:,:), intent(in) :: rand_pert
-         real(wp), dimension(:), intent(in) :: spp_prt_list, spp_stddev_cutoff
-         character(len=10), dimension(:), intent(in) :: spp_var_list
+         real(wp), dimension(:,:), intent(in), optional :: rand_pert
+         real(wp), dimension(:), intent(in), optional :: spp_prt_list, spp_stddev_cutoff
+         character(len=10), dimension(:), intent(in), optional :: spp_var_list
          integer, intent(in):: has_reqc, has_reqi, has_reqs
 #if ( WRF_CHEM == 1 )
          real(wp), dimension(ims:ime, kms:kme, jms:jme), intent(inout):: &
@@ -1091,7 +1097,7 @@ module module_mp_thompson
          ! Extended diagnostics, array pointers only associated if ext_diag flag is .true.
          logical, intent (in) :: ext_diag
          logical, optional, intent(in):: aero_ind_fdb
-         real(wp), dimension(:,:,:), intent(inout)::                     &
+         real(wp), dimension(:,:,:), optional, intent(inout)::     &
                            !vts1, txri, txrc,                       &
                            prw_vcdc,                               &
                            prw_vcde, tpri_inu, tpri_ide_d,         &
@@ -1249,44 +1255,6 @@ module module_mp_thompson
          allocate (nrten1(kts:kte))
          allocate (ncten1(kts:kte))
          allocate (qcten1(kts:kte))
-      else
-         allocate (prw_vcdc1  (0))
-         allocate (prw_vcde1  (0))
-         allocate (tpri_inu1  (0))
-         allocate (tpri_ide1_d(0))
-         allocate (tpri_ide1_s(0))
-         allocate (tprs_ide1  (0))
-         allocate (tprs_sde1_d(0))
-         allocate (tprs_sde1_s(0))
-         allocate (tprg_gde1_d(0))
-         allocate (tprg_gde1_s(0))
-         allocate (tpri_iha1  (0))
-         allocate (tpri_wfz1  (0))
-         allocate (tpri_rfz1  (0))
-         allocate (tprg_rfz1  (0))
-         allocate (tprs_scw1  (0))
-         allocate (tprg_scw1  (0))
-         allocate (tprg_rcs1  (0))
-         allocate (tprs_rcs1  (0))
-         allocate (tprr_rci1  (0))
-         allocate (tprg_rcg1  (0))
-         allocate (tprw_vcd1_c(0))
-         allocate (tprw_vcd1_e(0))
-         allocate (tprr_sml1  (0))
-         allocate (tprr_gml1  (0))
-         allocate (tprr_rcg1  (0))
-         allocate (tprr_rcs1  (0))
-         allocate (tprv_rev1  (0))
-         allocate (tten1      (0))
-         allocate (qvten1     (0))
-         allocate (qrten1     (0))
-         allocate (qsten1     (0))
-         allocate (qgten1     (0))
-         allocate (qiten1     (0))
-         allocate (niten1     (0))
-         allocate (nrten1     (0))
-         allocate (ncten1     (0))
-         allocate (qcten1     (0))
       end if allocate_extended_diagnostics
 
 !+---+
@@ -1806,43 +1774,43 @@ module module_mp_thompson
       !deallocate (txri1)
       !deallocate (txrc1)
       deallocate_extended_diagnostics: if (ext_diag) then
-         deallocate (prw_vcdc1)
-         deallocate (prw_vcde1)
-         deallocate (tpri_inu1)
-         deallocate (tpri_ide1_d)
-         deallocate (tpri_ide1_s)
-         deallocate (tprs_ide1)
-         deallocate (tprs_sde1_d)
-         deallocate (tprs_sde1_s)
-         deallocate (tprg_gde1_d)
-         deallocate (tprg_gde1_s)
-         deallocate (tpri_iha1)
-         deallocate (tpri_wfz1)
-         deallocate (tpri_rfz1)
-         deallocate (tprg_rfz1)
-         deallocate (tprs_scw1)
-         deallocate (tprg_scw1)
-         deallocate (tprg_rcs1)
-         deallocate (tprs_rcs1)
-         deallocate (tprr_rci1)
-         deallocate (tprg_rcg1)
-         deallocate (tprw_vcd1_c)
-         deallocate (tprw_vcd1_e)
-         deallocate (tprr_sml1)
-         deallocate (tprr_gml1)
-         deallocate (tprr_rcg1)
-         deallocate (tprr_rcs1)
-         deallocate (tprv_rev1)
-         deallocate (tten1)
-         deallocate (qvten1)
-         deallocate (qrten1)
-         deallocate (qsten1)
-         deallocate (qgten1)
-         deallocate (qiten1)
-         deallocate (niten1)
-         deallocate (nrten1)
-         deallocate (ncten1)
-         deallocate (qcten1)
+        deallocate (prw_vcdc1)
+        deallocate (prw_vcde1)
+        deallocate (tpri_inu1)
+        deallocate (tpri_ide1_d)
+        deallocate (tpri_ide1_s)
+        deallocate (tprs_ide1)
+        deallocate (tprs_sde1_d)
+        deallocate (tprs_sde1_s)
+        deallocate (tprg_gde1_d)
+        deallocate (tprg_gde1_s)
+        deallocate (tpri_iha1)
+        deallocate (tpri_wfz1)
+        deallocate (tpri_rfz1)
+        deallocate (tprg_rfz1)
+        deallocate (tprs_scw1)
+        deallocate (tprg_scw1)
+        deallocate (tprg_rcs1)
+        deallocate (tprs_rcs1)
+        deallocate (tprr_rci1)
+        deallocate (tprg_rcg1)
+        deallocate (tprw_vcd1_c)
+        deallocate (tprw_vcd1_e)
+        deallocate (tprr_sml1)
+        deallocate (tprr_gml1)
+        deallocate (tprr_rcg1)
+        deallocate (tprr_rcs1)
+        deallocate (tprv_rev1)
+        deallocate (tten1)
+        deallocate (qvten1)
+        deallocate (qrten1)
+        deallocate (qsten1)
+        deallocate (qgten1)
+        deallocate (qiten1)
+        deallocate (niten1)
+        deallocate (nrten1)
+        deallocate (ncten1)
+        deallocate (qcten1)
       end if deallocate_extended_diagnostics
 
    end subroutine mp_gt_driver
@@ -1935,9 +1903,7 @@ module module_mp_thompson
                         qgten1, qiten1, niten1, nrten1, ncten1, qcten1,  &
                         pfil1, pfll1) 
 
-#ifdef MPI
-   use mpi
-#endif
+      use mpi_f08
 
       implicit none
 
@@ -1956,7 +1922,7 @@ module module_mp_thompson
       logical, intent(in) :: ext_diag
       logical, intent(in) :: sedi_semi
       integer, intent(in) :: decfl
-      real(wp), dimension(:), intent(out) :: &
+      real(wp), dimension(:), intent(out), optional :: &
                           !vtsk1, txri1, txrc1,                       &
                           prw_vcdc1,                                 &
                           prw_vcde1, tpri_inu1, tpri_ide1_d,         &
@@ -2054,7 +2020,6 @@ module module_mp_thompson
       real(wp) :: Ef_ra, Ef_sa, Ef_ga
       real(wp) :: dtsave, odts, odt, odzq, hgt_agl, SR
       real(wp) :: xslw1, ygra1, zans1, eva_factor
-      real(wp) av_i
       integer :: i, k, k2, n, nn, nstep, k_0, kbot, IT, iexfrq
       integer, dimension(5) :: ksed1
       integer :: nir, nis, nig, nii, nic, niin
@@ -2079,8 +2044,6 @@ module module_mp_thompson
       odt = 1./dt
       odts = 1./dtsave
       iexfrq = 1
-! Transition value of coefficient matching at crossover from cloud ice to snow
-      av_i = av_s * D0s ** (bv_s - bv_i)
 
 !+---+-----------------------------------------------------------------+
 !> - Initialize Source/sink terms.  First 2 chars: "pr" represents source/sink of
@@ -2306,7 +2269,7 @@ module module_mp_thompson
             ni(k) = max(R2, ni1d(k)*rho(k))
             if (ni(k).le. R2) then
                lami = cie(2)/5.E-6
-               ni(k) = min(4999.e3_dp, cig(1)*oig2*ri(k)/am_i*lami**bm_i)
+               ni(k) = min(Nt_i_max, cig(1)*oig2*ri(k)/am_i*lami**bm_i)
             endif
             L_qi(k) = .true.
             lami = (am_i*cig(2)*oig1*ni(k)/ri(k))**obmi
@@ -2314,7 +2277,7 @@ module module_mp_thompson
             xDi = (bm_i + mu_i + 1.) * ilami
             if (xDi.lt. 5.E-6) then
                lami = cie(2)/5.E-6
-               ni(k) = min(4999.e3_dp, cig(1)*oig2*ri(k)/am_i*lami**bm_i)
+               ni(k) = min(Nt_i_max, cig(1)*oig2*ri(k)/am_i*lami**bm_i)
             elseif (xDi.gt. 300.E-6) then
                lami = cie(2)/300.E-6
                ni(k) = cig(1)*oig2*ri(k)/am_i*lami**bm_i
@@ -2970,13 +2933,13 @@ module module_mp_thompson
 
 !>  - Deposition nucleation of dust/mineral from DeMott et al (2010)
 !! we may need to relax the temperature and ssati constraints.
-               if ( (ssati(k).ge. 0.15) .or. (ssatw(k).gt. eps &
+               if ( (ssati(k).ge. ssati_min) .or. (ssatw(k).gt. eps &
                                     .and. temp(k).lt.253.15) ) then
                   if (dustyIce .AND. (is_aerosol_aware .or. merra2_aerosol_aware)) then
                      xnc = iceDeMott(tempc,qv(k),qvs(k),qvsi(k),rho(k),nifa(k))
                      xnc = xnc*(1.0 + 50.*rand3)
                   else
-                     xnc = min(1000.E3, TNO*EXP(ATO*(T_0-temp(k))))
+                     xnc = min(xnc_max, TNO*EXP(ATO*(T_0-temp(k))))
                   endif
                   xni = ni(k) + (pni_rfz(k)+pni_wfz(k))*dtsave
                   pni_inu(k) = 0.5*(xnc-xni + abs(xnc-xni))*odts
@@ -2986,7 +2949,7 @@ module module_mp_thompson
 
 !>  - Freezing of aqueous aerosols based on Koop et al (2001, Nature)
                xni = smo0(k)+ni(k) + (pni_rfz(k)+pni_wfz(k)+pni_inu(k))*dtsave
-               if ((is_aerosol_aware .or. merra2_aerosol_aware) .AND. homogIce .AND. (xni.le.4999.E3)    & 
+               if ((is_aerosol_aware .or. merra2_aerosol_aware) .AND. homogIce .AND. (xni.le.Nt_i_max)    & 
                               .AND.(temp(k).lt.238).AND.(ssati(k).ge.0.4) ) then
                   xnc = iceKoop(temp(k),qv(k),qvs(k),nwfa(k), dtsave)
                   pni_iha(k) = xnc*odts
@@ -3319,7 +3282,7 @@ module module_mp_thompson
             xDi = (bm_i + mu_i + 1.) * ilami
             if (xDi.lt. 5.E-6) then
                lami = cie(2)/5.E-6
-               xni = min(4999.e3_dp, cig(1)*oig2*xri/am_i*lami**bm_i)
+               xni = min(Nt_i_max, cig(1)*oig2*xri/am_i*lami**bm_i)
                niten(k) = (xni-ni1d(k)*rho(k))*odts*orho
             elseif (xDi.gt. 300.E-6) then 
                lami = cie(2)/300.E-6
@@ -3330,8 +3293,8 @@ module module_mp_thompson
             niten(k) = -ni1d(k)*odts
          endif
          xni=max(0.,(ni1d(k) + niten(k)*dtsave)*rho(k))
-         if (xni.gt.4999.E3) &
-                niten(k) = (4999.E3-ni1d(k)*rho(k))*odts*orho
+         if (xni.gt.Nt_i_max) &
+                niten(k) = (Nt_i_max-ni1d(k)*rho(k))*odts*orho
 
 !>  - Rain tendency
          qrten(k) = qrten(k) + (prr_wau(k) + prr_rcw(k) &
@@ -3614,7 +3577,7 @@ module module_mp_thompson
 
    !+---+-----------------------------------------------------------------+ !  EVAPORATION
                elseif (clap .lt. -eps .AND. ssatw(k).lt.-1.E-6 .AND.     &
-                        (is_aerosol_aware .or. merra2_aerosol_aware)) then  
+                        is_aerosol_aware) then  
                   tempc = temp(k) - 273.15
                   otemp = 1./temp(k)
                   rvs = rho(k)*qvs(k)
@@ -4014,7 +3977,7 @@ module module_mp_thompson
                   pfll1(k) = pfll1(k) + sed_r(k)*DT*onstep(1)
                enddo
 
-               if (rr(kts).gt.R1*1000.) then
+               if (rr(kts).gt.R1*rr_min) then
                   pptrain = pptrain + sed_r(kts)*DT*onstep(1)
                endif 
             enddo
@@ -4109,7 +4072,7 @@ module module_mp_thompson
                pfil1(k) = pfil1(k) + sed_i(k)*DT*onstep(2)
             enddo
 
-            if (ri(kts).gt.R1*1000.) then
+            if (ri(kts).gt.R1*rr_min) then
                pptice = pptice + sed_i(kts)*DT*onstep(2)
             endif 
          enddo
@@ -4139,7 +4102,7 @@ module module_mp_thompson
                pfil1(k) = pfil1(k) + sed_s(k)*DT*onstep(3)
             enddo
 
-            if (rs(kts).gt.R1*1000.) then
+            if (rs(kts).gt.R1*rr_min) then
                pptsnow = pptsnow + sed_s(kts)*DT*onstep(3)
             endif 
          enddo
@@ -4170,7 +4133,7 @@ module module_mp_thompson
                   pfil1(k) = pfil1(k) + sed_g(k)*DT*onstep(4)
                enddo
 
-               if (rg(kts).gt.R1*1000.) then
+               if (rg(kts).gt.R1*rr_min) then
                   pptgraul = pptgraul + sed_g(kts)*DT*onstep(4)
                endif
             enddo
@@ -4298,7 +4261,7 @@ module module_mp_thompson
                lami = cie(2)/300.E-6
             endif
             ni1d(k) = min(cig(1)*oig2*qi1d(k)/am_i*lami**bm_i,           &
-                           4999.e3_dp/rho(k))
+                           Nt_i_max/rho(k))
          endif
          qr1d(k) = qr1d(k) + qrten(k)*DT
          nr1d(k) = max(R2/rho(k), nr1d(k) + nrten(k)*DT)
@@ -4437,9 +4400,7 @@ module module_mp_thompson
 
       good = 0
         INQUIRE(FILE=qr_acr_qg_file, EXIST=lexist)
-#ifdef MPI
         call MPI_BARRIER(mpi_communicator,ierr)
-#endif
         IF ( lexist ) THEN
           OPEN(63,file=qr_acr_qg_file,form="unformatted",err=1234)
 !sms$serial begin
@@ -4612,9 +4573,7 @@ module module_mp_thompson
 
       good = 0
         INQUIRE(FILE=qr_acr_qs_file, EXIST=lexist)
-#ifdef MPI
         call MPI_BARRIER(mpi_communicator,ierr)
-#endif
         IF ( lexist ) THEN
           !write(0,*) "ThompMP: read "//qr_acr_qs_file//" instead of computing"
           OPEN(63,file=qr_acr_qs_file,form="unformatted",err=1234)
@@ -4873,9 +4832,7 @@ module module_mp_thompson
 
       good = 0
         INQUIRE(FILE=freeze_h2o_file,EXIST=lexist)
-#ifdef MPI
         call MPI_BARRIER(mpi_communicator,ierr)
-#endif
         IF ( lexist ) THEN
           !write(0,*) "ThompMP: read "//freeze_h2o_file//" instead of computing"
           OPEN(63,file=freeze_h2o_file,form="unformatted",err=1234)
@@ -6253,13 +6210,13 @@ module module_mp_thompson
    end subroutine calc_refl10cm
 !
 !-------------------------------------------------------------------
+!> This routine is a semi-Lagrangian forward advection for hydrometeors
+!! with mass conservation and positive definite advection
+!! 2nd order interpolation with monotonic piecewise parabolic method is used.
+!! This routine is under assumption of decfl < 1 for semi_Lagrangian 
+!!(Juang and Hong, 2010 \cite Henry_Juang_2010).
    SUBROUTINE semi_lagrange_sedim(km,dzl,wwl,rql,precip,pfsan,dt,R1)
 !-------------------------------------------------------------------
-!
-! This routine is a semi-Lagrangain forward advection for hydrometeors
-! with mass conservation and positive definite advection
-! 2nd order interpolation with monotonic piecewise parabolic method is used.
-! This routine is under assumption of decfl < 1 for semi_Lagrangian
 !
 ! dzl    depth of model layer in meter
 ! wwl    terminal velocity at model layer m/s

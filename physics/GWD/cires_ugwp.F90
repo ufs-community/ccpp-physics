@@ -1,16 +1,17 @@
 !>  \file cires_ugwp.F90
 !! This file contains the Unified Gravity Wave Physics (UGWP) scheme by Valery Yudin (University of Colorado, CIRES)
+
+!> This module contains the UGWP v0 scheme by Valery Yudin (University of Colorado, CIRES)
+!!
 !! See Valery Yudin's presentation at 2017 NGGPS PI meeting:
 !! Gravity waves (GWs): Mesoscale GWs transport momentum, energy (heat) , and create eddy mixing in the whole atmosphere domain; Breaking and dissipating GWs deposit: (a) momentum; (b) heat (energy); and create (c) turbulent mixing of momentum, heat, and tracers
 !! To properly incorporate GW effects (a-c) unresolved by DYCOREs we need GW physics
 !! "Unified": a) all GW effects due to both dissipation/breaking; b) identical GW solvers for all GW sources; c) ability to replace solvers.
 !! Unified Formalism:
-!! 1. GW Sources: Stochastic and physics based mechanisms for GW-excitations in the lower atmosphere, calibrated by the high-res analyses/forecasts, and observations (3 types of GW sources: orography, convection, fronts/jets).
-!! 2. GW Propagation: Unified solver for "propagation, dissipation and breaking" excited from all type of GW sources.
-!! 3. GW Effects: Unified representation of GW impacts on the "resolved" flow for all sources (energy-balanced schemes for momentum, heat and mixing).
+!! - GW Sources: Stochastic and physics based mechanisms for GW-excitations in the lower atmosphere, calibrated by the high-res analyses/forecasts, and observations (3 types of GW sources: orography, convection, fronts/jets).
+!! - GW Propagation: Unified solver for "propagation, dissipation and breaking" excited from all type of GW sources.
+!! - GW Effects: Unified representation of GW impacts on the "resolved" flow for all sources (energy-balanced schemes for momentum, heat and mixing).
 !! https://www.weather.gov/media/sti/nggps/Presentations%202017/02%20NGGPS_VYUDIN_2017_.pdf
-
-
 module cires_ugwp
 
     use machine, only: kind_phys
@@ -33,9 +34,7 @@ contains
 ! ------------------------------------------------------------------------
 ! CCPP entry points for CIRES Unified Gravity Wave Physics (UGWP) scheme v0
 ! ------------------------------------------------------------------------
-!>\defgroup cires_ugwp_run_mod CIRES Unified Gravity Wave Physics v0 Module
-!> @{
-!>@ The subroutine initializes the CIRES UGWP V0.
+!> The subroutine initializes the CIRES UGWP V0.
 !> \section arg_table_cires_ugwp_init Argument Table
 !! \htmlinclude cires_ugwp_init.html
 !!
@@ -112,7 +111,7 @@ contains
 ! finalize of cires_ugwp   (_finalize)
 ! -----------------------------------------------------------------------
 
-!>@brief The subroutine finalizes the CIRES UGWP
+!> The subroutine finalizes the CIRES UGWP
 #if 0
 !> \section arg_table_cires_ugwp_finalize Argument Table
 !! \htmlinclude cires_ugwp_finalize.html
@@ -229,13 +228,14 @@ contains
     real(kind=kind_phys),    intent(out), dimension(:)      :: zmtb, zlwb, zogw, rdxzb
     real(kind=kind_phys),    intent(out), dimension(:)      :: tau_mtb, tau_ogw, tau_tofd, tau_ngw
     real(kind=kind_phys),    intent(out), dimension(:, :):: gw_dudt, gw_dvdt, gw_dtdt, gw_kdis
-    real(kind=kind_phys),    intent(out), dimension(:, :):: dudt_mtb, dudt_ogw, dudt_tms
-    real(kind=kind_phys),    intent(out), dimension(:)    :: dusfc_ms, dvsfc_ms, dusfc_bl, dvsfc_bl
-    real(kind=kind_phys),    intent(out), dimension(:, :) :: dtauy2d_ms
-    real(kind=kind_phys),    intent(out), dimension(:, :) :: dtaux2d_bl, dtauy2d_bl
+    real(kind=kind_phys),    intent(out), dimension(:, :):: dudt_mtb, dudt_tms
+    real(kind=kind_phys),    intent(out), dimension(:, :), optional :: dudt_ogw
+    real(kind=kind_phys),    intent(out), dimension(:), optional :: dusfc_ms, dvsfc_ms, dusfc_bl, dvsfc_bl
+    real(kind=kind_phys),    intent(out), dimension(:, :), optional :: dtauy2d_ms
+    real(kind=kind_phys),    intent(out), dimension(:, :), optional :: dtaux2d_bl, dtauy2d_bl
 
     ! dtend is only allocated if ldiag=.true.
-    real(kind=kind_phys), optional, intent(inout)            :: dtend(:,:,:)
+    real(kind=kind_phys), optional, intent(inout) :: dtend(:,:,:)
     integer, intent(in)                                      :: dtidx(:,:), &
          index_of_x_wind, index_of_y_wind, index_of_temperature,         &
          index_of_process_orographic_gwd, index_of_process_nonorographic_gwd
@@ -243,7 +243,7 @@ contains
     logical,                 intent(in)                         :: ldiag3d, lssav
 
     ! These arrays only allocated if ldiag_ugwp = .true.
-    real(kind=kind_phys),    intent(inout), dimension(:,:) :: du3dt_mtb, du3dt_ogw, du3dt_tms
+    real(kind=kind_phys),    intent(inout), dimension(:,:), optional :: du3dt_mtb, du3dt_ogw, du3dt_tms
 
     real(kind=kind_phys),    intent(inout), dimension(:, :):: dudt, dvdt, dtdt
 
@@ -444,5 +444,4 @@ contains
     endif
 
     end subroutine cires_ugwp_run
-!> @}
 end module cires_ugwp

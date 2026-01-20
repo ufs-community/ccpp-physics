@@ -42,7 +42,6 @@
       end subroutine satmedmfvdif_init
 
 !> \defgroup satmedmf GFS Scale-aware TKE-based Moist Eddy-Diffusivity Mass-flux (TKE-EDMF) Scheme Module 
-!! @{
 !! \brief This subroutine contains all of the logic for the
 !! scale-aware TKE-based moist eddy-diffusion mass-flux (TKE-EDMF) scheme.
 !!
@@ -60,7 +59,6 @@
 !! -# A mass-flux approach is also used to represent the stratocumulus-top-induced turbulence
 !! (mfscu.f).
 !! \section detail_satmedmfvidf GFS satmedmfvdif Detailed Algorithm 
-!> @{
       subroutine satmedmfvdif_run(im,km,ntrac,ntcw,ntiw,ntke,           &
      &     grav,rd,cp,rv,hvap,hfus,fv,eps,epsm1,                        &
      &     dv,du,tdt,rtg,u1,v1,t1,q1,swh,hlw,xmu,garea,                 &
@@ -84,7 +82,8 @@
       integer, intent(out) :: kpbl(:)
 !
       logical, intent(in)  :: gen_tend, ldiag3d
-      real(kind=kind_phys), intent(inout), dimension(:,:,:) :: dtend
+      real(kind=kind_phys), intent(inout), dimension(:,:,:), optional ::&
+     &     dtend
       integer, intent(in) :: index_of_temperature,index_of_x_wind,      &
      &  index_of_y_wind, ntqv, ntoz, dtidx(:,:), index_of_process_pbl
 !
@@ -1542,6 +1541,5 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       return
       end subroutine satmedmfvdif_run
-!> @}
 
       end module satmedmfvdif

@@ -1,6 +1,7 @@
 !>\file rrtmgp_aerosol_optics.F90
 !!
 
+!> This module contains aerosol optics properties for RRTMGP
 module rrtmgp_aerosol_optics
   use machine,                   only: kind_phys
   use radiation_tools,           only: check_error_msg
@@ -15,13 +16,7 @@ module rrtmgp_aerosol_optics
 
 contains
 
-  ! #########################################################################################
-  ! SUBROUTINE rrtmgp_aerosol_optics_run()
-  ! #########################################################################################
-
-!>\defgroup rrtmgp_aerosol_optics_mod GFS RRTMGP Aerosol Optics Module
-!> @{
-!! \section arg_table_rrtmgp_aerosol_optics_run
+!> \section arg_table_rrtmgp_aerosol_optics_run Argument Table
 !! \htmlinclude rrtmgp_aerosol_optics_run.html
 !!
   subroutine rrtmgp_aerosol_optics_run(doSWrad, doLWrad, nCol, nLev, nDay, idxday, p_lev,   &
@@ -53,7 +48,8 @@ contains
     real(kind_phys), dimension(:,:),intent(in) :: &
          p_lay,                 & ! Pressure @ layer-centers (Pa)
          tv_lay,                & ! Virtual-temperature @ layer-centers (K)
-         relhum,                & ! Relative-humidity @ layer-centers
+         relhum                   ! Relative-humidity @ layer-centers
+    real(kind_phys), dimension(:,:),intent(in) :: &
          p_lk                     ! Exner function @ layer-centers (1)
     real(kind_phys), dimension(:, :,:),intent(in) :: &
          tracer                   ! trace gas concentrations
@@ -124,5 +120,4 @@ contains
     endif
 
   end subroutine rrtmgp_aerosol_optics_run
-!> @}  
 end module rrtmgp_aerosol_optics

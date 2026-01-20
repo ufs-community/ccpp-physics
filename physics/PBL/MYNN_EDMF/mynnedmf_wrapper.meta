@@ -320,6 +320,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [qgrs_cloud_ice_num_conc]
   standard_name = mass_number_concentration_of_cloud_ice_water_crystals_in_air
   long_name = number concentration of ice
@@ -344,6 +345,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [qgrs_ice_aer_num_conc]
   standard_name = mass_number_concentration_of_nonhygroscopic_ice_nucleating_aerosols
   long_name = number concentration of ice-friendly aerosols
@@ -352,6 +354,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [qgrs_cccn]
   standard_name = cloud_condensation_nuclei_number_concentration
   long_name = number concentration of cloud condensation nuclei
@@ -360,6 +363,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [prsl]
   standard_name = air_pressure
   long_name = mean layer pressure
@@ -568,6 +572,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [dvsfc_cice]
   standard_name = surface_y_momentum_flux_from_coupled_process
   long_name = sfc y momentum flux for coupling
@@ -576,6 +581,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [dtsfc_cice]
   standard_name = surface_upward_sensible_heat_flux_from_coupled_process
   long_name = sfc sensible heat flux for coupling
@@ -584,6 +590,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [dqsfc_cice]
   standard_name = surface_upward_latent_heat_flux_from_coupled_process
   long_name = sfc latent heat flux for coupling
@@ -592,6 +599,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [hflx_wat]
   standard_name = kinematic_surface_upward_sensible_heat_flux_over_water
   long_name = kinematic surface upward sensible heat flux over water
@@ -661,6 +669,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [dvsfci_cpl]
   standard_name = surface_y_momentum_flux_for_coupling
   long_name = instantaneous sfc v momentum flux
@@ -669,6 +678,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [dtsfci_cpl]
   standard_name = surface_upward_sensible_heat_flux_for_coupling
   long_name = instantaneous sfc sensible heat flux
@@ -677,6 +687,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [dqsfci_cpl]
   standard_name = surface_upward_latent_heat_flux_for_coupling
   long_name = instantaneous sfc latent heat flux
@@ -685,6 +696,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [dusfc_cpl]
   standard_name = cumulative_surface_x_momentum_flux_for_coupling_multiplied_by_timestep
   long_name = cumulative sfc u momentum flux multiplied by timestep
@@ -693,6 +705,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [dvsfc_cpl]
   standard_name = cumulative_surface_y_momentum_flux_for_coupling_multiplied_by_timestep
   long_name = cumulative sfc v momentum flux multiplied by timestep
@@ -701,6 +714,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [dtsfc_cpl]
   standard_name = cumulative_surface_upward_sensible_heat_flux_for_coupling_multiplied_by_timestep
   long_name = cumulative sfc sensible heat flux multiplied by timestep
@@ -709,6 +723,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [dqsfc_cpl]
   standard_name = cumulative_surface_upward_latent_heat_flux_for_coupling_multiplied_by_timestep
   long_name = cumulative sfc latent heat flux multiplied by timestep
@@ -717,6 +732,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [recmol]
   standard_name = reciprocal_of_obukhov_length
   long_name = one over obukhov length
@@ -813,6 +829,7 @@
   type = real
   kind = kind_phys
   intent = out
+  optional = True
 [qwt]
   standard_name = tke_tendency_due_to_vertical_transport
   long_name = tke tendency due to vertical transport and diffusion
@@ -821,6 +838,7 @@
   type = real
   kind = kind_phys
   intent = out
+  optional = True
 [qshear]
   standard_name = tke_tendency_due_to_shear
   long_name = tke tendency due to shear
@@ -829,6 +847,7 @@
   type = real
   kind = kind_phys
   intent = out
+  optional = True
 [qbuoy]
   standard_name = tke_tendency_due_to_buoyancy
   long_name = tke tendency due to buoyancy production or consumption
@@ -837,6 +856,7 @@
   type = real
   kind = kind_phys
   intent = out
+  optional = True
 [qdiss]
   standard_name = tke_tendency_due_to_dissipation
   long_name = tke tendency due to the dissipation of tke
@@ -845,6 +865,7 @@
   type = real
   kind = kind_phys
   intent = out
+  optional = True
 [PBLH]
   standard_name = atmosphere_boundary_layer_thickness
   long_name = PBL thickness
@@ -892,6 +913,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [edmf_w]
   standard_name = emdf_updraft_vertical_velocity
   long_name = updraft vertical velocity from mass flux scheme
@@ -900,6 +922,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [edmf_qt]
   standard_name = emdf_updraft_total_water
   long_name = updraft total water from mass flux scheme
@@ -908,6 +931,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [edmf_thl]
   standard_name = emdf_updraft_theta_l
   long_name = updraft theta-l from mass flux scheme
@@ -916,6 +940,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [edmf_ent]
   standard_name = emdf_updraft_entrainment_rate
   long_name = updraft entrainment rate from mass flux scheme
@@ -924,6 +949,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [edmf_qc]
   standard_name = emdf_updraft_cloud_water
   long_name = updraft cloud water from mass flux scheme
@@ -932,6 +958,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [sub_thl]
   standard_name = theta_subsidence_tendency
   long_name = updraft theta subsidence tendency
@@ -940,6 +967,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [sub_sqv]
   standard_name = water_vapor_subsidence_tendency
   long_name = updraft water vapor subsidence tendency
@@ -948,6 +976,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [det_thl]
   standard_name = theta_detrainment_tendency
   long_name = updraft theta detrainment tendency
@@ -956,6 +985,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [det_sqv]
   standard_name = water_vapor_detrainment_tendency
   long_name = updraft water vapor detrainment tendency
@@ -964,6 +994,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [maxwidth]
   standard_name = maximum_width_of_plumes
   long_name = maximum width of plumes per grid column
@@ -1067,6 +1098,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [dqdt_ice_num_conc]
   standard_name = process_split_cumulative_tendency_of_mass_number_concentration_of_cloud_ice_water_crystals_in_air
   long_name = number conc. of ice tendency due to model physics
@@ -1083,6 +1115,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [dqdt_ice_aer_num_conc]
   standard_name = process_split_cumulative_tendency_of_mass_number_concentration_of_nonhygroscopic_ice_nucleating_aerosols
   long_name = number conc. of ice-friendly aerosols tendency due to model physics
@@ -1091,6 +1124,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [dqdt_cccn]
   standard_name = tendency_of_cloud_condensation_nuclei_number_concentration_due_to_model_physics
   long_name = number concentration of cloud condensation nuclei tendency due to model physics
@@ -1099,6 +1133,15 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
+[tmf]
+  standard_name = tendency_of_vertically_diffused_tracer_concentration
+  long_name = updated tendency of the tracers due to vertical diffusion in PBL scheme
+  units = kg kg-1 s-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension,number_of_vertical_diffusion_tracers)
+  type = real
+  kind = kind_phys
+  intent = out
 [flag_for_pbl_generic_tend]
   standard_name = flag_for_generic_tendency_due_to_planetary_boundary_layer
   long_name = true if GFS_PBL_generic should calculate tendencies
@@ -1114,6 +1157,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [dtidx]
   standard_name = cumulative_change_of_state_variables_outer_index
   long_name = index of state-variable and process in last dimension of diagnostic tendencies array AKA cumulative_change_index
@@ -1376,6 +1420,27 @@
   dimensions = ()
   type = integer
   intent = in
+[imfdeepcnv]
+  standard_name = control_for_deep_convection_scheme
+  long_name = flag for mass-flux deep convection scheme
+  units = flag
+  dimensions = ()
+  type = integer
+  intent = in
+[imfdeepcnv_c3]
+  standard_name = identifier_for_c3_deep_convection
+  long_name = flag for C3 deep convection scheme
+  units = flag
+  dimensions = ()
+  type = integer
+  intent = in
+[imfdeepcnv_samf]
+  standard_name = identifer_for_scale_aware_mass_flux_deep_convection
+  long_name = flag for SAMF deep convection scheme
+  units = flag
+  dimensions = ()
+  type = integer
+  intent = in 
 [nssl_ccn_on]
   standard_name = nssl_ccn_on
   long_name = CCN activation flag in NSSL micro
@@ -1391,6 +1456,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [frp]
   standard_name = frp_hourly
   long_name = hourly fire radiative power
@@ -1399,6 +1465,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [rrfs_sd]
   standard_name = do_smoke_coupling
   long_name = flag controlling rrfs_sd collection (default off)
@@ -1442,6 +1509,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [smoke_dbg]
   standard_name = do_smoke_debug
   long_name = flag for rrfs smoke plumerise debug
@@ -1471,6 +1539,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [spp_pbl]
   standard_name = control_for_pbl_spp_perturbations
   long_name = control for pbl spp perturbations

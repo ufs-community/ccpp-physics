@@ -2,10 +2,10 @@
   name = rrtmgp_sw_main
   type = scheme
   dependencies = ../../hooks/machine.F,../radiation_tools.F90,../mersenne_twister.f
-  dependencies = rte-rrtmgp/rrtmgp/mo_gas_optics_rrtmgp.F90,rte-rrtmgp/extensions/mo_fluxes_byband.F90
-  dependencies = rte-rrtmgp/rte/mo_rte_kind.F90,rte-rrtmgp/rrtmgp/mo_gas_concentrations.F90,rte-rrtmgp/rte/mo_optical_props.F90
-  dependencies = rte-rrtmgp/rte/mo_rte_sw.F90,rte-rrtmgp/rte/mo_fluxes.F90
-  dependencies = rte-rrtmgp/rte/kernels/mo_fluxes_broadband_kernels.F90, rte-rrtmgp/rte/kernels/mo_rte_solver_kernels.F90
+  dependencies = rte-rrtmgp/rrtmgp-frontend/mo_gas_optics_rrtmgp.F90,rte-rrtmgp/extensions/mo_fluxes_byband.F90
+  dependencies = rte-rrtmgp/rte-frontend/mo_rte_kind.F90,rte-rrtmgp/gas-optics/mo_gas_concentrations.F90,rte-rrtmgp/rte-frontend/mo_optical_props.F90
+  dependencies = rte-rrtmgp/rte-frontend/mo_rte_sw.F90,rte-rrtmgp/rte-frontend/mo_fluxes.F90
+  dependencies = rte-rrtmgp/rte-kernels/mo_fluxes_broadband_kernels.F90, rte-rrtmgp/rte-kernels/mo_rte_solver_kernels.F90
   dependencies = rrtmgp_sw_gas_optics.F90, rrtmgp_sw_cloud_optics.F90,rrtmgp_sampling.F90
   dependencies = ../../Interstitials/UFS_SCM_NEPTUNE/GFS_rrtmgp_pre.F90
 
@@ -37,20 +37,6 @@
   type = character
   intent = in
   kind = len=128
-[doGP_cldoptics_PADE]
-  standard_name = flag_to_calc_lw_cld_optics_using_RRTMGP_PADE
-  long_name = logical flag to control cloud optics scheme.
-  units = flag
-  dimensions = ()
-  type = logical
-  intent = in
-[doGP_cldoptics_LUT]
-  standard_name = flag_to_calc_lw_cld_optics_using_RRTMGP_LUT
-  long_name = logical flag to control cloud optics scheme.
-  units = flag
-  dimensions = ()
-  type = logical
-  intent = in
 [nrghice]
   standard_name = number_of_ice_roughness_categories
   long_name = number of ice-roughness categories in RRTMGP calculation
@@ -58,20 +44,6 @@
   dimensions =  ()
   type = integer
   intent = inout
-[doGP_sgs_cnv]
-  standard_name = flag_to_include_sgs_convective_cloud_in_RRTMGP
-  long_name = logical flag to control sgs convective cloud in RRTMGP
-  units = flag
-  dimensions = ()
-  type = logical
-  intent = in
-[doGP_sgs_pbl]
-  standard_name = flag_to_include_sgs_MYNN_EDMF_cloud_in_RRTMGP
-  long_name = logical flag to control MYNN-EDMF PBL cloud in RRTMGP
-  units = flag
-  dimensions = ()
-  type = logical
-  intent = in
 [rrtmgp_phys_blksz]
   standard_name = number_of_columns_per_RRTMGP_SW_block
   long_name = number of columns to process at a time by RRTMGP SW scheme
@@ -105,7 +77,7 @@
   long_name = MPI communicator
   units = index
   dimensions = ()
-  type = integer
+  type = MPI_Comm
   intent = in
 [active_gases_array]
   standard_name = list_of_active_gases_used_by_RRTMGP
@@ -162,20 +134,6 @@
   units = flag
   dimensions = ()
   type = integer
-  intent = in
-[doGP_sgs_cnv]
-  standard_name = flag_to_include_sgs_convective_cloud_in_RRTMGP
-  long_name = logical flag to control sgs convective cloud in RRTMGP
-  units = flag
-  dimensions = ()
-  type = logical
-  intent = in
-[doGP_sgs_pbl]
-  standard_name = flag_to_include_sgs_MYNN_EDMF_cloud_in_RRTMGP
-  long_name = logical flag to control MYNN-EDMF PBL cloud in RRTMGP
-  units = flag
-  dimensions = ()
-  type = logical
   intent = in
 [ncol]
   standard_name = horizontal_loop_extent
@@ -465,6 +423,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [cld_cnv_iwp]
   standard_name = convective_cloud_ice_water_path
   long_name = layer convective cloud ice water path
@@ -473,6 +432,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [cld_cnv_reliq]
   standard_name = mean_effective_radius_for_liquid_convective_cloud
   long_name = mean effective radius for liquid convective cloud
@@ -481,6 +441,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [cld_cnv_reice]
   standard_name = mean_effective_radius_for_ice_convective_cloud
   long_name = mean effective radius for ice convective cloud
@@ -489,6 +450,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [cld_pbl_lwp]
   standard_name = MYNN_SGS_cloud_liquid_water_path
   long_name = layer convective cloud liquid water path
@@ -497,6 +459,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [cld_pbl_iwp]
   standard_name = MYNN_SGS_cloud_ice_water_path
   long_name = layer convective cloud ice water path
@@ -505,6 +468,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [cld_pbl_reliq]
   standard_name = mean_effective_radius_for_liquid_MYNN_SGS_cloud
   long_name = mean effective radius for liquid MYNN_SGS cloud
@@ -513,6 +477,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [cld_pbl_reice]
   standard_name = mean_effective_radius_for_ice_MYNN_SGS_cloud
   long_name = mean effective radius for ice MYNN_SGS cloud
@@ -521,6 +486,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [cloud_overlap_param]
   standard_name = cloud_overlap_param
   long_name = cloud overlap parameter

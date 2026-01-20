@@ -1,7 +1,7 @@
 !>\file set_soilveg_ruc.F90
-!! This file contains subroutine to specify vegetation and soil
-!! parameters for a given soild and land-use classification. 
 
+!> This module contains subroutine to specify vegetation and soil
+!! parameters for a given soild and land-use classification. 
       module set_soilveg_ruc_mod
 
       use machine ,   only : kind_phys
@@ -45,36 +45,36 @@
       if(ivet.eq.2) then
 ! Using umd veg classification
       slope_data =(/0.1,  0.6, 1.0, 0.35, 0.55, 0.8,            &
-     &  	       0.63, 0.0, 0.0, 0.0,  0.0,  0.0,         &
-     &  	       0.0 , 0.0, 0.0, 0.0,  0.0,  0.0,         &
-     &  	       0.0 , 0.0, 0.0, 0.0,  0.0,  0.0,         & 
-     &  	       0.0 , 0.0, 0.0, 0.0,  0.0,  0.0/)
+     &             0.63, 0.0, 0.0, 0.0,  0.0,  0.0,         &
+     &             0.0 , 0.0, 0.0, 0.0,  0.0,  0.0,         &
+     &             0.0 , 0.0, 0.0, 0.0,  0.0,  0.0,         &
+     &             0.0 , 0.0, 0.0, 0.0,  0.0,  0.0/)
 ! ----------------------------------------------------------------------
 ! vegetation class-related arrays
 ! ----------------------------------------------------------------------
       rstbl      =(/300.0, 175.0, 175.0, 300.0, 300.0, 70.0,    &
-     &              20.0, 225.0, 225.0, 225.0, 400.0, 20.0,     &
-     &  	   150.0,   0.0,   0.0,   0.0,   0.0,  0.0,     &
-     &  	     0.0,   0.0,   0.0,   0.0,   0.0,  0.0,     &
-     &  	     0.0,   0.0,   0.0,   0.0,   0.0,  0.0/)
+     &               20.0, 225.0, 225.0, 225.0, 400.0, 20.0,     &
+     &              150.0,   0.0,   0.0,   0.0,   0.0,  0.0,     &
+     &                0.0,   0.0,   0.0,   0.0,   0.0,  0.0,     &
+     &                0.0,   0.0,   0.0,   0.0,   0.0,  0.0/)
 
       rgltbl     =(/30.0,  30.0,  30.0,  30.0,  30.0,  65.0,    &
-     &  	  100.0, 100.0, 100.0, 100.0, 100.0, 100.0,     &
-     &  	  100.0,   0.0,   0.0,   0.0,	0.0,   0.0,     &
-     &  	    0.0,   0.0,   0.0,   0.0,	0.0,   0.0,     &
-     &  	    0.0,   0.0,   0.0,   0.0,	0.0,   0.0/)
+     &             100.0, 100.0, 100.0, 100.0, 100.0, 100.0,     &
+     &             100.0,   0.0,   0.0,   0.0,   0.0,   0.0,     &
+     &               0.0,   0.0,   0.0,   0.0,   0.0,   0.0,     &
+     &               0.0,   0.0,   0.0,   0.0,   0.0,   0.0/)
 
       hstbl      =(/41.69, 54.53, 51.93, 47.35,  47.35, 54.53,  &
-     &  	  36.35, 42.00, 42.00, 42.00,  42.00, 36.35,    &
-     &  	  42.00,  0.00,  0.00,  0.00,	0.00,  0.00,    &
-     &  	   0.00,  0.00,  0.00,  0.00,	0.00,  0.00,    &
-     &  	   0.00,  0.00,  0.00,  0.00,	0.00,  0.00/)
+     &              36.35, 42.00, 42.00, 42.00,  42.00, 36.35,    &
+     &              42.00,  0.00,  0.00,  0.00, 0.00,  0.00,    &
+     &               0.00,  0.00,  0.00,  0.00, 0.00,  0.00,    &
+     &               0.00,  0.00,  0.00,  0.00, 0.00,  0.00/)
 
       snuptbl   =(/0.040, 0.040, 0.040, 0.040, 0.040, 0.040,    &
      &             0.020, 0.020, 0.020, 0.020, 0.013, 0.020,    &
      &             0.013, 0.000, 0.000, 0.000, 0.000, 0.000,    &
-     &  	   0.000, 0.000, 0.000, 0.000, 0.000, 0.000,    &
-     &  	   0.000, 0.000, 0.000, 0.000, 0.000, 0.000/)
+     &             0.000, 0.000, 0.000, 0.000, 0.000, 0.000,    &
+     &             0.000, 0.000, 0.000, 0.000, 0.000, 0.000/)
  
       bare =11
 
@@ -441,25 +441,21 @@
       LPARAM =.FALSE.
 
          IF (DEFINED_SOIL .GT. MAX_SOILTYP) THEN
-            WRITE(0,*) 'Warning: DEFINED_SOIL too large in namelist'
             errflg = 1
             errmsg = 'ERROR(set_soilveg_ruc):  DEFINED_SOIL too large in namelist'
             return
          ENDIF
          IF (DEFINED_VEG .GT. MAX_VEGTYP) THEN
-            WRITE(0,*) 'Warning: DEFINED_VEG too large in namelist'
             errflg = 1
             errmsg = 'ERROR(set_soilveg_ruc):  DEFINED_VEG too large in namelist'
             return
          ENDIF
          IF (DEFINED_SLOPE .GT. MAX_SLOPETYP) THEN
-            WRITE(0,*) 'Warning: DEFINED_SLOPE too large in namelist'
             errflg = 1
             errmsg = 'ERROR(set_soilveg_ruc):  DEFINED_SLOPE too large in namelist'
             return
          ENDIF
          
 !       if (me == 0) write(6,soil_veg_ruc)
-       return
        end subroutine set_soilveg_ruc
        end module set_soilveg_ruc_mod

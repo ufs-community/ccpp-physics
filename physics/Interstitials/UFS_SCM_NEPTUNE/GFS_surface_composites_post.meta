@@ -2,7 +2,7 @@
 [ccpp-table-properties]
   name = GFS_surface_composites_post
   type = scheme
-  relative_path = ../../
+  dependencies_path = ../../
   dependencies = hooks/machine.F,SFC_Layer/UFS/sfc_diff.f
 
 ########################################################################
@@ -144,6 +144,22 @@
   dimensions = (horizontal_loop_extent)
   type = logical
   intent = in
+[use_cdeps_data]
+  standard_name = do_cdeps_inline
+  long_name = flag for using data provided by CDEPS inline (default false)
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
+[mask_dat]
+  standard_name = land_sea_mask_from_data
+  long_name = landmask
+  units = flag
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
+  optional = True
 [wind]
   standard_name = wind_speed_at_lowest_model_layer
   long_name = wind speed at lowest model level
@@ -815,6 +831,31 @@
   dimensions = (horizontal_loop_extent)
   type = real
   kind = kind_phys
+  intent = in
+[hflx_fire]
+  standard_name = kinematic_surface_upward_sensible_heat_flux_of_fire
+  long_name = kinematic surface upward sensible heat flux of fire
+  units = K m s-1
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
+  optional = True
+[evap_fire]
+  standard_name = surface_upward_specific_humidity_flux_of_fire
+  long_name = kinematic surface upward latent heat flux of fire
+  units = kg kg-1 m s-1
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
+  optional = True
+[cpl_fire]
+  standard_name = do_fire_coupling
+  long_name = flag controlling fire_behavior collection (default off)
+  units = flag
+  dimensions = ()
+  type = logical
   intent = in
 [qss]
   standard_name = surface_specific_humidity

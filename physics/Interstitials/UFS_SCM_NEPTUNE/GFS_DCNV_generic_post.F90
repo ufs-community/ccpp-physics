@@ -15,8 +15,8 @@
       index_of_temperature, index_of_x_wind, index_of_y_wind, ntqv, gq0, save_q,  &
       cnvw, cnvc, cnvw_phy_f3d, cnvc_phy_f3d, flag_for_dcnv_generic_tend,         &
       ntcw,ntiw,ntclamt,ntrw,ntsw,ntrnc,ntsnc,ntgl,                               &
-      ntgnc, nthl, nthnc, nthv, ntgv, ntrz, ntgz, nthz, ntsigma, ntrac,clw,       &
-      satmedmf, trans_trac, errmsg, errflg)
+      ntgnc, nthl, nthnc, nthv, ntgv, ntrz, ntgz, nthz, ntsigma, ntomega,         &
+      ntrac,clw,satmedmf, trans_trac, errmsg, errflg)
 
 
       use machine,               only: kind_phys
@@ -32,25 +32,26 @@
       real(kind=kind_phys), dimension(:,:),   intent(in) :: save_u, save_v, save_t
       real(kind=kind_phys), dimension(:,:),   intent(in) :: gu0, gv0, gt0
       real(kind=kind_phys), dimension(:,:,:), intent(in) :: gq0, save_q
-      real(kind=kind_phys), dimension(:,:),   intent(in) :: ud_mf, dd_mf, dt_mf
+      real(kind=kind_phys), dimension(:,:),   intent(in) :: dd_mf, dt_mf
+      real(kind=kind_phys), dimension(:,:),   intent(in), optional :: ud_mf
       real(kind=kind_phys), intent(in) :: con_g
       integer, intent(in) :: npdf3d, num_p3d, ncnvcld3d
       logical, intent(in) :: satmedmf, trans_trac
 
       real(kind=kind_phys), dimension(:),   intent(inout) :: rainc, cldwrk
-      real(kind=kind_phys), dimension(:,:), intent(inout) :: upd_mf, dwn_mf, det_mf
+      real(kind=kind_phys), dimension(:,:), intent(inout), optional :: upd_mf, dwn_mf, det_mf
       real(kind=kind_phys), dimension(:,:), intent(inout) :: cnvw, cnvc
 
-      real(kind=kind_phys), dimension(:,:,:), intent(inout) :: dtend
+      real(kind=kind_phys), dimension(:,:,:), intent(inout), optional :: dtend
       integer, intent(in) :: dtidx(:,:), index_of_process_dcnv, index_of_temperature, &
            index_of_x_wind, index_of_y_wind, ntqv
       integer, intent(in) :: ntcw,ntiw,ntclamt,ntrw,ntsw,ntrnc,ntsnc,ntgl,     &
                              ntgnc, nthl, nthnc, nthv, ntgv, ntrz, ntgz, nthz, &
-                             ntsigma, ntrac
+                             ntsigma, ntomega, ntrac
       real(kind=kind_phys), dimension(:,:,:), intent(in) :: clw
 
 
-      real(kind=kind_phys), dimension(:,:), intent(inout) :: cnvw_phy_f3d, cnvc_phy_f3d
+      real(kind=kind_phys), dimension(:,:), intent(inout), optional :: cnvw_phy_f3d, cnvc_phy_f3d
 
       character(len=*), intent(out) :: errmsg
       integer, intent(out) :: errflg
@@ -114,7 +115,7 @@
                      n /= ntsnc .and. n /= ntgl  .and. n /= ntgnc   .and. &
                      n /= nthl  .and. n /= nthnc .and. n /= nthv    .and. &
                      n /= ntrz  .and. n /= ntgz  .and. n /= nthz    .and. &
-                     n /= ntgv  .and. n /= ntsigma) then
+                     n /= ntgv  .and. n /= ntsigma .and. n /= ntomega) then
                    tracers = tracers + 1
                    idtend = dtidx(100+n,index_of_process_dcnv)
                    if(idtend>0) then

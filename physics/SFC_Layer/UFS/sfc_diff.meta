@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = sfc_diff
   type = scheme
-  relative_path	= ../../
+  dependencies_path	= ../../
   dependencies = hooks/machine.F
 
 ########################################################################
@@ -143,6 +143,22 @@
   type = real
   kind = kind_phys
   intent = in
+[lakefrac]
+  standard_name = lake_area_fraction
+  long_name = fraction of horizontal grid area occupied by lake
+  units = frac
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
+[fice]
+  standard_name = sea_ice_area_fraction_of_sea_area_fraction
+  long_name = ice fraction over open water
+  units = frac
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
 [vegtype]
   standard_name = vegetation_type_classification
   long_name = vegetation type at each grid cell
@@ -218,12 +234,51 @@
   type = real
   kind = kind_phys
   intent = in
+[u1]
+  standard_name = x_wind_at_surface_adjacent_layer
+  long_name = x component of surface layer wind
+  units = m s-1
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
+[v1]
+  standard_name = y_wind_at_surface_adjacent_layer
+  long_name = y component of surface layer wind
+  units = m s-1
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
+[usfco]
+  standard_name = x_ocean_current
+  long_name = zonal current at ocean surface
+  units = m s-1
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
+[vsfco]
+  standard_name = y_ocean_current
+  long_name = meridional current at ocean surface
+  units = m s-1
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
 [sfc_z0_type]
   standard_name = flag_for_surface_roughness_option_over_water
   long_name = surface roughness options over water
   units = flag
   dimensions = ()
   type = integer
+  intent = in
+[use_oceanuv]
+  standard_name = do_air_sea_flux_computation_over_water
+  long_name = air-sea flux option
+  units = flag
+  dimensions = ()
+  type = logical
   intent = in
 [wet]
   standard_name = flag_nonzero_wet_surface_fraction

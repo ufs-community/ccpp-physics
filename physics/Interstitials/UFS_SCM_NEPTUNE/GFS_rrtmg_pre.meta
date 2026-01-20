@@ -1,8 +1,9 @@
 [ccpp-table-properties]
   name = GFS_rrtmg_pre
   type = scheme
-  relative_path = ../../
+  dependencies_path = ../../
   dependencies = tools/funcphys.f90,hooks/machine.F
+  dependencies = MP/TEMPO/TEMPO/module_mp_tempo_params.F90,MP/TEMPO/TEMPO/module_mp_tempo_utils.F90
   dependencies = MP/Thompson/module_mp_thompson.F90,MP/Thompson/module_mp_thompson_make_number_concentrations.F90
   dependencies = Radiation/RRTMG/radcons.f90,Radiation/radiation_aerosols.f
   dependencies = Radiation/radiation_astronomy.f,Radiation/radiation_clouds.f,Radiation/radiation_gases.f
@@ -52,6 +53,13 @@
 [lextop]
   standard_name = do_extra_top_layer_for_radiation
   long_name = use an extra top layer for radiation
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
+[xr_cnvcld]
+  standard_name = flag_for_suspended_convective_clouds_in_Xu_Randall
+  long_name = flag for using suspended convective clouds in Xu Randall
   units = flag
   dimensions = ()
   type = logical
@@ -259,6 +267,13 @@
   dimensions = ()
   type = ty_ozphys
   intent = in
+[tempo_cfg]
+  standard_name = configuration_for_TEMPO_microphysics
+  long_name = configuration information for TEMPO microphysics
+  units = mixed
+  dimensions = ()
+  type = ty_tempo_cfg
+  intent = in
 [iaermdl]
   standard_name = control_for_aerosol_radiation_scheme
   long_name = control of aerosol scheme in radiation
@@ -462,6 +477,13 @@
   dimensions = ()
   type = integer
   intent = in
+[imp_physics_tempo]
+  standard_name = identifier_for_tempo_microphysics_scheme
+  long_name = choice of TEMPO microphysics scheme
+  units = flag
+  dimensions = ()
+  type = integer
+  intent = in
 [imp_physics_gfdl]
   standard_name = identifier_for_gfdl_microphysics_scheme
   long_name = choice of GFDL microphysics scheme
@@ -611,6 +633,7 @@
   type = character
   kind = len=3
   intent = in
+  optional = True
 [lsswr]
   standard_name = flag_for_calling_shortwave_radiation
   long_name = logical flags for sw radiation calls
@@ -723,6 +746,22 @@
   standard_name = tunable_parameter_for_ice_supersaturation
   long_name = ice supersaturation parameter for PDF clouds
   units = none
+  dimensions = ()
+  type = real
+  kind = kind_phys
+  intent = in
+[xr_con]
+  standard_name = multiplicative_tuning_parameter_for_Xu_Randall_cloud_fraction
+  long_name = multiplicative tuning parameter for Xu Randall cloud fraction
+  units = 1
+  dimensions = ()
+  type = real
+  kind = kind_phys
+  intent = in
+[xr_exp]
+  standard_name = exponent_tuning_parameter_for_Xu_Randall_cloud_fraction
+  long_name = exponent tuning parameter for Xu Randall cloud fraction
+  units = 1
   dimensions = ()
   type = real
   kind = kind_phys
@@ -903,6 +942,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [mg_cld]
   standard_name = cloud_fraction_for_MG
   long_name = cloud fraction used by Morrison-Gettelman MP
@@ -911,6 +951,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [effrr_in]
   standard_name = effective_radius_of_stratiform_cloud_rain_particle
   long_name = effective radius of cloud rain particle in micrometers
@@ -919,6 +960,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [pert_clds]
   standard_name = flag_for_stochastic_cloud_fraction_perturbations
   long_name = flag for stochastic cloud fraction physics perturbations
@@ -934,6 +976,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [sppt_amp]
   standard_name = total_amplitude_of_sppt_perturbation
   long_name = total ampltidue of stochastic sppt perturbation
@@ -950,6 +993,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [cnvc_in]
   standard_name = convective_cloud_area_fraction
   long_name = convective cloud cover in the phy_f3d array
@@ -958,6 +1002,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [qgrs]
   standard_name = tracer_concentration
   long_name = model layer mean tracer concentration
@@ -1013,6 +1058,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [effri_inout]
   standard_name = effective_radius_of_stratiform_cloud_ice_particle
   long_name = eff. radius of cloud ice water particle in micrometer
@@ -1021,6 +1067,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [effrs_inout]
   standard_name = effective_radius_of_stratiform_cloud_snow_particle
   long_name = effective radius of cloud snow particle in micrometers
@@ -1029,6 +1076,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [clouds1]
   standard_name = total_cloud_fraction
   long_name = layer total cloud fraction
@@ -1077,6 +1125,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [kd]
   standard_name = vertical_index_difference_between_inout_and_local
   long_name = vertical index difference between in/out and local
@@ -1456,6 +1505,7 @@
   type = real
   kind = kind_phys
   intent = out
+  optional = True
 [top_at_1]
   standard_name = flag_for_vertical_ordering_in_radiation
   long_name = flag for vertical ordering in radiation
@@ -1508,6 +1558,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [spp_rad]
   standard_name = control_for_radiation_spp_perturbations
   long_name = control for radiation spp perturbations

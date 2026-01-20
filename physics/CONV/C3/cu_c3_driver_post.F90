@@ -34,7 +34,8 @@ module cu_c3_driver_post
       real(kind_phys),  intent(out) :: conv_act_m(:)
       ! for Radar reflectivity
       real(kind_phys),  intent(in)  :: dt
-      real(kind_phys),  intent(in)  :: raincv(:), maxupmf(:)
+      real(kind_phys),  intent(in)  :: raincv(:)
+      real(kind_phys),  intent(in)  :: maxupmf(:)
       real(kind_phys),  intent(inout) :: refl_10cm(:,:)
       character(len=*), intent(out) :: errmsg
 !$acc declare copyin(t,q,cactiv,cactiv_m) copyout(prevst,prevsq,conv_act,conv_act_m)

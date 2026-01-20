@@ -171,8 +171,6 @@ module GFS_rrtmg_setup
       ! Initialize the CCPP error handling variables
       errmsg = ''
       errflg = 0
-
-      if (is_initialized) return
       
       if (do_RRTMGP) then
         write(errmsg,'(*(a))') "Logic error: do_RRTMGP must be set to .false."
@@ -186,12 +184,6 @@ module GFS_rrtmg_setup
         iaerflg = mod(iaer, 1000)   
       endif
       iaermdl = iaer/1000               ! control flag for aerosol scheme selection
-      if ( iaermdl < 0 .or.  (iaermdl>2 .and. iaermdl/=5) ) then
-         print *, ' Error -- IAER flag is incorrect, Abort'
-         errflg = 1
-         errmsg = 'ERROR(GFS_rrtmg_setup): IAER flag is incorrect'
-         return
-      endif
 
 !  ---  assign initial permutation seed for mcica cloud-radiation
       if ( isubcsw>0 .or. isubclw>0 ) then
@@ -213,19 +205,30 @@ module GFS_rrtmg_setup
          print *, 'lextop=',lextop, ' ltp=',ltp
       endif
 
+      if (is_initialized) return
+
       ! Call initialization routines
       call sol_init ( me, isol, solar_file, con_solr_2008,con_solr_2002,&
            con_pi )
       call aer_init ( levr, me, iaermdl, iaerflg, lalw1bd, aeros_file,  &
            con_pi, con_t0c, con_c, con_boltz, con_plnk, errflg, errmsg)
+      if(errflg/=0) return
+
       call gas_init ( me, co2usr_file, co2cyc_file, ico2, ictm, con_pi, errflg, errmsg )
+      if(errflg/=0) return
+
       call cld_init ( si, levr, imp_physics, me, con_g, con_rd, errflg, errmsg)
+      if(errflg/=0) return
+
       call rlwinit ( me, rad_hr_units, inc_minor_gas, icliq_lw, isubcsw, &
            iovr, iovr_rand, iovr_maxrand, iovr_max, iovr_dcorr,         &
            iovr_exp, iovr_exprand, errflg, errmsg )
+      if(errflg/=0) return
+
       call rswinit ( me, rad_hr_units, inc_minor_gas, icliq_sw, isubclw, &
            iovr, iovr_rand, iovr_maxrand, iovr_max, iovr_dcorr,         &
            iovr_exp, iovr_exprand,iswmode, errflg, errmsg )
+      if(errflg/=0) return
 
       if ( me == 0 ) then
         print *,'  Radiation sub-cloud initial seed =',ipsd0,           &
@@ -235,8 +238,6 @@ module GFS_rrtmg_setup
 !
       is_initialized = .true.
 !
-      return
-
    end subroutine GFS_rrtmg_setup_init
 
 !> \section arg_table_GFS_rrtmg_setup_timestep_init Argument Table
@@ -446,6 +447,7 @@ module GFS_rrtmg_setup
 !  ---  outputs:
      &       slag,sdec,cdec,solcon,con_pi,errmsg,errflg                 &
      &     )
+        if(errflg/=0) return
 
       endif  ! end_if_lsswr_block
 
@@ -453,6 +455,7 @@ module GFS_rrtmg_setup
 !! time interpolation
       if ( lmon_chg ) then
         call aer_update ( iyear, imon, me, iaermdl, aeros_file, errflg, errmsg )
+        if(errflg/=0) return
       endif
 
 !> -# Call co2 and other gases update routine:
@@ -466,6 +469,8 @@ module GFS_rrtmg_setup
 
       call gas_update ( kyear,kmon,kday,khour,lco2_chg, me, co2dat_file, &
            co2gbl_file, ictm, ico2, errflg, errmsg )
+      if(errflg/=0) return
+
       if (ntoz == 0) then
          call ozphys%update_o3clim(kmon, kday, khour, loz1st)
       endif
@@ -478,7 +483,6 @@ module GFS_rrtmg_setup
 !> -# Call clouds update routine (currently not needed)
 !     call cld_update ( iyear, imon, me )
 !
-      return
 !...................................
       end subroutine radupdate
 !-----------------------------------

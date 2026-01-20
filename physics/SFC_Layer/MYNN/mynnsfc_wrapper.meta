@@ -702,6 +702,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [qsfc_ice_ruc]
   standard_name = water_vapor_mixing_ratio_at_surface_over_ice
   long_name = water vapor mixing ratio at surface over ice
@@ -710,6 +711,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [ustm]
   standard_name = surface_friction_velocity_for_momentum
   long_name = friction velocity isolated for momentum only
@@ -870,6 +872,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [spp_sfc]
   standard_name = control_for_surface_layer_spp_perturbations
   long_name = control for surface layer spp perturbations

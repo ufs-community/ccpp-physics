@@ -1,12 +1,12 @@
 [ccpp-table-properties]
   name = GFS_rrtmg_setup
   type = scheme
-  relative_path = ../../
+  dependencies_path = ../../
   dependencies = hooks/machine.F
   dependencies = Radiation/radiation_aerosols.f
   dependencies = Radiation/radiation_astronomy.f,Radiation/radiation_clouds.f,Radiation/radiation_gases.f
   dependencies = Radiation/RRTMG/radlw_main.F90,Radiation/RRTMG/radlw_param.f,Radiation/RRTMG/radsw_main.F90,Radiation/RRTMG/radsw_param.f
-  dependencies = MP/Thompson/module_mp_thompson.F90,photochem/module_ozphys.F90
+  dependencies = MP/module_mp_radar.F90,MP/Thompson/module_mp_thompson.F90,photochem/module_ozphys.F90
 
 ########################################################################
 [ccpp-arg-table]
@@ -364,7 +364,7 @@
   intent = in
 [ipsd0]
   standard_name = initial_seed_for_mcica
-  long_name = initial permutaion seed for mcica radiation
+  long_name = initial permutation seed for mcica radiation
   units = 1
   dimensions =  ()
   type = integer

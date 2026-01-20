@@ -1,4 +1,6 @@
+#ifndef CCPP
 #define CCPP
+#endif
 !>  \file noahmpdrv.F90
 !!  This file contains the NoahMP land surface scheme driver.
 
@@ -13,13 +15,19 @@
 
       use module_sf_noahmplsm
 
+! These hold and apply Land IAU increments for soil temperature 
+! (possibly will extend to soil moisture increments)
+      use land_iau_mod,  only: land_iau_control_type, land_iau_external_data_type, land_iau_state_type, &
+            land_iau_mod_init, land_iau_mod_getiauforcing, land_iau_mod_finalize, calculate_landinc_mask   
+
       implicit none
 
       integer, parameter :: psi_opt = 0 ! 0: MYNN or 1:GFS
 
       private
 
-      public :: noahmpdrv_init, noahmpdrv_run
+      public :: noahmpdrv_init, noahmpdrv_run, &
+                noahmpdrv_timestep_init, noahmpdrv_finalize 
 
       contains
 
@@ -32,7 +40,8 @@
       subroutine noahmpdrv_init(lsm, lsm_noahmp, me, isot, ivegsrc, &
                                 nlunit, pores, resid,               &
                                 do_mynnsfclay,do_mynnedmf,          &
-                                errmsg, errflg)
+                                errmsg, errflg,                     &
+                                Land_IAU_Control, Land_IAU_Data, Land_IAU_state)
 
         use machine,          only: kind_phys
         use set_soilveg_mod,  only: set_soilveg
@@ -52,6 +61,19 @@
 
         character(len=*),     intent(out) :: errmsg
         integer,              intent(out) :: errflg
+
+      ! Land iau mod DDTs ! made optional to allow NoahMP Component model call this function without having to deal with IAU 
+              
+      ! Land IAU Control holds settings' information, maily read from namelist 
+      ! (e.g., block of global domain that belongs to current process,
+      ! whether to do IAU increment at this time step, time step informatoin, etc)     
+        type(land_iau_control_type), intent(inout), optional :: Land_IAU_Control
+
+        ! land iau state holds increment data read from file (before interpolation)
+        type(land_iau_state_type),  intent(inout), optional  :: Land_IAU_state     
+
+        ! Land IAU Data holds spatially and temporally interpolated increments per time step
+        type(land_iau_external_data_type), intent(inout), optional :: Land_IAU_Data   ! arry of (number of blocks):each proc holds nblks
 
         ! Initialize CCPP error handling variables
         errmsg = ''
@@ -88,20 +110,298 @@
 
         !--- initialize soil vegetation
         call set_soilveg(me, isot, ivegsrc, nlunit, errmsg, errflg)
+        if(errflg/=0) return
 
         !--- read in noahmp table
         call read_mp_table_parameters(errmsg, errflg)
+        if(errflg/=0) return
 
         ! initialize psih and psim 
-
         if ( do_mynnsfclay ) then
-        call psi_init(psi_opt,errmsg,errflg)
+          call psi_init(psi_opt,errmsg,errflg)
+          if(errflg/=0) return
         endif
 
         pores (:) = maxsmc (:)
         resid (:) = drysmc (:)
+        
+        if (present(Land_IAU_Control) .and. present(Land_IAU_Data) .and. present(Land_IAU_State)) then 
+
+          ! Initialize IAU for land--land_iau_control was set by host model
+          if (.not. Land_IAU_Control%do_land_iau) return
+          call land_iau_mod_init (Land_IAU_Control, Land_IAU_Data, Land_IAU_State, errmsg, errflg) 
+
+        endif
 
       end subroutine noahmpdrv_init
+
+!> \ingroup NoahMP_LSM
+!! \brief This subroutine is called before noahmpdrv_run 
+!!  to update states with iau increments, if available
+!! \section arg_table_noahmpdrv_timestep_init Argument Table
+!! \htmlinclude noahmpdrv_timestep_init.html
+!!
+subroutine noahmpdrv_timestep_init (itime, fhour, delt, km,  ncols,         &      
+                                    isot, ivegsrc, soiltyp, vegtype, weasd, &
+                                    land_iau_control, land_iau_data, land_iau_state, &
+                                    stc, slc, smc, errmsg, errflg,   &      
+                                    con_g, con_t0c, con_hfus)  
+   
+  use machine,                 only: kind_phys  
+  use namelist_soilveg
+  ! use set_soilveg_snippet_mod, only: set_soilveg_noahmp
+  use noahmp_tables
+
+  implicit none
+
+  integer                                   , intent(in) :: itime      !current forecast iteration      
+  real(kind=kind_phys)                      , intent(in) :: fhour      !current forecast time (hr)
+  real(kind=kind_phys)                      , intent(in) :: delt       ! time interval [s]       
+  integer                                   , intent(in) :: km         !vertical soil layer dimension 
+  integer,                                    intent(in) :: ncols
+  integer, intent(in)                                    :: isot
+  integer, intent(in)                                    :: ivegsrc
+
+  integer             , dimension(:)     , intent(in)    :: soiltyp    ! soil type (integer index)
+  integer             , dimension(:)     , intent(in)    :: vegtype    ! vegetation type (integer index)
+  real(kind=kind_phys), dimension(:)     , intent(inout) :: weasd      ! water equivalent accumulated snow depth [mm]
+  
+  type(land_iau_control_type)            , intent(inout) :: Land_IAU_Control
+  type(land_iau_external_data_type)      , intent(inout) :: Land_IAU_Data
+  type(land_iau_state_type)              , intent(inout) :: Land_IAU_State
+  real(kind=kind_phys), dimension(:,:)   , intent(inout) :: stc        ! soiltemp [K] 
+  real(kind=kind_phys), dimension(:,:)   , intent(inout) :: slc        !liquid soil moisture [m3/m3]'
+  real(kind=kind_phys), dimension(:,:)   , intent(inout) :: smc        !
+  character(len=*),                          intent(out) :: errmsg
+  integer,                                   intent(out) :: errflg
+  real(kind=kind_phys), intent(in)                       :: con_g       ! grav
+  real(kind=kind_phys), intent(in)                       :: con_t0c     ! tfreez
+  real(kind=kind_phys), intent(in)                       :: con_hfus    ! hfus
+
+  ! IAU update  
+  real(kind=kind_phys),allocatable, dimension(:,:)       :: stc_inc_flat, slc_inc_flat
+  real(kind=kind_phys), dimension(km)                    :: dz ! layer thickness
+  
+!TODO: This is hard-coded in noahmpdrv
+  real(kind=kind_phys)          :: zsoil(4) = (/ -0.1, -0.4, -1.0, -2.0 /)   !zsoil(km)
+
+  integer                       :: lsoil_incr
+  integer, allocatable          :: mask_tile(:)
+  integer,allocatable           :: stc_updated(:), slc_updated(:)
+  logical                       :: soil_freeze, soil_ice
+  integer                       :: soiltype, n_stc, n_slc
+  real(kind=kind_phys)          :: slc_new
+
+  integer                  :: i, j, ij, l, k, ib
+  integer                  :: lensfc
+
+  real(kind=kind_phys)                     :: smp !< for computing supercooled water 
+  real(kind=kind_phys)                     :: hc_incr
+
+  integer                  :: nother, nsnowupd
+  integer                  :: nstcupd, nslcupd, nfrozen, nfrozen_upd
+  logical                  :: print_update_stats = .False.
+
+  !  --- Initialize CCPP error handling variables
+  errmsg = ''
+  errflg = 0
+ 
+  if (.not. Land_IAU_Control%do_land_iau) return
+
+  !> update current forecast hour     
+  Land_IAU_Control%fhour=fhour    
+
+  !> read iau increments 
+  call land_iau_mod_getiauforcing(Land_IAU_Control, Land_IAU_Data, Land_IAU_state, errmsg, errflg)  
+  if (errflg .ne. 0) then
+    return
+  endif
+
+  !> If no increment at the current timestep simply proceed forward
+  if (.not. Land_IAU_Data%in_interval) then
+    return
+  endif
+
+  if(Land_IAU_Control%me == Land_IAU_Control%mpi_root) then 
+    print*, "adding land iau increments " 
+  endif
+
+  if (Land_IAU_Control%lsoil .ne. km) then
+    write(errmsg,*) 'noahmpdrv_timestep_init: Land_IAU_Data%lsoil ',Land_IAU_Control%lsoil,' not equal to km ',km
+    errflg = 1
+    return
+  endif
+
+  ! local variable to copy blocked data Land_IAU_Data%stc_inc
+  allocate(stc_inc_flat(Land_IAU_Control%nx * Land_IAU_Control%ny, km))  !GFS_Control%ncols
+  allocate(slc_inc_flat(Land_IAU_Control%nx * Land_IAU_Control%ny, km))  !GFS_Control%ncols
+  allocate(stc_updated(Land_IAU_Control%nx * Land_IAU_Control%ny)) 
+  allocate(slc_updated(Land_IAU_Control%nx * Land_IAU_Control%ny)) 
+
+  !copy background stc
+  stc_updated = 0
+  slc_updated = 0
+  ib = 1
+  do j = 1, Land_IAU_Control%ny   
+    do k = 1, km    
+      stc_inc_flat(ib:ib+Land_IAU_Control%nx-1, k) = Land_IAU_Data%stc_inc(:,j, k)  
+      slc_inc_flat(ib:ib+Land_IAU_Control%nx-1, k) = Land_IAU_Data%slc_inc(:,j, k) 
+    enddo
+    ib = ib + Land_IAU_Control%nx  
+  enddo
+
+  if ((Land_IAU_Control%dtp - delt) > 0.0001) then 
+    if(Land_IAU_Control%me == Land_IAU_Control%mpi_root) then 
+      print*, "Warning! noahmpdrv_timestep_init delt ",delt," different from Land_IAU_Control%dtp ",Land_IAU_Control%dtp
+    endif
+  endif
+      
+  lsoil_incr = Land_IAU_Control%lsoil_incr 
+  lensfc = Land_IAU_Control%nx * Land_IAU_Control%ny   
+
+  if(Land_IAU_Control%me == Land_IAU_Control%mpi_root) print*,' adjusting first ', lsoil_incr, ' surface layers only, delt ', delt
+  ! initialize variables for counts statitics to be zeros
+  nother = 0 ! grid cells not land
+  nsnowupd = 0  ! grid cells with snow (temperature not yet updated)
+  nstcupd = 0 ! grid cells that are updated stc
+  nslcupd = 0 ! grid cells that are updated slc
+  nfrozen = 0 ! not update as frozen soil
+  nfrozen_upd = 0 ! not update as frozen soil
+
+!TODO---if only fv3 increment files are used, this can be read from file
+  allocate(mask_tile(lensfc))
+  call calculate_landinc_mask(weasd, vegtype, soiltyp, lensfc, isice_table, mask_tile)  
+                              
+  !IAU increments are in units of 1/sec     !Land_IAU_Control%dtp
+  !* only updating soil temp for now 
+  ij_loop : do ij = 1, lensfc
+    ! mask: 1  - soil, 2 - snow, 0 - land-ice, -1 - not land
+    if (mask_tile(ij) == 1) then
+     
+      soil_freeze=.false.
+      soil_ice=.false.
+      do k = 1, lsoil_incr   ! k = 1, km
+        if ( stc(ij,k) < con_t0c)  soil_freeze=.true.
+        if ( smc(ij,k) - slc(ij,k) > 0.001 )  soil_ice=.true.
+
+        if (Land_IAU_Control%upd_stc) then
+          stc(ij,k) = stc(ij,k) + stc_inc_flat(ij,k)*delt !Land_IAU_Control%dtp
+          if (k==1) then
+              stc_updated(ij) = 1
+              nstcupd = nstcupd + 1
+          endif
+        endif
+
+        if ( (stc(ij,k) < con_t0c) .and. (.not. soil_freeze) .and. (k==1) ) nfrozen_upd = nfrozen_upd + 1
+
+        ! do not do updates if this layer or any above is frozen
+        if ( (.not. soil_freeze ) .and. (.not. soil_ice ) ) then
+          if (Land_IAU_Control%upd_slc) then
+            if (k==1) then
+                nslcupd = nslcupd + 1
+                slc_updated(ij) = 1
+            endif
+            ! apply zero limit here (higher, model-specific limits are later)
+            slc(ij,k) = max(slc(ij,k) + slc_inc_flat(ij,k)*delt, 0.0)
+            smc(ij,k) = max(smc(ij,k) + slc_inc_flat(ij,k)*delt, 0.0) 
+          endif
+        else
+          if (k==1) nfrozen = nfrozen+1
+        endif       
+      enddo
+    endif ! if soil/snow point
+  enddo ij_loop
+
+ !!do moisture/temperature adjustment for consistency after increment add 
+  call read_mp_table_parameters(errmsg, errflg)          
+  if (errflg .ne. 0) then
+        errmsg = 'FATAL ERROR in noahmpdrv_timestep_init: problem in set_soilveg_noahmp'
+        return
+  endif
+  n_stc = 0
+  n_slc = 0  
+  if (Land_IAU_Control%do_stcsmc_adjustment) then
+    if (Land_IAU_Control%upd_stc) then
+      do i=1,lensfc
+        if (stc_updated(i) == 1 ) then ! soil-only location
+            n_stc = n_stc+1
+            soiltype = soiltyp(i)
+            do l = 1, lsoil_incr
+              if (abs(stc_inc_flat(i,l)) > Land_IAU_Control%min_T_increment) then
+                !the following if case applies when updated stc > melting point, it handles both
+                !case 1: frz ==> frz, recalculate slc, smc remains
+                !case 2: unfrz ==> frz, recalculate slc, smc remains
+                if (stc(i,l) .LT. con_t0c )then
+                  !recompute supercool liquid water,smc_anl remain unchanged
+                  smp = con_hfus*(con_t0c-stc(i,l))/(con_g*stc(i,l)) !(m)
+                  slc_new=maxsmc(soiltype)*(smp/satpsi(soiltype))**(-1./bb(soiltype))
+                  slc(i,l) = max( min( slc_new, smc(i,l)), 0.0 )
+                endif
+                !case 3: frz ==> unfrz (or unfrz ==> unfrz), melt all soil ice (if any) 
+                if (stc(i,l) .GT. con_t0c )then !do not rely on stc_bck
+                  slc(i,l)=smc(i,l)
+                endif
+              endif
+            enddo
+        endif
+      enddo    
+    endif 
+
+    if (Land_IAU_Control%upd_slc) then
+      dz(1) = -zsoil(1)
+      do l = 2, km 
+          dz(l) = -zsoil(l) + zsoil(l-1) 
+      enddo 
+      do i=1,lensfc
+        if (slc_updated(i) == 1 ) then 
+          n_slc = n_slc+1
+          ! apply SM bounds (later: add upper SMC limit)
+          do l = 1, lsoil_incr
+            if (abs(slc_inc_flat(i, l)) > Land_IAU_Control%min_SLC_increment) then
+              ! noah-mp minimum is 1 mm per layer (in SMC)
+              ! no need to maintain frozen amount, would be v. small.
+              slc(i,l) = max( 0.001/dz(l), slc(i,l) )
+              smc(i,l) = max( 0.001/dz(l), smc(i,l) )
+            endif
+          enddo
+        endif
+      enddo
+    endif
+  endif
+
+    deallocate(stc_inc_flat, slc_inc_flat, stc_updated, slc_updated)
+    deallocate(mask_tile)
+    
+    !Remove non-warning, non-error log write
+    !write(*,'(a,i4,a,i8)') 'noahmpdrv_timestep_init rank ', Land_IAU_Control%me, ' # of cells with stc update ', nstcupd
+
+
+end subroutine noahmpdrv_timestep_init
+
+   !> \ingroup NoahMP_LSM
+!! \brief This subroutine mirrors noahmpdrv_init  
+!!  it calls land_iau_finalize which frees up allocated memory by IAU_init (in noahmdrv_init)  
+!! \section arg_table_noahmpdrv_finalize Argument Table
+!! \htmlinclude noahmpdrv_finalize.html
+!!
+  subroutine noahmpdrv_finalize (Land_IAU_Control, Land_IAU_Data, Land_IAU_State, errmsg, errflg)          
+   
+    use machine,          only: kind_phys 
+    implicit none
+    type(land_iau_control_type)            , intent(in   ) :: Land_IAU_Control
+    type(land_iau_external_data_type)      , intent(inout) :: Land_IAU_Data
+    type(land_iau_state_type)              , intent(inout) :: Land_IAU_State
+    character(len=*),                          intent(out) :: errmsg
+    integer,                                   intent(out) :: errflg
+    integer :: j, k, ib
+    !  --- Initialize CCPP error handling variables
+    errmsg = ''
+    errflg = 0    
+
+    if (.not. Land_IAU_Control%do_land_iau) return
+    call land_iau_mod_finalize(Land_IAU_Control, Land_IAU_Data, Land_IAU_State, errmsg, errflg)    
+
+  end subroutine noahmpdrv_finalize
 
 !> \ingroup NoahMP_LSM
 !! \brief This subroutine is the main CCPP entry point for the NoahMP LSM.
@@ -157,7 +457,7 @@
       sncovr1, qsurf, gflux, drain, evap, hflx, ep, runoff,      &
       cmm, chh, evbs, evcw, sbsno, pah, ecan, etran, edir, snowc,&
       stm, snohf,smcwlt2, smcref2, wet1, t2mmp, q2mp,zvfun,      &
-      ztmax, errmsg, errflg,                                     &
+      ztmax, rca, errmsg, errflg,                                &
       canopy_heat_storage_ccpp,                                  &
       rainfall_ccpp,                                             &
       sw_absorbed_total_ccpp,                                    &
@@ -400,6 +700,8 @@
   real(kind=kind_phys), dimension(:)     , intent(out)   :: q2mp       ! combined q2m from tiles
   real(kind=kind_phys), dimension(:)     , intent(out)   :: zvfun      ! 
   real(kind=kind_phys), dimension(:)     , intent(out)   :: ztmax      ! thermal roughness length
+  real(kind=kind_phys), dimension(:)     , intent(out)   :: rca        ! total canopy/stomatal resistance (s/m)
+
   character(len=*)    ,                    intent(out)   :: errmsg
   integer             ,                    intent(out)   :: errflg
 
@@ -623,7 +925,7 @@
   real (kind=kind_phys)                            :: canopy_heat_storage   !   out | within-canopy heat [W/m2]
   real (kind=kind_phys)                            :: spec_humid_sfc_veg    !   out | surface specific humidty over vegetation [kg/kg]
   real (kind=kind_phys)                            :: spec_humid_sfc_bare   !   out | surface specific humidty over bare soil [kg/kg]
-
+  
   real (kind=kind_phys)                            :: ustarx                !  inout |surface friction velocity
   real (kind=kind_phys)                            :: prslkix               !  in exner function
   real (kind=kind_phys)                            :: prsik1x               !  in exner function
@@ -661,6 +963,7 @@
   real (kind=kind_phys) :: precip_freeze_frac_in  ! used for penman calculation
  
   real (kind=kind_phys) :: virtfac1               ! virtual factor
+  real (kind=kind_phys) :: tflux                  ! surface flux temp
   real (kind=kind_phys) :: tvs1                   ! surface virtual temp
   real (kind=kind_phys) :: vptemp                 ! virtual potential temp
 
@@ -856,7 +1159,7 @@
       call noahmp_options(idveg ,iopt_crs, iopt_btr , iopt_run, iopt_sfc,  &
                                  iopt_frz, iopt_inf , iopt_rad, iopt_alb,  &
                                  iopt_snf, iopt_tbot, iopt_stc, iopt_rsf,  &
-			         iopt_soil,iopt_pedo, iopt_crop,iopt_trs,  &
+                                 iopt_soil,iopt_pedo, iopt_crop,iopt_trs,  &
                                  iopt_diag,iopt_z0m)
 
       if ( vegetation_category == isice_table )  then
@@ -881,7 +1184,7 @@
           temperature_soil_bot ,forcing_height       ,snow_ice_frac_old    ,zsoil                , &
           thsfc_loc            ,prslkix              ,prsik1x              ,prslk1x              , &
           air_pressure_surface ,pblhx                ,iz0tlnd              ,itime                , &
-	  vegetation_frac      ,area_grid            ,psi_opt                                    , &
+          vegetation_frac      ,area_grid            ,psi_opt                                    , &
           con_fvirt            ,con_eps              ,con_epsm1            ,con_cp               , &
           snowfall             ,snow_water_equiv_old ,snow_albedo_old      ,                       &
           cm_noahmp            ,ch_noahmp            ,snow_levels          ,snow_water_equiv     , &
@@ -909,45 +1212,50 @@
 !
 
         snow_cover_fraction    = 1.0
-        temperature_leaf       = undefined  
-        canopy_ice             = undefined
-        canopy_liquid          = undefined
-        vapor_pres_canopy_air  = undefined
-        temperature_canopy_air = undefined
-        canopy_wet_fraction    = undefined
-        lake_water             = undefined
-        depth_water_table      = undefined
-        aquifer_water          = undefined
-        saturated_water        = undefined
-        leaf_carbon            = undefined
-        root_carbon            = undefined
-        stem_carbon            = undefined
-        wood_carbon            = undefined
-        soil_carbon_stable     = undefined
-        soil_carbon_fast       = undefined
-        leaf_area_index        = undefined
-        stem_area_index        = undefined
-        evaporation_canopy     = undefined
-        transpiration          = undefined
-        aquifer_water          = undefined
-        precip_adv_heat_total  = undefined
+        temperature_leaf       = temperature_radiative
+        canopy_ice             = 0.0
+        canopy_liquid          = 0.0
+        vapor_pres_canopy_air  = 2000.0
+        temperature_canopy_air = temperature_radiative
+        canopy_wet_fraction    = 0.0
+        lake_water             = 0.0
+        depth_water_table      = 0.0
+        aquifer_water          = 0.0
+        saturated_water        = 0.0
+        leaf_carbon            = 0.0
+        root_carbon            = 0.0
+        stem_carbon            = 0.0
+        wood_carbon            = 0.0
+        soil_carbon_stable     = 0.0
+        soil_carbon_fast       = 0.0
+        leaf_area_index        = 0.0
+        stem_area_index        = 0.0
+        evaporation_canopy     = 0.0
+        transpiration          = 0.0
+        aquifer_water          = 0.0
+        precip_adv_heat_total  = 0.0
         soil_moisture_wtd      = 0.0
         recharge               = 0.0
         deep_recharge          = 0.0
         eq_soil_water_vol      = soil_moisture_vol
-        transpiration_heat     = undefined
-        latent_heat_canopy     = undefined
+        transpiration_heat     = 0.0
+        latent_heat_canopy     = 0.0
         z0_total               = 0.002
         latent_heat_total      = latent_heat_ground
         t2mmp(i)               = temperature_bare_2m
         q2mp(i)                = spec_humidity_bare_2m
 
-        tskin(i)               = temperature_ground
+        tskin(i)               = temperature_radiative
+        tflux                  = temperature_ground
         surface_temperature    = temperature_ground
         vegetation_fraction    = vegetation_frac
         ch_vegetated           = 0.0
         ch_bare_ground         = ch_noahmp
         canopy_heat_storage    = 0.0
+        lai_sunlit             = 0.0
+        lai_shaded             = 0.0
+        rs_sunlit              = 0.0
+        rs_shaded              = 0.0
 
       else  ! not glacier
 
@@ -1032,7 +1340,8 @@
          q2mp(i)  = spec_humidity_veg_2m * vegetation_fraction + &
                    spec_humidity_bare_2m * (1-vegetation_fraction)
 
-         tskin(i) = surface_temperature
+         tskin(i)               = temperature_radiative
+         tflux                  = surface_temperature
 
       endif          ! glacial split ends
 
@@ -1056,7 +1365,17 @@
       chxy      (i)   = ch_noahmp
       zorl      (i)   = z0_total * 100.0  ! convert to cm
       ztmax     (i)   = z0h_total 
-
+      
+      !LAI-scale canopy resistance based on weighted sunlit shaded fraction
+      if(rs_sunlit .le. 0.0 .or. rs_shaded .le. 0.0 .or. &
+          lai_sunlit .eq. 0.0 .or. lai_shaded .eq. 0.0) then
+        rca(i) = parameters%rsmax
+      else !calculate LAI-scale canopy conductance (1/Rs)
+        rca(i) = ((1.0/(rs_sunlit+leaf_air_resistance)*lai_sunlit) + &
+                 ((1.0/(rs_shaded+leaf_air_resistance))*lai_shaded))
+        rca(i) = max((1.0/rca(i)),parameters%rsmin) !resistance
+      end if
+      
       smc       (i,:) = soil_moisture_vol
       slc       (i,:) = soil_liquid_vol
       snowxy    (i)   = float(snow_levels)
@@ -1178,9 +1497,9 @@
        endif
 
        if(thsfc_loc) then ! Use local potential temperature
-              tvs1   = tskin(i) * virtfac1
+              tvs1   = tflux * virtfac1
          else ! Use potential temperature referenced to 1000 hPa
-              tvs1   = tskin(i)/prsik1(i) * virtfac1
+              tvs1   = tflux/prsik1(i) * virtfac1
        endif
 
       z0_total  = max(min(z0_total,forcing_height),1.0e-6)
@@ -1347,7 +1666,7 @@
         parameters%den    =    den_table(vegtype)       !tree density (no. of trunks per m2)
         parameters%rc     =     rc_table(vegtype)       !tree crown radius (m)
         parameters%mfsno  =  mfsno_table(vegtype)       !snowmelt m parameter ()
-	parameters%scffac = scffac_table(vegtype)       !snow cover factor
+        parameters%scffac = scffac_table(vegtype)       !snow cover factor
         parameters%cbiom  =  cbiom_table(vegtype)       !canopy biomass heat capacity parameter (m)
         parameters%saim   =   saim_table(vegtype,:)     !monthly stem area index, one-sided
         parameters%laim   =   laim_table(vegtype,:)     !monthly leaf area index, one-sided

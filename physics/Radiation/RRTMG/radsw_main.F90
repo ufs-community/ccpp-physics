@@ -689,7 +689,8 @@
            isubcsw, iovr, iswmode, iovr_dcorr, iovr_exp, iovr_exprand,  &
            iovr_rand, iovr_maxrand, iovr_max
 
-      integer, dimension(:), intent(in) :: idxday, icseed
+      integer, dimension(:), intent(in) :: idxday
+      integer, dimension(:), intent(in) :: icseed
 
       logical, intent(in) :: lprnt, lsswr, inc_minor_gas, top_at_1
 
@@ -725,7 +726,8 @@
 
       real (kind=kind_phys), intent(in) :: cosz(npts), solcon,          &
      &       de_lgth(npts)
-      real (kind=kind_phys), dimension(npts,nlay), intent(in) :: alpha
+      real (kind=kind_phys), dimension(npts,nlay),intent(in) ::         &
+             alpha
 
 !  ---  outputs:
       real (kind=kind_phys), dimension(:,:), intent(inout) :: hswc
@@ -876,7 +878,7 @@
         do i = 1, npts
           ipseed(i) = ipsdsw0 + i
         enddo
-      elseif ( isubcsw == 2 ) then     ! use input array of permutaion seeds
+      elseif ( isubcsw == 2 ) then     ! use input array of permutation seeds
         do i = 1, npts
           ipseed(i) = icseed(i)
         enddo

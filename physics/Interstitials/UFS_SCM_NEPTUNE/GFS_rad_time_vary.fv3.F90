@@ -10,9 +10,8 @@
 
       contains
 
-!>\defgroup mod_GFS_rad_time_vary GFS Radiation Time Update
-!! This module contains code related to GFS radiation setup.
-!> @{
+!> This module contains code related to GFS radiation setup.
+
 !> \section arg_table_GFS_rad_time_vary_timestep_init Argument Table
 !! \htmlinclude GFS_rad_time_vary_timestep_init.html
 !!
@@ -30,19 +29,19 @@
 
          ! Interface variables
          logical,                intent(in)    :: lrseeds
-         integer,                intent(in)    :: rseeds(:,:)
+         integer,                intent(in), optional :: rseeds(:,:)
          integer,                intent(in)    :: isubc_lw, isubc_sw, cnx, cny, isc, jsc, kdt
          integer,                intent(in)    :: imp_physics, imp_physics_zhao_carr, ipsd0, ipsdlim
          logical,                intent(in)    :: lslwr, lsswr
-         integer,                intent(inout) :: icsdsw(:), icsdlw(:)
+         integer,                intent(inout), optional :: icsdsw(:), icsdlw(:)
          integer,                intent(in)    :: imap(:), jmap(:)
          real(kind_phys),        intent(in)    :: sec
-         real(kind_phys),        intent(inout) :: ps_2delt(:)
-         real(kind_phys),        intent(inout) :: ps_1delt(:)
-         real(kind_phys),        intent(inout) :: t_2delt(:,:)
-         real(kind_phys),        intent(inout) :: t_1delt(:,:)
-         real(kind_phys),        intent(inout) :: qv_2delt(:,:)
-         real(kind_phys),        intent(inout) :: qv_1delt(:,:)
+         real(kind_phys),        intent(inout), optional :: ps_2delt(:)
+         real(kind_phys),        intent(inout), optional :: ps_1delt(:)
+         real(kind_phys),        intent(inout), optional :: t_2delt(:,:)
+         real(kind_phys),        intent(inout), optional :: t_1delt(:,:)
+         real(kind_phys),        intent(inout), optional :: qv_2delt(:,:)
+         real(kind_phys),        intent(inout), optional:: qv_1delt(:,:)
          real(kind_phys),        intent(in)    :: t(:,:), qv(:,:), ps(:)
          character(len=*),       intent(out)   :: errmsg
          integer,                intent(out)   :: errflg
@@ -97,6 +96,5 @@
          endif
 
       end subroutine GFS_rad_time_vary_timestep_init
-!> @}
 
    end module GFS_rad_time_vary

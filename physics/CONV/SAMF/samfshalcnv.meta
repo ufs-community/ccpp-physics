@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = samfshalcnv
   type = scheme
-  dependencies = ../../tools/funcphys.f90,../../hooks/machine.F,samfaerosols.F,../progsigma_calc.f90
+  dependencies = ../../tools/funcphys.f90,../../hooks/machine.F,samfaerosols.F,../progsigma_calc.f90,../progomega_calc.f90
 
 ########################################################################
 [ccpp-arg-table]
@@ -85,6 +85,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [itc]
   standard_name = index_of_first_chemical_tracer_for_convection
   long_name = index of first chemical tracer transported/scavenged by convection
@@ -187,6 +188,14 @@
   type = real
   kind = kind_phys
   intent = in
+[cscale]
+  standard_name = multiplicative_tuning_parameter_for_convective_cloud_water
+  long_name = multiplicative tuning parameter for convective cloud water
+  units = none
+  dimensions = ()
+  type = real
+  kind = kind_phys
+  intent = in
 [delt]
   standard_name = timestep_for_physics
   long_name = physics time step
@@ -241,6 +250,14 @@
   type = real
   kind = kind_phys
   intent = in
+[tkeh]
+  standard_name = vertical_turbulent_kinetic_energy_at_interface
+  long_name = vertical turbulent kinetic energy at model layer interfaces
+  units = m2 s-2
+  dimensions = (horizontal_loop_extent,vertical_interface_dimension)
+  type = real
+  kind = kind_phys
+  intent = inout
 [qtr]
   standard_name = convective_transportable_tracers
   long_name = array to contain cloud water and other convective trans. tracers
@@ -257,6 +274,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [q]
   standard_name = specific_humidity
   long_name = water vapor specific humidity
@@ -466,6 +484,13 @@
   dimensions = ()
   type = logical
   intent = in
+[progomega]
+  standard_name = do_prognostic_updraft_velocity
+  long_name = flag for prognostic omega in cumuls scheme
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
 [sigmain]
   standard_name = prognostic_updraft_area_fraction_in_convection
   long_name = convective updraft area fraction
@@ -474,6 +499,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [sigmaout]
   standard_name = updraft_area_fraction_updated_by_physics
   long_name = convective updraft area fraction updated by physics
@@ -481,7 +507,26 @@
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
   kind = kind_phys
-  intent = out
+  intent = inout
+  optional = True
+[omegain]
+  standard_name = prognostic_updraft_velocity_in_convection
+  long_name = convective updraft velocity
+  units = Pa s-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
+  optional = True
+[omegaout]
+  standard_name = updraft_velocity_updated_by_physics
+  long_name = convective updraft velocity updated by physics
+  units = Pa s-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = inout
+  optional = True
 [betascu]
   standard_name = tuning_param_for_shallow_cu
   long_name = tuning param for shallow cu in case prognostic closure is used

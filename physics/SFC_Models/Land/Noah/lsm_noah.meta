@@ -750,6 +750,7 @@
   type = real
   kind = kind_phys
   intent = inout
+  optional = True
 [lai]
   standard_name = leaf_area_index
   long_name = leaf area index

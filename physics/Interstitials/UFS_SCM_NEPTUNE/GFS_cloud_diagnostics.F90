@@ -28,7 +28,7 @@ contains
 !! This was bundled together with the prognostic cloud modules within the RRTMG implementation.
 !! For the RRTMGP implementation we propose to keep these diagnostics independent.
 !> @{
-!> \section arg_table_GFS_cloud_diagnostics_run
+!> \section arg_table_GFS_cloud_diagnostics_run Argument Table
 !! \htmlinclude GFS_cloud_diagnostics_run.html
 !!  
   subroutine GFS_cloud_diagnostics_run(nCol, nLev, iovr, iovr_rand, iovr_maxrand,        &
@@ -59,12 +59,13 @@ contains
          lat,                  & ! Latitude
          de_lgth,              & ! Decorrelation length
          si                      ! Vertical sigma coordinate
+    real(kind_phys), dimension(:,:), intent(in), optional :: &
+         p_lay                   ! Pressure at model-layer
     real(kind_phys), dimension(:,:), intent(in) :: &
-         p_lay,                & ! Pressure at model-layer
          cld_frac                ! Total cloud fraction
-    real(kind_phys), dimension(:,:), intent(in) :: &
+    real(kind_phys), dimension(:,:), intent(in), optional :: &
          p_lev                   ! Pressure at model interfaces         
-    real(kind_phys), dimension(:,:), intent(in) :: &
+    real(kind_phys), dimension(:,:), intent(in), optional :: &
     	 deltaZ,               & ! Layer thickness (m)
          cloud_overlap_param,  & ! Cloud-overlap parameter
          precip_overlap_param    ! Precipitation overlap parameter

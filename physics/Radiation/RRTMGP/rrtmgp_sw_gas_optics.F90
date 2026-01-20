@@ -1,23 +1,18 @@
 !> \file rrtmgp_sw_gas_optics.F90
 !!
-!> \defgroup rrtmgp_sw_gas_optics rrtmgp_sw_gas_optics.F90
-!!
-!! \brief This module contains a routine to initialize the k-distribution data used
+
+!> This module contains a routine to initialize the k-distribution data used
 !! by the RRTMGP shortwave radiation scheme.
-!!
 module rrtmgp_sw_gas_optics
-  use machine,                only: kind_phys
-  use mo_rte_kind,            only: wl
+  use mo_rte_kind,            only: wl, wp
   use mo_gas_optics_rrtmgp,   only: ty_gas_optics_rrtmgp
   use mo_gas_concentrations,  only: ty_gas_concs
   use radiation_tools,        only: check_error_msg
   use netcdf
-#ifdef MPI
-  use mpi
-#endif
+  use mpi_f08
 
   implicit none
-  real(kind_phys),parameter :: &
+  real(wp),parameter :: &
        tsi_default = 1360.85767381726, &
        mg_default  = 0.1567652,        &
        sb_default  = 902.7126
@@ -29,92 +24,84 @@ module rrtmgp_sw_gas_optics
        nmixingfracsSW, nlayersSW, nbndsSW, npairsSW, nminor_absorber_intervals_lowerSW,&
        nminor_absorber_intervals_upperSW, ncontributors_lowerSW, ncontributors_upperSW
   integer, dimension(:), allocatable :: &
-       kminor_start_lowerSW,              & ! Starting index in the [1, nContributors] vector for a contributor
-                                            ! given by \"minor_gases_lower\" (lower atmosphere)
-       kminor_start_upperSW                 ! Starting index in the [1, nContributors] vector for a contributor
-                                            ! given by \"minor_gases_upper\" (upper atmosphere)
+       kminor_start_lowerSW,              & !< Starting index in the [1, nContributors] vector for a contributor
+                                            !< given by \"minor_gases_lower\" (lower atmosphere)
+       kminor_start_upperSW                 !< Starting index in the [1, nContributors] vector for a contributor
+                                            !< given by \"minor_gases_upper\" (upper atmosphere)
   integer, dimension(:,:), allocatable :: &
-       band2gptSW,                        & ! Beginning and ending gpoint for each band
-       minor_limits_gpt_lowerSW,          & ! Beginning and ending gpoint for each minor interval in lower atmosphere
-       minor_limits_gpt_upperSW             ! Beginning and ending gpoint for each minor interval in upper atmosphere
+       band2gptSW,                        & !< Beginning and ending gpoint for each band
+       minor_limits_gpt_lowerSW,          & !< Beginning and ending gpoint for each minor interval in lower atmosphere
+       minor_limits_gpt_upperSW             !< Beginning and ending gpoint for each minor interval in upper atmosphere
   integer, dimension(:,:,:), allocatable :: &
-       key_speciesSW                        ! Key species pair for each band
-  real(kind_phys) :: &
-       press_ref_tropSW,                  & ! Reference pressure separating the lower and upper atmosphere [Pa]
-       temp_ref_pSW,                      & ! Standard spectroscopic reference pressure [Pa]
-       temp_ref_tSW,                      & ! Standard spectroscopic reference temperature [K]
-       tsi_defaultSW,                     & ! 
-       mg_defaultSW,                      & ! Mean value of Mg2 index over the average solar cycle from the NRLSSI2 model of solar variability
-       sb_defaultSW                         ! Mean value of sunspot index over the average solar cycle from the NRLSSI2 model of solar variability
-  real(kind_phys), dimension(:), allocatable :: &
-       press_refSW,                       & ! Pressures for reference atmosphere; press_ref(# reference layers) [Pa]
-       temp_refSW,                        & ! Temperatures for reference atmosphere; temp_ref(# reference layers) [K]
-       solar_quietSW,                     & ! Spectrally-dependent quiet sun irradiance from the NRLSSI2 model of solar variability
-       solar_facularSW,                   & ! Spectrally-dependent facular term from the NRLSSI2 model of solar variability
-       solar_sunspotSW                      ! Spectrally-dependent sunspot term from the NRLSSI2 model of solar variability
-  real(kind_phys), dimension(:,:), allocatable :: &
-       band_limsSW                          ! Beginning and ending wavenumber [cm -1] for each band
-  real(kind_phys), dimension(:,:,:), allocatable :: &
-       vmr_refSW,                         & ! Volume mixing ratios for reference atmosphere
-       kminor_lowerSW,                    & ! (transformed from [nTemp x nEta x nGpt x nAbsorbers] array to
-                                            ! [nTemp x nEta x nContributors] array)
-       kminor_upperSW,                    & ! (transformed from [nTemp x nEta x nGpt x nAbsorbers] array to
-                                            ! [nTemp x nEta x nContributors] array)
-       rayl_lowerSW,                      & ! Stored coefficients due to rayleigh scattering contribution
-       rayl_upperSW                         ! Stored coefficients due to rayleigh scattering contribution
-  real(kind_phys), dimension(:,:,:,:), allocatable :: &
-       kmajorSW                             ! Stored absorption coefficients due to major absorbing gases
+       key_speciesSW                        !< Key species pair for each band
+  real(wp) :: &
+       press_ref_tropSW,                  & !< Reference pressure separating the lower and upper atmosphere [Pa]
+       temp_ref_pSW,                      & !< Standard spectroscopic reference pressure [Pa]
+       temp_ref_tSW,                      & !< Standard spectroscopic reference temperature [K]
+       tsi_defaultSW,                     & !< 
+       mg_defaultSW,                      & !< Mean value of Mg2 index over the average solar cycle from the NRLSSI2 model of solar variability
+       sb_defaultSW                         !< Mean value of sunspot index over the average solar cycle from the NRLSSI2 model of solar variability
+  real(wp), dimension(:), allocatable :: &
+       press_refSW,                       & !< Pressures for reference atmosphere; press_ref(# reference layers) [Pa]
+       temp_refSW,                        & !< Temperatures for reference atmosphere; temp_ref(# reference layers) [K]
+       solar_quietSW,                     & !< Spectrally-dependent quiet sun irradiance from the NRLSSI2 model of solar variability
+       solar_facularSW,                   & !< Spectrally-dependent facular term from the NRLSSI2 model of solar variability
+       solar_sunspotSW                      !< Spectrally-dependent sunspot term from the NRLSSI2 model of solar variability
+  real(wp), dimension(:,:), allocatable :: &
+       band_limsSW                          !< Beginning and ending wavenumber [cm -1] for each band
+  real(wp), dimension(:,:,:), allocatable :: &
+       vmr_refSW,                         & !< Volume mixing ratios for reference atmosphere
+       kminor_lowerSW,                    & !< (transformed from [nTemp x nEta x nGpt x nAbsorbers] array to
+                                            !< [nTemp x nEta x nContributors] array)
+       kminor_upperSW,                    & !< (transformed from [nTemp x nEta x nGpt x nAbsorbers] array to
+                                            !< [nTemp x nEta x nContributors] array)
+       rayl_lowerSW,                      & !< Stored coefficients due to rayleigh scattering contribution
+       rayl_upperSW                         !< Stored coefficients due to rayleigh scattering contribution
+  real(wp), dimension(:,:,:,:), allocatable :: &
+       kmajorSW                             !< Stored absorption coefficients due to major absorbing gases
   character(len=32),  dimension(:), allocatable :: &
-       gas_namesSW,                       & ! Names of absorbing gases
-       gas_minorSW,                       & ! Name of absorbing minor gas
-       identifier_minorSW,                & ! Unique string identifying minor gas
-       minor_gases_lowerSW,               & ! Names of minor absorbing gases in lower atmosphere
-       minor_gases_upperSW,               & ! Names of minor absorbing gases in upper atmosphere
-       scaling_gas_lowerSW,               & ! Absorption also depends on the concentration of this gas
-       scaling_gas_upperSW                  ! Absorption also depends on the concentration of this gas
+       gas_namesSW,                       & !< Names of absorbing gases
+       gas_minorSW,                       & !< Name of absorbing minor gas
+       identifier_minorSW,                & !< Unique string identifying minor gas
+       minor_gases_lowerSW,               & !< Names of minor absorbing gases in lower atmosphere
+       minor_gases_upperSW,               & !< Names of minor absorbing gases in upper atmosphere
+       scaling_gas_lowerSW,               & !< Absorption also depends on the concentration of this gas
+       scaling_gas_upperSW                  !< Absorption also depends on the concentration of this gas
   logical(wl), dimension(:), allocatable :: &
-       minor_scales_with_density_lowerSW, & ! Density scaling is applied to minor absorption coefficients
-       minor_scales_with_density_upperSW, & ! Density scaling is applied to minor absorption coefficients
-       scale_by_complement_lowerSW,       & ! Absorption is scaled by concentration of scaling_gas (F) or its complement (T)
-       scale_by_complement_upperSW          ! Absorption is scaled by concentration of scaling_gas (F) or its complement (T)
+       minor_scales_with_density_lowerSW, & !< Density scaling is applied to minor absorption coefficients
+       minor_scales_with_density_upperSW, & !< Density scaling is applied to minor absorption coefficients
+       scale_by_complement_lowerSW,       & !< Absorption is scaled by concentration of scaling_gas (F) or its complement (T)
+       scale_by_complement_upperSW          !< Absorption is scaled by concentration of scaling_gas (F) or its complement (T)
 contains
 
-  ! ######################################################################################
-!>\defgroup rrtmgp_sw_gas_optics_mod GFS RRTMGP-SW Gas Optics Module
-!> @{
-!! \section arg_table_rrtmgp_sw_gas_optics_init
+!> \section arg_table_rrtmgp_sw_gas_optics_init Argument Table
 !! \htmlinclude rrtmgp_sw_gas_optics.html
-!!
-!> \ingroup rrtmgp_sw_gas_optics
 !!
 !! RRTMGP relies heavility on derived-data-types, which contain type-bound procedures 
 !! that are referenced frequently throughout the RRTMGP shortwave scheme. The data needed
 !! for the correlated k-distribution is also contained within this type. Within this module,
 !! the full k-distribution data is read in, reduced by the "active gases" provided, and
 !! loaded into the RRTMGP DDT, ty_gas_optics_rrtmgp.
-!!
-!! \section rrtmgp_sw_gas_optics_init
-!> @{ 
-  ! ######################################################################################  
   subroutine rrtmgp_sw_gas_optics_init(rrtmgp_root_dir, rrtmgp_sw_file_gas,              &
        active_gases_array, mpicomm, mpirank, mpiroot, errmsg, errflg)
 
     ! Inputs
     character(len=128),intent(in) :: &
-         rrtmgp_root_dir,  & ! RTE-RRTMGP root directory
-         rrtmgp_sw_file_gas  ! RRTMGP file containing K-distribution data
+         rrtmgp_root_dir,  & !< RTE-RRTMGP root directory
+         rrtmgp_sw_file_gas  !< RRTMGP file containing K-distribution data
     character(len=*), dimension(:), intent(in) :: &
-         active_gases_array  ! List of active gases from namelist as array
+         active_gases_array  !< List of active gases from namelist as array
+    type(MPI_Comm),intent(in) :: &
+         mpicomm             !< MPI communicator
     integer,intent(in) :: &
-         mpicomm,          & ! MPI communicator
-         mpirank,          & ! Current MPI rank
-         mpiroot             ! Master MPI rank
+         mpirank,          & !< Current MPI rank
+         mpiroot             !< Master MPI rank
 
     ! Outputs
     character(len=*), intent(out) :: &
-         errmsg              ! CCPP error message
+         errmsg              !< CCPP error message
     integer,          intent(out) :: &
-         errflg              ! CCPP error code
+         errflg              !< CCPP error code
 
     ! Local variables
     integer :: status, ncid, dimid, varID, mpierr, iChar
@@ -135,9 +122,7 @@ contains
     ! (ONLY master processor(0), if MPI enabled)
     !
     ! #######################################################################################
-#ifdef MPI
     if (mpirank .eq. mpiroot) then
-#endif
        write (*,*) 'Reading RRTMGP shortwave k-distribution metadata ... '
 
        ! Open file
@@ -173,7 +158,6 @@ contains
        status = nf90_inq_dimid(ncid, 'minor_absorber_intervals_upper', dimid)
        status = nf90_inquire_dimension(ncid, dimid, len=nminor_absorber_intervals_upperSW)
 
-#ifdef MPI
     endif ! On master processor
 
     ! Other processors waiting...
@@ -199,7 +183,6 @@ contains
     call mpi_bcast(ncontributors_lowerSW,             1, MPI_INTEGER, mpiroot, mpicomm, mpierr)
     call mpi_bcast(nminor_absorber_intervals_upperSW, 1, MPI_INTEGER, mpiroot, mpicomm, mpierr)
     call mpi_bcast(nminor_absorber_intervals_lowerSW, 1, MPI_INTEGER, mpiroot, mpicomm, mpierr)
-#endif
 
     ! #######################################################################################
     !
@@ -280,9 +263,7 @@ contains
     ! (ONLY master processor(0), if MPI enabled) 
     !
     ! #######################################################################################
-#ifdef MPI
     if (mpirank .eq. mpiroot) then
-#endif
        write (*,*) 'Reading RRTMGP shortwave k-distribution data ... '
        status = nf90_inq_varid(ncid, 'gas_names', varID)
        status = nf90_get_var(  ncid, varID, gas_namesSW)       
@@ -379,7 +360,6 @@ contains
        
        ! Close
        status = nf90_close(ncid)
-#ifdef MPI
     endif ! Master process
 
     ! Other processors waiting...
@@ -393,13 +373,22 @@ contains
     ! #######################################################################################
 
     ! Real scalars
+#ifdef RTE_USE_SP
+    call mpi_bcast(press_ref_tropSW, 1,           MPI_REAL,             mpiroot, mpicomm, mpierr)
+    call mpi_bcast(temp_ref_pSW,     1,           MPI_REAL,             mpiroot, mpicomm, mpierr)
+    call mpi_bcast(temp_ref_tSW,     1,           MPI_REAL,             mpiroot, mpicomm, mpierr)
+    call mpi_bcast(tsi_defaultSW,    1,           MPI_REAL,             mpiroot, mpicomm, mpierr)
+    call mpi_bcast(mg_defaultSW,     1,           MPI_REAL,             mpiroot, mpicomm, mpierr)
+    call mpi_bcast(sb_defaultSW,     1,           MPI_REAL,             mpiroot, mpicomm, mpierr)
+#else
     call mpi_bcast(press_ref_tropSW, 1,           MPI_DOUBLE_PRECISION, mpiroot, mpicomm, mpierr)
     call mpi_bcast(temp_ref_pSW,     1,           MPI_DOUBLE_PRECISION, mpiroot, mpicomm, mpierr)
     call mpi_bcast(temp_ref_tSW,     1,           MPI_DOUBLE_PRECISION, mpiroot, mpicomm, mpierr)
     call mpi_bcast(tsi_defaultSW,    1,           MPI_DOUBLE_PRECISION, mpiroot, mpicomm, mpierr)
     call mpi_bcast(mg_defaultSW,     1,           MPI_DOUBLE_PRECISION, mpiroot, mpicomm, mpierr)
     call mpi_bcast(sb_defaultSW,     1,           MPI_DOUBLE_PRECISION, mpiroot, mpicomm, mpierr)
-    
+#endif
+
     ! Integer arrays
     call mpi_bcast(kminor_start_lowerSW,               &
          size(kminor_start_lowerSW),              MPI_INTEGER,          mpiroot, mpicomm, mpierr)
@@ -415,6 +404,32 @@ contains
          size(key_speciesSW),                     MPI_INTEGER,          mpiroot, mpicomm, mpierr)
     
     ! Real arrays
+#ifdef RTE_USE_SP
+    call mpi_bcast(press_refSW,                        &
+         size(press_refSW),                       MPI_REAL,             mpiroot, mpicomm, mpierr)
+    call mpi_bcast(temp_refSW,                         &
+         size(temp_refSW),                        MPI_REAL,             mpiroot, mpicomm, mpierr)
+    call mpi_bcast(solar_quietSW,                      &
+         size(solar_quietSW),                     MPI_REAL,             mpiroot, mpicomm, mpierr)
+    call mpi_bcast(solar_facularSW,                    &
+         size(solar_facularSW),                   MPI_REAL,             mpiroot, mpicomm, mpierr)
+    call mpi_bcast(solar_sunspotSW,                    &
+         size(solar_sunspotSW),                   MPI_REAL,             mpiroot, mpicomm, mpierr)
+    call mpi_bcast(band_limsSW,                        &
+         size(band_limsSW),                       MPI_REAL,             mpiroot, mpicomm, mpierr)
+    call mpi_bcast(vmr_refSW,                          &
+         size(vmr_refSW),                         MPI_REAL,             mpiroot, mpicomm, mpierr)
+    call mpi_bcast(kminor_lowerSW,                     &
+         size(kminor_lowerSW),                    MPI_REAL,             mpiroot, mpicomm, mpierr)
+    call mpi_bcast(kminor_upperSW,                     &
+         size(kminor_upperSW),                    MPI_REAL,             mpiroot, mpicomm, mpierr)
+    call mpi_bcast(rayl_lowerSW,                       &
+         size(rayl_lowerSW),                      MPI_REAL,             mpiroot, mpicomm, mpierr)
+    call mpi_bcast(rayl_upperSW,                       &
+         size(rayl_upperSW),                      MPI_REAL,             mpiroot, mpicomm, mpierr)
+    call mpi_bcast(kmajorSW,                           &
+         size(kmajorSW),                          MPI_REAL,             mpiroot, mpicomm, mpierr)
+#else
     call mpi_bcast(press_refSW,                        &
          size(press_refSW),                       MPI_DOUBLE_PRECISION, mpiroot, mpicomm, mpierr)
     call mpi_bcast(temp_refSW,                         &
@@ -439,7 +454,7 @@ contains
          size(rayl_upperSW),                      MPI_DOUBLE_PRECISION, mpiroot, mpicomm, mpierr)
     call mpi_bcast(kmajorSW,                           &
          size(kmajorSW),                          MPI_DOUBLE_PRECISION, mpiroot, mpicomm, mpierr)
-    
+#endif
     ! Characters
     do iChar=1,nabsorbersSW
        call mpi_bcast(gas_namesSW(iChar),              &
@@ -476,7 +491,6 @@ contains
          size(scale_by_complement_upperSW),       MPI_LOGICAL,          mpiroot, mpicomm, mpierr)
 
     call mpi_barrier(mpicomm, mpierr)
-#endif
 
     ! #######################################################################################
     !   
@@ -496,6 +510,5 @@ contains
          sb_defaultSW, rayl_lowerSW, rayl_upperSW))
 
   end subroutine rrtmgp_sw_gas_optics_init
-!> @}
 end module rrtmgp_sw_gas_optics
  

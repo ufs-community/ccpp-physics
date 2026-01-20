@@ -22,18 +22,18 @@
 !> \section arg_table_sgscloud_radpre_run Argument Table
 !! \htmlinclude sgscloud_radpre_run.html
 !!
-!!    cloud array description:                                          !
-!!          clouds(:,:,1)  -  layer total cloud fraction                !
-!!          clouds(:,:,2)  -  layer cloud liq water path                !
-!!          clouds(:,:,3)  -  mean effective radius for liquid cloud    !
-!!          clouds(:,:,4)  -  layer cloud ice water path                !
-!!          clouds(:,:,5)  -  mean effective radius for ice cloud       !
-!!          clouds(:,:,6)  -  layer rain drop water path                !
-!!          clouds(:,:,7)  -  mean effective radius for rain drop       !
-!!          clouds(:,:,8)  -  layer snow flake water path               !
-!!          clouds(:,:,9)  -  mean effective radius for snow flake
-!!
-!>\section sgscloud_radpre_mod  SGS Cloud Scheme Pre General Algorithm
+!    cloud array description:                                          !
+!          clouds(:,:,1)  -  layer total cloud fraction                !
+!          clouds(:,:,2)  -  layer cloud liq water path                !
+!          clouds(:,:,3)  -  mean effective radius for liquid cloud    !
+!          clouds(:,:,4)  -  layer cloud ice water path                !
+!          clouds(:,:,5)  -  mean effective radius for ice cloud       !
+!          clouds(:,:,6)  -  layer rain drop water path                !
+!          clouds(:,:,7)  -  mean effective radius for rain drop       !
+!          clouds(:,:,8)  -  layer snow flake water path               !
+!          clouds(:,:,9)  -  mean effective radius for snow flake
+!
+! \section sgscloud_radpre_mod  SGS Cloud Scheme Pre General Algorithm
       subroutine sgscloud_radpre_run(    &
            im,dt,fhswr,levs,             &
            flag_init,flag_restart,       &
@@ -81,18 +81,18 @@
       real(kind=kind_phys), dimension(:,:), intent(inout) :: qc, qi
       real(kind=kind_phys), dimension(:,:), intent(inout) :: qr, qs, qg
       ! note: qci_conv only allocated if GF is used
-      real(kind=kind_phys), dimension(:,:), intent(inout) :: qci_conv
+      real(kind=kind_phys), dimension(:,:), intent(inout), optional :: qci_conv
       real(kind=kind_phys), dimension(:,:), intent(inout) :: qlc, qli !for SAS
-      real(kind=kind_phys), dimension(:,:), intent(in)    :: ud_mf
+      real(kind=kind_phys), dimension(:,:), intent(in), optional    :: ud_mf
       real(kind=kind_phys), dimension(:,:), intent(in)    :: T3D,delp
       real(kind=kind_phys), dimension(:,:), intent(in)    :: qv,P3D,exner
       real(kind=kind_phys), dimension(:,:), intent(inout) ::  &
            &         clouds1,clouds2,clouds3,clouds4,clouds5, &
            &         clouds8,clouds9
       real(kind=kind_phys), dimension(:,:), intent(inout) :: qc_save, qi_save, qs_save
-      real(kind=kind_phys), dimension(:,:), intent(in)    :: qc_bl, qi_bl, cldfra_bl
+      real(kind=kind_phys), dimension(:,:), intent(in), optional :: qc_bl, qi_bl, cldfra_bl
       real(kind=kind_phys), dimension(:),   intent(in)    :: slmsk, xlat, de_lgth
-      real(kind=kind_phys), dimension(:,:), intent(in)    :: plyr, dz      
+      real(kind=kind_phys), dimension(:,:), intent(in)    :: plyr, dz
       real(kind=kind_phys), dimension(:,:), intent(inout) :: cldsa
       integer,              dimension(:,:), intent(inout) :: mbota, mtopa
       integer,                              intent(in)    :: iovr

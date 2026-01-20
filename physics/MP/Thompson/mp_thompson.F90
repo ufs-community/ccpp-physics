@@ -3,13 +3,15 @@
 
 
 !>\defgroup aathompson Aerosol-Aware Thompson MP Module
-!! This module contains the aerosol-aware Thompson microphysics scheme.
+
+!> This module contains the aerosol-aware Thompson microphysics scheme.
 module mp_thompson
 
+      use mpi_f08
       use machine, only : kind_phys
- 
+
       use module_mp_thompson, only : thompson_init, mp_gt_driver, thompson_finalize, calc_effectRad
-      use module_mp_thompson, only : naIN0, naIN1, naCCN0, naCCN1, eps, Nt_c_l, Nt_c_o
+      use module_mp_thompson, only : naIN0, naIN1, naCCN0, naCCN1, eps
       use module_mp_thompson, only : re_qc_min, re_qc_max, re_qi_min, re_qi_max, re_qs_min, re_qs_max
 
       use module_mp_thompson_make_number_concentrations, only: make_IceNumber, make_DropletNumber, make_RainNumber
@@ -19,8 +21,6 @@ module mp_thompson
       public :: mp_thompson_init, mp_thompson_run, mp_thompson_finalize
 
       private
-
-      logical :: is_initialized = .False.
 
       integer, parameter :: ext_ndiag3d = 37
 
@@ -34,6 +34,9 @@ module mp_thompson
                                   con_cp, con_rgas, con_boltz, con_amd,    &
                                   con_amw, con_avgd, con_hvap, con_hfus,   &
                                   con_g, con_rd, con_eps,                  &
+                                  con_Nt_c_l, con_Nt_c_o, con_av_i,        &
+                                  con_xnc_max, con_ssati_min, con_Nt_i_max,&
+                                  con_rr_min,                              &
                                   restart, imp_physics,                    &
                                   imp_physics_thompson, convert_dry_rho,   &
                                   spechum, qc, qr, qi, qs, qg, ni, nr,     &
@@ -42,9 +45,11 @@ module mp_thompson
                                   nwfa, nifa, tgrs, prsl, phil, area,      &
                                   aerfld, mpicomm, mpirank, mpiroot,       &
                                   threads, ext_diag, diag3d,               &
-                                  errmsg, errflg)
+                                  is_initialized, errmsg, errflg)
          use module_mp_thompson, only : PI, T_0, Rv, R, RoverRv, Cp
          use module_mp_thompson, only : R_uni, k_b, M_w, M_a, N_avo, lvap0, lfus
+         use module_mp_thompson, only : av_i, av_s, D0s, bv_s, bv_i
+         use module_mp_thompson, only : nt_c_l, nt_c_o, xnc_max, ssati_min, Nt_i_max, rr_min
          
          implicit none
 
@@ -54,7 +59,10 @@ module mp_thompson
          real(kind_phys),           intent(in   ) :: con_pi, con_t0c, con_rv, con_cp, con_rgas, &
                                                      con_boltz, con_amd, con_amw, con_avgd,     &
                                                      con_hvap, con_hfus, con_g, con_rd, con_eps
+         real(kind_phys), optional, intent(in   ) :: con_Nt_c_l, con_Nt_c_o, con_av_i, con_xnc_max, &
+                                                     con_ssati_min, con_Nt_i_max, con_rr_min
          logical,                   intent(in   ) :: restart
+         logical,                   intent(inout) :: is_initialized
          integer,                   intent(in   ) :: imp_physics
          integer,                   intent(in   ) :: imp_physics_thompson
          ! Hydrometeors
@@ -70,11 +78,11 @@ module mp_thompson
          ! Aerosols
          logical,                   intent(in   ) :: is_aerosol_aware
          logical,                   intent(in   ) :: merra2_aerosol_aware
-         real(kind_phys),           intent(inout) :: nc(:,:)
-         real(kind_phys),           intent(inout) :: nwfa(:,:)
-         real(kind_phys),           intent(inout) :: nifa(:,:)
-         real(kind_phys),           intent(inout) :: nwfa2d(:)
-         real(kind_phys),           intent(inout) :: nifa2d(:)
+         real(kind_phys),           intent(inout), optional :: nc(:,:)
+         real(kind_phys),           intent(inout), optional :: nwfa(:,:)
+         real(kind_phys),           intent(inout), optional :: nifa(:,:)
+         real(kind_phys),           intent(inout), optional :: nwfa2d(:)
+         real(kind_phys),           intent(inout), optional :: nifa2d(:)
          real(kind_phys),           intent(in)    :: aerfld(:,:,:)
          ! State variables
          real(kind_phys),           intent(in   ) :: tgrs(:,:)
@@ -82,14 +90,14 @@ module mp_thompson
          real(kind_phys),           intent(in   ) :: phil(:,:)
          real(kind_phys),           intent(in   ) :: area(:)
          ! MPI information
-         integer,                   intent(in   ) :: mpicomm
+         type(MPI_Comm),            intent(in   ) :: mpicomm
          integer,                   intent(in   ) :: mpirank
          integer,                   intent(in   ) :: mpiroot
          ! Threading/blocking information
          integer,                   intent(in   ) :: threads
          ! Extended diagnostics
          logical,                   intent(in   ) :: ext_diag
-         real(kind_phys),           intent(in   ) :: diag3d(:,:,:)
+         real(kind_phys),           intent(in   ), optional :: diag3d(:,:,:)
          ! CCPP error handling
          character(len=*),          intent(  out) :: errmsg
          integer,                   intent(  out) :: errflg
@@ -125,6 +133,22 @@ module mp_thompson
          lvap0 = con_hvap
          lfus = con_hfus
          
+         if (present(con_nt_c_l)) nt_c_l = con_nt_c_l
+         if (present(con_nt_c_o)) nt_c_o = con_nt_c_o
+         if (present(con_av_i)) then
+           if (con_av_i > 0.) then
+             av_i = con_av_i
+           else
+             av_i = av_s * D0s ** (bv_s - bv_i) ! Transition value of coefficient matching at crossover from cloud ice to snow
+           end if
+         else
+           av_i = av_s * D0s ** (bv_s - bv_i) ! Transition value of coefficient matching at crossover from cloud ice to snow
+         end if
+         if (present(con_xnc_max)) xnc_max = con_xnc_max
+         if (present(con_ssati_min)) ssati_min = con_ssati_min
+         if (present(con_Nt_i_max)) Nt_i_max = con_Nt_i_max
+         if (present(con_rr_min)) rr_min = con_rr_min
+         
          ! Consistency checks
          if (imp_physics/=imp_physics_thompson) then
             write(errmsg,'(*(a))') "Logic error: namelist choice of microphysics is different from Thompson MP"
@@ -152,7 +176,7 @@ module mp_thompson
                             mpicomm=mpicomm, mpirank=mpirank, mpiroot=mpiroot, &
                             threads=threads, errmsg=errmsg, errflg=errflg)
          if (errflg /= 0) return
-
+         
          ! For restart runs, the init is done here
          if (restart) then
            is_initialized = .true.
@@ -359,12 +383,12 @@ module mp_thompson
                               spp_prt_list, spp_var_list,          &
                               spp_stddev_cutoff,                   &
                               cplchm, pfi_lsan, pfl_lsan,          &
-                              errmsg, errflg)
+                              is_initialized, errmsg, errflg)
 
          implicit none
 
          ! Interface variables
-
+         logical,                   intent(inout) :: is_initialized
          ! Dimensions and constants
          integer,                   intent(in   ) :: ncol
          integer,                   intent(in   ) :: nlev
@@ -416,12 +440,12 @@ module mp_thompson
          integer,                   intent(in)    :: decfl
          ! MPI and block information
          integer,                   intent(in)    :: blkno
-         integer,                   intent(in)    :: mpicomm
+         type(MPI_Comm),            intent(in)    :: mpicomm
          integer,                   intent(in)    :: mpirank
          integer,                   intent(in)    :: mpiroot
          ! Extended diagnostic output
          logical,                   intent(in)    :: ext_diag
-         real(kind_phys), target,   intent(inout) :: diag3d(:,:,:)
+         real(kind_phys), target,   intent(inout), optional :: diag3d(:,:,:)
          logical,                   intent(in)    :: reset_diag3d
 
          ! CCPP error handling
@@ -431,15 +455,15 @@ module mp_thompson
          ! SPP
          integer,                   intent(in) :: spp_mp
          integer,                   intent(in) :: n_var_spp
-         real(kind_phys),           intent(in) :: spp_wts_mp(:,:)
-         real(kind_phys),           intent(in) :: spp_prt_list(:)
-         character(len=10),          intent(in) :: spp_var_list(:)
-         real(kind_phys),           intent(in) :: spp_stddev_cutoff(:)
+         real(kind_phys),           intent(in), optional :: spp_wts_mp(:,:)
+         real(kind_phys),           intent(in), optional :: spp_prt_list(:)
+         character(len=10),         intent(in), optional :: spp_var_list(:)
+         real(kind_phys),           intent(in), optional :: spp_stddev_cutoff(:)
 
          logical, intent (in) :: cplchm
          ! ice and liquid water 3d precipitation fluxes - only allocated if cplchm is .true.
-         real(kind=kind_phys), intent(inout), dimension(:,:) :: pfi_lsan
-         real(kind=kind_phys), intent(inout), dimension(:,:) :: pfl_lsan
+         real(kind=kind_phys), intent(inout), dimension(:,:), optional :: pfi_lsan
+         real(kind=kind_phys), intent(inout), dimension(:,:), optional :: pfl_lsan
 
          ! Local variables
 
@@ -709,47 +733,9 @@ module mp_thompson
             nrten3     => diag3d(:,:,35:35)
             ncten3     => diag3d(:,:,36:36)
             qcten3     => diag3d(:,:,37:37)
-         else
-            allocate(prw_vcdc   (0,0,0))
-            allocate(prw_vcde   (0,0,0))
-            allocate(tpri_inu   (0,0,0))
-            allocate(tpri_ide_d (0,0,0))
-            allocate(tpri_ide_s (0,0,0))
-            allocate(tprs_ide   (0,0,0))
-            allocate(tprs_sde_d (0,0,0))
-            allocate(tprs_sde_s (0,0,0))
-            allocate(tprg_gde_d (0,0,0))
-            allocate(tprg_gde_s (0,0,0))
-            allocate(tpri_iha   (0,0,0))
-            allocate(tpri_wfz   (0,0,0))
-            allocate(tpri_rfz   (0,0,0))
-            allocate(tprg_rfz   (0,0,0))
-            allocate(tprs_scw   (0,0,0))
-            allocate(tprg_scw   (0,0,0))
-            allocate(tprg_rcs   (0,0,0))
-            allocate(tprs_rcs   (0,0,0))
-            allocate(tprr_rci   (0,0,0))
-            allocate(tprg_rcg   (0,0,0))
-            allocate(tprw_vcd_c (0,0,0))
-            allocate(tprw_vcd_e (0,0,0))
-            allocate(tprr_sml   (0,0,0))
-            allocate(tprr_gml   (0,0,0))
-            allocate(tprr_rcg   (0,0,0))
-            allocate(tprr_rcs   (0,0,0))
-            allocate(tprv_rev   (0,0,0))
-            allocate(tten3      (0,0,0))
-            allocate(qvten3     (0,0,0))
-            allocate(qrten3     (0,0,0))
-            allocate(qsten3     (0,0,0))
-            allocate(qgten3     (0,0,0))
-            allocate(qiten3     (0,0,0))
-            allocate(niten3     (0,0,0))
-            allocate(nrten3     (0,0,0))
-            allocate(ncten3     (0,0,0))
-            allocate(qcten3     (0,0,0))
          end if set_extended_diagnostic_pointers
          !> - Call mp_gt_driver() with or without aerosols, with or without effective radii, ...
-         if (is_aerosol_aware .or. merra2_aerosol_aware) then
+         if (is_aerosol_aware) then
             call mp_gt_driver(qv=qv, qc=qc, qr=qr, qi=qi, qs=qs, qg=qg, ni=ni, nr=nr,        &
                               nc=nc, nwfa=nwfa, nifa=nifa, nwfa2d=nwfa2d, nifa2d=nifa2d,     &
                               tt=tgrs, p=prsl, w=w, dz=dz, dt_in=dtstep, dt_inner=dt_inner,  &
@@ -791,6 +777,48 @@ module mp_thompson
                               qvten3=qvten3, qrten3=qrten3, qsten3=qsten3, qgten3=qgten3,    &
                               qiten3=qiten3, niten3=niten3, nrten3=nrten3, ncten3=ncten3,    &
                               qcten3=qcten3, pfils=pfils, pflls=pflls)
+         else if (merra2_aerosol_aware) then
+             call mp_gt_driver(qv=qv, qc=qc, qr=qr, qi=qi, qs=qs, qg=qg, ni=ni, nr=nr,        &
+                               nc=nc, nwfa=nwfa, nifa=nifa,                                   &
+                               tt=tgrs, p=prsl, w=w, dz=dz, dt_in=dtstep, dt_inner=dt_inner,  &
+                               sedi_semi=sedi_semi, decfl=decfl, lsm=islmsk,                  &
+                               rainnc=rain_mp, rainncv=delta_rain_mp,                         &
+                               snownc=snow_mp, snowncv=delta_snow_mp,                         &
+                               icenc=ice_mp, icencv=delta_ice_mp,                             &
+                               graupelnc=graupel_mp, graupelncv=delta_graupel_mp, sr=sr,      &
+                               refl_10cm=refl_10cm,                                           &
+                               diagflag=diagflag, do_radar_ref=do_radar_ref_mp,               &
+                               max_hail_diam_sfc=max_hail_diam_sfc,                           &
+                               has_reqc=has_reqc, has_reqi=has_reqi, has_reqs=has_reqs,       &
+                               aero_ind_fdb=aero_ind_fdb, rand_perturb_on=spp_mp_opt,         &
+                               kme_stoch=kme_stoch,                                           &
+                               rand_pert=spp_wts_mp, spp_var_list=spp_var_list,               &
+                               spp_prt_list=spp_prt_list, n_var_spp=n_var_spp,                &
+                               spp_stddev_cutoff=spp_stddev_cutoff,                           &
+                               ids=ids, ide=ide, jds=jds, jde=jde, kds=kds, kde=kde,          &
+                               ims=ims, ime=ime, jms=jms, jme=jme, kms=kms, kme=kme,          &
+                               its=its, ite=ite, jts=jts, jte=jte, kts=kts, kte=kte,          &
+                               fullradar_diag=fullradar_diag, istep=istep, nsteps=nsteps,     &
+                               first_time_step=first_time_step, errmsg=errmsg, errflg=errflg, &
+                               ! Extended diagnostics
+                               ext_diag=ext_diag,                                             &
+                               ! vts1=vts1, txri=txri, txrc=txrc,                             &
+                               prw_vcdc=prw_vcdc,                                             &
+                               prw_vcde=prw_vcde, tpri_inu=tpri_inu, tpri_ide_d=tpri_ide_d,   &
+                               tpri_ide_s=tpri_ide_s, tprs_ide=tprs_ide,                      &
+                               tprs_sde_d=tprs_sde_d,                                         &
+                               tprs_sde_s=tprs_sde_s, tprg_gde_d=tprg_gde_d,                  &
+                               tprg_gde_s=tprg_gde_s, tpri_iha=tpri_iha,                      &
+                               tpri_wfz=tpri_wfz, tpri_rfz=tpri_rfz, tprg_rfz=tprg_rfz,       &
+                               tprs_scw=tprs_scw, tprg_scw=tprg_scw, tprg_rcs=tprg_rcs,       &
+                               tprs_rcs=tprs_rcs,                                             &
+                               tprr_rci=tprr_rci, tprg_rcg=tprg_rcg, tprw_vcd_c=tprw_vcd_c,   &
+                               tprw_vcd_e=tprw_vcd_e, tprr_sml=tprr_sml, tprr_gml=tprr_gml,   &
+                               tprr_rcg=tprr_rcg, tprr_rcs=tprr_rcs,                          &
+                               tprv_rev=tprv_rev, tten3=tten3,                                &
+                               qvten3=qvten3, qrten3=qrten3, qsten3=qsten3, qgten3=qgten3,    &
+                               qiten3=qiten3, niten3=niten3, nrten3=nrten3, ncten3=ncten3,    &
+                               qcten3=qcten3, pfils=pfils, pflls=pflls)
          else
             call mp_gt_driver(qv=qv, qc=qc, qr=qr, qi=qi, qs=qs, qg=qg, ni=ni, nr=nr,        &
                               tt=tgrs, p=prsl, w=w, dz=dz, dt_in=dtstep, dt_inner=dt_inner,  &
@@ -878,59 +906,16 @@ module mp_thompson
            pfl_lsan(:,:) = pflls(:,:,1)
          end if
 
-         unset_extended_diagnostic_pointers: if (ext_diag) then
-           !vts1       => null()
-           !txri       => null()
-           !txrc       => null()
-           prw_vcdc   => null()
-           prw_vcde   => null()
-           tpri_inu   => null()
-           tpri_ide_d => null()
-           tpri_ide_s => null()
-           tprs_ide   => null()
-           tprs_sde_d => null()
-           tprs_sde_s => null()
-           tprg_gde_d => null()
-           tprg_gde_s => null()
-           tpri_iha   => null()
-           tpri_wfz   => null()
-           tpri_rfz   => null()
-           tprg_rfz   => null()
-           tprs_scw   => null()
-           tprg_scw   => null()
-           tprg_rcs   => null()
-           tprs_rcs   => null()
-           tprr_rci   => null()
-           tprg_rcg   => null()
-           tprw_vcd_c => null()
-           tprw_vcd_e => null()
-           tprr_sml   => null()
-           tprr_gml   => null()
-           tprr_rcg   => null()
-           tprr_rcs   => null()
-           tprv_rev   => null()
-           tten3      => null()
-           qvten3     => null()
-           qrten3     => null()
-           qsten3     => null()
-           qgten3     => null()
-           qiten3     => null()
-           niten3     => null()
-           nrten3     => null()
-           ncten3     => null()
-           qcten3     => null()
-         end if unset_extended_diagnostic_pointers
-
       end subroutine mp_thompson_run
 !>@}
 
 !> \section arg_table_mp_thompson_finalize Argument Table
 !! \htmlinclude mp_thompson_finalize.html
 !!
-      subroutine mp_thompson_finalize(errmsg, errflg)
+      subroutine mp_thompson_finalize(is_initialized, errmsg, errflg)
 
          implicit none
-
+         logical,                   intent(inout) :: is_initialized
          character(len=*),          intent(  out) :: errmsg
          integer,                   intent(  out) :: errflg
 

@@ -1,7 +1,7 @@
 !>\file cu_gf_driver.F90
 !! This file is scale-aware Grell-Freitas cumulus scheme driver.
 
-
+!> This module contains the scale-aware Grell-Freitas cumulus scheme driver.
 module cu_gf_driver
 
    ! DH* TODO: replace constants with arguments to cu_gf_driver_run
@@ -82,7 +82,7 @@ contains
       integer            :: ichoicem=13  ! 0 2 5 13
       integer            :: ichoice_s=3  ! 0 1 2 3
       integer, intent(in) :: spp_cu_deep ! flag for using SPP perturbations
-      real(kind_phys), dimension(:,:), intent(in) ::        &
+      real(kind_phys), dimension(:,:), optional, intent(in) ::        &
      &                    spp_wts_cu_deep
       real(kind=kind_phys) :: spp_wts_cu_deep_tmp
 
@@ -102,15 +102,16 @@ contains
    real (kind=kind_phys), intent(in) :: g,cp,xlv,r_v
    logical, intent(in   ) :: ldiag3d
 
-   real(kind=kind_phys), intent(inout)                      :: dtend(:,:,:)
+   real(kind=kind_phys), intent(inout), optional            :: dtend(:,:,:)
 !$acc declare copy(dtend)
    integer, intent(in)                                      :: dtidx(:,:), &
         index_of_x_wind, index_of_y_wind, index_of_temperature,            &
         index_of_process_scnv, index_of_process_dcnv, ntqv, ntcw, ntiw
 !$acc declare copyin(dtidx)
-   real(kind=kind_phys),  dimension( : , : ), intent(in    ) :: forcet,forceqv_spechum,w,phil
+   real(kind=kind_phys),  dimension( : , : ), intent(in    ), optional :: forcet,forceqv_spechum
+   real(kind=kind_phys),  dimension( : , : ), intent(in    ) :: w,phil
    real(kind=kind_phys),  dimension( : , : ), intent(inout ) :: t,us,vs
-   real(kind=kind_phys),  dimension( : , : ), intent(inout ) :: qci_conv
+   real(kind=kind_phys),  dimension( : , : ), intent(inout ), optional :: qci_conv
    real(kind=kind_phys),  dimension( : , : ), intent(out   ) :: cnvw_moist,cnvc
    real(kind=kind_phys),  dimension( : , : ), intent(inout ) :: cliw, clcw
 !$acc declare copyin(forcet,forceqv_spechum,w,phil)
@@ -122,27 +123,30 @@ contains
    integer, intent(in) :: dfi_radar_max_intervals
    real(kind=kind_phys), intent(in) :: fhour, fh_dfi_radar(:)
    integer, intent(in) :: num_dfi_radar, ix_dfi_radar(:)
-   real(kind=kind_phys), intent(in) :: cap_suppress(:,:)
+   real(kind=kind_phys), intent(in), optional :: cap_suppress(:,:)
 !$acc declare copyin(fh_dfi_radar,ix_dfi_radar,cap_suppress)
 
    integer, dimension (:), intent(out) :: hbot,htop,kcnv
    integer, dimension (:), intent(in)  :: xland
-   real(kind=kind_phys),    dimension (:), intent(in) :: pbl,maxMF
+   real(kind=kind_phys),    dimension (:), intent(in) :: pbl
+   real(kind=kind_phys),    dimension (:), intent(in) :: maxMF
 !$acc declare copyout(hbot,htop,kcnv)
 !$acc declare copyin(xland,pbl)
    integer, dimension (im) :: tropics
 !$acc declare create(tropics)
 !  ruc variable
    real(kind=kind_phys), dimension (:),   intent(in)  :: hfx2,qfx2,psuri
-   real(kind=kind_phys), dimension (:,:), intent(out) :: ud_mf,dd_mf,dt_mf
-   real(kind=kind_phys), dimension (:),   intent(out) :: raincv,cld1d,maxupmf
+   real(kind=kind_phys), dimension (:,:), intent(out) :: dd_mf,dt_mf
+   real(kind=kind_phys), dimension (:,:), intent(out), optional :: ud_mf
+   real(kind=kind_phys), dimension (:),   intent(out) :: raincv,cld1d
+   real(kind=kind_phys), dimension (:),   intent(out), optional :: maxupmf
    real(kind=kind_phys), dimension (:,:), intent(in)  :: t2di,p2di
 !$acc declare copyin(hfx2,qfx2,psuri,t2di,p2di)
 !$acc declare copyout(ud_mf,dd_mf,dt_mf,raincv,cld1d)
    ! Specific humidity from FV3
    real(kind=kind_phys), dimension (:,:), intent(in) :: qv2di_spechum
    real(kind=kind_phys), dimension (:,:), intent(inout) :: qv_spechum
-   real(kind=kind_phys), dimension (:), intent(inout) :: aod_gf
+   real(kind=kind_phys), dimension (:), intent(inout), optional :: aod_gf
 !$acc declare copyin(qv2di_spechum) copy(qv_spechum,aod_gf)
    ! Local water vapor mixing ratios and cloud water mixing ratios
    real(kind=kind_phys), dimension (im,km) :: qv2di, qv, forceqv, cnvw
@@ -153,11 +157,11 @@ contains
    real(kind=kind_phys), intent(in   ) :: dt
 
    integer, intent(in   ) :: imfshalcnv
-   integer, dimension(:), intent(inout) :: cactiv,cactiv_m
+   integer, dimension(:), intent(inout), optional :: cactiv,cactiv_m
    real(kind_phys), dimension(:), intent(in) :: fscav
 !$acc declare copyin(fscav)
-   real(kind_phys), dimension(:,:,:), intent(inout) :: chem3d
-   real(kind_phys), dimension(:,:), intent(inout) :: wetdpc_deep
+   real(kind_phys), dimension(:,:,:), intent(inout), optional :: chem3d
+   real(kind_phys), dimension(:,:), intent(inout), optional   :: wetdpc_deep
 !$acc declare copy(cactiv,cactiv_m,chem3d,wetdpc_deep)
 
    character(len=*), intent(out) :: errmsg
@@ -216,10 +220,10 @@ contains
    real(kind=kind_phys), dimension (im,km) :: qcheck,zo,t2d,q2d,po,p2d,rhoi,clw_ten
    real(kind=kind_phys), dimension (im,km) :: tn,qo,tshall,qshall,dz8w,omeg
    real(kind=kind_phys), dimension (im)    :: z1,psur,cuten,cutens,cutenm
-   real(kind=kind_phys), dimension (im)    :: umean,vmean,pmean
+   real(kind=kind_phys), dimension (im)    :: umean,vmean,pmean,mc_thresh
    real(kind=kind_phys), dimension (im)    :: xmbs,xmbs2,xmb,xmbm,xmb_dumm,mconv
 !$acc declare create(qcheck,zo,t2d,q2d,po,p2d,rhoi,clw_ten,tn,qo,tshall,qshall,dz8w,omeg, &
-!$acc                z1,psur,cuten,cutens,cutenm,umean,vmean,pmean,           &
+!$acc                z1,psur,cuten,cutens,cutenm,umean,vmean,pmean,mc_thresh,           &
 !$acc                xmbs,xmbs2,xmb,xmbm,xmb_dumm,mconv)
 
    integer :: i,j,k,icldck,ipr,jpr,jpr_deep,ipr_deep,uidx,vidx,tidx,qidx
@@ -592,6 +596,7 @@ contains
       hfx(i)=hfx2(i)*cp*rhoi(i,1)
       qfx(i)=qfx2(i)*xlv*rhoi(i,1)
       dx(i) = sqrt(garea(i))
+      mc_thresh(i)=3.25/dx(i)
      enddo
 
      do i=its,itf
@@ -766,7 +771,7 @@ contains
                                ! betwee -1 and +1
               ,do_cap_suppress_here,cap_suppress_j &
               ,k22m          &
-              ,jminm,kdt,tropics)
+              ,jminm,kdt,mc_thresh)
 !$acc kernels
             do i=its,itf
              do k=kts,ktf
@@ -812,33 +817,32 @@ contains
               ,dx            &
               ,mconv         &
               ,omeg          &
-
-              ,cactiv       &
-              ,cnvwt        &
-              ,zu           &
-              ,zd           &
-              ,zdm          & ! hli
-              ,edt          &
-              ,edtm         & ! hli
-              ,xmb          &
-              ,xmbm         &
-              ,xmbs         &
-              ,pret         &
-              ,outu         &
-              ,outv         &
-              ,outt         &
-              ,outq         &
-              ,outqc        &
-              ,kbcon        &
-              ,ktop         &
-              ,cupclw       &
-              ,frhd         &
-              ,ierr         &
-              ,ierrc        &
-              ,nchem        &
-              ,fscav        &
-              ,chem3d       &
-              ,wetdpc_deep  &
+              ,cactiv        &
+              ,cnvwt         &
+              ,zu            &
+              ,zd            &
+              ,zdm           & ! hli
+              ,edt           &
+              ,edtm          & ! hli
+              ,xmb           &
+              ,xmbm          &
+              ,xmbs          &
+              ,pret          &
+              ,outu          &
+              ,outv          &
+              ,outt          &
+              ,outq          &
+              ,outqc         &
+              ,kbcon         &
+              ,ktop          &
+              ,cupclw        &
+              ,frhd          &
+              ,ierr          &
+              ,ierrc         &
+              ,nchem         &
+              ,fscav         &
+              ,chem3d        &
+              ,wetdpc_deep   &
               ,do_smoke_transport     &
 !    the following should be set to zero if not available
               ,rand_mom      & ! for stochastics mom, if temporal and spatial patterns exist
@@ -853,7 +857,7 @@ contains
                                ! betwee -1 and +1
               ,do_cap_suppress_here,cap_suppress_j &
               ,k22          &
-              ,jmin,kdt,tropics)
+              ,jmin,kdt,mc_thresh)
           jpr=0
           ipr=0
 !$acc kernels

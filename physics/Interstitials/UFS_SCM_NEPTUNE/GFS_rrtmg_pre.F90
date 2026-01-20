@@ -19,20 +19,22 @@
 !>\section rrtmg_pre_gen General Algorithm
       subroutine GFS_rrtmg_pre_run (im, levs, lm, lmk, lmp, n_var_lndp, lextop,&
         ltp, imfdeepcnv, imfdeepcnv_gf, imfdeepcnv_c3, me, ncnd, ntrac,        &
-        num_p3d, npdf3d,                                                       &
+        num_p3d, npdf3d, xr_cnvcld,                                            &
         ncnvcld3d,ntqv, ntcw,ntiw, ntlnc, ntinc, ntrnc, ntsnc, ntccn, top_at_1,&
         ntrw, ntsw, ntgl, nthl, ntwa, ntoz, ntsmoke, ntdust, ntcoarsepm,       &
         ntclamt, nleffr, nieffr, nseffr, lndp_type, kdt,                       &
         ntdu1, ntdu2, ntdu3, ntdu4, ntdu5, ntss1, ntss2,                       &
         ntss3, ntss4, ntss5, ntsu, ntbcb, ntbcl, ntocb, ntocl, ntchm,          &
         imp_physics,imp_physics_nssl, nssl_ccn_on, nssl_invertccn,             &
-        imp_physics_thompson, imp_physics_gfdl, imp_physics_zhao_carr,         &
+        imp_physics_thompson, imp_physics_tempo, imp_physics_gfdl,             &
+        imp_physics_zhao_carr,                                                 &
         imp_physics_zhao_carr_pdf, imp_physics_mg, imp_physics_wsm6,           &
         imp_physics_fer_hires, iovr, iovr_rand, iovr_maxrand, iovr_max,        &
         iovr_dcorr, iovr_exp, iovr_exprand, idcor, idcor_con, idcor_hogan,     &
         idcor_oreopoulos, dcorr_con, julian, yearlen, lndp_var_list, lsswr,    &
         lslwr, ltaerosol, mraerosol, lgfdlmprad, uni_cld, effr_in, do_mynnedmf,&
-        lmfshal, lcnorm, lmfdeep2, lcrick, fhswr, fhlwr, solhr, sup, con_eps,  &
+        lmfshal, lcnorm, lmfdeep2, lcrick, fhswr, fhlwr, solhr, sup, xr_con,   &
+        xr_exp, con_eps,                                                       &
         epsm1, fvirt, rog, rocp, con_rd, xlat_d, xlat, xlon, coslat, sinlat,   &
         tsfc, slmsk, prsi, prsl, prslk, tgrs, sfc_wts, mg_cld, effrr_in,       &
         pert_clds, sppt_wts, sppt_amp, cnvw_in, cnvc_in, qgrs, aer_nm, dx,     &
@@ -45,7 +47,7 @@
         gasvmr_ccl4,  gasvmr_cfc113, aerodp,ext550, clouds6, clouds7, clouds8, &
         clouds9, cldsa, cldfra, cldfra2d, lwp_ex,iwp_ex, lwp_fc,iwp_fc,        &
         faersw1, faersw2, faersw3, faerlw1, faerlw2, faerlw3, alpha, rrfs_sd,  &
-        aero_dir_fdb, fdb_coef, spp_wts_rad, spp_rad, ico2, ozphys,      &
+        aero_dir_fdb, fdb_coef, spp_wts_rad, spp_rad, ico2, ozphys, tempo_cfg, &
         errmsg, errflg)
 
       use machine,                   only: kind_phys
@@ -72,15 +74,37 @@
       use surface_perturbation,      only: cdfnor,ppfbet
 
       ! For Thompson MP
-      use module_mp_thompson,        only: calc_effectRad,           &
-                                           Nt_c_l, Nt_c_o,           &
-                                           re_qc_min, re_qc_max,     &
-                                           re_qi_min, re_qi_max,     &
-                                           re_qs_min, re_qs_max
+      use module_mp_thompson,        only: calc_effectRad_thompson     => calc_effectRad, &
+                                           Nt_c_l_thompson             => Nt_c_l,         &
+                                           Nt_c_o_thompson             => Nt_c_o,         &
+                                           re_qc_min_thompson          => re_qc_min,      &
+                                           re_qc_max_thompson          => re_qc_max,      &
+                                           re_qi_min_thompson          => re_qi_min,      &
+                                           re_qi_max_thompson          => re_qi_max,      &
+                                           re_qs_min_thompson          => re_qs_min,      &
+                                           re_qs_max_thompson          => re_qs_max
       use module_mp_thompson_make_number_concentrations, only:       &
-                                           make_IceNumber,           &
-                                           make_DropletNumber,       &
-                                           make_RainNumber
+                                           make_IceNumber_thompson     => make_IceNumber,     &
+                                           make_DropletNumber_thompson => make_DropletNumber, &
+                                           make_RainNumber_thompson    => make_RainNumber
+
+      use module_mp_tempo_params, only: &
+           ty_tempo_cfg, &
+           Nt_c_l_tempo => Nt_c_l, &
+           Nt_c_o_tempo => Nt_c_o, &
+           re_qc_min_tempo => re_qc_min, &
+           re_qc_max_tempo => re_qc_max, &
+           re_qi_min_tempo => re_qi_min, &
+           re_qi_max_tempo => re_qi_max, &
+           re_qs_min_tempo => re_qs_min, &
+           re_qs_max_tempo => re_qs_max
+
+      use module_mp_tempo_utils, only: &
+           calc_effectRad_tempo => calc_effectRad, &
+           make_IceNumber_tempo => make_IceNumber, &
+           make_DropletNumber_tempo => make_DropletNumber, &
+           make_RainNumber_tempo => make_RainNumber
+
       ! For NRL Ozone
       use module_ozphys, only: ty_ozphys
       implicit none
@@ -98,6 +122,7 @@
                                            lndp_type,                          &
                                            kdt, imp_physics,                   &
                                            imp_physics_thompson,               &
+                                           imp_physics_tempo,                  &
                                            imp_physics_gfdl,                   &
                                            imp_physics_zhao_carr,              &
                                            imp_physics_zhao_carr_pdf,          &
@@ -123,19 +148,19 @@
       integer, intent(in) :: ntdu1, ntdu2, ntdu3, ntdu4, ntdu5, ntss1, ntss2, ntss3,  &
                              ntss4, ntss5, ntsu, ntbcb, ntbcl, ntocb, ntocl, ntchm
 
-      character(len=3), dimension(:), intent(in) :: lndp_var_list
+      character(len=3), dimension(:), intent(in), optional :: lndp_var_list
 
       logical,              intent(in) :: lsswr, lslwr, ltaerosol, lgfdlmprad, &
                                           uni_cld, effr_in, do_mynnedmf,       &
                                           lmfshal, lmfdeep2, pert_clds, lcrick,&
                                           lcnorm, top_at_1, lextop, mraerosol
-      logical,              intent(in) :: rrfs_sd, aero_dir_fdb
+      logical,              intent(in) :: rrfs_sd, aero_dir_fdb, xr_cnvcld
 
       logical,              intent(in) :: nssl_ccn_on, nssl_invertccn
       integer,              intent(in) :: spp_rad
-      real(kind_phys),      intent(in) :: spp_wts_rad(:,:)
+      real(kind_phys),      intent(in), optional :: spp_wts_rad(:,:)
 
-      real(kind=kind_phys), intent(in) :: fhswr, fhlwr, solhr, sup, julian, sppt_amp, dcorr_con
+      real(kind=kind_phys), intent(in) :: fhswr, fhlwr, solhr, sup, julian, sppt_amp, dcorr_con, xr_con, xr_exp
       real(kind=kind_phys), intent(in) :: con_eps, epsm1, fvirt, rog, rocp, con_rd, con_pi, con_g, con_ttp, con_thgni
 
       real(kind=kind_phys), dimension(:), intent(in) :: xlat_d, xlat, xlon,    &
@@ -143,23 +168,24 @@
                                                         slmsk, dx, si
 
       real(kind=kind_phys), dimension(:,:), intent(in) :: prsi, prsl, prslk,   &
-                                                          tgrs, sfc_wts,       &
+                                                          tgrs
+      real(kind=kind_phys), dimension(:,:), intent(in), optional :: &
                                                           mg_cld, effrr_in,    &
                                                           cnvw_in, cnvc_in,    &
-                                                          sppt_wts
+                                                          sppt_wts, sfc_wts
 
       real(kind=kind_phys), dimension(:,:,:), intent(in) :: qgrs
       real(kind=kind_phys), dimension(:,:,:), intent(inout) :: aer_nm
 
       real(kind=kind_phys), dimension(:),   intent(inout) :: coszen, coszdg
 
-      real(kind=kind_phys), dimension(:,:), intent(inout) :: effrl_inout,      &
+      real(kind=kind_phys), dimension(:,:), intent(inout), optional :: effrl_inout,      &
                                                              effri_inout,      &
                                                              effrs_inout
       real(kind=kind_phys), dimension(:,:), intent(inout) :: clouds1,          &
                                                              clouds2, clouds3, &
                                                              clouds4, clouds5
-      real(kind=kind_phys), dimension(:,:), intent(in)  :: qci_conv
+      real(kind=kind_phys), dimension(:,:), intent(in), optional  :: qci_conv
       real(kind=kind_phys), dimension(:),   intent(in)  :: fdb_coef
       real(kind=kind_phys), dimension(:),   intent(out) :: lwp_ex,iwp_ex, &
                                                            lwp_fc,iwp_fc
@@ -207,7 +233,7 @@
       real(kind=kind_phys), dimension(:,:,:), intent(out) :: faerlw1,&
                                                              faerlw2,&
                                                              faerlw3
-      real(kind=kind_phys), dimension(:,:),   intent(out) :: alpha
+      real(kind=kind_phys), dimension(:,:),   intent(out), optional :: alpha
       character(len=*), intent(out) :: errmsg
       integer,          intent(out) :: errflg
 
@@ -233,6 +259,9 @@
                                   nc_mp, ni_mp, nwfa
       real (kind=kind_phys), dimension(lm) :: cldfra1d, qv1d,           &
      &                                 qc1d, qi1d, qs1d, dz1d, p1d, t1d
+
+      ! For TEMPO MP
+      type(ty_tempo_cfg), intent(in) :: tempo_cfg
 
       ! for F-A MP
       real(kind=kind_phys), dimension(im,lm+LTP+1) :: tem2db, hz
@@ -275,7 +304,7 @@
 
       LP1 = LM + 1               ! num of in/out levels
 
-      if (imp_physics == imp_physics_thompson) then
+      if (imp_physics == imp_physics_thompson .or. imp_physics == imp_physics_tempo) then
          max_relh = 1.5
       else
          max_relh = 1.1
@@ -736,7 +765,8 @@
             enddo
           enddo
           ! for Thompson MP - prepare variables for calc_effr
-          if_thompson: if (imp_physics == imp_physics_thompson .and. (ltaerosol .or. mraerosol)) then
+          if_thompson: if ((imp_physics == imp_physics_thompson .or. &
+               imp_physics == imp_physics_tempo) .and. (ltaerosol .or. mraerosol)) then
             do k=1,LMK
               do i=1,IM
                 qvs = qlyr(i,k)
@@ -751,7 +781,7 @@
                 nwfa  (i,k) = tracer1(i,k,ntwa)
               enddo
             enddo
-          elseif (imp_physics == imp_physics_thompson) then
+          elseif (imp_physics == imp_physics_thompson .or. imp_physics == imp_physics_tempo) then
             do k=1,LMK
               do i=1,IM
                 qvs = qlyr(i,k)
@@ -762,9 +792,17 @@
                 qi_mp (i,k) = tracer1(i,k,ntiw)/(1.-qvs)
                 qs_mp (i,k) = tracer1(i,k,ntsw)/(1.-qvs)
                 if(nint(slmsk(i)) == 1) then
-                  nc_mp (i,k) = Nt_c_l*orho(i,k)
+                   if (imp_physics == imp_physics_thompson) then
+                      nc_mp (i,k) = Nt_c_l_thompson*orho(i,k)
+                   else
+                      nc_mp (i,k) = Nt_c_l_tempo*orho(i,k)
+                   endif
                 else
-                  nc_mp (i,k) = Nt_c_o*orho(i,k)
+                   if (imp_physics == imp_physics_thompson) then
+                      nc_mp (i,k) = Nt_c_o_thompson*orho(i,k)
+                   else
+                      nc_mp (i,k) = Nt_c_o_tempo*orho(i,k)
+                   endif
                 endif
                 ni_mp (i,k) = tracer1(i,k,ntinc)/(1.-qvs)
               enddo
@@ -877,18 +915,26 @@
            ! not used yet -- effr_in should always be true for now
           endif
 
-        elseif (imp_physics == imp_physics_thompson) then       !  Thompson MP
+        elseif (imp_physics == imp_physics_thompson .or. imp_physics == imp_physics_tempo) then       !  Thompson MP
           !
           ! Compute effective radii for QC, QI, QS with (GF, MYNN) or without (all others) sub-grid clouds
           !
           ! Update number concentration, consistent with sub-grid clouds (GF, MYNN) or without (all others)
           do k=1,lm
             do i=1,im
-              if ((ltaerosol .or. mraerosol) .and. qc_mp(i,k)>1.e-12 .and. nc_mp(i,k)<100.) then
-                nc_mp(i,k) = make_DropletNumber(qc_mp(i,k)*rho(i,k), nwfa(i,k)*rho(i,k)) * orho(i,k)
+               if ((ltaerosol .or. mraerosol) .and. qc_mp(i,k)>1.e-12 .and. nc_mp(i,k)<100.) then
+                  if (imp_physics == imp_physics_thompson) then
+                     nc_mp(i,k) = make_DropletNumber_thompson(qc_mp(i,k)*rho(i,k), nwfa(i,k)*rho(i,k)) * orho(i,k)
+                  else
+                     nc_mp(i,k) = make_DropletNumber_tempo(qc_mp(i,k)*rho(i,k), nwfa(i,k)*rho(i,k)) * orho(i,k)
+                  endif
               endif
               if (qi_mp(i,k)>1.e-12 .and. ni_mp(i,k)<100.) then
-                ni_mp(i,k) = make_IceNumber(qi_mp(i,k)*rho(i,k), tlyr(i,k)) * orho(i,k)
+                 if (imp_physics == imp_physics_thompson) then
+                    ni_mp(i,k) = make_IceNumber_thompson(qi_mp(i,k)*rho(i,k), tlyr(i,k)) * orho(i,k)
+                 else
+                    ni_mp(i,k) = make_IceNumber_tempo(qi_mp(i,k)*rho(i,k), tlyr(i,k)) * orho(i,k)
+                 endif
               endif
             end do
           end do
@@ -899,18 +945,36 @@
             !tgs: progclduni has different limits for ice radii (10.0-150.0) than
             !     calc_effectRad (4.99-125.0 for WRFv3.8.1; 2.49-125.0 for WRFv4+)
             !     it will raise the low limit from 5 to 10, but the high limit will remain 125.
-            call calc_effectRad (tlyr(i,:), plyr(i,:)*100., qv_mp(i,:), qc_mp(i,:),   &
-                                 nc_mp(i,:), qi_mp(i,:), ni_mp(i,:), qs_mp(i,:), &
-                                 effrl(i,:), effri(i,:), effrs(i,:), islmsk, 1, lm )
-            ! Scale Thompson's effective radii from meter to micron
-            do k=1,lm
-              effrl(i,k) = MAX(re_qc_min, MIN(effrl(i,k), re_qc_max))*1.e6
-              effri(i,k) = MAX(re_qi_min, MIN(effri(i,k), re_qi_max))*1.e6
-              effrs(i,k) = MAX(re_qs_min, MIN(effrs(i,k), re_qs_max))*1.e6
-            end do
-            effrl(i,lmk) = re_qc_min*1.e6
-            effri(i,lmk) = re_qi_min*1.e6
-            effrs(i,lmk) = re_qs_min*1.e6
+
+            if (imp_physics == imp_physics_thompson) then
+               call calc_effectRad_thompson(tlyr(i,:), plyr(i,:)*100., qv_mp(i,:), qc_mp(i,:),   &
+                    nc_mp(i,:), qi_mp(i,:), ni_mp(i,:), qs_mp(i,:), &
+                    effrl(i,:), effri(i,:), effrs(i,:), islmsk, 1, lm )
+               ! Scale Thompson's effective radii from meter to micron
+               do k=1,lm
+                  effrl(i,k) = MAX(re_qc_min_thompson, MIN(effrl(i,k), re_qc_max_thompson))*1.e6
+                  effri(i,k) = MAX(re_qi_min_thompson, MIN(effri(i,k), re_qi_max_thompson))*1.e6
+                  effrs(i,k) = MAX(re_qs_min_thompson, MIN(effrs(i,k), re_qs_max_thompson))*1.e6
+               end do
+               effrl(i,lmk) = re_qc_min_thompson*1.e6
+               effri(i,lmk) = re_qi_min_thompson*1.e6
+               effrs(i,lmk) = re_qs_min_thompson*1.e6
+            else
+               call calc_effectRad_tempo(t1d=tlyr(i,:), p1d=plyr(i,:)*100., qv1d=qv_mp(i,:), qc1d=qc_mp(i,:),   &
+                    nc1d=nc_mp(i,:), qi1d=qi_mp(i,:), ni1d=ni_mp(i,:), qs1d=qs_mp(i,:), &
+                    re_qc1d=effrl(i,:), re_qi1d=effri(i,:), re_qs1d=effrs(i,:), kts=1, kte=lm, &
+                    lsml=islmsk, configs=tempo_cfg)
+               ! Scale Thompson's effective radii from meter to micron
+               do k=1,lm
+                  effrl(i,k) = MAX(re_qc_min_tempo, MIN(effrl(i,k), re_qc_max_tempo))*1.e6
+                  effri(i,k) = MAX(re_qi_min_tempo, MIN(effri(i,k), re_qi_max_tempo))*1.e6
+                  effrs(i,k) = MAX(re_qs_min_tempo, MIN(effrs(i,k), re_qs_max_tempo))*1.e6
+               end do
+               effrl(i,lmk) = re_qc_min_tempo*1.e6
+               effri(i,lmk) = re_qi_min_tempo*1.e6
+               effrs(i,lmk) = re_qs_min_tempo*1.e6
+            endif
+
           end do
           effrr(:,:) = 1000. ! rrain_def=1000.
           ! Update global arrays
@@ -975,19 +1039,20 @@
      &       deltaq, sup, dcorr_con, me, icloud, kdt,                   &
      &       ntrac, ntcw, ntiw, ntrw, ntsw, ntgl, ntclamt,              &
      &       imp_physics, imp_physics_nssl, imp_physics_fer_hires,      &
-     &       imp_physics_gfdl, imp_physics_thompson, imp_physics_wsm6,  &
+     &       imp_physics_gfdl, imp_physics_thompson,                    &
+     &       imp_physics_wsm6, imp_physics_tempo,                       &
      &       imp_physics_zhao_carr, imp_physics_zhao_carr_pdf,          &
      &       imp_physics_mg, iovr, iovr_rand, iovr_maxrand, iovr_max,   &
      &       iovr_dcorr, iovr_exp, iovr_exprand, idcor, idcor_con,      &
      &       idcor_hogan, idcor_oreopoulos, lcrick, lcnorm,             &
      &       imfdeepcnv, imfdeepcnv_gf, imfdeepcnv_c3, do_mynnedmf,     &
-     &       lgfdlmprad,                                                &
+     &       lgfdlmprad, xr_cnvcld,                                     &
      &       uni_cld, lmfshal, lmfdeep2, cldcov, clouds1,               &
      &       effrl, effri, effrr, effrs, effr_in,                       &
      &       effrl_inout, effri_inout, effrs_inout,                     &
      &       lwp_ex, iwp_ex, lwp_fc, iwp_fc,                            &
      &       dzb, xlat_d, julian, yearlen, gridkm, top_at_1, si,        &
-     &       con_ttp, con_pi, con_g, con_rd, con_thgni,                 &
+     &       xr_con, xr_exp, con_ttp, con_pi, con_g, con_rd, con_thgni, &
      &       cld_frac, cld_lwp, cld_reliq, cld_iwp, cld_reice,          &    !  ---  outputs:
      &       cld_rwp, cld_rerain, cld_swp, cld_resnow,                  &    !  ---  outputs:
      &       cldsa, mtopa, mbota, de_lgth, alpha                        &    !  ---  outputs:

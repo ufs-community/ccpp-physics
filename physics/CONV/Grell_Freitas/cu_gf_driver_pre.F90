@@ -1,6 +1,7 @@
 !> \file cu_gf_driver_pre.F90
 !!  Contains code related to GF convective schemes to be used within the GFS physics suite.
 
+!> This module contains code related to GF convective schemes to be used within the GFS physics suite.
 module cu_gf_driver_pre
 
    implicit none
@@ -17,8 +18,7 @@ module cu_gf_driver_pre
 !!
    subroutine cu_gf_driver_pre_run (flag_init, flag_restart, gf_coldstart, kdt, fhour, dtp, t, q, prevst, prevsq, &
                                     forcet, forceq, cactiv, cactiv_m, conv_act, conv_act_m,         &
-                                    rrfs_sd, ntsmoke, ntdust, ntcoarsepm, chem3d, gq0,              &
-                                    errmsg, errflg)
+                                    ntsmoke, ntdust, ntcoarsepm, chem3d, gq0, errmsg, errflg)
 
       use machine, only: kind_phys
 
@@ -26,8 +26,7 @@ module cu_gf_driver_pre
 
       logical,          intent(in)  :: flag_init
       logical,          intent(in)  :: flag_restart
-      logical,          intent(in)  :: gf_coldstart 
-      logical,          intent(in)  :: rrfs_sd
+      logical,          intent(in)  :: gf_coldstart
       integer,          intent(in)  :: kdt
       real(kind_phys),  intent(in)  :: fhour
       real(kind_phys),  intent(in)  :: dtp
@@ -44,7 +43,8 @@ module cu_gf_driver_pre
 !$acc declare copyout(forcet,forceq,cactiv,cactiv_m)
       real(kind_phys),  intent(in)  :: conv_act(:)
       real(kind_phys),  intent(in)  :: conv_act_m(:)
-      real(kind_phys),  intent(inout) :: chem3d(:,:,:), gq0(:,:,:)
+      real(kind_phys),  intent(inout), optional :: chem3d(:,:,:)
+      real(kind_phys),  intent(inout) :: gq0(:,:,:)
 !$acc declare copyin(conv_act,conv_act_m) copy(chem3d,gq0)
       character(len=*), intent(out) :: errmsg
       integer,          intent(out) :: errflg
@@ -83,7 +83,7 @@ module cu_gf_driver_pre
       cactiv(:)=nint(conv_act(:))
       cactiv_m(:)=nint(conv_act_m(:))
 
-      if (rrfs_sd) then
+      if (present(chem3d)) then
        chem3d(:,:,1) = gq0(:,:,ntsmoke)
        chem3d(:,:,2) = gq0(:,:,ntdust)
        chem3d(:,:,3) = gq0(:,:,ntcoarsepm)

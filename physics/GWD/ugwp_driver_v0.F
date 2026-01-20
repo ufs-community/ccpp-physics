@@ -1,4 +1,6 @@
 !>\file ugwp_driver_v0.F
+
+!> This module contains the UGWP v0 driver module
       module ugwp_driver_v0
       use cires_orowam2017
       contains
@@ -8,8 +10,7 @@
 !ugwp-v0 subroutines: GWDPS_V0 and fv3_ugwp_solv2_v0	
 !
 !=====================================================================
-!>\ingroup cires_ugwp_run_mod
-!>\defgroup ugwp_driverv0_mod GFS UGWP V0 Driver Module
+!>\defgroup ugwp_driverv0_mod UGWP V0 Driver Module
 !! This is the CIRES UGWP V0 driver module
 !!
 !! Note for the sub-grid scale orography scheme in UGWP-v0: Due to degraded forecast
@@ -347,7 +348,9 @@
           BVF2 = grav2 * RDZ * (VTK(I,K+1)-VTK(I,K))
      &                       / (VTK(I,K+1)+VTK(I,K))
           bnv2(i,k+1) = max( BVF2, bnv2min )
-          RI_N(I,K+1) = Bnv2(i,k)/SHR2        ! Richardson number consistent with BNV2
+          ! https://github.com/NCAR/ccpp-physics/issues/1103
+          !RI_N(I,K+1) = Bnv2(i,k)/SHR2        ! Richardson number consistent with BNV2
+          RI_N(I,K+1) = Bnv2(i,max(k,2))/SHR2        ! Richardson number consistent with BNV2
 !
 ! add here computation for Ktur and OGW-dissipation fro VE-GFS
 !
@@ -813,7 +816,7 @@
       IF( do_tofd ) then
         axtms(:,:) = 0.0 ; aytms(:,:) = 0.0
 
-	
+
         DO I = 1,npt
           J = ipt(i)
           zpbl  =rgrav*phil( j, kpbl(j) )
@@ -920,8 +923,7 @@
 !===============================================================================
 !23456==============================================================================
 
-!>\ingroup cires_ugwp_run_mod
-!! A modification of the Scinocca (2003) \cite scinocca_2003 algorithm for 
+!> A modification of the Scinocca (2003) \cite scinocca_2003 algorithm for 
 !! NGWs with non-hydrostatic and rotational
 !!effects for GW propagations and background dissipation 
       subroutine fv3_ugwp_solv2_v0(klon, klev, dtime,

@@ -5,9 +5,7 @@
 
       contains
 
-!>\defgroup gfs_stoch_mod GFS Stochastics Physics Module
-!> @{
-!! This is the GFS stochastics physics driver module.
+!> This is the GFS stochastics physics driver module.
 !!
 !> \section arg_table_GFS_stochastics_init Argument Table
 !! \htmlinclude GFS_stochastics_init.html
@@ -64,7 +62,7 @@
                                       zmtnblck, sppt_wts, skebu_wts, skebv_wts, shum_wts,&
                                       diss_est, ugrs, vgrs, tgrs, qgrs_wv,               &
                                       qgrs_cw, qgrs_rw, qgrs_sw, qgrs_iw, qgrs_gl,       &
-                                      gu0, gv0, gt0, gq0_wv, dtdtnp,                     &
+                                      gu0, gv0, gt0, gq0_wv, dtdtnp, num_diag_buckets,   &
                                       gq0_cw, gq0_rw, gq0_sw, gq0_iw, gq0_gl,            &
                                       rain, rainc, tprcp, totprcp, cnvprcp,              &
                                       totprcpb, cnvprcpb, cplflx, cpllnd,                &
@@ -87,14 +85,15 @@
          logical,                               intent(in)    :: use_zmtnblck
          logical,                               intent(in)    :: do_shum
          logical,                               intent(in)    :: do_skeb
+         integer,                               intent(in)    :: num_diag_buckets
          real(kind_phys), dimension(:),         intent(in)    :: zmtnblck
          ! sppt_wts only allocated if do_sppt == .true.
-         real(kind_phys), dimension(:,:),       intent(inout) :: sppt_wts
+         real(kind_phys), dimension(:,:),       intent(inout), optional :: sppt_wts
          ! skebu_wts, skebv_wts only allocated if do_skeb == .true.
-         real(kind_phys), dimension(:,:),       intent(in)    :: skebu_wts
-         real(kind_phys), dimension(:,:),       intent(in)    :: skebv_wts
+         real(kind_phys), dimension(:,:),       intent(in), optional    :: skebu_wts
+         real(kind_phys), dimension(:,:),       intent(in), optional    :: skebv_wts
          ! shum_wts only allocated if do_shum == .true.
-         real(kind_phys), dimension(:,:),       intent(in)    :: shum_wts
+         real(kind_phys), dimension(:,:),       intent(in), optional    :: shum_wts
          real(kind_phys), dimension(:,:),       intent(in)    :: diss_est
          real(kind_phys), dimension(:,:),       intent(in)    :: ugrs
          real(kind_phys), dimension(:,:),       intent(in)    :: vgrs
@@ -119,30 +118,30 @@
          integer, intent(in) ::      ntsw
          integer, intent(in) ::      ntiw
          integer, intent(in) ::      ntgl
-         real(kind_phys), dimension(:,:),       intent(inout) :: dtdtnp
+         real(kind_phys), dimension(:,:),       intent(inout), optional :: dtdtnp
          real(kind_phys), dimension(:),         intent(in)    :: rain
          real(kind_phys), dimension(:),         intent(in)    :: rainc
          real(kind_phys), dimension(:),         intent(inout) :: tprcp
          real(kind_phys), dimension(:),         intent(inout) :: totprcp
          real(kind_phys), dimension(:),         intent(inout) :: cnvprcp
-         real(kind_phys), dimension(:),         intent(inout) :: totprcpb
-         real(kind_phys), dimension(:),         intent(inout) :: cnvprcpb
+         real(kind_phys), dimension(:,:),       intent(inout) :: totprcpb
+         real(kind_phys), dimension(:,:),       intent(inout) :: cnvprcpb
          logical,                               intent(in)    :: cplflx
          logical,                               intent(in)    :: cpllnd
          ! rain_cpl only allocated if cplflx == .true. or cplchm == .true. or cpllnd == .true.
-         real(kind_phys), dimension(:),         intent(inout) :: rain_cpl
+         real(kind_phys), dimension(:),         intent(inout), optional :: rain_cpl
          ! snow_cpl only allocated if cplflx == .true. or cplchm == .true.
-         real(kind_phys), dimension(:),         intent(inout) :: snow_cpl
+         real(kind_phys), dimension(:),         intent(inout), optional :: snow_cpl
          ! drain_cpl, dsnow_cpl only allocated if cplflx == .true. or cplchm == .true.
-         real(kind_phys), dimension(:),         intent(in)    :: drain_cpl
-         real(kind_phys), dimension(:),         intent(in)    :: dsnow_cpl
+         real(kind_phys), dimension(:),         intent(in), optional    :: drain_cpl
+         real(kind_phys), dimension(:),         intent(in), optional    :: dsnow_cpl
          real(kind_phys), dimension(:),         intent(in)    :: vfact_ca
-         real(kind_phys), dimension(:),         intent(in)    :: ca1
+         real(kind_phys), dimension(:),         intent(in), optional :: ca1
          character(len=*),                      intent(out)   :: errmsg
          integer,                               intent(out)   :: errflg
 
          !--- local variables
-         integer :: k, i
+         integer :: k, i, ib
          real(kind=kind_phys) :: upert, vpert, tpert, qpert, qnew, sppt_vwt
          real(kind=kind_phys), dimension(1:im,1:km) :: ca
 
@@ -236,11 +235,13 @@
            ! instantaneous precip rate going into land model at the next time step
            tprcp(:) = sppt_wts(:,15)*tprcp(:)
            totprcp(:) = totprcp(:) + (sppt_wts(:,15) - 1 )*rain(:)
-           ! acccumulated total and convective preciptiation
+           ! convective precipitation
            cnvprcp(:) = cnvprcp(:) + (sppt_wts(:,15) - 1 )*rainc(:)
            ! bucket precipitation adjustment due to sppt
-           totprcpb(:) = totprcpb(:) + (sppt_wts(:,15) - 1 )*rain(:)
-           cnvprcpb(:) = cnvprcpb(:) + (sppt_wts(:,15) - 1 )*rainc(:)
+           do ib=1,num_diag_buckets
+             totprcpb(:,ib) = totprcpb(:,ib) + (sppt_wts(:,15) - 1 )*rain(:)
+             cnvprcpb(:,ib) = cnvprcpb(:,ib) + (sppt_wts(:,15) - 1 )*rainc(:)
+           enddo
 
            if (cplflx .or. cpllnd) then
                rain_cpl(:) = rain_cpl(:) + (sppt_wts(:,15) - 1.0)*drain_cpl(:)
@@ -340,11 +341,13 @@
             ! instantaneous precip rate going into land model at the next time step                                                                                                                                                                         
             tprcp(:) = ca(:,15)*tprcp(:)
             totprcp(:) = totprcp(:) + (ca(:,15) - 1 )*rain(:)
-            ! acccumulated total and convective preciptiation                                                                                                                                                                                               
-            cnvprcp(:) = cnvprcp(:)      + (ca(:,15) - 1 )*rainc(:)
-            ! bucket precipitation adjustment due to sppt                                                                                                                                                                                                   
-            totprcpb(:)      = totprcpb(:)      + (ca(:,15) - 1 )*rain(:)
-            cnvprcpb(:)      = cnvprcpb(:)      + (ca(:,15) - 1 )*rainc(:)
+            ! convective precipitation
+            cnvprcp(:) = cnvprcp(:) + (ca(:,15) - 1 )*rainc(:)
+            ! bucket precipitation adjustment due to sppt
+            do ib=1,num_diag_buckets
+              totprcpb(:,ib) = totprcpb(:,ib)   + (ca(:,15) - 1 )*rain(:)
+              cnvprcpb(:,ib) = cnvprcpb(:,ib)   + (ca(:,15) - 1 )*rainc(:)
+            enddo
             
             if (cplflx .or. cpllnd) then
                rain_cpl(:) = rain_cpl(:) + (ca(:,15) - 1.0)*drain_cpl(:)
@@ -372,5 +375,4 @@
          endif
 
       end subroutine GFS_stochastics_run
-!> @}
     end module GFS_stochastics

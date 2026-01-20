@@ -121,6 +121,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [cnvc]
   standard_name = convective_cloud_cover
   long_name = convective cloud cover
