@@ -1506,7 +1506,7 @@ c
          
          ! Copy back output if needed
          if(present(omegaout)) then
-            omegaout = real(omegaout_loc, kind=kind_phys)
+            omegaout(:,:) = real(omegaout_loc(:,:), kind=kind_phys)
          endif
 
          do k = 1, km
@@ -1514,14 +1514,14 @@ c
                if (cnvflg(i)) then
                   if(k > kbcon1(i) .and. k < ktcon(i)) then
                      omega_u(i,k)=omegaout_loc(i,k)
-                     omega_u(i,k)=MAX(omega_u(i,k),-80._conv_wp)
+                     omega_u(i,k)=MAX(omega_u(i,k),-80.0_conv_wp)
 !      Convert to m/s for use in convective time-scale:
-                     rho = po(i,k)*100._conv_wp / (real(rd,
+                     rho = po(i,k)*100.0_conv_wp / (real(rd,
      &                     kind=conv_wp) * to(i,k))
                      tem = (-omega_u(i,k)) / ((rho * real(grav,
      &                     kind=conv_wp)))
                      wu2(i,k) = tem**2
-                     wu2(i,k) = max(wu2(i,k), 0._conv_wp)
+                     wu2(i,k) = max(wu2(i,k), 0.0_conv_wp)
                   endif
                endif
             enddo
@@ -2044,8 +2044,9 @@ c
      &        kind=conv_wp),sigmind,sigminm,sigmins,real(sigmain,
      &        kind=conv_wp),sigmaout_loc,sigmab)
          
-         if(present(sigmaout)) sigmaout = real(sigmaout_loc,
-     &                                    kind=kind_phys)
+         if(present(sigmaout)) then
+           sigmaout(:,:) = real(sigmaout_loc(:,:),kind=kind_phys)
+         endif
 
       endif
 
@@ -2212,7 +2213,7 @@ c
             if(k > kb(i) .and. k <= ktcon(i)) then
               if(rtnp(i) < 0._conv_wp) then
                 if(tsump(i) > abs(tsumn(i))) then
-                  if(real(q1(i,k), kind=conv_wp) < 1._conv_wp)
+                  if(real(q1(i,k), kind=conv_wp) < 0._conv_wp)
      &               q1(i,k) = 0._kind_phys
                   if(real(q1(i,k), kind=conv_wp) > 0._conv_wp)
      &               q1(i,k) = real((1._conv_wp+rtnp(i)),
@@ -2451,9 +2452,8 @@ c
                 else
                   rn(i) = rn(i) - tem1
                 endif
-                q1(i,k) = q1(i,k) + real(qevap(i), kind=kind_phys)
-                t1(i,k) = t1(i,k) - real(elocp * qevap(i), 
-     &                    kind=kind_phys)
+                q1(i,k) = q1(i,k) + qevap(i)
+                t1(i,k) = t1(i,k) - elocp * qevap(i)
                 deltv(i) = - elocp*qevap(i)/dt2
                 delq(i) =  + qevap(i)/dt2
                 delqev(i) = delqev(i) + tem * qevap(i)
@@ -2541,13 +2541,10 @@ c
               tem1 = max(0.0_conv_wp, min(1.0_conv_wp, (tcr-real(t1(i,k)
      &             , kind=conv_wp))*tcrf))
               if (real(qtr(i,k,2), kind=conv_wp) > -999.0_conv_wp) then
-                qtr(i,k,1) = qtr(i,k,1) + real(tem * tem1, 
-     &                       kind=kind_phys)  ! ice
-                qtr(i,k,2) = qtr(i,k,2) + real(tem *(1.0_conv_wp-tem1),
-     &                       kind=kind_phys)  ! water
+                qtr(i,k,1) = qtr(i,k,1) + tem * tem1                 ! ice
+                qtr(i,k,2) = qtr(i,k,2) + tem * (1.0_conv_wp - tem1) ! water
               else
-                qtr(i,k,1) = real(qtr(i,k,1), kind=kind_phys)
-     &                     + real(tem, kind=kind_phys)
+                qtr(i,k,1) = qtr(i,k,1) + tem
               endif
             endif
           endif
