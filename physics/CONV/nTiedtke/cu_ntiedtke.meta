@@ -312,6 +312,13 @@
   dimensions = ()
   type = integer
   intent = in
+[icu_zoentr]
+  standard_name = option_for_different_entrainment_in_Tiedtke
+  long_name = option for different entrainment in Tiedtke
+  units = none
+  dimensions = ()
+  type = integer
+  intent = in
 [cnvc]
   standard_name = convective_cloud_cover
   long_name = convective cloud cover

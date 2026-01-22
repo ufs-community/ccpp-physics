@@ -170,7 +170,7 @@ contains
 !     level 1 subroutine 'cu_ntiedkte_run'
       subroutine cu_ntiedtke_run(pu,pv,pt,pqv,tdi,qvdi,pqvf,ptf,clw,poz,pzz,prsl,prsi,pomg, &
                                  evap,hfx,zprecc,lmask,scale_fac_opt,lq,km,dt,dx,kbot,ktop,kcnv, &
-                                 ktrac,ud_mf,dd_mf,dt_mf,cnvw,cnvc,errmsg,errflg)
+                                 ktrac,ud_mf,dd_mf,dt_mf,cnvw,cnvc,icu_zoentr,errmsg,errflg)
 !=================================================================================================================
 !  this is the interface between the model and the mass flux convection module
 !     m.tiedtke      e.c.m.w.f.      1989
@@ -200,7 +200,7 @@ contains
 !
       implicit none
 !--- input arguments:
-      integer, intent(in) :: scale_fac_opt
+      integer, intent(in) :: scale_fac_opt,icu_zoentr
       integer, intent(in) :: lq, km, ktrac
       integer, intent(in), dimension(:) :: lmask
 
@@ -381,7 +381,7 @@ contains
      &     ktype,    icbot,    ictop,    ztu,     zqu,   &
      &     zlu,      zlude,    zmfu,     zmfd,    zrain, &
      &     pcte,     phhfl,    lndj,     pgeoh,   zmfude_rate, dx, &
-     &     scale_fac, scale_fac2)
+     &     scale_fac, scale_fac2, icu_zoentr)
 !
 !     to include the cloud water and cloud ice detrained from convection
 !
@@ -457,7 +457,7 @@ contains
      &     ktype,    kcbot,    kctop,    ptu,      pqu,   &
      &     plu,      plude,    pmfu,     pmfd,     prain, &
      &     pcte,     phhfl,    lndj,     zgeoh,    pmfude_rate, dx, &
-     &     scale_fac,  scale_fac2)
+     &     scale_fac,  scale_fac2, icu_zoentr)
       implicit none
 !
 !***cumastrn*  master routine for cumulus massflux-scheme
@@ -520,7 +520,7 @@ contains
 
 !--- input arguments:
       integer,intent(in):: klev,klon,klevp1,klevm1
-      integer,intent(in):: ktrac
+      integer,intent(in):: ktrac,icu_zoentr
       integer,intent(in),dimension(klon):: lndj
 
       real(kind=kind_phys),intent(in):: ztmst
@@ -700,7 +700,7 @@ contains
      &     zmfus,    zmfuq,    zmful,    plude,    zdmfup,  &
      &     kcbot,    kctop,    ictop0,   icum,     ztmst,   &
      &     zqsenh,   zlglac,   lndj,     wup,      wbase,   &
-     &     kdpl,     pmfude_rate)
+     &     kdpl,     pmfude_rate, icu_zoentr)
 
 !*     (b) check cloud depth and change entrainment rate accordingly
 !          calculate precipitation rate (for downdraft calculation)
@@ -2021,7 +2021,7 @@ contains
      &     pmfus,    pmfuq,    pmful,    plude,    pdmfup,  &
      &     kcbot,    kctop,    kctop0,   kcum,     ztmst,   &
      &     pqsenh,   plglac,   lndj,     wup,      wbase,   &
-     &     kdpl,     pmfude_rate)
+     &     kdpl,     pmfude_rate, icu_zoentr)
 
       implicit none
 !     this routine does the calculations for cloud ascents
@@ -2093,9 +2093,10 @@ contains
 !       kctop - cloud top level
 !       kctop0 [ictop0] - estimate of cloud top. (cumastr)
 !       kcum [icum] - flag to control the call
+!       icu_zoentr   1: original entrainment equation, 2: Bechtold 2008 equation
 
     !--- input arguments:
-      integer,intent(in):: klev,klon,klevp1,klevm1
+      integer,intent(in):: klev,klon,klevp1,klevm1,icu_zoentr
       integer,intent(in),dimension(klon):: lndj
       integer,intent(in),dimension(klon):: klwmin
       integer,intent(in),dimension(klon):: kdpl
@@ -2146,6 +2147,8 @@ contains
       real(kind=kind_phys),dimension(klon):: zph,zdmfen,zdmfde,zmfuu,zmfuv,zpbase,zqold,zluold,zprecip
       real(kind=kind_phys),dimension(klon,klev):: zlrain,zbuo,kup,zodetr,pdmfen
 
+      real(kind=kind_phys),parameter:: c1 = 5.0e-4  !shin
+      real(kind=kind_phys),parameter:: d1 = 1.0e-3  !shin
     !--------------------------------
     !*    1. specify parameters
     !--------------------------------
