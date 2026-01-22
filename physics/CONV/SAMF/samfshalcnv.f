@@ -10,8 +10,6 @@
       use mo_conv_kind, only : conv_wp
       use machine , only : kind_phys
 
-      implicit none
-
       contains
 
       subroutine samfshalcnv_init(imfshalcnv, imfshalcnv_samf,          &
@@ -36,6 +34,25 @@
 !> \defgroup SAMF_shal GFS saSAS Shallow Convection Module
 !>  This subroutine contains the entirety of the SAMF shallow convection
 !!  scheme.
+!> @{
+!!  This routine follows the \ref SAMFdeep quite closely, although it
+!!  can be interpreted as only having the "static" and "feedback" control
+!!  portions, since the "dynamic" control is not necessary to find the cloud
+!!  base mass flux. The algorithm is simplified from SAMF deep convection by
+!!  excluding convective downdrafts and being confined to operate below
+!!  \f$p=0.7p_{sfc}\f$. Also, entrainment is both simpler and stronger in
+!!  magnitude compared to the deep scheme.
+!!
+!! \section arg_table_samfshalcnv_run Argument Table
+!! \htmlinclude samfshalcnv_run.html
+!!
+!!  \section gen_samfshalcnv GFS samfshalcnv General Algorithm
+!!  -# Compute preliminary quantities needed for the static and feedback control portions of the algorithm.
+!!  -# Perform calculations related to the updraft of the entraining/detraining cloud model ("static control").
+!!  -# The cloud base mass flux is obtained using the cumulus updraft velocity averaged ove the whole cloud depth.
+!!  -# Calculate the tendencies of the state variables (per unit cloud base mass flux) and the cloud base mass flux.
+!!  -# For the "feedback control", calculate updated values of the state variables by multiplying the cloud base mass flux and the tendencies calculated per unit cloud base mass flux from the static control.
+!!  \section det_samfshalcnv GFS samfshalcnv Detailed Algorithm
       subroutine samfshalcnv_run(im,km,itc,ntc,cliq,cp,cvap,            &
      &      eps,epsm1,fv,grav,hvap,rd,rv,                               &
      &      t0c,delt,ntk,ntr,delp,first_time_step,restart,              &
@@ -51,7 +68,6 @@
 
       implicit none
 !
-      ! --- Input/Output Arguments (kind_phys: 64-bit) ---
       integer, intent(in)  :: im, km, itc, ntc, ntk, ntr, ncloud
       integer, intent(in)  :: islimsk(:)
       real(kind=kind_phys), intent(in) :: cliq, cp, cvap,               &
@@ -62,12 +78,13 @@
      &   prslp(:,:), garea(:), hpbl(:), dot(:,:), phil(:,:),            &
      &   tmf(:,:,:), q(:,:)
       real(kind=kind_phys), intent(in), optional :: qmicro(:,:),        &
-     &      prevsq(:,:)
+     &     prevsq(:,:)
       real(kind=kind_phys), intent(in), optional :: sigmain(:,:),       &
-     &      omegain(:,:)
+     &     omegain(:,:)
 !
       real(kind=kind_phys), dimension(:), intent(in) :: fscav
       integer, intent(inout)  :: kcnv(:)
+      ! DH* TODO - check dimensions of qtr, ntr+2 correct?  *DH
       real(kind=kind_phys), intent(inout) ::   qtr(:,:,:),              &
      &   q1(:,:), t1(:,:), u1(:,:), v1(:,:), tkeh(:,:)
 !
@@ -80,9 +97,9 @@
      &   omegaout(:,:)
 
       real(kind=kind_phys), intent(in) :: clam,    c0s,     c1,         &
-     &                             asolfac, evef, pgcon
+     &                     asolfac, evef, pgcon
       logical,          intent(in)  :: hwrf_samfshal,first_time_step,   &
-     &      restart,progsigma,progomega
+     &     restart,progsigma,progomega
       character(len=*), intent(out) :: errmsg
       integer,          intent(out) :: errflg
 !
@@ -163,8 +180,24 @@ cc
 
       logical flag_shallow,flag_mid
 c  physical parameters
+!     parameter(g=grav,asolfac=0.89)
+!     parameter(g=grav)
+!     parameter(elocp=hvap/cp,
+!    &          el2orc=hvap*hvap/(rv*cp))
+!     parameter(c0s=0.002,c1=5.e-4,d0=.01)
+!     parameter(d0=.01)
       parameter(d0=.001_conv_wp)
+!     parameter(c0l=c0s*asolfac)
+!
+! asolfac: aerosol-aware parameter based on Lim & Hong (2012)
+!      asolfac= cx / c0s(=.002)
+!      cx = min([-0.7 ln(Nccn) + 24]*1.e-4, c0s)
+!      Nccn: CCN number concentration in cm^(-3)
+!      Until a realistic Nccn is provided, Nccns are assumed
+!      as Nccn=100 for sea and Nccn=1000 for land
+!
       parameter(cm=1.0_conv_wp,cq=1.0_conv_wp)
+!     parameter(fact1=(cvap-cliq)/rv,fact2=hvap/rv-fact1*t0c)
       parameter(clamd=0.1_conv_wp,tkemx=0.65_conv_wp,tkemn=0.05_conv_wp)
       parameter(dtke=tkemx-tkemn)
       parameter(cthk=200.0_conv_wp,cthkmn=0.0_conv_wp,dthk=25.0_conv_wp)
@@ -186,7 +219,7 @@ c  local variables and arrays
      &                     uo(im,km),      vo(im,km),     qeso(im,km),
      &                     ctr(im,km,ntr), ctro(im,km,ntr)
 !  for aerosol transport
-!      real(kind=conv_wp) qaero(im,km,ntc)
+!     real(kind=kind_phys) qaero(im,km,ntc)
 c  variables for tracer wet deposition,
       real(kind=conv_wp), dimension(im,km,ntc) :: chem_c, chem_pw,
      &  wet_dep
@@ -200,7 +233,7 @@ c  variables for tracer wet deposition,
       real(kind=conv_wp) scaldfunc(im), sigmagfm(im)
 !
 c  cloud water
-!      real(kind=conv_wp) qlko_ktcon(im), dellal(im,km), tvo(im,km),
+!     real(kind=kind_phys) qlko_ktcon(im), dellal(im,km), tvo(im,km),
       real(kind=conv_wp) qlko_ktcon(im), dellal(im,km),
      &                     dbyo(im,km),    zo(im,km),    xlamue(im,km),
      &                     rh(im,km),
@@ -605,7 +638,7 @@ c
         do i=1,im
           if(cnvflg(i) .and. (k > kb1(i) .and. k <= kpbl(i))) then
             if(heo(i,k) > hmax(i)) then
-              kb(i)    = k
+              kb(i)   = k
               hmax(i) = heo(i,k)
             endif
           endif
@@ -1348,6 +1381,34 @@ c
 c
 c  calculate cloud work function
 c
+!     do k = 2, km1
+!       do i = 1, im
+!         if (cnvflg(i)) then
+!           if(k >= kbcon(i) .and. k < ktcon(i)) then
+!             dz1 = zo(i,k+1) - zo(i,k)
+!             gamma = el2orc * qeso(i,k) / (to(i,k)**2)
+!             rfact =  1. + fv * cp * gamma
+!    &                 * to(i,k) / hvap
+!             aa1(i) = aa1(i) +
+!!   &                 dz1 * eta(i,k) * (grav / (cp * to(i,k)))
+!    &                 dz1 * (grav / (cp * to(i,k)))
+!    &                 * dbyo(i,k) / (1. + gamma)
+!    &                 * rfact
+!             val = 0.
+!             aa1(i) = aa1(i) +
+!!   &                 dz1 * eta(i,k) * grav * fv *
+!    &                 dz1 * grav * fv *
+!    &                 max(val,(qeso(i,k) - qo(i,k)))
+!           endif
+!         endif
+!       enddo
+!     enddo
+!     do i = 1, im
+!       if(cnvflg(i) .and. aa1(i) <= 0.) cnvflg(i) = .false.
+!     enddo
+!
+!  calculate cloud work function
+!
 !> - Calculate the cloud work function according to Pan and Wu (1995) \cite pan_and_wu_1995 equation 4:
 !!  \f[
 !!  A_u=\int_{z_0}^{z_t}\frac{g}{c_pT(z)}\frac{\eta}{1 + \gamma}[h(z)-h^*(z)]dz
@@ -2429,27 +2490,29 @@ c
 !              evef = edt(i) * evfact
 !              if(islimsk(i) == 1) evef=edt(i) * evfactl
 !              if(islimsk(i) == 1) evef=.07
+              tem = real(t1(i,k), kind=conv_wp)      
               qcond(i) = real(shevf, kind=conv_wp) * real(evef,
      &                   kind=conv_wp) * (real(q1(i,k), kind=conv_wp)
      &                 - qeso(i,k)) / (1.0_conv_wp + real(el2orc,
-     &                   kind=conv_wp) * qeso(i,k) / real(t1(i,k),
-     &                   kind=conv_wp)**2)
+     &                   kind=conv_wp) * qeso(i,k) / tem**2)
               dp = 1000.0_conv_wp * del(i,k)
               factor = dp / real(grav, kind=conv_wp)
-              if(rn(i) > 0.0_conv_wp .and. qcond(i) < 0.0_conv_wp) then
-                qevap(i) = -qcond(i) * (1.0_conv_wp-exp(-.32_conv_wp
-     &                   *sqrt(dt2*rn(i))))
-                qevap(i) = min(qevap(i), rn(i)*1000.0_conv_wp*real(grav,
-     &                     kind=conv_wp)/dp)
+              if(real(rn(i), kind=conv_wp) > 0.0_conv_wp .and. qcond(i) 
+     &          < 0.0_conv_wp) then 
+                qevap(i) = -qcond(i) * (1.0_conv_wp
+     &          -exp(-.32_conv_wp*sqrt(dt2*real(rn(i), kind=conv_wp))))
+                qevap(i) = min(qevap(i), real(rn(i), kind=conv_wp) 
+     &                   * 1000.0_conv_wp*real(grav, kind=conv_wp)/dp)
                 delq2(i) = delqev(i) + .001_conv_wp * qevap(i) * factor
               endif
-              if(rn(i) > 0.0_conv_wp .and. qcond(i) < 0.0_conv_wp .and.
-     &             delq2(i) > rntot(i)) then
+              if(real(rn(i), kind=conv_wp) > 0.0_conv_wp .and. qcond(i)
+     &          < 0.0_conv_wp .and.delq2(i) > rntot(i)) then
                 qevap(i) = 1000.0_conv_wp* real(grav, kind=conv_wp)
      &                   * (rntot(i) - delqev(i)) / dp
                 flg(i) = .false.
               endif
-              if(rn(i) > 0.0_conv_wp .and. qevap(i) > 0.0_conv_wp) then
+              if(real(rn(i), kind=conv_wp) > 0.0_conv_wp .and. qevap(i)
+     &          > 0.0_conv_wp) then
                 tem  = .001_conv_wp * factor
                 tem1 = qevap(i) * tem
                 if (tem1 > real(rn(i), kind=conv_wp)) then
@@ -2495,12 +2558,13 @@ cj
 cj
       do i = 1, im
         if(cnvflg(i)) then
-          if(rn(i) < 0.0_conv_wp .or. .not.flg(i)) rn(i) = 0.0_kind_phys
+          if(real(rn(i), kind=conv_wp) < 0.0_conv_wp .or. .not.flg(i)) 
+     &      rn(i) = 0.0_kind_phys
           ktop(i) = ktcon(i)
           kbot(i) = kbcon(i)
           kcnv(i) = 2
         endif
-      enddo
+      enddo 
 c
 c      convective cloud water
       do k = 1, km
