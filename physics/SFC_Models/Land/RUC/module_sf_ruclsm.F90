@@ -7348,9 +7348,7 @@ print *, 'SNOWTEMP: SNHEI,SNTH,SOILT1: ',SNHEI,SNTH,SOILT1,soilt
        tbq(k) = R61*eis
      endif
    END DO
-   write(6,'("ruclsminit: Done initializing tbq")')
-
-
+   
   END SUBROUTINE ruclsminit
 !
 !-----------------------------------------------------------------
