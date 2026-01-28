@@ -434,7 +434,6 @@ CONTAINS
 
    character(len=*),intent(out) :: errmsg
    integer,         intent(out) :: errflg
-   real (kind=8) :: walltime, tb, te
 
 !-----------------------------------------------------------------
 !   
