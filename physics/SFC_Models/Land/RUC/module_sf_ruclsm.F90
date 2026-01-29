@@ -18,7 +18,7 @@ MODULE module_sf_ruclsm
    private
    !private qsn
 
-   public :: lsmruc, ruclsminit, rslf
+   public :: lsmruc, ruclsminit, rslf, tbq
 
 !> CONSTANT PARAMETERS
 !! @{
@@ -75,6 +75,7 @@ MODULE module_sf_ruclsm
                  REFKDT_DATA,FRZK_DATA,ZBOT_DATA,  SMLOW_DATA,SMHIGH_DATA, &
                         CZIL_DATA
 !! @}
+   real (kind_phys),     DIMENSION(1:5001)            :: tbq
 
 
 CONTAINS
@@ -381,9 +382,6 @@ CONTAINS
 
    real (kind_phys),     DIMENSION(1:2*(nsl-2))       :: DTDZS
 
-   real (kind_phys),     DIMENSION(1:5001)            :: TBQ
-
-
    real (kind_phys),     DIMENSION( 1:nsl )          :: SOILM1D, & 
                                                           TSO1D, &
                                                         SOILICE, &
@@ -454,26 +452,6 @@ CONTAINS
         testptlat = 35.55 !48.7074_kind_phys !39.958 !42.05 !39.0 !74.12 !29.5 
         testptlon = 278.66 !289.03_kind_phys !271.622 !286.75 !280.6 !164.0 !283.0 
         !--
-
-
-!> - Table TBQ is for resolution of balance equation in vilka()
-        CQ=173.15_kind_dbl_prec-.05_kind_dbl_prec
-        R273=1._kind_dbl_prec/tfrz
-        R61=6.1153_kind_dbl_prec*0.62198_kind_dbl_prec
-        ARP=77455._kind_dbl_prec*41.9_kind_dbl_prec/461.525_kind_dbl_prec
-        BRP=64._kind_dbl_prec*41.9_kind_dbl_prec/461.525_kind_dbl_prec
-
-        DO K=1,5001
-          CQ=CQ+.05_kind_dbl_prec
-          EVS=EXP(17.67_kind_dbl_prec*(CQ-tfrz)/(CQ-29.65_kind_dbl_prec))
-          EIS=EXP(22.514_kind_dbl_prec-6.15E3_kind_dbl_prec/CQ)
-          if(CQ.ge.tfrz) then
-          ! tbq is in mb
-            tbq(k) = R61*evs
-          else
-            tbq(k) = R61*eis
-          endif
-        END DO
 
 !> - Initialize soil/vegetation parameters
 !--- This is temporary until SI is added to mass coordinate ---!!!!!
@@ -7261,8 +7239,9 @@ print *, 'SNOWTEMP: SNHEI,SNTH,SOILT1: ',SNHEI,SNTH,SOILT1,soilt
    !-- local
    real (kind_phys), DIMENSION ( 1:nzs ) :: SOILIQW
 
-   INTEGER ::  I,J,L,itf,jtf
+   INTEGER ::  I,J,L,K,itf,jtf
    real (kind_phys)    ::  RIW,XLMELT,TLN,DQM,REF,PSIS,QMIN,BCLH
+   real (kind_phys)      ::  cq,r61,r273,arp,brp,x,evs,eis
 
    INTEGER                   :: errflag
 
@@ -7350,7 +7329,25 @@ print *, 'SNOWTEMP: SNHEI,SNTH,SOILT1: ',SNHEI,SNTH,SOILT1,soilt
     ENDDO
    ENDDO
 
+!> - Table TBQ is for resolution of balance equation in vilka()
+   CQ=173.15_kind_dbl_prec-.05_kind_dbl_prec
+   R273=1._kind_dbl_prec/tfrz
+   R61=6.1153_kind_dbl_prec*0.62198_kind_dbl_prec
+   ARP=77455._kind_dbl_prec*41.9_kind_dbl_prec/461.525_kind_dbl_prec
+   BRP=64._kind_dbl_prec*41.9_kind_dbl_prec/461.525_kind_dbl_prec
 
+   DO K=1,5001
+     CQ=CQ+.05_kind_dbl_prec
+     EVS=EXP(17.67_kind_dbl_prec*(CQ-tfrz)/(CQ-29.65_kind_dbl_prec))
+     EIS=EXP(22.514_kind_dbl_prec-6.15E3_kind_dbl_prec/CQ)
+     if(CQ.ge.tfrz) then
+       ! tbq is in mb
+       tbq(k) = R61*evs
+     else
+       tbq(k) = R61*eis
+     endif
+   END DO
+   
   END SUBROUTINE ruclsminit
 !
 !-----------------------------------------------------------------

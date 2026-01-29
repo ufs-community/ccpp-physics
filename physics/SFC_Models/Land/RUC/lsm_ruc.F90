@@ -1697,6 +1697,8 @@ module lsm_ruc
       integer,              dimension(1:lsoil)  :: sm_levels_input ! 4 - for Noah lsm
 
       integer :: ii,jj
+      real (kind_phys)      ::  cq,r61,r273,arp,brp,x,evs,eis
+
       ! Initialize the CCPP error handling variables
       errmsg = ''
       errflg = 0
@@ -1771,6 +1773,25 @@ module lsm_ruc
         endif
 
       else
+
+!> - Table TBQ is for resolution of balance equation in vilka()
+        CQ=173.15_kind_dbl_prec-.05_kind_dbl_prec
+        R273=1._kind_dbl_prec/con_t0c
+        R61=6.1153_kind_dbl_prec*0.62198_kind_dbl_prec
+        ARP=77455._kind_dbl_prec*41.9_kind_dbl_prec/461.525_kind_dbl_prec
+        BRP=64._kind_dbl_prec*41.9_kind_dbl_prec/461.525_kind_dbl_prec
+
+        DO K=1,5001
+          CQ=CQ+.05_kind_dbl_prec
+          EVS=EXP(17.67_kind_dbl_prec*(CQ-con_t0c)/(CQ-29.65_kind_dbl_prec))
+          EIS=EXP(22.514_kind_dbl_prec-6.15E3_kind_dbl_prec/CQ)
+          if(CQ.ge.con_t0c) then
+            ! tbq is in mb
+            tbq(k) = R61*evs
+          else
+            tbq(k) = R61*eis
+          endif
+        END DO
 
         ! For RUC restart data, return here
         return
