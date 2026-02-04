@@ -790,13 +790,13 @@
                 if(nint(slmsk(i)) == 1) then
                    if (imp_physics == imp_physics_thompson) then
                       nc_mp (i,k) = Nt_c_l_thompson*orho(i,k)
-                   else
+                   else ! tempo
                       nc_mp (i,k) = Nt_c_l_tempo*orho(i,k)
                    endif
                 else
                    if (imp_physics == imp_physics_thompson) then
                       nc_mp (i,k) = Nt_c_o_thompson*orho(i,k)
-                   else
+                   else ! tempo
                       nc_mp (i,k) = Nt_c_o_tempo*orho(i,k)
                    endif
                 endif
@@ -921,14 +921,14 @@
                if ((ltaerosol .or. mraerosol) .and. qc_mp(i,k)>1.e-12 .and. nc_mp(i,k)<100.) then
                   if (imp_physics == imp_physics_thompson) then
                      nc_mp(i,k) = make_DropletNumber_thompson(qc_mp(i,k)*rho(i,k), nwfa(i,k)*rho(i,k)) * orho(i,k)
-                  else
+                  else ! tempo
                      nc_mp(i,k) = make_DropletNumber_tempo(qc_mp(i,k)*rho(i,k), nwfa(i,k)*rho(i,k)) * orho(i,k)
                   endif
               endif
               if (qi_mp(i,k)>1.e-12 .and. ni_mp(i,k)<100.) then
                  if (imp_physics == imp_physics_thompson) then
                     ni_mp(i,k) = make_IceNumber_thompson(qi_mp(i,k)*rho(i,k), tlyr(i,k)) * orho(i,k)
-                 else
+                 else ! tempo
                     ni_mp(i,k) = make_IceNumber_tempo(qi_mp(i,k)*rho(i,k), tlyr(i,k)) * orho(i,k)
                  endif
               endif
@@ -955,7 +955,7 @@
                effrl(i,lmk) = re_qc_min_thompson*1.e6
                effri(i,lmk) = re_qi_min_thompson*1.e6
                effrs(i,lmk) = re_qs_min_thompson*1.e6
-            else
+            else ! tempo
                call calc_effectRad_thompson(tlyr(i,:), plyr(i,:)*100., qv_mp(i,:), qc_mp(i,:),   &
                     nc_mp(i,:), qi_mp(i,:), ni_mp(i,:), qs_mp(i,:), &
                     effrl(i,:), effri(i,:), effrs(i,:), islmsk, 1, lm )               
