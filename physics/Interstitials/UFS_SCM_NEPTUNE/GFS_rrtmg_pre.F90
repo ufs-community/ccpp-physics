@@ -47,7 +47,7 @@
         gasvmr_ccl4,  gasvmr_cfc113, aerodp,ext550, clouds6, clouds7, clouds8, &
         clouds9, cldsa, cldfra, cldfra2d, lwp_ex,iwp_ex, lwp_fc,iwp_fc,        &
         faersw1, faersw2, faersw3, faerlw1, faerlw2, faerlw3, alpha, rrfs_sd,  &
-        aero_dir_fdb, fdb_coef, spp_wts_rad, spp_rad, ico2, ozphys, tempo_cfg, &
+        aero_dir_fdb, fdb_coef, spp_wts_rad, spp_rad, ico2, ozphys,            &
         errmsg, errflg)
 
       use machine,                   only: kind_phys
@@ -89,7 +89,6 @@
                                            make_RainNumber_thompson    => make_RainNumber
 
       use module_mp_tempo_params, only: &
-           ty_tempo_cfg, &
            Nt_c_l_tempo => Nt_c_l, &
            Nt_c_o_tempo => Nt_c_o, &
            re_qc_min_tempo => re_qc_min, &
@@ -259,9 +258,6 @@
                                   nc_mp, ni_mp, nwfa
       real (kind=kind_phys), dimension(lm) :: cldfra1d, qv1d,           &
      &                                 qc1d, qi1d, qs1d, dz1d, p1d, t1d
-
-      ! For TEMPO MP
-      type(ty_tempo_cfg), intent(in) :: tempo_cfg
 
       ! for F-A MP
       real(kind=kind_phys), dimension(im,lm+LTP+1) :: tem2db, hz
@@ -960,10 +956,9 @@
                effri(i,lmk) = re_qi_min_thompson*1.e6
                effrs(i,lmk) = re_qs_min_thompson*1.e6
             else
-               call calc_effectRad_tempo(t1d=tlyr(i,:), p1d=plyr(i,:)*100., qv1d=qv_mp(i,:), qc1d=qc_mp(i,:),   &
-                    nc1d=nc_mp(i,:), qi1d=qi_mp(i,:), ni1d=ni_mp(i,:), qs1d=qs_mp(i,:), &
-                    re_qc1d=effrl(i,:), re_qi1d=effri(i,:), re_qs1d=effrs(i,:), kts=1, kte=lm, &
-                    lsml=islmsk, configs=tempo_cfg)
+               call calc_effectRad_thompson(tlyr(i,:), plyr(i,:)*100., qv_mp(i,:), qc_mp(i,:),   &
+                    nc_mp(i,:), qi_mp(i,:), ni_mp(i,:), qs_mp(i,:), &
+                    effrl(i,:), effri(i,:), effrs(i,:), islmsk, 1, lm )               
                ! Scale Thompson's effective radii from meter to micron
                do k=1,lm
                   effrl(i,k) = MAX(re_qc_min_tempo, MIN(effrl(i,k), re_qc_max_tempo))*1.e6

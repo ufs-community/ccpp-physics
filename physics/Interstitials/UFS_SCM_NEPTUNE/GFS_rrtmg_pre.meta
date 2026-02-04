@@ -267,13 +267,6 @@
   dimensions = ()
   type = ty_ozphys
   intent = in
-[tempo_cfg]
-  standard_name = configuration_for_TEMPO_microphysics
-  long_name = configuration information for TEMPO microphysics
-  units = mixed
-  dimensions = ()
-  type = ty_tempo_cfg
-  intent = in
 [iaermdl]
   standard_name = control_for_aerosol_radiation_scheme
   long_name = control of aerosol scheme in radiation
