@@ -312,6 +312,7 @@
         if (trans_aero) then
           call set_aerosol_tracer_index(imp_physics, imp_physics_wsm6,          &
                                         imp_physics_thompson, ltaerosol,mraerosol, &
+                                        imp_physics_tempo, lthailaware, &
                                         imp_physics_mg, ntgl, imp_physics_gfdl, &
                                         imp_physics_zhao_carr, imp_physics_nssl,&
                                         nssl_hail_on, nssl_ccn_on, nssl_3moment, kk, &
