@@ -1,0 +1,26 @@
+name: Physics Scheme Unit Tests (CTest)
+
+on: [push, pull_request]
+
+jobs:
+  ctests:
+    if: github.repository == 'NCAR/ccpp-physics' || github.repository == 'ufs-community/ccpp-physics' || github.repository == 'bbakernoaa/ccpp-physics'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gfortran cmake
+
+    - name: Build and run FENGSHA tests
+      run: |
+        cd physics/smoke_dust/tests
+        mkdir build
+        cd build
+        cmake ..
+        make
+        ctest --output-on-failure

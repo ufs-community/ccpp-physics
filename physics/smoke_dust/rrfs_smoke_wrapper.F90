@@ -421,7 +421,9 @@ contains
             num_emis_dust,num_chem,nsoil,                               &
             ids,ide, jds,jde, kds,kde,                                  &
             ims,ime, jms,jme, kms,kme,                                  &
-            its,ite, jts,jte, kts,kte)
+            its,ite, jts,jte, kts,kte,                                  &
+            errmsg, errflg)
+       if (errflg /= 0) return
     end if
 
     ! compute wild-fire plumes
