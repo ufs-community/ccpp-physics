@@ -219,13 +219,16 @@ module mp_tempo
         nc, nwfa, nifa, nwfa2d, nifa2d, ng, volg, &
         con_g, con_rd, con_eps, &
         tgrs, prsl, phii, omega, &
-        is_aerosol_aware, is_hail_aware, &        
+        is_aerosol_aware, is_hail_aware, &
+        prcp, rain, graupel, ice, snow, sr, refl_10cm, &
+        do_radar_ref, &
         is_initialized, tempo_cfgs, errmsg, errflg)
 
 
          ! Interface variables
          logical,                   intent(in   ) :: is_initialized
          logical,                   intent(in   ) :: convert_dry_rho
+         logical,                   intent(in   ) :: do_radar_ref
          ! Dimensions and constants
          integer,                   intent(in   ) :: ncol
          integer,                   intent(in   ) :: nlev
@@ -250,6 +253,15 @@ module mp_tempo
          real(kind_phys), optional, intent(inout) :: volg(:,:)
          logical,                   intent(in)    :: is_aerosol_aware
          logical,                   intent(in)    :: is_hail_aware
+         ! Precip/rain/snow/graupel fall amounts and fraction of frozen precip
+         real(kind_phys),           intent(inout) :: prcp(:)
+         real(kind_phys),           intent(inout) :: rain(:)
+         real(kind_phys),           intent(inout) :: graupel(:)
+         real(kind_phys),           intent(inout) :: ice(:)
+         real(kind_phys),           intent(inout) :: snow(:)
+         real(kind_phys),           intent(  out) :: sr(:)
+         ! Radar reflectivity
+         real(kind_phys),           intent(inout) :: refl_10cm(:,:)         
          ! State variables and timestep information
          real(kind_phys),           intent(inout) :: tgrs(:,:)
          real(kind_phys),           intent(in   ) :: prsl(:,:)
@@ -271,9 +283,8 @@ module mp_tempo
          type(ty_tempo_driver_diags) :: tempo_driver_diags
          ! Local variables
 
-         ! ! Reduced time step if subcycling is used
-         ! real(kind_phys) :: dtstep
-         ! integer         :: ndt
+         ! Reduced time step if dt_inner
+         real(kind_phys) :: dt
          ! Air density
          real(kind_phys) :: rho(1:ncol,1:nlev)              !< kg m-3
          ! Water vapor mixing ratio (instead of specific humidity)
@@ -283,6 +294,7 @@ module mp_tempo
          real(kind_phys) :: dz(1:ncol,1:nlev)               !< m
 
          ! Dimensions
+         integer :: ndt
          integer         :: ids,ide, jds,jde, kds,kde, &
                             ims,ime, jms,jme, kms,kme, &
                             its,ite, jts,jte, kts,kte
@@ -335,12 +347,9 @@ module mp_tempo
          !    end if
          ! end if
 
-         ! Set reduced time step if subcycling is used
-!         if (nsteps>1) then
-!            dtstep = dtp/real(nsteps, kind=kind_phys)
-!         else
-!            dtstep = dtp
-!         end if
+         ndt = max(nint(dtp/dt_inner), 1)
+         dt = dtp/ndt
+         if (dt <= dt_inner) dt = dt_inner
 
          !> - Convert specific humidity to water vapor mixing ratio.
          !> - Also, hydrometeor variables are mass or number mixing ratio
@@ -398,15 +407,17 @@ module mp_tempo
          !ADD AEROSOL SOURCE/SINKS HERE
          
          call tempo_run(tempo_cfgs=tempo_cfgs, &
-            dt=dt_inner, itimestep=itimestep , &
+            dt=dt, itimestep=itimestep , &
             qv=qv, qc=qc, qr=qr, qi=qi, qs=qs, qg=qg, ni=ni, nr=nr, &
+            nc=nc, nwfa=nwfa, nifa=nifa, &
+            ng=ng, qb=volg, &
             w=w, t=tgrs, p=prsl, dz=dz, &
             ids = ids , ide = ide , jds = jds , jde = jde , kds = kds , kde = kde , &
             ims = ims , ime = ime , jms = jms , jme = jme , kms = kms , kme = kme , &
             its = its , ite = ite , jts = jts , jte = jte , kts = kts , kte = kte , &
             tempo_diags=tempo_driver_diags)
 
-         if (mpirank==mpiroot) write(*,*) 'Calling tempo_run() with itimestep = ', itimestep         
+         if (mpirank==mpiroot) write(*,*) 'Calling tempo_run() with itimestep = ', itimestep
          itimestep = itimestep + 1
          
          if (errflg/=0) return
@@ -432,6 +443,21 @@ module mp_tempo
               nifa = nifa/(1.0_kind_phys+qv)
            end if
          end if
+
+         if (do_radar_ref) then
+            refl_10cm = tempo_driver_diags%refl10cm(:,:,1)
+         endif
+         
+         ice = ice + max(0.0, tempo_driver_diags%ice_liquid_equiv_precip(:,1)/1000.0_kind_phys)
+         snow = snow + (max(0.0, tempo_driver_diags%ice_liquid_equiv_precip(:,1)) + &
+              max(0.0, tempo_driver_diags%snow_liquid_equiv_precip(:,1)))/1000.0_kind_phys
+         graupel = graupel + max(0.0, tempo_driver_diags%graupel_liquid_equiv_precip(:,1)/1000.0_kind_phys)
+         rain = rain + max(0.0, tempo_driver_diags%rain_precip(:,1)/1000.0_kind_phys)                           
+         prcp = prcp + (max(0.0, tempo_driver_diags%ice_liquid_equiv_precip(:,1)) + &
+              max(0.0, tempo_driver_diags%snow_liquid_equiv_precip(:,1)) + &
+              max(0.0, tempo_driver_diags%graupel_liquid_equiv_precip(:,1)) + &
+              max(0.0, tempo_driver_diags%rain_precip(:,1)))/1000._kind_phys
+         sr = tempo_driver_diags%frozen_fraction(:,1)
 
       end subroutine mp_tempo_run
 
