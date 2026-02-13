@@ -11,7 +11,7 @@ module mp_tempo
 
       use module_mp_tempo_params
       use module_mp_tempo_cfgs, only : ty_tempo_cfgs
-      use module_mp_tempo_driver, only : tempo_init, tempo_run, ty_tempo_driver_diags
+      use module_mp_tempo_driver, only : tempo_init, tempo_run, ty_tempo_driver_diags, tempo_aerosol_surface_emissions
 
       implicit none
 
@@ -72,6 +72,7 @@ module mp_tempo
          real(kind_phys) :: hgt(1:ncol,1:nlev)      ! m
          real(kind_phys) :: rho(1:ncol,1:nlev)      ! kg m-3
          real(kind_phys) :: orho(1:ncol,1:nlev)     ! m3 kg-1
+         
          real (kind=kind_phys) :: h_01, z1, niIN3, niCCN3
          integer :: i, k
          
@@ -92,7 +93,7 @@ module mp_tempo
          if (mpirank==mpiroot) write(*,*) 'Calling tempo_init()'
 
          ! Main call to tempo_init()
-         call tempo_init(aerosolaware_flag=.false., hailaware_flag=.false., &
+         call tempo_init(aerosolaware_flag=is_aerosol_aware, hailaware_flag=is_hail_aware, &
               semi_sedi_flag=semi_sedi, cloud_condensation_flag=(.not. do_sat_adj), &
               tempo_cfgs=tempo_cfgs)
 
@@ -292,6 +293,8 @@ module mp_tempo
          ! Vertical velocity and level width
          real(kind_phys) :: w(1:ncol,1:nlev)                !< m s-1
          real(kind_phys) :: dz(1:ncol,1:nlev)               !< m
+         real(kind_phys) :: xnwfa(1:ncol,1:nlev,1)
+         real(kind_phys) :: xnwfa2d(1:ncol,1)
 
          ! Dimensions
          integer :: ndt
@@ -404,8 +407,14 @@ module mp_tempo
          kme = nlev
          kte = nlev
 
-         !ADD AEROSOL SOURCE/SINKS HERE
-         
+         if (present(nwfa) .and. present(nwfa2d)) then
+            xnwfa(:,:,1) = nwfa(:,:)
+            xnwfa2d(:,1) = nwfa2d(:)
+            call tempo_aerosol_surface_emissions(dt=dt, nwfa=xnwfa, nwfa2d=xnwfa2d, ims=ims, ime=ime, &
+                 jms=jms, jme=jme, kms=kms, kme=kme, kts=kts)
+            nwfa(:,:) = xnwfa(:,:,1)
+         endif
+
          call tempo_run(tempo_cfgs=tempo_cfgs, &
             dt=dt, itimestep=itimestep , &
             qv=qv, qc=qc, qr=qr, qi=qi, qs=qs, qg=qg, ni=ni, nr=nr, &
