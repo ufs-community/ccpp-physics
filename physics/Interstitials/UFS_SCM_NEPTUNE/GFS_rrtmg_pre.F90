@@ -88,7 +88,7 @@
                                            make_DropletNumber_thompson => make_DropletNumber, &
                                            make_RainNumber_thompson    => make_RainNumber
 
-      use module_mp_tempo_params, only: &
+      use module_mp_tempo_params_v2, only: &
            Nt_c_l_tempo => Nt_c_l, &
            Nt_c_o_tempo => Nt_c_o, &
            re_qc_min_tempo => re_qc_min, &
@@ -98,7 +98,7 @@
            re_qs_min_tempo => re_qs_min, &
            re_qs_max_tempo => re_qs_max
 
-      use module_mp_tempo_utils, only: &
+      use module_mp_tempo_utils_v2, only: &
            calc_effectRad_tempo => calc_effectRad, &
            make_IceNumber_tempo => make_IceNumber, &
            make_DropletNumber_tempo => make_DropletNumber, &
