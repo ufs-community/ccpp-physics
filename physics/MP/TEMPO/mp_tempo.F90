@@ -90,7 +90,7 @@ module mp_tempo
          end if
 
          ! Call tempo init (also sets initial default values of physical constants)
-         if (mpirank==mpiroot) write(*,*) 'Calling tempo_init()'
+         if (mpirank==mpiroot) write(*,*) 'Calling tempo_init()', is_aerosol_aware, is_hail_aware, semi_sedi, do_sat_adj
 
          ! Main call to tempo_init()
          call tempo_init(aerosolaware_flag=is_aerosol_aware, hailaware_flag=is_hail_aware, &
@@ -104,7 +104,9 @@ module mp_tempo
            is_initialized = .true.
            return
          end if
-         
+
+         where(spechum<0) spechum = 1.0e-10
+         qv = spechum/(1.0_kind_phys-spechum)         
          if (convert_dry_rho) then
            if (is_aerosol_aware) then
               nwfa = nwfa/(1.0_kind_phys-spechum)
@@ -297,7 +299,7 @@ module mp_tempo
          real(kind_phys) :: xnwfa2d(1:ncol,1)
 
          ! Dimensions
-         integer :: ndt
+         integer :: ndt, i, k
          integer         :: ids,ide, jds,jde, kds,kde, &
                             ims,ime, jms,jme, kms,kme, &
                             its,ite, jts,jte, kts,kte
@@ -350,6 +352,7 @@ module mp_tempo
          !    end if
          ! end if
 
+         
          ndt = max(nint(dtp/dt_inner), 1)
          dt = dtp/ndt
          if (dt <= dt_inner) dt = dt_inner
@@ -415,18 +418,29 @@ module mp_tempo
             nwfa(:,:) = xnwfa(:,:,1)
          endif
 
+         if (mpirank==mpiroot) write(*,*) 'Calling tempo_run() with itimestep = ', itimestep
+!         do k = 1, nlev
+!            write(*,*) 'aaj tempo_run', k, tgrs(5,k), prsl(5,k), qv(5,k), qc(5,k), &
+!                 qr(5,k), qi(5,k), qs(5,k), qg(5,k), ni(5,k), nr(5,k), dt, w(5,k), dz(5,k)
+!         enddo
+
+!         if (present(nwfa)) write(*,*) 'aaj nwfa present'
+!         if (present(nifa)) write(*,*) 'aaj nifa present'
+!         if (present(nc)) write(*,*) 'aaj nc present'
+!         if (present(ng)) write(*,*) 'aaj ng present'
+!         if (present(volg)) write(*,*) 'aaj volg present'                           
+         
          call tempo_run(tempo_cfgs=tempo_cfgs, &
             dt=dt, itimestep=itimestep , &
             qv=qv, qc=qc, qr=qr, qi=qi, qs=qs, qg=qg, ni=ni, nr=nr, &
             nc=nc, nwfa=nwfa, nifa=nifa, &
-            ng=ng, qb=volg, &
+!!            ng=ng, qb=volg, &
             w=w, t=tgrs, p=prsl, dz=dz, &
             ids = ids , ide = ide , jds = jds , jde = jde , kds = kds , kde = kde , &
             ims = ims , ime = ime , jms = jms , jme = jme , kms = kms , kme = kme , &
             its = its , ite = ite , jts = jts , jte = jte , kts = kts , kte = kte , &
             tempo_diags=tempo_driver_diags)
 
-         if (mpirank==mpiroot) write(*,*) 'Calling tempo_run() with itimestep = ', itimestep
          itimestep = itimestep + 1
          
          if (errflg/=0) return
