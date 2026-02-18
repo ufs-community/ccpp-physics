@@ -9,10 +9,10 @@ module mp_tempo_condensation
       use mpi_f08
       use machine, only : kind_phys, kind_dyn
 
-      use module_mp_tempo_params, only : roverrv, rv, rdry, eps, r1, t0, cp
+      use module_mp_tempo_params, only : roverrv, rv, rdry, eps, r1, t0, cp, initialize_parameters
       use module_mp_tempo_cfgs, only : ty_tempo_cfgs
       use module_mp_tempo_main, only : cloud_check_and_update
-      use module_mp_tempo_utils, only : calc_rslf
+      use module_mp_tempo_utils, only : calc_rslf, get_constant_cloud_number
 
       implicit none
 
@@ -55,7 +55,8 @@ module mp_tempo_condensation
          real(kind_dyn),            intent(in   ) :: prsl(is:ie, 1:km+1, js:je)
 
          real(kind_phys) :: qv(is:ie, js:je, 1:km)
-!!         real(kind_phys) :: qc2(is:ie, js:je, 1:km)         
+         real(kind_phys) :: qc_mixing_ratio(is:ie, js:je, 1:km)
+         real(kind_phys) :: nc3d(is:ie, js:je, 1:km)                  
          real(kind_phys) :: qvs(is:ie, js:je, 1:km)         
          real(kind_phys) :: rho(is:ie, js:je, 1:km)
          real(kind_phys) :: temp(is:ie, js:je, 1:km)
@@ -73,36 +74,39 @@ module mp_tempo_condensation
          real(kind_phys) :: qcten(1:km)
          real(kind_phys) :: ncten(1:km)
          logical         :: l_qc(1:km)                                                                        
-         real(kind_phys) :: out(is:ie, js:je, 1:km)         
+         real(kind_phys) :: condensation(is:ie, js:je, 1:km)         
          real(kind_phys) :: orho, clap, fcd, dfcd, xrc
          
          ! CCPP error handling
          character(len=*),          intent(  out) :: errmsg
          integer,                   intent(  out) :: errflg
          integer :: i, j, k, n
+         logical :: need_tempo_params = .true.
+        
          ! Initialize the CCPP error handling variables
          errmsg = ''
          errflg = 0
 
-         if (mpirank==mpiroot) then
-            write(*,*) 'Calling condensation for Tempo MP'
+         if (need_tempo_params) then
+            call initialize_parameters()
+            need_tempo_params = .false.
          endif
 
+         write(*,*) 'tempo condensation', is, ie, js, je, km, isd, ied, jsd, jed
          do k = 1, km
             do j = js, je
                do i = is, ie
                   spechum(i,j,k) = max(1.e-10, spechum(i,j,k))
                   qv(i,j,k) = spechum(i,j,k)/(1.0_kind_phys-spechum(i,j,k))
-                   qc(i,j,k) = qc(i,j,k) / (1.-spechum(i,j,k)) ! convert from moist to dry rho
-!                  qc2(i,j,k) = qc(i,j,k)
-                  temp(i,j,k) = tgrs(i,j,k) / ((0.608 * spechum(i,j,k)) + 1.)
+                  qc_mixing_ratio(i,j,k) = real(qc(i,j,k),kind=kind_phys) / (1._kind_phys-real(spechum(i,j,k),kind=kind_phys)) ! convert from moist to dry rho
+                  temp(i,j,k) = tgrs(i,j,k) / ((0.608 * spechum(i,j,k)) + 1.) ! tgrs is virtual temperature
                   rho(i,j,k) = roverrv * exp(prsl(i,k,j)) / (rdry*temp(i,j,k) * (qv(i,j,k)+roverrv))
-                  qvs(i,j,k) = calc_rslf(exp(prsl(i,k,j)), temp(i,j,k))
+                  qvs(i,j,k) = calc_rslf(real(exp(prsl(i,k,j)),kind=kind_phys), real(temp(i,j,k),kind=kind_phys)) ! prsl is log pressure
                enddo
             enddo
          enddo
 
-         out = 0.         
+         condensation = 0.         
          do j = js, je
             do i = is, ie
                l_qc = .false.
@@ -111,10 +115,11 @@ module mp_tempo_condensation
                qcten = 0.
                ncten = 0.
 
-               ! returns cloud mass concentration
-               call cloud_check_and_update(rho=rho(i,j,:), l_qc=l_qc, qc1d=qc(i,j,:), &
-                    rc=rc, nc=nc, qcten=qcten, ncten=ncten, ilamc=ilamc, mvd_c=mvd_c)
+               call get_constant_cloud_number(nc=nc3d(i,j,:))
 
+               ! returns cloud mass concentration
+               call cloud_check_and_update(dt=real(mdt,kind=kind_phys), rho=rho(i,j,:), l_qc=l_qc, &
+                    qc1d=qc_mixing_ratio(i,j,:), nc1d=nc3d(i,j,:), rc=rc, nc=nc, qcten=qcten, ncten=ncten, ilamc=ilamc, mvd_c=mvd_c)
                 
                do k = 1, km
                   satw(k) = qv(i,j,k)/qvs(i,j,k)
@@ -137,34 +142,32 @@ module mp_tempo_condensation
                      xrc = rc(k) + clap*rho(i,j,k)
                      
                      if (xrc > r1) then
-                        out(i,j,k) = clap / mdt
+                        condensation(i,j,k) = clap / mdt
                         
                         if (l_qc(k) .and. ssatw(k) < -1.e-6 .and. clap < -eps) then ! evaporation
-                           out(i,j,k) = max(-rc(k)*0.99*orho/mdt, out(i,j,k))
+                           condensation(i,j,k) = max(-rc(k)*0.99*orho/mdt, condensation(i,j,k))
                         endif
                      else
-                        out(i,j,k) = -rc(k)*orho/mdt
+                        condensation(i,j,k) = -rc(k)*orho/mdt
                      endif
                   endif
                   
-                  qv(i,j,k) = qv(i,j,k) - out(i,j,k)*mdt
-                  qc(i,j,k) = qc(i,j,k) + out(i,j,k)*mdt                  
-!!                  qc2(i,j,k) = qc2(i,j,k) + out(i,j,k)*mdt
-                  temp(i,j,k) = temp(i,j,k) + lvap(k)*ocp(k)*out(i,j,k)*mdt
+                  qv(i,j,k) = qv(i,j,k) - condensation(i,j,k)*mdt
+                  qc_mixing_ratio(i,j,k) = qc_mixing_ratio(i,j,k) + condensation(i,j,k)*mdt
+                  temp(i,j,k) = temp(i,j,k) + lvap(k)*ocp(k)*condensation(i,j,k)*mdt
                enddo
 
-               call cloud_check_and_update(rho=rho(i,j,:), l_qc=l_qc, qc1d=qc(i,j,:), &
-                    rc=rc, nc=nc, qcten=qcten, ncten=ncten, ilamc=ilamc, mvd_c=mvd_c)
+               call cloud_check_and_update(dt=real(mdt,kind=kind_phys), rho=rho(i,j,:), l_qc=l_qc, &
+                    qc1d=qc_mixing_ratio(i,j,:), nc1d=nc3d(i,j,:), rc=rc, nc=nc, qcten=qcten, ncten=ncten, ilamc=ilamc, mvd_c=mvd_c)
             enddo
          enddo
 
          do k = 1, km
             do j = js, je
                do i = is, ie
-                  spechum(i,j,k) = max(1.e-10, qv(i,j,k)/(1.+qv(i,j,k)))
-                  qc(i,j,k) = qc(i,j,k)/(1.+qv(i,j,k))
+                  spechum(i,j,k) = max(1.e-10, real(qv(i,j,k),kind=kind_dyn)/(1. + real(qv(i,j,k), kind=kind_dyn)))
+                  qc(i,j,k) = real(qc_mixing_ratio(i,j,k), kind=kind_dyn)/(1. + real(qv(i,j,k), kind=kind_dyn))
                   tgrs(i,j,k) = temp(i,j,k)*((0.608*spechum(i,j,k)) + 1.)
-!                  qc(i,j,k) = qc2(i,j,k)
                enddo
             enddo
          enddo

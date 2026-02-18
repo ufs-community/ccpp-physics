@@ -247,13 +247,13 @@ module mp_tempo
          real(kind_phys),           intent(inout) :: qg(:,:)
          real(kind_phys),           intent(inout) :: ni(:,:)
          real(kind_phys),           intent(inout) :: nr(:,:)
-         real(kind_phys), optional, intent(inout) :: nc(:,:)
-         real(kind_phys), optional, intent(inout) :: nwfa(:,:)
-         real(kind_phys), optional, intent(inout) :: nifa(:,:)
+         real(kind_phys), volatile, optional, intent(inout) :: nc(:,:)
+         real(kind_phys), volatile, optional, intent(inout) :: nwfa(:,:)
+         real(kind_phys), volatile, optional, intent(inout) :: nifa(:,:)
          real(kind_phys), optional, intent(in   ) :: nwfa2d(:)
          real(kind_phys), optional, intent(in   ) :: nifa2d(:)
-         real(kind_phys), optional, intent(inout) :: ng(:,:)
-         real(kind_phys), optional, intent(inout) :: volg(:,:)
+         real(kind_phys), volatile, optional, intent(inout) :: ng(:,:)
+         real(kind_phys), volatile, optional, intent(inout) :: volg(:,:)
          logical,                   intent(in)    :: is_aerosol_aware
          logical,                   intent(in)    :: is_hail_aware
          ! Precip/rain/snow/graupel fall amounts and fraction of frozen precip
@@ -418,23 +418,11 @@ module mp_tempo
             nwfa(:,:) = xnwfa(:,:,1)
          endif
 
-         if (mpirank==mpiroot) write(*,*) 'Calling tempo_run() with itimestep = ', itimestep
-!         do k = 1, nlev
-!            write(*,*) 'aaj tempo_run', k, tgrs(5,k), prsl(5,k), qv(5,k), qc(5,k), &
-!                 qr(5,k), qi(5,k), qs(5,k), qg(5,k), ni(5,k), nr(5,k), dt, w(5,k), dz(5,k)
-!         enddo
-
-!         if (present(nwfa)) write(*,*) 'aaj nwfa present'
-!         if (present(nifa)) write(*,*) 'aaj nifa present'
-!         if (present(nc)) write(*,*) 'aaj nc present'
-!         if (present(ng)) write(*,*) 'aaj ng present'
-!         if (present(volg)) write(*,*) 'aaj volg present'                           
-         
          call tempo_run(tempo_cfgs=tempo_cfgs, &
             dt=dt, itimestep=itimestep , &
             qv=qv, qc=qc, qr=qr, qi=qi, qs=qs, qg=qg, ni=ni, nr=nr, &
             nc=nc, nwfa=nwfa, nifa=nifa, &
-!!            ng=ng, qb=volg, &
+            ng=ng, qb=volg, &
             w=w, t=tgrs, p=prsl, dz=dz, &
             ids = ids , ide = ide , jds = jds , jde = jde , kds = kds , kde = kde , &
             ims = ims , ime = ime , jms = jms , jme = jme , kms = kms , kme = kme , &
