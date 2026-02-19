@@ -80,6 +80,14 @@ module mp_tempo
          errmsg = ''
          errflg = 0
 
+          if (do_sat_adj) then
+            if ((is_aerosol_aware) .or. (is_hail_aware)) then
+               write(errmsg, fmt='((a))') 'do_sat_adj should be run with is_aerosol_aware=F and is_hail_aware=F'
+               errflg = 1
+               return
+            endif
+         end if
+
          if (is_initialized) return
          
          ! Consistency checks
@@ -90,7 +98,8 @@ module mp_tempo
          end if
 
          ! Call tempo init (also sets initial default values of physical constants)
-         if (mpirank==mpiroot) write(*,*) 'Calling tempo_init()', is_aerosol_aware, is_hail_aware, semi_sedi, do_sat_adj
+         if (mpirank==mpiroot) write(*,*) 'Calling tempo_init() with ltaerosol= ', is_aerosol_aware, &
+              ' lthailaware= ', is_hail_aware, ' sedi_semi= ', semi_sedi, ' do_sat_adj= ' do_sat_adj
 
          ! Main call to tempo_init()
          call tempo_init(aerosolaware_flag=is_aerosol_aware, hailaware_flag=is_hail_aware, &
@@ -272,7 +281,7 @@ module mp_tempo
          real(kind_phys),           intent(in   ) :: omega(:,:)
          real(kind_phys),           intent(in   ) :: dtp
          real,                      intent(in   ) :: dt_inner
-         ! logical,                   intent(in   ) :: first_time_step
+         logical,                   intent(in   ) :: first_time_step
          ! MPI and block information
          integer,                   intent(in)    :: blkno
          type(MPI_Comm),            intent(in)    :: mpicomm
@@ -309,49 +318,14 @@ module mp_tempo
          errmsg = ''
          errflg = 0
 
-         ! if (first_time_step .and. istep==1 .and. blkno==1) then
-         !    ! Check initialization state
-         !    if (.not.is_initialized) then
-         !       write(errmsg, fmt='((a))') 'mp_tempo_run called before mp_tempo_init'
-         !       errflg = 1
-         !       return
-         !    end if
-         !    ! Check forr optional arguments of aerosol-aware microphysics
-         !    if (is_aerosol_aware .and. .not. (present(nc)     .and. &
-         !                                      present(nwfa)   .and. &
-         !                                      present(nifa)   .and. &
-         !                                      present(nwfa2d) .and. &
-         !                                      present(nifa2d)       )) then
-         !       write(errmsg,fmt='(*(a))') 'Logic error in mp_tempo_run:',  &
-         !                                  ' aerosol-aware microphysics require all of the', &
-         !                                  ' following optional arguments:', &
-         !                                  ' nc, nwfa, nifa, nwfa2d, nifa2d'
-         !       errflg = 1
-         !       return
-         !    else if (merra2_aerosol_aware .and. .not. (present(nc)     .and. &
-         !                                               present(nwfa)   .and. &
-         !                                               present(nifa)         )) then
-         !      write(errmsg,fmt='(*(a))') 'Logic error in mp_tempo_run:', &
-         !                                 ' merra2 aerosol-aware microphysics require the', &
-         !                                 ' following optional arguments: nc, nwfa, nifa'
-         !      errflg = 1
-         !      return
-         !    end if
-         !    ! Consistency cheecks - subcycling and inner loop at the same time are not supported
-         !    if (nsteps>1 .and. dt_inner < dtp) then
-         !       write(errmsg,'(*(a))') "Logic error: Subcycling and inner loop cannot be used at the same time"
-         !       errflg = 1
-         !       return
-         !    else if (mpirank==mpiroot .and. nsteps>1) then
-         !       write(*,'(a,i0,a,a,f6.2,a)') 'TEMPO MP is using ', nsteps, ' substep(s) per time step with an ', &
-         !                                    'effective time step of ', dtp/real(nsteps, kind=kind_phys), ' seconds'
-         !    else if (mpirank==mpiroot .and. dt_inner < dtp) then
-         !       ndt = max(nint(dtp/dt_inner),1)
-         !       write(*,'(a,i0,a,a,f6.2,a)') 'TEMPO MP is using ', ndt, ' inner loops per time step with an ', &
-         !                                    'effective time step of ', dtp/real(ndt, kind=kind_phys), ' seconds'
-         !    end if
-         ! end if
-
+         if (first_time_step .and. blkno==1) then
+            ! Check initialization state
+            if (.not.is_initialized) then
+               write(errmsg, fmt='((a))') 'mp_tempo_run called before mp_tempo_init'
+               errflg = 1
+               return
+            end if
+         endif
          
          ndt = max(nint(dtp/dt_inner), 1)
          dt = dtp/ndt

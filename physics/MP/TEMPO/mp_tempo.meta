@@ -556,6 +556,13 @@
   dimensions = ()
   intent = in
   type = ty_tempo_cfgs    
+[first_time_step]
+  standard_name = flag_for_first_timestep
+  long_name = flag for first time step for time integration loop (cold/warmstart)
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
 [dtp]
   standard_name = timestep_for_physics
   long_name = physics timestep

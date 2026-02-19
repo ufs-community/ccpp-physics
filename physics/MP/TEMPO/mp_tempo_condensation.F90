@@ -81,7 +81,7 @@ module mp_tempo_condensation
          character(len=*),          intent(  out) :: errmsg
          integer,                   intent(  out) :: errflg
          integer :: i, j, k, n
-         logical :: need_tempo_params = .true.
+         logical, save :: need_tempo_params = .true.
         
          ! Initialize the CCPP error handling variables
          errmsg = ''
@@ -92,7 +92,7 @@ module mp_tempo_condensation
             need_tempo_params = .false.
          endif
 
-         write(*,*) 'tempo condensation', is, ie, js, je, km, isd, ied, jsd, jed
+         write(*,*) 'tempo condensation on re-mapping timestep'
          do k = 1, km
             do j = js, je
                do i = is, ie
