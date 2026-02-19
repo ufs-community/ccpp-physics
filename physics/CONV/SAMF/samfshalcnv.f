@@ -54,15 +54,15 @@
 !!  -# For the "feedback control", calculate updated values of the state variables by multiplying the cloud base mass flux and the tendencies calculated per unit cloud base mass flux from the static control.
 !!  \section det_samfshalcnv GFS samfshalcnv Detailed Algorithm
       subroutine samfshalcnv_run(im,km,itc,ntc,cliq,cp,cvap,            &
-     &      eps,epsm1,fv,grav,hvap,rd,rv,                               &
-     &      t0c,delt,ntk,ntr,delp,first_time_step,restart,              &
-     &      tmf,qmicro,progsigma,progomega,                             &
-     &      prslp,psp,phil,tkeh,qtr,prevsq,q,q1,t1,u1,v1,fscav,         &
-     &      rn,kbot,ktop,kcnv,islimsk,garea,cscale,                     &
-     &      dot,ncloud,hpbl,ud_mf,dt_mf,cnvw,cnvc,                      &
-     &      clam,c0s,c1,evef,pgcon,asolfac,hwrf_samfshal,               &
-     &      sigmain,sigmaout,omegain,omegaout,betadcu,betamcu,betascu,  &
-     &      errmsg,errflg)
+     &     eps,epsm1,fv,grav,hvap,rd,rv,                                &
+     &     t0c,delt,ntk,ntr,delp,first_time_step,restart,               & 
+     &     tmf,qmicro,progsigma,progomega,                              &
+     &     prslp,psp,phil,tkeh,qtr,prevsq,q,q1,t1,u1,v1,fscav,          &
+     &     rn,kbot,ktop,kcnv,islimsk,garea,cscale,                      &
+     &     dot,ncloud,hpbl,ud_mf,dt_mf,cnvw,cnvc,                       &
+     &     clam,c0s,c1,evef,pgcon,asolfac,hwrf_samfshal,                & 
+     &     sigmain,sigmaout,omegain,omegaout,betadcu,betamcu,betascu,   &
+     &     cat_adj_shal,errmsg,errflg)
 !
       use funcphys , only : fpvs
 
@@ -100,8 +100,10 @@
      &                     asolfac, evef, pgcon
       logical,          intent(in)  :: hwrf_samfshal,first_time_step,   &
      &     restart,progsigma,progomega
+      real(kind_phys), intent(in) :: cat_adj_shal
       character(len=*), intent(out) :: errmsg
       integer,          intent(out) :: errflg
+
 !
 !  local variables
       integer              i,j,indx, k, kk, km1, n
@@ -2051,7 +2053,8 @@ c
            umean(i) = max(umean(i), 1.0_conv_wp)
            tauadv = gdx(i) / umean(i)
            advfac(i) = tauadv / dtconv(i)
-           advfac(i) = min(advfac(i), 1.0_conv_wp)
+           advfac(i) = min(real(cat_adj_shal, kind=conv_wp) * advfac(i)
+     &               , 1.0_conv_wp)
         endif
       enddo
 c

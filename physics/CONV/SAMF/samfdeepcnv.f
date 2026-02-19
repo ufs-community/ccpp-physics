@@ -74,20 +74,20 @@
 !!  -# For the "feedback control", calculate updated values of the state variables by multiplying the cloud base mass flux and the tendencies calculated per unit cloud base mass flux from the static control.
 !!
 !!  \section samfdeep_detailed GFS samfdeepcnv Detailed Algorithm
-      subroutine samfdeepcnv_run (im,km,first_time_step,restart,        
-     &    tmf,qmicro,itc,ntc,cliq,cp,cvap,                              
-     &    eps,epsm1,fv,grav,hvap,rd,rv,                                 
-     &    t0c,delt,ntk,ntr,delp,                                        
-     &    prslp,psp,phil,tkeh,qtr,prevsq,q,q1,t1,u1,v1,fscav,           
-     &    hwrf_samfdeep,progsigma,progomega,cldwrk,rn,kbot,ktop,kcnv,  
-     &    islimsk,garea,dot,ncloud,hpbl,ud_mf,dd_mf,dt_mf,cnvw,cnvc,    
-     &    QLCN, QICN, w_upi, cf_upi, CNV_MFD,                           
-     &    CNV_DQLDT,CLCN,CNV_FICE,CNV_NDROP,CNV_NICE,mp_phys,
-     &    mp_phys_mg,clam,c0s,c1,betal,betas,evef,pgcon,asolfac,
-     &    cscale,do_ca, ca_closure, ca_entr, ca_trigger, nthresh,
-     &    ca_deep,rainevap,sigmain,sigmaout,omegain,omegaout,betadcu,
-     &    betamcu,betascu,maxMF,do_mynnedmf,sigmab_coldstart,errmsg,
-     &    errflg)
+      subroutine samfdeepcnv_run (im,km,first_time_step,restart,        &
+     &    tmf,qmicro,itc,ntc,cliq,cp,cvap,                              &
+     &    eps,epsm1,fv,grav,hvap,rd,rv,                                 &
+     &    t0c,delt,ntk,ntr,delp,                                        &
+     &    prslp,psp,phil,tkeh,qtr,prevsq,q,q1,t1,u1,v1,fscav,           &
+     &    hwrf_samfdeep,progsigma,progomega,cldwrk,rn,kbot,ktop,kcnv,   &
+     &    islimsk,garea,dot,ncloud,hpbl,ud_mf,dd_mf,dt_mf,cnvw,cnvc,    &
+     &    QLCN, QICN, w_upi, cf_upi, CNV_MFD,                           &
+     &    CNV_DQLDT,CLCN,CNV_FICE,CNV_NDROP,CNV_NICE,mp_phys,mp_phys_mg,&
+     &    clam,c0s,c1,betal,betas,evef,pgcon,asolfac,cscale,            &
+     &    do_ca, ca_closure, ca_entr, ca_trigger, nthresh,ca_deep,      &
+     &    rainevap,sigmain,sigmaout,omegain,omegaout,betadcu,betamcu,   &
+     &    betascu,maxMF,do_mynnedmf,sigmab_coldstart,cat_adj_deep,      &
+     &    errmsg,errflg)
 !
       use machine , only : kind_phys
       use funcphys , only : fpvs
@@ -139,6 +139,7 @@
       real(kind=kind_phys), intent(in) :: clam,  c0s,  c1,              
      &                     betal,   betas,   asolfac,                   
      &                     evef,  pgcon
+      real(kind_phys), intent(in) :: cat_adj_deep
       character(len=*), intent(out) :: errmsg
       integer,          intent(out) :: errflg
 !
@@ -3074,7 +3075,8 @@ c
            umean(i) = max(umean(i), 1.0_conv_wp)
            tauadv = gdx(i) / umean(i)
            advfac(i) = tauadv / dtconv(i)
-           advfac(i) = min(advfac(i), 1.0_conv_wp)
+           advfac(i) = min(real(cat_adj_deep, kind=conv_wp) * advfac(i)
+     &               , 1.0_conv_wp)
         endif
       enddo
       
