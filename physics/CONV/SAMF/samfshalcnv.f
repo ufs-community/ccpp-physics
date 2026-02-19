@@ -261,8 +261,6 @@ c  cloud water
       real(kind=conv_wp) tf, tcr, tcrf
       parameter (tf=233.16_conv_wp, tcr=263.16_conv_wp,
      &           tcrf=1.0_conv_wp/(tcr-tf))
-
-
 c-----------------------------------------------------------------------
 !
 ! Initialize CCPP error handling variables
@@ -397,7 +395,8 @@ c
           if(real(t1(i,k), kind=conv_wp) > 273.16_conv_wp) then
             c0t(i,k) = c0(i)
           else
-            tem = d0 * (real(t1(i,k), kind=conv_wp) - 273.16_conv_wp)
+            tem = real(d0 * (real(t1(i,k), kind=conv_wp)
+     &          - 273.16_conv_wp), kind=conv_wp)
             tem1 = exp(tem)
             c0t(i,k) = c0(i) * tem1
           endif
@@ -1909,10 +1908,10 @@ c
       do i=1,im
         if(cnvflg(i)) then
           if(real(q1(i,1), kind=conv_wp) >= 0.0_conv_wp) then
-            q_diff(i,0) = real(max(0.0_kind_phys, 2.0_kind_phys 
+            q_diff(i,0) = real(max(0.0_conv_wp, 2.0_conv_wp 
      &                  * q1(i,1) - q1(i,2)) - q1(i,1), kind=conv_wp)
           else
-            q_diff(i,0) = real(min(0.0_kind_phys, 2.0_kind_phys 
+            q_diff(i,0) = real(min(0.0_conv_wp, 2.0_conv_wp 
      &                  * q1(i,1) - q1(i,2)) - q1(i,1), kind=conv_wp)
           endif
         endif
@@ -2208,6 +2207,9 @@ c
         do i = 1, im
           if (cnvflg(i)) then
             if(k > kb(i) .and. k <= ktcon(i)) then
+               if (i == 1 .and. k == kb(i)+1) then
+                print *, 'CHECK: Actual update happening for i,k:', i, k
+               endif
               dellat = (dellah(i,k) - real(hvap, kind=conv_wp)
      &               * dellaq(i,k)) / real(cp, kind=conv_wp)
               t1(i,k) = real(t1(i,k), kind=kind_phys)
@@ -2245,8 +2247,8 @@ c
         do i = 1,im
           if (cnvflg(i)) then
             if(k > kb(i) .and. k <= ktcon(i)) then
-              tem = real(q1(i,k), kind=conv_wp) * delp(i,k) / real(grav,
-     &              kind=conv_wp)
+              tem = real(q1(i,k), kind=conv_wp) * real(delp(i,k),
+     &              kind=conv_wp) / real(grav, kind=conv_wp)
               if(real(q1(i,k), kind=conv_wp) < 0.0_conv_wp) tsumn(i) =
      &        tsumn(i) + tem
               if(real(q1(i,k), kind=conv_wp) > 0.0_conv_wp) tsump(i) =
@@ -2275,11 +2277,11 @@ c
                   if(real(q1(i,k), kind=conv_wp) < 0.0_conv_wp)
      &              q1(i,k) = 0.0_kind_phys
                   if(real(q1(i,k), kind=conv_wp) > 0.0_conv_wp)
-     &              q1(i,k) = real((1.0_conv_wp+rtnp(i)),kind=kind_phys)
+     &              q1(i,k) = (1.0_conv_wp + rtnp(i))
      &                      * real(q1(i,k), kind=kind_phys)
                 else
                   if(real(q1(i,k), kind=conv_wp) < 0.0_conv_wp)
-     &              q1(i,k) = real((1.0_conv_wp+rtnp(i)),kind=kind_phys)
+     &              q1(i,k) = (1.0_conv_wp + rtnp(i))
      &                      * real(q1(i,k), kind=kind_phys)
                   if(real(q1(i,k), kind=conv_wp) > 0.0_conv_wp)
      &              q1(i,k) = 0.0_kind_phys
@@ -2299,9 +2301,7 @@ c
          do i = 1, im
            if (cnvflg(i)) then
              if(k > kb(i) .and. k <= ktcon(i)) then
-               ctr(i,k,n) = real(ctr(i,k,n), kind=conv_wp)
-     &                    + real(dellae(i,k,n) * xmb(i) * dt2,
-     &                           kind=conv_wp)
+               ctr(i,k,n) = ctr(i,k,n) + dellae(i,k,n) * xmb(i) * dt2
                dp = 1000.0_conv_wp * del(i,k)
                delebar(i,n)=delebar(i,n)+dellae(i,k,n)*xmb(i)*dp
      &                     /real(grav, kind=conv_wp)
@@ -2330,8 +2330,8 @@ c
                   endif
                   tem = ctr(i,k,n) * dz
                 else
-                  tem = ctr(i,k,n) * delp(i,k) / real(grav,
-     &                  kind=conv_wp)
+                  tem = ctr(i,k,n) * real(delp(i,k), kind=conv_wp)
+     &                / real(grav, kind=conv_wp)
                 endif
                 if(ctr(i,k,n) < 0.0_conv_wp) tsumn(i) = tsumn(i) + tem
                 if(ctr(i,k,n) > 0.0_conv_wp) tsump(i) = tsump(i) + tem
@@ -2358,13 +2358,11 @@ c
                 if(tsump(i) > abs(tsumn(i))) then
                   if(ctr(i,k,n) < 0.0_conv_wp) ctr(i,k,n) = 0.0_conv_wp
                   if(ctr(i,k,n) > 0.0_conv_wp) then 
-                    ctr(i,k,n)=real(1.0_conv_wp + rtnp(i), kind=conv_wp)
-     &                        *real(ctr(i,k,n), kind=conv_wp)
+                    ctr(i,k,n) = (1.0_conv_wp + rtnp(i)) * ctr(i,k,n)
                   endif
                 else
                   if(ctr(i,k,n) < 0.0_conv_wp) then 
-                    ctr(i,k,n) =real(1.0_conv_wp + rtnp(i),kind=conv_wp)
-     &                         *real(ctr(i,k,n), kind=conv_wp)
+                    ctr(i,k,n) = (1.0_conv_wp + rtnp(i)) * ctr(i,k,n)
                   endif
                   if(ctr(i,k,n) > 0.0_conv_wp) ctr(i,k,n) = 0.0_conv_wp
                 endif
@@ -2481,9 +2479,8 @@ c
             qevap(i) = 0.0_conv_wp
             if(cnvflg(i)) then
               if(k < ktcon(i) .and. k > kb(i)) then
-                rn(i) = real(rn(i), kind=kind_phys)
-     &              + real(pwo(i,k) * xmb(i) * 0.001_conv_wp * dt2,
-     &                     kind=kind_phys)
+                rn(i) = real(rn(i), kind=kind_phys) + real(pwo(i,k)
+     &                * xmb(i) * 0.001_conv_wp * dt2, kind=kind_phys)
               endif
             endif
             if(flg(i) .and. k < ktcon(i)) then
@@ -2499,9 +2496,9 @@ c
               factor = dp / real(grav, kind=conv_wp)
               if(real(rn(i), kind=conv_wp) > 0.0_conv_wp .and. qcond(i) 
      &          < 0.0_conv_wp) then 
-                qevap(i) = -qcond(i) * (1.0_conv_wp
-     &          -exp(-.32_conv_wp*sqrt(dt2*real(rn(i), kind=conv_wp))))
-                qevap(i) = min(qevap(i), real(rn(i), kind=conv_wp) 
+                qevap(i) = -qcond(i) * (1.0_conv_wp -exp(-.32_conv_wp
+     &                   * sqrt(dt2 * real(rn(i), kind=conv_wp))))
+                qevap(i) = min(qevap(i), real(rn(i), kind=kind_phys)
      &                   * 1000.0_conv_wp*real(grav, kind=conv_wp)/dp)
                 delq2(i) = delqev(i) + .001_conv_wp * qevap(i) * factor
               endif
@@ -2515,8 +2512,10 @@ c
      &          > 0.0_conv_wp) then
                 tem  = .001_conv_wp * factor
                 tem1 = qevap(i) * tem
-                if (tem1 > real(rn(i), kind=conv_wp)) then
-                  qevap(i) = real(rn(i), kind=conv_wp) / tem
+                if (real(tem1, kind=kind_phys) > real(rn(i), 
+     &            kind=kind_phys)) then
+                  qevap(i) = real(rn(i), kind=kind_phys)
+     &                     / real(tem, kind=kind_phys)
                   rn(i) = 0.0_kind_phys
                 else
                   rn(i) = real(rn(i), kind=kind_phys)
@@ -2621,11 +2620,10 @@ c
      &                     + real(tem * tem1, kind=kind_phys)
                 ! Water
                 qtr(i,k,2) = real(qtr(i,k,2), kind=kind_phys)
-     &                     + real(tem * (1.0_conv_wp - tem1),
-     &                            kind=kind_phys)
+     &                + real(tem * (1.0_conv_wp - tem1), kind=kind_phys)
               else
                 qtr(i,k,1) = real(qtr(i,k,1), kind=kind_phys)
-     &                       + real(tem, kind=kind_phys)
+     &                     + real(tem, kind=kind_phys)
               endif
             endif
           endif
@@ -2690,8 +2688,8 @@ c
               endif
               ptem = tem / (tem2 * tem1)
               qtr(i,k,ntk) = real(qtr(i,k,ntk), kind=kind_phys)
-     &                     + real(0.5_conv_wp * tem2 * ptem * ptem,
-     &                            kind=kind_phys)
+     &                     + real(0.5_conv_wp * tem2 * ptem * ptem, 
+     &                       kind=kind_phys)
             endif
           endif
         enddo
