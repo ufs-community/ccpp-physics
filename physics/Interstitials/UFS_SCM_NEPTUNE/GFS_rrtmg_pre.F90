@@ -92,22 +92,6 @@
       use module_mp_tempo_utils, only : get_constant_cloud_number
       use module_mp_tempo_diags, only : effective_radius
       
-!      use module_mp_tempo_params_v2, only: &
-!           Nt_c_l_tempo => Nt_c_l, &
-!           Nt_c_o_tempo => Nt_c_o, &
-!           re_qc_min_tempo => re_qc_min, &
-!           re_qc_max_tempo => re_qc_max, &
-!           re_qi_min_tempo => re_qi_min, &
-!           re_qi_max_tempo => re_qi_max, &
-!           re_qs_min_tempo => re_qs_min, &
-!           re_qs_max_tempo => re_qs_max
-
-!      use module_mp_tempo_utils_v2, only: &
-!           calc_effectRad_tempo => calc_effectRad, &
-!           make_IceNumber_tempo => make_IceNumber, &
-!           make_DropletNumber_tempo => make_DropletNumber, &
-!           make_RainNumber_tempo => make_RainNumber
-
       ! For NRL Ozone
       use module_ozphys, only: ty_ozphys
       implicit none
@@ -986,21 +970,6 @@
                effrl(i,lmk) = re_qc_min_thompson*1.e6
                effri(i,lmk) = re_qi_min_thompson*1.e6
                effrs(i,lmk) = re_qs_min_thompson*1.e6
-  !          else ! tempo
-  !             call effective_radius(temp=tlyr(i,:), l_qc=l_qc(i,:), nc=nc_mp(i,:), &
-  !                  ilamc=ilamc(i,:), l_qi=l_qi(i,:), ilami=ilami(i,:), l_qs=l_qs(i,:), rs=rs(i,:), &
-  !                  re_qc=effrl(i,:), re_qi=effri(i,:), re_qs=effrs(i,:))
-  !             ! Scale Thompson's effective radii from meter to micron
-  !             do k=1,lm
-  !                effrl(i,k) = MAX(re_qc_min_thompson, MIN(effrl(i,k), re_qc_max_thompson))*1.e6
-  !                effri(i,k) = MAX(re_qi_min_thompson, MIN(effri(i,k), re_qi_max_thompson))*1.e6
-  !                effrs(i,k) = MAX(re_qs_min_thompson, MIN(effrs(i,k), re_qs_max_thompson))*1.e6
-  !             end do
-  !             effrl(i,lmk) = re_qc_min_thompson*1.e6
-  !             effri(i,lmk) = re_qi_min_thompson*1.e6
-  !             effrs(i,lmk) = re_qs_min_thompson*1.e6
-  !          endif
-
           end do
           effrr(:,:) = 1000. ! rrain_def=1000.
           ! Update global arrays
@@ -1013,49 +982,13 @@
             enddo
           enddo
 
-        elseif (imp_physics == imp_physics_tempo) then       !  Thompson MP
-          !
-          ! Compute effective radii for QC, QI, QS with (GF, MYNN) or without (all others) sub-grid clouds
-          !
-          ! Update number concentration, consistent with sub-grid clouds (GF, MYNN) or without (all others)
-!          do k=1,lm
-!            do i=1,im
-!               if (imp_physics == imp_physics_thompson) then
-!               if ((ltaerosol .or. mraerosol) .and. qc_mp(i,k)>1.e-12 .and. nc_mp(i,k)<100.) then
-!                  nc_mp(i,k) = make_DropletNumber_thompson(qc_mp(i,k)*rho(i,k), nwfa(i,k)*rho(i,k)) * orho(i,k)
-!              endif
-!              if (qi_mp(i,k)>1.e-12 .and. ni_mp(i,k)<100.) then
-!                 ni_mp(i,k) = make_IceNumber_thompson(qi_mp(i,k)*rho(i,k), tlyr(i,k)) * orho(i,k)
-!              endif
-!              endif
-!            end do
-!          end do
-          !> - Call Thompson's subroutine calc_effectRad() to compute effective radii
+        elseif (imp_physics == imp_physics_tempo) then       ! Tempo
           do i=1,im
             islmsk = nint(slmsk(i))
-            ! Effective radii [m] are now intent(out), bounds applied in calc_effectRad
-            !tgs: progclduni has different limits for ice radii (10.0-150.0) than
-            !     calc_effectRad (4.99-125.0 for WRFv3.8.1; 2.49-125.0 for WRFv4+)
-            !     it will raise the low limit from 5 to 10, but the high limit will remain 125.
-
-!            if (imp_physics == imp_physics_thompson) then
-!               call calc_effectRad_thompson(tlyr(i,:), plyr(i,:)*100., qv_mp(i,:), qc_mp(i,:),   &
-!                    nc_mp(i,:), qi_mp(i,:), ni_mp(i,:), qs_mp(i,:), &
-!                    effrl(i,:), effri(i,:), effrs(i,:), islmsk, 1, lm )
-!               ! Scale Thompson's effective radii from meter to micron
-!               do k=1,lm
-!                  effrl(i,k) = MAX(re_qc_min_thompson, MIN(effrl(i,k), re_qc_max_thompson))*1.e6
-!                  effri(i,k) = MAX(re_qi_min_thompson, MIN(effri(i,k), re_qi_max_thompson))*1.e6
-!                  effrs(i,k) = MAX(re_qs_min_thompson, MIN(effrs(i,k), re_qs_max_thompson))*1.e6
-!               end do
-!               effrl(i,lmk) = re_qc_min_thompson*1.e6
-1               effri(i,lmk) = re_qi_min_thompson*1.e6
-!               effrs(i,lmk) = re_qs_min_thompson*1.e6
-!            else ! tempo
                call effective_radius(temp=tlyr(i,:), l_qc=l_qc(i,:), nc=nc_mp(i,:), &
                     ilamc=ilamc(i,:), l_qi=l_qi(i,:), ilami=ilami(i,:), l_qs=l_qs(i,:), rs=rs(i,:), &
                     re_qc=effrl(i,:), re_qi=effri(i,:), re_qs=effrs(i,:))
-               ! Scale Thompson's effective radii from meter to micron
+               ! use min/max values from Thompson for now
                do k=1,lm
                   effrl(i,k) = MAX(re_qc_min_thompson, MIN(effrl(i,k), re_qc_max_thompson))*1.e6
                   effri(i,k) = MAX(re_qi_min_thompson, MIN(effri(i,k), re_qi_max_thompson))*1.e6
@@ -1064,8 +997,6 @@
                effrl(i,lmk) = re_qc_min_thompson*1.e6
                effri(i,lmk) = re_qi_min_thompson*1.e6
                effrs(i,lmk) = re_qs_min_thompson*1.e6
-!            endif
-
           end do
           effrr(:,:) = 1000. ! rrain_def=1000.
           ! Update global arrays

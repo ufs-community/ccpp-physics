@@ -3,7 +3,6 @@
   type = scheme
   dependencies_path = ../../
   dependencies = tools/funcphys.f90,hooks/machine.F
-  dependencies = MP/TEMPO/TEMPO/module_mp_tempo_params_v2.F90,MP/TEMPO/TEMPO/module_mp_tempo_utils_v2.F90
   dependencies = MP/Thompson/module_mp_thompson.F90,MP/Thompson/module_mp_thompson_make_number_concentrations.F90
   dependencies = Radiation/RRTMG/radcons.f90,Radiation/radiation_aerosols.f
   dependencies = Radiation/radiation_astronomy.f,Radiation/radiation_clouds.f,Radiation/radiation_gases.f
