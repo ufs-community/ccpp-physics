@@ -7,5 +7,6 @@
   url = https://github.com/NCAR/TEMPO
   branch = main
 [submodule "physics/MP/TEMPO/tempo_v3"]
-	path = physics/MP/TEMPO/tempo_v3
-	url = https://github.com/AndersJensen-NOAA/TEMPO.git
+  path = physics/MP/TEMPO/tempo_v3
+  url = https://github.com/NCAR/TEMPO.git
+  branch = main
