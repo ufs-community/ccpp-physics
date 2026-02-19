@@ -99,7 +99,7 @@ module mp_tempo
 
          ! Call tempo init (also sets initial default values of physical constants)
          if (mpirank==mpiroot) write(*,*) 'Calling tempo_init() with ltaerosol= ', is_aerosol_aware, &
-              ' lthailaware= ', is_hail_aware, ' sedi_semi= ', semi_sedi, ' do_sat_adj= ' do_sat_adj
+              ' lthailaware= ', is_hail_aware, ' sedi_semi= ', semi_sedi, ' do_sat_adj= ', do_sat_adj
 
          ! Main call to tempo_init()
          call tempo_init(aerosolaware_flag=is_aerosol_aware, hailaware_flag=is_hail_aware, &
@@ -229,7 +229,7 @@ module mp_tempo
         convert_dry_rho, dtp, dt_inner, &
         spechum, qc, qr, qi, qs, qg, ni, nr, &
         nc, nwfa, nifa, nwfa2d, nifa2d, ng, volg, &
-        con_g, con_rd, con_eps, &
+        con_g, con_rd, con_eps, first_time_step, &
         tgrs, prsl, phii, omega, &
         is_aerosol_aware, is_hail_aware, &
         prcp, rain, graupel, ice, snow, sr, refl_10cm, &
