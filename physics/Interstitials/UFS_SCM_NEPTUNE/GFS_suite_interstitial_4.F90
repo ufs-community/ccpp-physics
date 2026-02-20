@@ -20,6 +20,10 @@
            make_IceNumber_thompson => make_IceNumber, &
            make_DropletNumber_thompson => make_DropletNumber
 
+      use module_mp_tempo_utils_v2, only: &
+           make_IceNumber_tempo => make_IceNumber, &
+           make_DropletNumber_tempo => make_DropletNumber
+    
       implicit none
 
       ! interface variables
@@ -231,7 +235,7 @@
                     if (imp_physics == imp_physics_thompson) then
                        nc_mp(i,k) = max(zero, nc_mp(i,k) + make_DropletNumber_thompson(qc_mp(i,k) * rho, nwfa(i,k)*rho) * orho)
                     else ! tempo
-                       nc_mp(i,k) = max(zero, nc_mp(i,k) + make_DropletNumber_thompson(qc_mp(i,k) * rho, nwfa(i,k)*rho) * orho)
+                       nc_mp(i,k) = max(zero, nc_mp(i,k) + make_DropletNumber_tempo(qc_mp(i,k) * rho, nwfa(i,k)*rho) * orho)
                     endif
                     !> - Convert number concentrations from dry to moist
                     gq0(i,k,ntlnc) = nc_mp(i,k) / (one+qv_mp(i,k))
@@ -244,7 +248,7 @@
                     if (imp_physics == imp_physics_thompson) then
                        ni_mp(i,k) = max(zero, ni_mp(i,k) + make_IceNumber_thompson(qi_mp(i,k) * rho, save_tcp(i,k)) * orho)
                     else ! tempo
-                       ni_mp(i,k) = max(zero, ni_mp(i,k) + make_IceNumber_thompson(qi_mp(i,k) * rho, save_tcp(i,k)) * orho)
+                       ni_mp(i,k) = max(zero, ni_mp(i,k) + make_IceNumber_tempo(qi_mp(i,k) * rho, save_tcp(i,k)) * orho)
                     endif
                     !> - Convert number concentrations from dry to moist
                     gq0(i,k,ntinc) = ni_mp(i,k) / (one+qv_mp(i,k))
@@ -264,7 +268,7 @@
                     if (imp_physics == imp_physics_thompson) then
                        gq0(i,k,ntlnc) = max(zero, gq0(i,k,ntlnc) + make_DropletNumber_thompson(qc_mp(i,k) * rho, nwfa(i,k)*rho) * orho)
                     else ! tempo
-                       gq0(i,k,ntlnc) = max(zero, gq0(i,k,ntlnc) + make_DropletNumber_thompson(qc_mp(i,k) * rho, nwfa(i,k)*rho) * orho)
+                       gq0(i,k,ntlnc) = max(zero, gq0(i,k,ntlnc) + make_DropletNumber_tempo(qc_mp(i,k) * rho, nwfa(i,k)*rho) * orho)
                     endif
                   endif
                   if (ntinc>0) then
@@ -274,7 +278,7 @@
                     if (imp_physics == imp_physics_thompson) then
                        gq0(i,k,ntinc) = max(zero, gq0(i,k,ntinc) + make_IceNumber_thompson(qi_mp(i,k) * rho, save_tcp(i,k)) * orho)
                     else ! tempo
-                       gq0(i,k,ntinc) = max(zero, gq0(i,k,ntinc) + make_IceNumber_thompson(qi_mp(i,k) * rho, save_tcp(i,k)) * orho)
+                       gq0(i,k,ntinc) = max(zero, gq0(i,k,ntinc) + make_IceNumber_tempo(qi_mp(i,k) * rho, save_tcp(i,k)) * orho)
                     endif
                   endif
                 enddo
