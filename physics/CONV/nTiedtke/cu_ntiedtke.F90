@@ -265,7 +265,7 @@ contains
             scale_fac(j) = 1.+1.33e-5*dx(j)
             scale_fac2(j) = 1.
           end if
-        else 
+        else
           if (dx(j).lt.dxref) then
             scale_fac(j) = (1.06133+log(dxref/dx(j)))**3
             scale_fac2(j) = scale_fac(j)**0.5
@@ -457,7 +457,7 @@ contains
      &     ktype,    kcbot,    kctop,    ptu,      pqu,   &
      &     plu,      plude,    pmfu,     pmfd,     prain, &
      &     pcte,     phhfl,    lndj,     zgeoh,    pmfude_rate, dx, &
-     &     scale_fac,  scale_fac2, icu_zoentr)
+     &     scale_fac, scale_fac2, icu_zoentr)
       implicit none
 !
 !***cumastrn*  master routine for cumulus massflux-scheme
@@ -2149,7 +2149,6 @@ contains
 
       real(kind=kind_phys),parameter:: c1 = 5.0e-4  !shin
       real(kind=kind_phys),parameter:: d1 = 1.0e-3  !shin
-      integer,parameter:: icu_zoentr = 2            !shin
     !--------------------------------
     !*    1. specify parameters
     !--------------------------------
@@ -2286,14 +2285,14 @@ contains
           ! Why is it negative?
           !---------------------------------------
           if ( jk == kcbot(jl) ) then
-           IF(icu_zoentr.eq.1)THEN
-            zoentr(jl) = -entorg*(min(1.,pqen(jl,jk)/pqsen(jl,jk)) - &
-                         1.)*(pgeoh(jl,jk)-pgeoh(jl,jk+1))*zrg
-           ENDIF
-           IF(icu_zoentr.eq.2)THEN
-            zoentr(jl) = (c1+d1*(1.0-min(1.,pqen(jl,jk)/pqsen(jl,jk))))* &  !shin
-                    (pgeoh(jl,jk)-pgeoh(jl,jk+1))*zrg                                  !shin
-           ENDIF
+            if ( icu_zoentr .eq. 1 ) then
+              zoentr(jl) = -entorg*(min(1.,pqen(jl,jk)/pqsen(jl,jk)) - &
+                           1.)*(pgeoh(jl,jk)-pgeoh(jl,jk+1))*zrg
+            end if
+            if ( icu_zoentr .eq. 2 ) then
+              zoentr(jl) = (c1+d1*(1.0-min(1.,pqen(jl,jk)/pqsen(jl,jk))))* &
+                           (pgeoh(jl,jk)-pgeoh(jl,jk+1))*zrg
+            end if
             zoentr(jl) = min(0.4,zoentr(jl))*pmfu(jl,jk+1)
           end if
           !---------------------------------------
@@ -2487,16 +2486,16 @@ contains
                 ikb = kcbot(jl)
                 ! zoentr is overwritten, but not used until
                 ! the next jk level in the loop (ICON comment)
-                IF(icu_zoentr.eq.1)THEN
-                 zoentr(jl) = entorg*(0.3-(min(1.,pqen(jl,jk-1) /    &
-                  pqsen(jl,jk-1))-1.))*(pgeoh(jl,jk-1)-pgeoh(jl,jk)) * &
-                  zrg*min(1.,pqsen(jl,jk)/pqsen(jl,ikb))**3
-                ENDIF
-                IF(icu_zoentr.eq.2)THEN
-                 zoentr(jl) = ( c1*(min(1.,pqsen(jl,jk)/pqsen(jl,ikb))**2) &  !shin
-                  + d1*(1.0-min(1.,pqen(jl,jk-1)/pqsen(jl,jk-1)))*(min(1.,pqsen(jl,jk)/pqsen(jl,ikb))**3))* & !shin
-                    (pgeoh(jl,jk-1)-pgeoh(jl,jk))*zrg            !shin
-                ENDIF
+                if ( icu_zoentr .eq. 1 ) then
+                  zoentr(jl) = entorg*(0.3-(min(1.,pqen(jl,jk-1) / &
+                               pqsen(jl,jk-1))-1.))*(pgeoh(jl,jk-1)-pgeoh(jl,jk)) * &
+                               zrg*min(1.,pqsen(jl,jk)/pqsen(jl,ikb))**3
+                end if
+                if ( icu_zoentr .eq. 2 ) then
+                  zoentr(jl) = ( c1*(min(1.,pqsen(jl,jk)/pqsen(jl,ikb))**2) + &
+                               d1*(1.0-min(1.,pqen(jl,jk-1)/pqsen(jl,jk-1)))*(min(1.,pqsen(jl,jk)/pqsen(jl,ikb))**3))* &
+                               (pgeoh(jl,jk-1)-pgeoh(jl,jk))*zrg
+                end if
                 zoentr(jl) = min(0.4,zoentr(jl))*pmfu(jl,jk)
               else
                 zoentr(jl) = 0.
