@@ -198,6 +198,12 @@ contains
 !     other reference: tiedtke (1989, mwr, 117, 1779-1800)
 !                      IFS documentation - cy33r1, cy37r2, cy38r1, cy40r1
 !
+!     Important 2026 update regarding new input arguments: scale_fac_opt,icu_zoentr
+!     scale_fac_opt (0 or 1): Option for alternative scale-awareness formulation (below link for more information)
+!                             https://github.com/ufs-community/ccpp-physics/issues/357
+!     icu_zoentr (1 or 2): Option for a new entrainment equation (below link for more information)
+!                          https://github.com/ufs-community/ccpp-physics/issues/358
+
       implicit none
 !--- input arguments:
       integer, intent(in) :: scale_fac_opt,icu_zoentr
@@ -381,7 +387,7 @@ contains
      &     ktype,    icbot,    ictop,    ztu,     zqu,   &
      &     zlu,      zlude,    zmfu,     zmfd,    zrain, &
      &     pcte,     phhfl,    lndj,     pgeoh,   zmfude_rate, dx, &
-     &     scale_fac, scale_fac2, icu_zoentr)
+     &     scale_fac, scale_fac2, icu_zoentr, errmsg, errflg)
 !
 !     to include the cloud water and cloud ice detrained from convection
 !
@@ -434,8 +440,10 @@ contains
         end do
       endif
 !
+     if(errflg.eq.0)then
       errmsg = 'cu_ntiedtke_run OK'
       errflg = 0
+     endif
 !
       return
       end subroutine cu_ntiedtke_run
@@ -457,7 +465,7 @@ contains
      &     ktype,    kcbot,    kctop,    ptu,      pqu,   &
      &     plu,      plude,    pmfu,     pmfd,     prain, &
      &     pcte,     phhfl,    lndj,     zgeoh,    pmfude_rate, dx, &
-     &     scale_fac, scale_fac2, icu_zoentr)
+     &     scale_fac, scale_fac2, icu_zoentr, errmsg, errflg)
       implicit none
 !
 !***cumastrn*  master routine for cumulus massflux-scheme
@@ -544,6 +552,10 @@ contains
       logical:: llo1
       logical,dimension(klon):: loddraf,llo2
       logical,dimension(klon):: lldcum,llddraf3
+
+! error messages
+      character(len=*), intent(out) :: errmsg
+      integer,          intent(out) :: errflg
 
       integer:: jl,jk,ik
       integer:: ikb,ikt,icum,itopm2
@@ -700,7 +712,7 @@ contains
      &     zmfus,    zmfuq,    zmful,    plude,    zdmfup,  &
      &     kcbot,    kctop,    ictop0,   icum,     ztmst,   &
      &     zqsenh,   zlglac,   lndj,     wup,      wbase,   &
-     &     kdpl,     pmfude_rate, icu_zoentr)
+     &     kdpl,     pmfude_rate, icu_zoentr, errmsg, errflg)
 
 !*     (b) check cloud depth and change entrainment rate accordingly
 !          calculate precipitation rate (for downdraft calculation)
@@ -2021,7 +2033,7 @@ contains
      &     pmfus,    pmfuq,    pmful,    plude,    pdmfup,  &
      &     kcbot,    kctop,    kctop0,   kcum,     ztmst,   &
      &     pqsenh,   plglac,   lndj,     wup,      wbase,   &
-     &     kdpl,     pmfude_rate, icu_zoentr)
+     &     kdpl,     pmfude_rate, icu_zoentr, errmsg, errflg)
 
       implicit none
 !     this routine does the calculations for cloud ascents
@@ -2125,6 +2137,10 @@ contains
 
       real(kind=kind_phys),intent(out),dimension(klon):: wup
       real(kind=kind_phys),intent(out),dimension(klon,klev):: plglac,pmfude_rate
+
+! error messages
+      character(len=*), intent(out) :: errmsg
+      integer,          intent(out) :: errflg
 
     !--- local variables and arrays:
       logical:: llo2,llo3
@@ -2288,10 +2304,13 @@ contains
             if ( icu_zoentr .eq. 1 ) then
               zoentr(jl) = -entorg*(min(1.,pqen(jl,jk)/pqsen(jl,jk)) - &
                            1.)*(pgeoh(jl,jk)-pgeoh(jl,jk+1))*zrg
-            end if
-            if ( icu_zoentr .eq. 2 ) then
+            elseif ( icu_zoentr .eq. 2 ) then
               zoentr(jl) = (c1+d1*(1.0-min(1.,pqen(jl,jk)/pqsen(jl,jk))))* &
                            (pgeoh(jl,jk)-pgeoh(jl,jk+1))*zrg
+            else
+              write(errmsg,'(*(a))') 'Error: unsupported icu_zoentr'
+              errflg = 1
+              return
             end if
             zoentr(jl) = min(0.4,zoentr(jl))*pmfu(jl,jk+1)
           end if
@@ -2490,11 +2509,14 @@ contains
                   zoentr(jl) = entorg*(0.3-(min(1.,pqen(jl,jk-1) / &
                                pqsen(jl,jk-1))-1.))*(pgeoh(jl,jk-1)-pgeoh(jl,jk)) * &
                                zrg*min(1.,pqsen(jl,jk)/pqsen(jl,ikb))**3
-                end if
-                if ( icu_zoentr .eq. 2 ) then
+                elseif ( icu_zoentr .eq. 2 ) then
                   zoentr(jl) = ( c1*(min(1.,pqsen(jl,jk)/pqsen(jl,ikb))**2) + &
                                d1*(1.0-min(1.,pqen(jl,jk-1)/pqsen(jl,jk-1)))*(min(1.,pqsen(jl,jk)/pqsen(jl,ikb))**3))* &
                                (pgeoh(jl,jk-1)-pgeoh(jl,jk))*zrg
+                else
+                  write(errmsg,'(*(a))') 'Error: unsupported icu_zoentr'
+                  errflg = 1
+                  return
                 end if
                 zoentr(jl) = min(0.4,zoentr(jl))*pmfu(jl,jk)
               else
