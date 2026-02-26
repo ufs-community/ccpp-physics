@@ -100,7 +100,7 @@
      &                     asolfac, evef, pgcon
       logical,          intent(in)  :: hwrf_samfshal,first_time_step,   &
      &     restart,progsigma,progomega
-      real(kind_phys), intent(in) :: cat_adj_shal
+      real(kind=kind_phys), intent(in) :: cat_adj_shal
       character(len=*), intent(out) :: errmsg
       integer,          intent(out) :: errflg
 
@@ -326,7 +326,7 @@ c
           ktop(i)=0
         endif
         sfcpbl(i) = sfclfac * real(hpbl(i), kind=conv_wp)
-        rn(i)=0.0_conv_wp
+        rn(i)=0.0_kind_phys
         kbcon(i)=km
         ktcon(i)=1
         kb(i)=km
@@ -352,7 +352,7 @@ c
           ktop(i)=0
         endif
         sfcpbl(i) = sfclfac * real(hpbl(i), kind=conv_wp)
-        rn(i)=0.0_conv_wp
+        rn(i)=0.0_kind_phys
         kbcon(i)=km
         ktcon(i)=1
         kb(i)=km
@@ -397,8 +397,7 @@ c
           if(real(t1(i,k), kind=conv_wp) > 273.16_conv_wp) then
             c0t(i,k) = c0(i)
           else
-            tem = real(d0 * (real(t1(i,k), kind=conv_wp)
-     &          - 273.16_conv_wp), kind=conv_wp)
+            tem = d0 * (real(t1(i,k), kind=conv_wp) - 273.16_conv_wp)
             tem1 = exp(tem)
             c0t(i,k) = c0(i) * tem1
           endif
@@ -408,16 +407,16 @@ c
 !>  - Initialize convective cloud water and cloud cover to zero.
       do k = 1, km
         do i = 1, im
-          cnvw(i,k) = 0.0_conv_wp
-          cnvc(i,k) = 0.0_conv_wp
+          cnvw(i,k) = 0.0_kind_phys
+          cnvc(i,k) = 0.0_kind_phys
         enddo
       enddo
 ! hchuang code change
 !>  - Initialize updraft mass fluxes to zero.
       do k = 1, km
         do i = 1, im
-          ud_mf(i,k) = 0.0_conv_wp
-          dt_mf(i,k) = 0.0_conv_wp
+          ud_mf(i,k) = 0.0_kind_phys
+          dt_mf(i,k) = 0.0_kind_phys
         enddo
       enddo
 c
@@ -918,13 +917,16 @@ c
           if(cnvflg(i)) then
              tkemean(i) = tkemean(i) / sumx(i)
              if(tkemean(i) > tkemx) then
-               clamt(i) = real(clam, kind=conv_wp) + clamd
+               clamt(i) = real(clam, kind=conv_wp)
+     &                  + real(clamd, kind=conv_wp)
              else if(tkemean(i) < tkemn) then
-               clamt(i) = real(clam, kind=conv_wp) - clamd
+               clamt(i) = real(clam, kind=conv_wp)
+     &                  - real(clamd, kind=conv_wp)
              else
                tem = tkemx - tkemean(i)
                tem1 = 1.0_conv_wp - 2.0_conv_wp * tem / dtke
-               clamt(i) = real(clam, kind=conv_wp) + clamd * tem1
+               clamt(i) = real(clam, kind=conv_wp)
+     &                  + real(clamd, kind=conv_wp) * tem1
              endif
           endif
         enddo
@@ -1031,9 +1033,9 @@ c
       do i = 1, im
         if(cnvflg(i)) then
           indx         = kb(i)
-          hcko(i,indx) = heo(i,indx)
-          ucko(i,indx) = uo(i,indx)
-          vcko(i,indx) = vo(i,indx)
+          hcko(i,indx) = real(heo(i,indx), kind=conv_wp)
+          ucko(i,indx) = real(uo(i,indx), kind=conv_wp)
+          vcko(i,indx) = real(vo(i,indx), kind=conv_wp)
         endif
       enddo
 !  for tracers
@@ -1042,8 +1044,8 @@ c
         do i = 1, im
           if(cnvflg(i)) then
             indx = kb(i)
-            ecko(i,indx,n) = ctro(i,indx,n)
-            ercko(i,indx,n) = ctro(i,indx,n)
+            ecko(i,indx,n) = real(ctro(i,indx,n), kind=conv_wp)
+            ercko(i,indx,n) = real(ctro(i,indx,n), kind=conv_wp)
           endif
         enddo
       enddo
@@ -1064,7 +1066,7 @@ c
      &                   *0.5_conv_wp*(heo(i,k)+heo(i,k-1)))/factor
               dbyo(i,k) = hcko(i,k) - heso(i,k)
 !
-              tem  = 0.5_conv_wp * cm * tem
+              tem  = 0.5_conv_wp * real(cm,kind=conv_wp) * tem
               factor = 1.0_conv_wp + tem
               ptem = tem + real(pgcon, kind=conv_wp)
               ptem1= tem - real(pgcon, kind=conv_wp)
@@ -1246,7 +1248,7 @@ c
           val2    =              1.0_conv_wp
           tem = min(tem,val2)
           tem = 1.0_conv_wp - tem
-          tem1= .5_conv_wp*(cinacrmx-cinacrmn)
+          tem1= .5_conv_wp * (cinacrmx- cinacrmn)
           cinacr = cinacrmx - tem * tem1
           if(cina(i) < cinacr) cnvflg(i) = .false.
          endif
@@ -1327,7 +1329,8 @@ cj
               tem  = cq * tem
               factor = 1.0_conv_wp + tem
               qcko(i,k) = ((1.0_conv_wp-tem)*qcko(i,k-1)+tem*
-     &                     (qo(i,k)+qo(i,k-1)))/factor
+     &                    (real(qo(i,k), kind=conv_wp)+real(qo(i,k-1),
+     &                    kind=conv_wp)))/factor
               qrcko(i,k) = qcko(i,k)
 cj
               dq = eta(i,k) * (qcko(i,k) - qrch)
@@ -1505,7 +1508,8 @@ cj
               tem  = cq * tem
               factor = 1.0_conv_wp + tem
               qcko(i,k) = ((1.0_conv_wp-tem)*qcko(i,k-1)+tem*
-     &                     (qo(i,k)+qo(i,k-1)))/factor
+     &                    (real(qo(i,k), kind=conv_wp) + real(qo(i,k-1),
+     &                    kind=conv_wp)))/factor
               qrcko(i,k) = qcko(i,k)
 cj
               dq = eta(i,k) * (qcko(i,k) - qrch)
@@ -1563,8 +1567,7 @@ c
      &                       real(omegain, kind=conv_wp),real(delt, 
      &                       kind=conv_wp),del,zi,cnvflg,omegaout_loc,
      &                       real(grav, kind=conv_wp),buo,drag,wush,
-     &                       xlamue,real(bb1, kind=conv_wp), real(bb2, 
-     &                       kind=conv_wp)) 
+     &                       xlamue,bb1,bb2) 
          
          ! Copy back output if needed
          if(present(omegaout)) then
@@ -1903,18 +1906,21 @@ c
       do k=1,km1
         do i=1,im
           if(cnvflg(i) .and. k <= ktcon(i)) then
-            q_diff(i,k) = real(q1(i,k) - q1(i,k+1), kind=conv_wp)
+            q_diff(i,k) = real(q1(i,k), kind=conv_wp) - real(q1(i,k+1),
+     &                    kind=conv_wp)
           endif
         enddo
       enddo
       do i=1,im
         if(cnvflg(i)) then
           if(real(q1(i,1), kind=conv_wp) >= 0.0_conv_wp) then
-            q_diff(i,0) = real(max(0.0_conv_wp, 2.0_conv_wp 
-     &                  * q1(i,1) - q1(i,2)) - q1(i,1), kind=conv_wp)
+            q_diff(i,0) = max(0.0_conv_wp,2.0_conv_wp*real(q1(i,1),
+     &                    kind=conv_wp)-real(q1(i,2), kind=conv_wp))-
+     &                    real(q1(i,1), kind=conv_wp)
           else
-            q_diff(i,0) = real(min(0.0_conv_wp, 2.0_conv_wp 
-     &                  * q1(i,1) - q1(i,2)) - q1(i,1), kind=conv_wp)
+            q_diff(i,0) = min(0.0_conv_wp,2.0_conv_wp*real(q1(i,1),
+     &                    kind=conv_wp)-real(q1(i,2), kind=conv_wp))-
+     &                    real(q1(i,1), kind=conv_wp)
           endif
         endif
       enddo
@@ -2078,8 +2084,8 @@ c
          else
             do k = 1,km
                do i = 1,im
-                  qadv(i,k) = real(q(i,k) - prevsq(i,k), kind=conv_wp)
-     &                      * invdelt
+                  qadv(i,k) = (real(q(i,k), kind=conv_wp)
+     &                      - real(prevsq(i,k), kind=conv_wp))*invdelt
                enddo
             enddo
          endif
@@ -2215,17 +2221,17 @@ c
                endif
               dellat = (dellah(i,k) - real(hvap, kind=conv_wp)
      &               * dellaq(i,k)) / real(cp, kind=conv_wp)
-              t1(i,k) = real(t1(i,k), kind=kind_phys)
-     &                + real(dellat * xmb(i) * dt2, kind=kind_phys)
-              q1(i,k) = real(q1(i,k), kind=kind_phys)
-     &                + real(dellaq(i,k) * xmb(i) * dt2, kind=kind_phys)
+              t1(i,k) = real(real(t1(i,k), kind=conv_wp) + (dellat
+     &                * xmb(i) * dt2), kind=kind_phys)
+              q1(i,k) = real(real(q1(i,k), kind=conv_wp) + (dellaq(i,k)
+     &                * xmb(i) * dt2), kind=kind_phys)
 !              tem = 1./rcs(i)
 !              u1(i,k) = u1(i,k) + dellau(i,k) * xmb(i) * dt2 * tem
 !              v1(i,k) = v1(i,k) + dellav(i,k) * xmb(i) * dt2 * tem
-              u1(i,k) = real(u1(i,k), kind=kind_phys)
-     &                + real(dellau(i,k) * xmb(i) * dt2, kind=kind_phys)
-              v1(i,k) = real(v1(i,k), kind=kind_phys)
-     &                + real(dellav(i,k) * xmb(i) * dt2, kind=kind_phys)
+              u1(i,k) = real(real(u1(i,k), kind=conv_wp) + (dellau(i,k)
+     &                * xmb(i) * dt2), kind=kind_phys)
+              v1(i,k) = real(real(v1(i,k), kind=conv_wp) + (dellav(i,k)
+     &                * xmb(i) * dt2), kind=kind_phys)
               dp = 1000.0_conv_wp * del(i,k)
               tem = xmb(i) * dp / real(grav, kind=conv_wp)
               delhbar(i) = delhbar(i) + tem * dellah(i,k)
@@ -2280,12 +2286,12 @@ c
                   if(real(q1(i,k), kind=conv_wp) < 0.0_conv_wp)
      &              q1(i,k) = 0.0_kind_phys
                   if(real(q1(i,k), kind=conv_wp) > 0.0_conv_wp)
-     &              q1(i,k) = (1.0_conv_wp + rtnp(i))
-     &                      * real(q1(i,k), kind=kind_phys)
+     &              q1(i,k) = real((1.0_conv_wp + rtnp(i))
+     &                     * real(q1(i,k), kind=conv_wp),kind=kind_phys)
                 else
                   if(real(q1(i,k), kind=conv_wp) < 0.0_conv_wp)
-     &              q1(i,k) = (1.0_conv_wp + rtnp(i))
-     &                      * real(q1(i,k), kind=kind_phys)
+     &              q1(i,k) = real((1.0_conv_wp + rtnp(i))
+     &                     * real(q1(i,k), kind=conv_wp),kind=kind_phys)
                   if(real(q1(i,k), kind=conv_wp) > 0.0_conv_wp)
      &              q1(i,k) = 0.0_kind_phys
                 endif
@@ -2420,8 +2426,9 @@ c
                       qtr(i,k,kk) = 0.0_kind_phys
                     else
                       wet_dep(i,k,n) = 0.0_conv_wp
-                      qtr(i,k,kk) = real(qtr(i,k,kk), kind=kind_phys)
-     &                         + real(wet_dep(i,k,n)/dp, kind=kind_phys)
+                      qtr(i,k,kk) = real(real(qtr(i,k,kk), kind=conv_wp)
+     &                         + (real(wet_dep(i,k,n), kind=conv_wp)
+     &                         / dp), kind=kind_phys)
                     endif
                   endif
                 endif
@@ -2444,7 +2451,7 @@ c
      &                    kind=kind_phys)), kind=conv_wp)       ! fpvs is in pa
               qeso(i,k) = real(eps, kind=conv_wp) * qeso(i,k)/(pfld(i,k)
      &                  + real(epsm1, kind=conv_wp)*qeso(i,k))
-              val       =             1.e-8_conv_wp
+              val       = 1.e-8_conv_wp
               qeso(i,k) = max(qeso(i,k), val )
             endif
           endif
@@ -2482,26 +2489,25 @@ c
             qevap(i) = 0.0_conv_wp
             if(cnvflg(i)) then
               if(k < ktcon(i) .and. k > kb(i)) then
-                rn(i) = real(rn(i), kind=kind_phys) + real(pwo(i,k)
-     &                * xmb(i) * 0.001_conv_wp * dt2, kind=kind_phys)
+                rn(i) = real(real(rn(i), kind=conv_wp) + (pwo(i,k)
+     &                * xmb(i) * 0.001_conv_wp * dt2), kind=kind_phys)
               endif
             endif
             if(flg(i) .and. k < ktcon(i)) then
 !              evef = edt(i) * evfact
 !              if(islimsk(i) == 1) evef=edt(i) * evfactl
 !              if(islimsk(i) == 1) evef=.07
-              tem = real(t1(i,k), kind=conv_wp)      
-              qcond(i) = real(shevf, kind=conv_wp) * real(evef,
-     &                   kind=conv_wp) * (real(q1(i,k), kind=conv_wp)
-     &                 - qeso(i,k)) / (1.0_conv_wp + real(el2orc,
-     &                   kind=conv_wp) * qeso(i,k) / tem**2)
+              qcond(i) = shevf * real(evef, kind=conv_wp)
+     &                 * (real(q1(i,k), kind=conv_wp) - qeso(i,k))
+     &                 / (1.0_conv_wp + el2orc * qeso(i,k)
+     &                 / real(t1(i,k), kind=conv_wp)**2)
               dp = 1000.0_conv_wp * del(i,k)
               factor = dp / real(grav, kind=conv_wp)
               if(real(rn(i), kind=conv_wp) > 0.0_conv_wp .and. qcond(i) 
      &          < 0.0_conv_wp) then 
                 qevap(i) = -qcond(i) * (1.0_conv_wp -exp(-.32_conv_wp
      &                   * sqrt(dt2 * real(rn(i), kind=conv_wp))))
-                qevap(i) = min(qevap(i), real(rn(i), kind=kind_phys)
+                qevap(i) = min(qevap(i), real(rn(i), kind=conv_wp)
      &                   * 1000.0_conv_wp*real(grav, kind=conv_wp)/dp)
                 delq2(i) = delqev(i) + .001_conv_wp * qevap(i) * factor
               endif
@@ -2515,21 +2521,20 @@ c
      &          > 0.0_conv_wp) then
                 tem  = .001_conv_wp * factor
                 tem1 = qevap(i) * tem
-                if (real(tem1, kind=kind_phys) > real(rn(i), 
-     &            kind=kind_phys)) then
-                  qevap(i) = real(rn(i), kind=kind_phys)
-     &                     / real(tem, kind=kind_phys)
+                if (real(tem1, kind=conv_wp) > real(rn(i), 
+     &            kind=conv_wp)) then
+                  qevap(i) = real(rn(i), kind=conv_wp) / tem
                   rn(i) = 0.0_kind_phys
                 else
-                  rn(i) = real(rn(i), kind=kind_phys)
-     &                  - real(tem1, kind=kind_phys)
+                  rn(i) = real(real(rn(i), kind=conv_wp) - tem1,
+     &                    kind=kind_phys)
                 endif
-                q1(i,k) = real(q1(i,k), kind=kind_phys)
-     &                  + real(qevap(i), kind=kind_phys)
-                t1(i,k) = real(t1(i,k), kind=kind_phys)
-     &                  - real(elocp * qevap(i), kind=kind_phys)
-                deltv(i) = - real(elocp * qevap(i) / dt2, kind=conv_wp)
-                delq(i) = real(qevap(i) / dt2, kind=conv_wp)
+                q1(i,k) = real(real(q1(i,k), kind=conv_wp) +
+     &                    qevap(i), kind=kind_phys)
+                t1(i,k) = real(real(t1(i,k), kind=conv_wp) -
+     &                    (elocp * qevap(i)), kind=kind_phys)
+                deltv(i) = - elocp * qevap(i) / dt2
+                delq(i) = qevap(i) / dt2
                 delqev(i) = delqev(i) + tem * qevap(i)
               endif
               delqbar(i) = delqbar(i) + delq(i)  * factor
@@ -2573,14 +2578,14 @@ c      convective cloud water
          do i = 1, im
             if (cnvflg(i)) then
                if (k >= kbcon(i) .and. k < ktcon(i)) then
-                  cnvw(i,k) = real(cnvwt(i,k) * xmb(i) * dt2,
-     &                        kind=kind_phys)
+                  cnvw(i,k) = real((real(cnvwt(i,k), kind=conv_wp)
+     &                         * xmb(i) * dt2), kind=kind_phys)
                   if (progsigma) then
-                     cnvw(i,k) = real(cnvw(i,k), kind=kind_phys)
-     &                         * real(cscale, kind=kind_phys)
+                     cnvw(i,k) = real(real(cnvw(i,k), kind=conv_wp) *
+     &                    real(cscale, kind=conv_wp), kind=kind_phys)
                   else
-                     cnvw(i,k) = real(cnvw(i,k), kind=kind_phys)        
-     &                         * real(cscale, kind=kind_phys)
+                     cnvw(i,k) = real(real(cnvw(i,k), kind=conv_wp) *
+     &                    real(cscale, kind=conv_wp), kind=kind_phys)
                   endif
                endif
             endif
@@ -2597,8 +2602,10 @@ c
               cnvc(i,k) = real(0.04_conv_wp * log(1.0_conv_wp
      &                  + 675.0_conv_wp * eta(i,k) * xmb(i)),
      &                    kind=kind_phys)
-              cnvc(i,k) = min(cnvc(i,k), 0.2_kind_phys)
-              cnvc(i,k) = max(cnvc(i,k), 0.0_kind_phys)
+              cnvc(i,k) = real(min(real(cnvc(i,k), kind=conv_wp),
+     &                    0.2_conv_wp), kind=kind_phys)
+              cnvc(i,k) = real(max(real(cnvc(i,k), kind=conv_wp),
+     &                    0.0_conv_wp), kind=kind_phys)
             endif
           endif
         enddo
@@ -2619,14 +2626,14 @@ c
      &             , kind=conv_wp))*tcrf))
               if (real(qtr(i,k,2), kind=conv_wp) > -999.0_conv_wp) then
                 ! Ice
-                qtr(i,k,1) = real(qtr(i,k,1), kind=kind_phys)
-     &                     + real(tem * tem1, kind=kind_phys)
+                qtr(i,k,1) = real(real(qtr(i,k,1), kind=conv_wp)
+     &                     + (tem * tem1), kind=kind_phys)
                 ! Water
-                qtr(i,k,2) = real(qtr(i,k,2), kind=kind_phys)
-     &                + real(tem * (1.0_conv_wp - tem1), kind=kind_phys)
+                qtr(i,k,2) = real(real(qtr(i,k,2), kind=conv_wp)
+     &                   + (tem * (1.0_conv_wp - tem1)), kind=kind_phys)
               else
-                qtr(i,k,1) = real(qtr(i,k,1), kind=kind_phys)
-     &                     + real(tem, kind=kind_phys)
+                qtr(i,k,1) = real(real(qtr(i,k,1), kind=conv_wp)
+     &                     + tem, kind=kind_phys)
               endif
             endif
           endif
@@ -2668,7 +2675,7 @@ c
       do i = 1, im
         if(cnvflg(i)) then
            k = ktop(i)-1
-           dt_mf(i,k) = ud_mf(i,k)
+           dt_mf(i,k) = real(ud_mf(i,k),kind=kind_phys)
         endif
       enddo
 !
@@ -2690,9 +2697,9 @@ c
                  tem2 = max(sigmagfm(i), betaw)
               endif
               ptem = tem / (tem2 * tem1)
-              qtr(i,k,ntk) = real(qtr(i,k,ntk), kind=kind_phys)
-     &                     + real(0.5_conv_wp * tem2 * ptem * ptem, 
-     &                       kind=kind_phys)
+              qtr(i,k,ntk) = real(real(qtr(i,k,ntk), kind=conv_wp)
+     &                     + (0.5_conv_wp * tem2 * ptem * ptem),
+     &                       kind=kind_phys )
             endif
           endif
         enddo
