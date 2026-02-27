@@ -360,7 +360,7 @@ contains
            lu_nofire(i,j) = 1.0
         else
           ! Permanent wetlands, snow/ice, water, barren tundra:
-          lu_nofire(i,j)= vegfrac(i,11,j) + vegfrac(i,15,j) + vegfrac(i,17,j) + vegfrac(i,20,j)
+          lu_nofire(i,j)= vegfrac(i,15,j) + vegfrac(i,17,j) + vegfrac(i,20,j)
           ! cropland, urban, cropland/natural mosaic, barren and sparsely
           ! vegetated and non-vegetation areas: 
           lu_qfire(i,j) = lu_nofire(i,j) + vegfrac(i,12,j) + vegfrac(i,13,j) + vegfrac(i,14,j) + vegfrac(i,16,j)
