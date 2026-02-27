@@ -646,9 +646,8 @@ c
       do k = 1, km
         do i=1,im
           if (k <= kmax(i)) then
-            qeso(i,k) = 0.01_conv_wp * 
-     &                  real(fpvs(real(to(i,k), kind=kind_phys)),
-     &                  kind=conv_wp) ! fpvs is in pa
+            qeso(i,k) = real(0.01_kind_phys * fpvs(real(to(i,k),
+     &                  kind=kind_phys)), kind=conv_wp) ! fpvs in pa
             qeso(i,k) = real(eps, kind=conv_wp) * qeso(i,k)
      &                  / (pfld(i,k) + real(epsm1, kind=conv_wp)
      &                  *  qeso(i,k))
@@ -722,7 +721,7 @@ c
           if (k <= kmax(i)-1) then
             dz = .5_conv_wp * (zo(i,k+1) - zo(i,k))
             dp = .5_conv_wp * (pfld(i,k+1) - pfld(i,k))
-            es = 0.01_conv_wp * real(fpvs(real(to(i,k+1),
+            es = real(0.01_kind_phys * fpvs(real(to(i,k+1),
      &           kind=kind_phys)), kind=conv_wp) ! fpvs is in pa
             pprime  = pfld(i,k+1) + real(epsm1, kind=conv_wp) * es
             qs      = real(eps, kind=conv_wp) * es / pprime
@@ -745,7 +744,7 @@ c
       do k = 1, km1
         do i=1,im
           if (k <= kmax(i)-1) then
-            qeso(i,k) = 0.01_conv_wp * real(fpvs(real(to(i,k),
+            qeso(i,k) = real(0.01_kind_phys * fpvs(real(to(i,k),
      &                  kind=kind_phys)), kind=conv_wp) ! fpvs is in pa
             qeso(i,k) = real(eps, kind=conv_wp) * qeso(i,k) / (po(i,k)
      &                  + real(epsm1, kind=conv_wp) * qeso(i,k))
@@ -2676,7 +2675,7 @@ c
       do k = 1, km
         do i = 1, im
           if(asqecflg(i) .and. k <= kmax(i)) then
-            qeso(i,k) = 0.01_conv_wp * real(fpvs(real(to(i,k),
+            qeso(i,k) = real(0.01_kind_phys * fpvs(real(to(i,k),
      &                  kind=kind_phys)), kind=conv_wp) ! fpvs is in pa
             qeso(i,k) = real(eps, kind=conv_wp) * qeso(i,k) / (pfld(i,k)
      &                 + real(epsm1, kind=conv_wp)*qeso(i,k))
@@ -2695,7 +2694,7 @@ c
           if(asqecflg(i) .and. k <= kmax(i)-1) then
             dz = .5_conv_wp * (zo(i,k+1) - zo(i,k))
             dp = .5_conv_wp * (pfld(i,k+1) - pfld(i,k))
-            es = 0.01_conv_wp * real(fpvs(real(to(i,k+1),
+            es = real(0.01_kind_phys * fpvs(real(to(i,k+1),
      &           kind=kind_phys)), kind=conv_wp) ! fpvs is in pa
             pprime = pfld(i,k+1) + real(epsm1, conv_wp) * es
             qs = real(eps, kind=conv_wp) * es / pprime
@@ -2717,7 +2716,7 @@ c
       do k = 1, km1
         do i = 1, im
           if(asqecflg(i) .and. k <= kmax(i)-1) then
-            qeso(i,k) = 0.01_conv_wp * real(fpvs(real(to(i,k),
+            qeso(i,k) = real(0.01_kind_phys * fpvs(real(to(i,k),
      &                  kind=kind_phys)), kind=conv_wp) ! fpvs is in pa
             qeso(i,k) = real(eps, kind=conv_wp) * qeso(i,k) / (po(i,k)
      &                 + real(epsm1, kind=conv_wp) * qeso(i,k))
@@ -3231,7 +3230,7 @@ c
             qo(i,k) = real(q1(i,k), kind=conv_wp)
             uo(i,k) = real(u1(i,k), kind=conv_wp)
             vo(i,k) = real(v1(i,k), kind=conv_wp)
-            qeso(i,k) = 0.01_conv_wp * real(fpvs(real(t1(i,k),
+            qeso(i,k) = real(0.01_kind_phys * fpvs(real(t1(i,k),
      &                  kind=kind_phys)), kind=conv_wp) ! fpvs is in pa
             qeso(i,k) = real(eps, kind=conv_wp) * qeso(i,k) / (pfld(i,k)
      &                + real(epsm1, kind=conv_wp) *qeso(i,k))
@@ -3499,7 +3498,7 @@ c
         do i = 1, im
           if (cnvflg(i) .and. k <= kmax(i)) then
             if(k <= ktcon(i)) then
-              qeso(i,k) = 0.01_conv_wp * real(fpvs(real(t1(i,k),
+              qeso(i,k) = real(0.01_kind_phys * fpvs(real(t1(i,k),
      &                    kind=kind_phys)), kind=conv_wp) ! fpvs is in pa
               qeso(i,k) = real(eps, kind=conv_wp) * qeso(i,k)
      &                  / (pfld(i,k) + real(epsm1, conv_wp) * qeso(i,k))
