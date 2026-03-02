@@ -2521,8 +2521,7 @@ c
      &          > 0.0_conv_wp) then
                 tem  = .001_conv_wp * factor
                 tem1 = qevap(i) * tem
-                if (real(tem1, kind=conv_wp) > real(rn(i), 
-     &            kind=conv_wp)) then
+                if (tem1 > real(rn(i), kind=conv_wp)) then
                   qevap(i) = real(rn(i), kind=conv_wp) / tem
                   rn(i) = 0.0_kind_phys
                 else
@@ -2534,7 +2533,7 @@ c
                 t1(i,k) = real(real(t1(i,k), kind=conv_wp) -
      &                    (elocp * qevap(i)), kind=kind_phys)
                 deltv(i) = - elocp * qevap(i) / dt2
-                delq(i) = qevap(i) / dt2
+                delq(i) = + qevap(i) / dt2
                 delqev(i) = delqev(i) + tem * qevap(i)
               endif
               delqbar(i) = delqbar(i) + delq(i)  * factor
