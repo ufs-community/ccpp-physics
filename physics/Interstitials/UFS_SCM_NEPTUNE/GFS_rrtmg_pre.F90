@@ -817,12 +817,12 @@
 
                call cloud_check_and_update(rho=rho(i,:), l_qc=l_qc(i,:), qc1d=qc_mp(i,:), &
                     nc1d=nc_mp(i,:), rc=rc(i,:), nc=nc(i,:), qcten=qcten(i,:), ncten=ncten(i,:), &
-                    ilamc=ilamc(i,:), mvd_c=mvd_c(i,:), dt=1.)
+                    ilamc=ilamc(i,:), mvd_c=mvd_c(i,:), dt=1., odt=1.)
                call ice_check_and_update(rho=rho(i,:), l_qi=l_qi(i,:), qi1d=qi_mp(i,:), &
                     ni1d=ni_mp(i,:), ri=ri(i,:), ni=ni(i,:), qiten=qiten(i,:), niten=niten(i,:), &
-                    ilami=ilami(i,:), dt=1.)
+                    ilami=ilami(i,:), dt=1., odt=1.)
                call snow_check_and_update(rho=rho(i,:), l_qs=l_qs(i,:), qs1d=qs_mp(i,:), &
-                    rs=rs(i,:), qsten=qsten(i,:), dt=1.) 
+                    rs=rs(i,:), qsten=qsten(i,:), dt=1., odt=1.)
             enddo
           endif
         endif
