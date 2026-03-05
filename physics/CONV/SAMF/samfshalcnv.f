@@ -2188,7 +2188,7 @@ c
      &                / (pfld(i,k) + real(epsm1, kind=conv_wp)
      &                * qeso(i,k))
             val       = 1.e-8_conv_wp
-            qeso(i,k) = max(qeso(i,k), val )
+            qeso(i,k) = max(qeso(i,k), val)
           endif
         enddo
       enddo
@@ -2216,23 +2216,19 @@ c
         do i = 1, im
           if (cnvflg(i)) then
             if(k > kb(i) .and. k <= ktcon(i)) then
-               if (i == 1 .and. k == kb(i)+1) then
-                print *, 'CHECK: Actual update happening for i,k:', i, k
-               endif
               dellat = (dellah(i,k) - real(hvap, kind=conv_wp)
      &               * dellaq(i,k)) / real(cp, kind=conv_wp)
-              tem2 = xmb(i) * dt2
-              t1(i,k) = real(real(t1(i,k), kind=conv_wp) + (tem2
-     &                * dellat), kind=kind_phys)
-              q1(i,k) = real(real(q1(i,k), kind=conv_wp) + (tem2
-     &                * dellaq(i,k)), kind=kind_phys)
+              t1(i,k) = real(real(t1(i,k), kind=conv_wp) +
+     &                  dellat * xmb(i) * dt2, kind=kind_phys)
+              q1(i,k) = real(real(q1(i,k), kind=conv_wp) +
+     &                  dellaq(i,k) * xmb(i) * dt2, kind=kind_phys)
 !              tem = 1./rcs(i)
 !              u1(i,k) = u1(i,k) + dellau(i,k) * xmb(i) * dt2 * tem
 !              v1(i,k) = v1(i,k) + dellav(i,k) * xmb(i) * dt2 * tem
-              u1(i,k) = real(real(u1(i,k), kind=conv_wp) + (tem2
-     &                * dellau(i,k)), kind=kind_phys)
-              v1(i,k) = real(real(v1(i,k), kind=conv_wp) + (tem2
-     &                * dellav(i,k)), kind=kind_phys)
+              u1(i,k) = real(real(u1(i,k), kind=conv_wp) +
+     &                  dellau(i,k) * xmb(i) * dt2, kind=kind_phys)
+              v1(i,k) = real(real(v1(i,k), kind=conv_wp) +
+     &                  dellav(i,k) * xmb(i) * dt2, kind=kind_phys)
               dp = 1000.0_conv_wp * del(i,k)
               tem = xmb(i) * dp / real(grav, kind=conv_wp)
               delhbar(i) = delhbar(i) + tem * dellah(i,k)
