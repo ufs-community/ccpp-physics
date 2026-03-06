@@ -359,7 +359,7 @@ contains
            fire_type(i,j) = 0
            lu_nofire(i,j) = 1.0
         else
-          ! Permanent wetlands, snow/ice, water, barren tundra:
+          ! exclude snow/ice, water, barren tundra:
           lu_nofire(i,j)= vegfrac(i,15,j) + vegfrac(i,17,j) + vegfrac(i,20,j)
           ! cropland, urban, cropland/natural mosaic, barren and sparsely
           ! vegetated and non-vegetation areas: 
