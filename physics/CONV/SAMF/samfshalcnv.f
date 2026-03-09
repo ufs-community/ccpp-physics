@@ -385,8 +385,7 @@ c
       do i=1,im
         if(gdx(i) < dxcrtc0) then
           tem = gdx(i) / dxcrtc0
-!          tem1 = tem**3
-          tem1 = tem * tem * tem
+          tem1 = tem**3
           c0(i) = c0(i) * tem1
         endif
       enddo
@@ -577,7 +576,7 @@ c
           if (cnvflg(i) .and. k <= kmax(i)) then
             qeso(i,k) = real(0.01_kind_phys * fpvs(real(to(i,k),
      &                  kind=kind_phys)), kind=conv_wp)
-            qeso(i,k) = (real(eps, kind=conv_wp) * qeso(i,k))
+            qeso(i,k) = real(eps, kind=conv_wp) * qeso(i,k)
      &                / (pfld(i,k) + real(epsm1, kind=conv_wp)
      &                * qeso(i,k))
             val1      = 1.e-8_conv_wp
@@ -677,7 +676,7 @@ c
           if (cnvflg(i) .and. k <= kmax(i)-1) then
             qeso(i,k) = real(0.01_kind_phys * fpvs(real(to(i,k),
      &                  kind=kind_phys)), kind=conv_wp)
-            qeso(i,k) = (real(eps, kind=conv_wp) * qeso(i,k)) / (po(i,k)
+            qeso(i,k) = real(eps, kind=conv_wp) * qeso(i,k) / (po(i,k)
      &                + real(epsm1, kind=conv_wp)*qeso(i,k))
             val1      = 1.e-8_conv_wp
             qeso(i,k) = max(qeso(i,k), val1)
@@ -2184,7 +2183,7 @@ c
           if (cnvflg(i) .and. k <= kmax(i)) then
             qeso(i,k) = real(0.01_kind_phys * fpvs(real(t1(i,k),
      &                  kind=kind_phys)), kind=conv_wp) ! fpvs is in pa
-            qeso(i,k) = (real(eps, kind=conv_wp) * qeso(i,k))
+            qeso(i,k) = real(eps, kind=conv_wp) * qeso(i,k)
      &                / (pfld(i,k) + real(epsm1, kind=conv_wp)
      &                * qeso(i,k))
             val       = 1.e-8_conv_wp
@@ -2424,8 +2423,8 @@ c
                     else
                       wet_dep(i,k,n) = 0.0_conv_wp
                       qtr(i,k,kk) = real(real(qtr(i,k,kk), kind=conv_wp)
-     &                         + (real(wet_dep(i,k,n), kind=conv_wp)
-     &                         / dp), kind=kind_phys)
+     &                         + real(wet_dep(i,k,n), kind=conv_wp)
+     &                         / dp, kind=kind_phys)
                     endif
                   endif
                 endif
@@ -2446,7 +2445,7 @@ c
             if(k > kb(i) .and. k <= ktcon(i)) then
               qeso(i,k) = real(0.01_kind_phys * fpvs(real(t1(i,k),
      &                  kind=kind_phys)), kind=conv_wp) ! fpvs is in pa
-              qeso(i,k) = (real(eps, kind=conv_wp) * qeso(i,k))
+              qeso(i,k) = real(eps, kind=conv_wp) * qeso(i,k)
      &                  / (pfld(i,k) + real(epsm1, kind=conv_wp)
      &                  * qeso(i,k))
               val       = 1.e-8_conv_wp
@@ -2487,8 +2486,8 @@ c
             qevap(i) = 0.0_conv_wp
             if(cnvflg(i)) then
               if(k < ktcon(i) .and. k > kb(i)) then
-                rn(i) = real(real(rn(i), kind=conv_wp) + (pwo(i,k)
-     &                * xmb(i) * 0.001_conv_wp * dt2), kind=kind_phys)
+                rn(i) = real(real(rn(i), kind=conv_wp) + pwo(i,k)
+     &                * xmb(i) * 0.001_conv_wp * dt2, kind=kind_phys)
               endif
             endif
             if(flg(i) .and. k < ktcon(i)) then
@@ -2529,7 +2528,7 @@ c
                 q1(i,k) = real(real(q1(i,k), kind=conv_wp) +
      &                    qevap(i), kind=kind_phys)
                 t1(i,k) = real(real(t1(i,k), kind=conv_wp) -
-     &                    (elocp * qevap(i)), kind=kind_phys)
+     &                    elocp * qevap(i), kind=kind_phys)
                 deltv(i) = - elocp * qevap(i) / dt2
                 delq(i) = + qevap(i) / dt2
                 delqev(i) = delqev(i) + tem * qevap(i)
@@ -2624,10 +2623,10 @@ c
               if (real(qtr(i,k,2), kind=conv_wp) > -999.0_conv_wp) then
                 ! Ice
                 qtr(i,k,1) = real(real(qtr(i,k,1), kind=conv_wp)
-     &                     + (tem * tem1), kind=kind_phys)
+     &                     + tem * tem1, kind=kind_phys)
                 ! Water
                 qtr(i,k,2) = real(real(qtr(i,k,2), kind=conv_wp)
-     &                   + (tem * (1.0_conv_wp - tem1)), kind=kind_phys)
+     &                   + tem * (1.0_conv_wp - tem1), kind=kind_phys)
               else
                 qtr(i,k,1) = real(real(qtr(i,k,1), kind=conv_wp)
      &                     + tem, kind=kind_phys)
@@ -2695,8 +2694,8 @@ c
               endif
               ptem = tem / (tem2 * tem1)
               qtr(i,k,ntk) = real(real(qtr(i,k,ntk), kind=conv_wp)
-     &                     + (0.5_conv_wp * tem2 * ptem * ptem),
-     &                       kind=kind_phys )
+     &                     + 0.5_conv_wp * tem2 * ptem * ptem,
+     &                       kind=kind_phys)
             endif
           endif
         enddo
