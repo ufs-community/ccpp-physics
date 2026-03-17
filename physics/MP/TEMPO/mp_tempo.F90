@@ -256,13 +256,13 @@ module mp_tempo
          real(kind_phys),           intent(inout) :: qg(:,:)
          real(kind_phys),           intent(inout) :: ni(:,:)
          real(kind_phys),           intent(inout) :: nr(:,:)
-         real(kind_phys), volatile, optional, intent(inout) :: nc(:,:)
-         real(kind_phys), volatile, optional, intent(inout) :: nwfa(:,:)
-         real(kind_phys), volatile, optional, intent(inout) :: nifa(:,:)
+         real(kind_phys), optional, intent(inout) :: nc(:,:)
+         real(kind_phys), optional, intent(inout) :: nwfa(:,:)
+         real(kind_phys), optional, intent(inout) :: nifa(:,:)
          real(kind_phys), optional, intent(in   ) :: nwfa2d(:)
          real(kind_phys), optional, intent(in   ) :: nifa2d(:)
-         real(kind_phys), volatile, optional, intent(inout) :: ng(:,:)
-         real(kind_phys), volatile, optional, intent(inout) :: volg(:,:)
+         real(kind_phys), optional, intent(inout) :: ng(:,:)
+         real(kind_phys), optional, intent(inout) :: volg(:,:)
          logical,                   intent(in)    :: is_aerosol_aware
          logical,                   intent(in)    :: is_hail_aware
          ! Precip/rain/snow/graupel fall amounts and fraction of frozen precip

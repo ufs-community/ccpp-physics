@@ -92,7 +92,7 @@ module mp_tempo_condensation
             need_tempo_params = .false.
          endif
 
-         write(*,*) 'tempo condensation on re-mapping timestep'
+         if (mpirank == mpiroot) write(*,*) 'tempo condensation on re-mapping timestep'
          do k = 1, km
             do j = js, je
                do i = is, ie

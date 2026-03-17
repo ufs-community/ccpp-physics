@@ -21,7 +21,7 @@
   units = none
   dimensions = ()
   type = character
-  kind = len=*n
+  kind = len=*
   intent = out
 [errflg]
   standard_name = ccpp_error_code
