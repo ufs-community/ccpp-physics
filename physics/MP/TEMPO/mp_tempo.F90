@@ -308,7 +308,7 @@ module mp_tempo
          real(kind_phys) :: xnwfa2d(1:ncol,1)
 
          ! Dimensions
-         integer :: ndt, i, k
+         integer :: ndt, i, k, it
          integer         :: ids,ide, jds,jde, kds,kde, &
                             ims,ime, jms,jme, kms,kme, &
                             its,ite, jts,jte, kts,kte
@@ -355,12 +355,6 @@ module mp_tempo
            end if
          end if
 
-         !> - Density of air in kg m-3
-         rho = con_eps*prsl/(con_rd*tgrs*(qv+con_eps))
-
-         !> - Convert omega in Pa s-1 to vertical velocity w in m s-1
-         w = -omega/(rho*con_g)
-
          !> - Layer width in m from geopotential in m2 s-2
          dz = (phii(:,2:nlev+1) - phii(:,1:nlev)) / con_g
 
@@ -384,24 +378,51 @@ module mp_tempo
          kme = nlev
          kte = nlev
 
-         if (present(nwfa) .and. present(nwfa2d)) then
-            xnwfa(:,:,1) = nwfa(:,:)
-            xnwfa2d(:,1) = nwfa2d(:)
-            call tempo_aerosol_surface_emissions(dt=dt, nwfa=xnwfa, nwfa2d=xnwfa2d, ims=ims, ime=ime, &
-                 jms=jms, jme=jme, kms=kms, kme=kme, kts=kts)
-            nwfa(:,:) = xnwfa(:,:,1)
-         endif
+         ! handle dt_inner < dtp
+         do it = 1, ndt
 
-         call tempo_run(tempo_cfgs=tempo_cfgs, &
-            dt=dt, itimestep=itimestep , &
-            qv=qv, qc=qc, qr=qr, qi=qi, qs=qs, qg=qg, ni=ni, nr=nr, &
-            nc=nc, nwfa=nwfa, nifa=nifa, &
-            ng=ng, qb=volg, &
-            w=w, t=tgrs, p=prsl, dz=dz, &
-            ids = ids , ide = ide , jds = jds , jde = jde , kds = kds , kde = kde , &
-            ims = ims , ime = ime , jms = jms , jme = jme , kms = kms , kme = kme , &
-            its = its , ite = ite , jts = jts , jte = jte , kts = kts , kte = kte , &
-            tempo_diags=tempo_driver_diags)
+            !> - Density of air in kg m-3
+            rho = con_eps*prsl/(con_rd*tgrs*(qv+con_eps))
+
+            !> - Convert omega in Pa s-1 to vertical velocity w in m s-1
+            w = -omega/(rho*con_g)
+
+            if (present(nwfa) .and. present(nwfa2d)) then
+               xnwfa(:,:,1) = nwfa(:,:)
+               xnwfa2d(:,1) = nwfa2d(:)
+               call tempo_aerosol_surface_emissions(dt=dt, nwfa=xnwfa, nwfa2d=xnwfa2d, ims=ims, ime=ime, &
+                    jms=jms, jme=jme, kms=kms, kme=kme, kts=kts)
+               nwfa(:,:) = xnwfa(:,:,1)
+            endif
+            
+            call tempo_run(tempo_cfgs=tempo_cfgs, &
+                 dt=dt, itimestep=itimestep , &
+                 qv=qv, qc=qc, qr=qr, qi=qi, qs=qs, qg=qg, ni=ni, nr=nr, &
+                 nc=nc, nwfa=nwfa, nifa=nifa, &
+                 ng=ng, qb=volg, &
+                 w=w, t=tgrs, p=prsl, dz=dz, &
+                 ids = ids , ide = ide , jds = jds , jde = jde , kds = kds , kde = kde , &
+                 ims = ims , ime = ime , jms = jms , jme = jme , kms = kms , kme = kme , &
+                 its = its , ite = ite , jts = jts , jte = jte , kts = kts , kte = kte , &
+                 tempo_diags=tempo_driver_diags)
+            
+            ice = ice + max(0.0, tempo_driver_diags%ice_liquid_equiv_precip(:,1)/1000.0_kind_phys)
+            snow = snow + (max(0.0, tempo_driver_diags%ice_liquid_equiv_precip(:,1)) + &
+                 max(0.0, tempo_driver_diags%snow_liquid_equiv_precip(:,1)))/1000.0_kind_phys
+            graupel = graupel + max(0.0, tempo_driver_diags%graupel_liquid_equiv_precip(:,1)/1000.0_kind_phys)
+            rain = rain + max(0.0, tempo_driver_diags%rain_precip(:,1)/1000.0_kind_phys)
+            prcp = prcp + (max(0.0, tempo_driver_diags%ice_liquid_equiv_precip(:,1)) + &
+                 max(0.0, tempo_driver_diags%snow_liquid_equiv_precip(:,1)) + &
+                 max(0.0, tempo_driver_diags%graupel_liquid_equiv_precip(:,1)) + &
+                 max(0.0, tempo_driver_diags%rain_precip(:,1)))/1000._kind_phys
+         enddo
+
+         ! diagnostics that are not precipitation don't need to be in the inner time loop
+         sr = tempo_driver_diags%frozen_fraction(:,1)
+
+         if (do_radar_ref) then
+            refl_10cm = tempo_driver_diags%refl10cm(:,:,1)
+         endif
 
          itimestep = itimestep + 1
          
@@ -428,21 +449,6 @@ module mp_tempo
               nifa = nifa/(1.0_kind_phys+qv)
            end if
          end if
-
-         if (do_radar_ref) then
-            refl_10cm = tempo_driver_diags%refl10cm(:,:,1)
-         endif
-         
-         ice = ice + max(0.0, tempo_driver_diags%ice_liquid_equiv_precip(:,1)/1000.0_kind_phys)
-         snow = snow + (max(0.0, tempo_driver_diags%ice_liquid_equiv_precip(:,1)) + &
-              max(0.0, tempo_driver_diags%snow_liquid_equiv_precip(:,1)))/1000.0_kind_phys
-         graupel = graupel + max(0.0, tempo_driver_diags%graupel_liquid_equiv_precip(:,1)/1000.0_kind_phys)
-         rain = rain + max(0.0, tempo_driver_diags%rain_precip(:,1)/1000.0_kind_phys)                           
-         prcp = prcp + (max(0.0, tempo_driver_diags%ice_liquid_equiv_precip(:,1)) + &
-              max(0.0, tempo_driver_diags%snow_liquid_equiv_precip(:,1)) + &
-              max(0.0, tempo_driver_diags%graupel_liquid_equiv_precip(:,1)) + &
-              max(0.0, tempo_driver_diags%rain_precip(:,1)))/1000._kind_phys
-         sr = tempo_driver_diags%frozen_fraction(:,1)
 
       end subroutine mp_tempo_run
 
