@@ -169,8 +169,8 @@ contains
 !=================================================================================================================
 !     level 1 subroutine 'cu_ntiedkte_run'
       subroutine cu_ntiedtke_run(pu,pv,pt,pqv,tdi,qvdi,pqvf,ptf,clw,poz,pzz,prsl,prsi,pomg, &
-                                 evap,hfx,zprecc,lmask,lq,km,dt,dx,kbot,ktop,kcnv, &
-                                 ktrac,ud_mf,dd_mf,dt_mf,cnvw,cnvc,errmsg,errflg)
+                                 evap,hfx,zprecc,lmask,scale_fac_opt,lq,km,dt,dx,kbot,ktop,kcnv, &
+                                 ktrac,ud_mf,dd_mf,dt_mf,cnvw,cnvc,icu_zoentr,errmsg,errflg)
 !=================================================================================================================
 !  this is the interface between the model and the mass flux convection module
 !     m.tiedtke      e.c.m.w.f.      1989
@@ -198,8 +198,15 @@ contains
 !     other reference: tiedtke (1989, mwr, 117, 1779-1800)
 !                      IFS documentation - cy33r1, cy37r2, cy38r1, cy40r1
 !
+!     Important 2026 update regarding new input arguments: scale_fac_opt,icu_zoentr
+!     scale_fac_opt (0 or 1): Option for alternative scale-awareness formulation (below link for more information)
+!                             https://github.com/ufs-community/ccpp-physics/issues/357
+!     icu_zoentr (1 or 2): Option for a new entrainment equation (below link for more information)
+!                          https://github.com/ufs-community/ccpp-physics/issues/358
+
       implicit none
 !--- input arguments:
+      integer, intent(in) :: scale_fac_opt,icu_zoentr
       integer, intent(in) :: lq, km, ktrac
       integer, intent(in), dimension(:) :: lmask
 
@@ -256,13 +263,23 @@ contains
 !
       dxref = 15000.
       do j=1,lq
-      if (dx(j).lt.dxref) then
-          scale_fac(j) = (1.06133+log(dxref/dx(j)))**3
-          scale_fac2(j) = scale_fac(j)**0.5
-      else
-          scale_fac(j) = 1.+1.33e-5*dx(j)
-          scale_fac2(j) = 1.
-      end if
+        if (scale_fac_opt == 1) then
+          if (dx(j).lt.dxref) then
+            scale_fac(j) = (1.06133+log(dxref/dx(j)))**2
+            scale_fac2(j) = scale_fac(j)
+          else
+            scale_fac(j) = 1.+1.33e-5*dx(j)
+            scale_fac2(j) = 1.
+          end if
+        else
+          if (dx(j).lt.dxref) then
+            scale_fac(j) = (1.06133+log(dxref/dx(j)))**3
+            scale_fac2(j) = scale_fac(j)**0.5
+          else
+            scale_fac(j) = 1.+1.33e-5*dx(j)
+            scale_fac2(j) = 1.
+          end if
+        end if
       end do
 !
 !  masv flux diagnostics.
@@ -370,7 +387,7 @@ contains
      &     ktype,    icbot,    ictop,    ztu,     zqu,   &
      &     zlu,      zlude,    zmfu,     zmfd,    zrain, &
      &     pcte,     phhfl,    lndj,     pgeoh,   zmfude_rate, dx, &
-     &     scale_fac, scale_fac2)
+     &     scale_fac, scale_fac2, icu_zoentr, errmsg, errflg)
 !
 !     to include the cloud water and cloud ice detrained from convection
 !
@@ -423,8 +440,10 @@ contains
         end do
       endif
 !
+     if(errflg.eq.0)then
       errmsg = 'cu_ntiedtke_run OK'
       errflg = 0
+     endif
 !
       return
       end subroutine cu_ntiedtke_run
@@ -446,7 +465,7 @@ contains
      &     ktype,    kcbot,    kctop,    ptu,      pqu,   &
      &     plu,      plude,    pmfu,     pmfd,     prain, &
      &     pcte,     phhfl,    lndj,     zgeoh,    pmfude_rate, dx, &
-     &     scale_fac,  scale_fac2)
+     &     scale_fac, scale_fac2, icu_zoentr, errmsg, errflg)
       implicit none
 !
 !***cumastrn*  master routine for cumulus massflux-scheme
@@ -509,7 +528,7 @@ contains
 
 !--- input arguments:
       integer,intent(in):: klev,klon,klevp1,klevm1
-      integer,intent(in):: ktrac
+      integer,intent(in):: ktrac,icu_zoentr
       integer,intent(in),dimension(klon):: lndj
 
       real(kind=kind_phys),intent(in):: ztmst
@@ -533,6 +552,10 @@ contains
       logical:: llo1
       logical,dimension(klon):: loddraf,llo2
       logical,dimension(klon):: lldcum,llddraf3
+
+! error messages
+      character(len=*), intent(out) :: errmsg
+      integer,          intent(out) :: errflg
 
       integer:: jl,jk,ik
       integer:: ikb,ikt,icum,itopm2
@@ -689,7 +712,7 @@ contains
      &     zmfus,    zmfuq,    zmful,    plude,    zdmfup,  &
      &     kcbot,    kctop,    ictop0,   icum,     ztmst,   &
      &     zqsenh,   zlglac,   lndj,     wup,      wbase,   &
-     &     kdpl,     pmfude_rate)
+     &     kdpl,     pmfude_rate, icu_zoentr, errmsg, errflg)
 
 !*     (b) check cloud depth and change entrainment rate accordingly
 !          calculate precipitation rate (for downdraft calculation)
@@ -2010,7 +2033,7 @@ contains
      &     pmfus,    pmfuq,    pmful,    plude,    pdmfup,  &
      &     kcbot,    kctop,    kctop0,   kcum,     ztmst,   &
      &     pqsenh,   plglac,   lndj,     wup,      wbase,   &
-     &     kdpl,     pmfude_rate)
+     &     kdpl,     pmfude_rate, icu_zoentr, errmsg, errflg)
 
       implicit none
 !     this routine does the calculations for cloud ascents
@@ -2082,9 +2105,10 @@ contains
 !       kctop - cloud top level
 !       kctop0 [ictop0] - estimate of cloud top. (cumastr)
 !       kcum [icum] - flag to control the call
+!       icu_zoentr   1: original entrainment equation, 2: Bechtold 2008 equation
 
     !--- input arguments:
-      integer,intent(in):: klev,klon,klevp1,klevm1
+      integer,intent(in):: klev,klon,klevp1,klevm1,icu_zoentr
       integer,intent(in),dimension(klon):: lndj
       integer,intent(in),dimension(klon):: klwmin
       integer,intent(in),dimension(klon):: kdpl
@@ -2114,6 +2138,10 @@ contains
       real(kind=kind_phys),intent(out),dimension(klon):: wup
       real(kind=kind_phys),intent(out),dimension(klon,klev):: plglac,pmfude_rate
 
+! error messages
+      character(len=*), intent(out) :: errmsg
+      integer,          intent(out) :: errflg
+
     !--- local variables and arrays:
       logical:: llo2,llo3
       logical,dimension(klon):: loflag,llo1
@@ -2135,6 +2163,8 @@ contains
       real(kind=kind_phys),dimension(klon):: zph,zdmfen,zdmfde,zmfuu,zmfuv,zpbase,zqold,zluold,zprecip
       real(kind=kind_phys),dimension(klon,klev):: zlrain,zbuo,kup,zodetr,pdmfen
 
+      real(kind=kind_phys),parameter:: c1 = 5.0e-4  !shin
+      real(kind=kind_phys),parameter:: d1 = 1.0e-3  !shin
     !--------------------------------
     !*    1. specify parameters
     !--------------------------------
@@ -2271,9 +2301,17 @@ contains
           ! Why is it negative?
           !---------------------------------------
           if ( jk == kcbot(jl) ) then
-
-            zoentr(jl) = -entorg*(min(1.,pqen(jl,jk)/pqsen(jl,jk)) - &
-                         1.)*(pgeoh(jl,jk)-pgeoh(jl,jk+1))*zrg
+            if ( icu_zoentr .eq. 1 ) then
+              zoentr(jl) = -entorg*(min(1.,pqen(jl,jk)/pqsen(jl,jk)) - &
+                           1.)*(pgeoh(jl,jk)-pgeoh(jl,jk+1))*zrg
+            elseif ( icu_zoentr .eq. 2 ) then
+              zoentr(jl) = (c1+d1*(1.0-min(1.,pqen(jl,jk)/pqsen(jl,jk))))* &
+                           (pgeoh(jl,jk)-pgeoh(jl,jk+1))*zrg
+            else
+              write(errmsg,'(*(a))') 'Error: unsupported icu_zoentr'
+              errflg = 1
+              return
+            end if
             zoentr(jl) = min(0.4,zoentr(jl))*pmfu(jl,jk+1)
           end if
           !---------------------------------------
@@ -2467,10 +2505,19 @@ contains
                 ikb = kcbot(jl)
                 ! zoentr is overwritten, but not used until
                 ! the next jk level in the loop (ICON comment)
-                zoentr(jl) = entorg*(0.3-(min(1.,pqen(jl,jk-1) /    &
-                  pqsen(jl,jk-1))-1.))*(pgeoh(jl,jk-1)-pgeoh(jl,jk)) * &
-                  zrg*min(1.,pqsen(jl,jk)/pqsen(jl,ikb))**3
-
+                if ( icu_zoentr .eq. 1 ) then
+                  zoentr(jl) = entorg*(0.3-(min(1.,pqen(jl,jk-1) / &
+                               pqsen(jl,jk-1))-1.))*(pgeoh(jl,jk-1)-pgeoh(jl,jk)) * &
+                               zrg*min(1.,pqsen(jl,jk)/pqsen(jl,ikb))**3
+                elseif ( icu_zoentr .eq. 2 ) then
+                  zoentr(jl) = ( c1*(min(1.,pqsen(jl,jk)/pqsen(jl,ikb))**2) + &
+                               d1*(1.0-min(1.,pqen(jl,jk-1)/pqsen(jl,jk-1)))*(min(1.,pqsen(jl,jk)/pqsen(jl,ikb))**3))* &
+                               (pgeoh(jl,jk-1)-pgeoh(jl,jk))*zrg
+                else
+                  write(errmsg,'(*(a))') 'Error: unsupported icu_zoentr'
+                  errflg = 1
+                  return
+                end if
                 zoentr(jl) = min(0.4,zoentr(jl))*pmfu(jl,jk)
               else
                 zoentr(jl) = 0.
