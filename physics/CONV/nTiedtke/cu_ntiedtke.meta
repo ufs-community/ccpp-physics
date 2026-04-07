@@ -305,6 +305,20 @@
   type = real
   kind = kind_phys
   intent = out
+[scale_fac_opt]
+  standard_name = control_for_scale_awareness_options_in_Tiedtke
+  long_name = control for scale awareness options in the Tiedtke scheme
+  units = none
+  dimensions = ()
+  type = integer
+  intent = in
+[icu_zoentr]
+  standard_name = option_for_different_entrainment_in_Tiedtke
+  long_name = option for different entrainment in Tiedtke
+  units = none
+  dimensions = ()
+  type = integer
+  intent = in
 [cnvc]
   standard_name = convective_cloud_cover
   long_name = convective cloud cover
