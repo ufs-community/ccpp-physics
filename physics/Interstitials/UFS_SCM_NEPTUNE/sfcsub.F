@@ -8,6 +8,7 @@
 !! and setrmsk().
       module sfccyc_module
       use machine , only : kind_io8,kind_io4
+      use sp_mod
       implicit none
       save
 
@@ -78,8 +79,6 @@
      &,                   min_ice                                       &
      &,                   ialb,isot,ivegsrc,tile_num_ch,i_index,j_index)
       use machine , only : kind_io8,kind_io4
-      ! pick up splat()
-      use sp_mod
       implicit none
       character(len=*),     intent(in) :: tile_num_ch
       integer,              intent(in) :: i_index(len), j_index(len),   &

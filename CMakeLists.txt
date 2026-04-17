@@ -213,6 +213,7 @@ if(ip_FOUND)
   target_link_libraries(ccpp_physics PUBLIC ip::ip_d)
 else()
   target_link_libraries(ccpp_physics PUBLIC sp::sp_d)
+endif()
 
 #add FMS for FV3 only
 if(FV3 OR MPAS)
