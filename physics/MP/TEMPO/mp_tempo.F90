@@ -9,7 +9,10 @@ module mp_tempo
       use mpi_f08
       use machine, only : kind_phys
 
-      use module_mp_tempo_params
+      !physical constants that are set from the host
+      use module_mp_tempo_params, only : pi, lvap0, lfus, lsub, rv, rdry, cp, t0, r_uni, rho_w
+      use module_mp_tempo_params, only : roverrv
+      use module_mp_tempo_params, only : initialize_parameters
       use module_mp_tempo_cfgs, only : ty_tempo_cfgs
       use module_mp_tempo_driver, only : tempo_init, tempo_run, ty_tempo_driver_diags, tempo_aerosol_surface_emissions
 
@@ -28,7 +31,9 @@ module mp_tempo
       subroutine mp_tempo_init(ncol, nlev, &
            imp_physics, imp_physics_tempo, &
            mpicomm, mpirank, mpiroot, &
-           tgrs, prsl, phil, con_g, con_rd, con_eps, &
+           tgrs, prsl, phil, con_pi, con_hvap, con_hfus, &
+           con_rv, con_g, con_rd, con_cp, &
+           con_t0c, con_rgas, rhowater, &
            restart, convert_dry_rho, is_aerosol_aware, &
            is_hail_aware, do_sat_adj, semi_sedi, &
            spechum, nwfa, nifa, nwfa2d, nifa2d, &
@@ -46,7 +51,9 @@ module mp_tempo
          logical,                   intent(in   ) :: convert_dry_rho
          logical,                   intent(in   ) :: is_aerosol_aware
          logical,                   intent(in   ) :: is_hail_aware
-         real(kind_phys),           intent(in   ) :: con_g, con_rd, con_eps
+         real(kind_phys),           intent(in   ) :: con_pi, con_hvap, con_hfus, &
+                                                     con_rv, con_g, con_rd, con_cp, &
+                                                     con_t0c, con_rgas, rhowater
          ! Hydrometeors
          real(kind_phys),           intent(inout) :: spechum(:,:)
          ! Aerosols
@@ -80,7 +87,7 @@ module mp_tempo
          errmsg = ''
          errflg = 0
 
-          if (do_sat_adj) then
+         if (do_sat_adj) then
             if ((is_aerosol_aware) .or. (is_hail_aware)) then
                write(errmsg, fmt='((a))') 'do_sat_adj should be run with is_aerosol_aware=F and is_hail_aware=F'
                errflg = 1
@@ -106,6 +113,21 @@ module mp_tempo
               semi_sedi_flag=semi_sedi, cloud_condensation_flag=(.not. do_sat_adj), &
               tempo_cfgs=tempo_cfgs)
 
+         ! Set local TEMPO MP module constants from host model and overwrite derived constants calculated in module_mp_tempo_params/initialize_parameters()
+         pi = con_pi
+         lvap0 = con_hvap
+         lfus = con_hfus
+         lsub = lvap0 + lfus
+         rv   = con_rv
+         rdry = con_rd
+         cp = con_cp
+         t0 = con_t0c
+         r_uni = con_rgas
+         rho_w = rhowater
+
+         ! Although initialize_parameters() is already called during the call to tempo_init() above, it needs to be called again with the host-set constants to recalculate dependent parameters
+         call initialize_parameters()
+
          if (errflg /= 0) return
 
          ! For restart runs, the init is done here
@@ -127,7 +149,7 @@ module mp_tempo
          hgt = phil/con_g
          
          ! Density of moist air in kg m-3 and inverse density of air
-         rho = con_eps*prsl/(con_rd*tgrs*(qv+con_eps))
+         rho = roverrv*prsl/(rdry*tgrs*(qv+roverrv))
          orho = 1.0/rho
 
          ! Check for existing aerosol data, both CCN and IN aerosols.  If missing
@@ -229,7 +251,7 @@ module mp_tempo
         convert_dry_rho, dtp, dt_inner, &
         spechum, qc, qr, qi, qs, qg, ni, nr, &
         nc, nwfa, nifa, nwfa2d, nifa2d, ng, volg, &
-        con_g, con_rd, con_eps, first_time_step, &
+        con_g, first_time_step, &
         tgrs, prsl, phii, omega, &
         is_aerosol_aware, is_hail_aware, &
         prcp, rain, graupel, ice, snow, sr, refl_10cm, &
@@ -245,8 +267,6 @@ module mp_tempo
          integer,                   intent(in   ) :: ncol
          integer,                   intent(in   ) :: nlev
          real(kind_phys),           intent(in   ) :: con_g
-         real(kind_phys),           intent(in   ) :: con_rd
-         real(kind_phys),           intent(in   ) :: con_eps
          ! Hydrometeors
          real(kind_phys),           intent(inout) :: spechum(:,:)
          real(kind_phys),           intent(inout) :: qc(:,:)
@@ -382,7 +402,7 @@ module mp_tempo
          do it = 1, ndt
 
             !> - Density of air in kg m-3
-            rho = con_eps*prsl/(con_rd*tgrs*(qv+con_eps))
+            rho = roverrv*prsl/(rdry*tgrs*(qv+roverrv))
 
             !> - Convert omega in Pa s-1 to vertical velocity w in m s-1
             w = -omega/(rho*con_g)

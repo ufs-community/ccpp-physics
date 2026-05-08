@@ -3,6 +3,7 @@
 module module_mp_tempo_utils_v2
 
     use machine, only: wp => kind_phys, sp => kind_sngl_prec, dp => kind_dbl_prec
+    use module_mp_tempo_params, only: pi, rho_i, am_r
 
     implicit none
 
@@ -18,8 +19,6 @@ contains
     elemental real function make_IceNumber (Q_ice, temp)
 
         !IMPLICIT NONE
-        REAL, PARAMETER:: Ice_density = 890.0
-        REAL, PARAMETER:: PI = 3.1415926536
         real, intent(in):: Q_ice, temp
         integer idx_rei
         real corr, reice, deice
@@ -78,7 +77,7 @@ contains
         !+---+-----------------------------------------------------------------+
 
         lambda = 3.0 / deice
-        make_IceNumber = Q_ice * lambda*lambda*lambda / (PI*Ice_density)
+        make_IceNumber = Q_ice * lambda*lambda*lambda / (PI*rho_i)
 
         !+---+-----------------------------------------------------------------+
         !..Example1: Common ice size coming from Thompson scheme is about 30 microns.
@@ -99,8 +98,6 @@ contains
 
         real, intent(in):: Q_cloud, qnwfa
 
-        real, parameter:: PI = 3.1415926536
-        real, parameter:: am_r = PI*1000./6.
         real, dimension(15), parameter:: g_ratio = (/24,60,120,210,336,   &
         &                504,720,990,1320,1716,2184,2730,3360,4080,4896/)
         double precision:: lambda, qnc
@@ -134,8 +131,6 @@ contains
 
         real, intent(in):: Q_rain, temp
         double precision:: lambda, N0, qnr
-        real, parameter:: PI = 3.1415926536
-        real, parameter:: am_r = PI*1000./6.
 
         if (Q_rain == 0) then
             make_RainNumber = 0
