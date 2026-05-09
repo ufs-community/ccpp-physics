@@ -203,7 +203,7 @@
 !> \section det_drag_suite GFS Orographic GWD Scheme Detailed Algorithm
 !> @{
    subroutine drag_suite_run(                                           &
-     &           IM,KM,dvdt,dudt,dtdt,U1,V1,T1,Q1,KPBL,                 &
+     &           IM,KM,dvdt,dudt,dtdt,dqdt,U1,V1,T1,Q1,KPBL,            &
      &           PRSI,DEL,PRSL,PRSLK,PHII,PHIL,DELTIM,KDT,              &
      &           var,oc1,oa4,ol4,                                       &
      &           varss,oc1ss,oa4ss,ol4ss,                               &
@@ -217,6 +217,7 @@
      &           g, cp, rd, rv, fv, pi, imx, cdmbgwd, alpha_fd,         &
      &           me, master, lprnt, ipr, rdxzb, dx, gwd_opt,            &
      &           do_gsl_drag_ls_bl, do_gsl_drag_ss, do_gsl_drag_tofd,   &
+     &           flag_for_gwd_generic_tend,                             &
      &           dtend, dtidx, index_of_process_orographic_gwd,         &
      &           index_of_temperature, index_of_x_wind,                 &
      &           index_of_y_wind, ldiag3d, ldiag_ugwp, ugwp_seq_update, & 
@@ -325,7 +326,7 @@
    real(kind=kind_phys), intent(in) :: deltim, G, CP, RD, RV,    &
      &                                 cdmbgwd(:), alpha_fd
    real(kind=kind_phys), intent(inout), optional :: dtend(:,:,:)
-   logical, intent(in) :: ldiag3d
+   logical, intent(in) :: ldiag3d, flag_for_gwd_generic_tend
    integer, intent(in) :: dtidx(:,:), index_of_temperature,      &
      &  index_of_process_orographic_gwd, index_of_x_wind, index_of_y_wind
 
@@ -335,9 +336,9 @@
    real(kind=kind_phys) ::  rcl, cdmb
    real(kind=kind_phys) ::  g_inv, rd_inv
 
-   real(kind=kind_phys), intent(inout) ::                        &
+   real(kind=kind_phys), intent(out) ::                        &
      &                   dudt(:,:),dvdt(:,:),                &
-     &                   dtdt(:,:)
+     &                   dtdt(:,:),dqdt(:,:,:)
    real(kind=kind_phys), intent(inout) :: rdxzb(:)
    real(kind=kind_phys), intent(in) ::                           &
      &                            u1(:,:),v1(:,:),           &
@@ -536,8 +537,13 @@
    udtend = -1
    vdtend = -1
    Tdtend = -1
-
-   if(ldiag3d) then
+   
+   dudt(:,:)  = 0.
+   dvdt(:,:)  = 0.
+   dtdt(:,:)  = 0.
+   dqdt(:,:,:)= 0.
+   
+   if(ldiag3d .and. .not. flag_for_gwd_generic_tend) then
       udtend = dtidx(index_of_x_wind,index_of_process_orographic_gwd)
       vdtend = dtidx(index_of_y_wind,index_of_process_orographic_gwd)
       Tdtend = dtidx(index_of_temperature,index_of_process_orographic_gwd)
@@ -1119,8 +1125,8 @@ IF ( (do_gsl_drag_ls_bl) .and.                                       &
             ! wind direction (similar to above)
             dtfac_meso = 1.0
             if (prsl(i,k).le.plolevmeso) then
-               if (taud_ms(i,k).ne.0.)                                  &
-                  dtfac_meso = min(dtfac_meso,facmeso*abs(velco(i,k)    &
+               if (taud_ms(i,k).ne.0.)                                          &
+                  dtfac_meso = min(dtfac_meso,facmeso*abs(velco(i,min(k,km-1))  &
                      /(deltim*rcs*taud_ms(i,k))))
             end if
 
@@ -1428,7 +1434,7 @@ endif
      &           g, cp, rd, rv, fv, pi, imx, cdmbgwd, alpha_fd,         &
      &           me, master, lprnt, ipr, rdxzb, dx, gwd_opt,            &
      &           do_gsl_drag_ls_bl, do_gsl_drag_ss, do_gsl_drag_tofd,   &
-     &           psl_gwd_dx_factor,                                     &
+     &           psl_gwd_dx_factor, flag_for_gwd_generic_tend,          &
      &           dtend, dtidx, index_of_process_orographic_gwd,         &
      &           index_of_temperature, index_of_x_wind,                 &
      &           index_of_y_wind, ldiag3d, ldiag_ugwp, ugwp_seq_update, &
@@ -1538,7 +1544,7 @@ endif
    real(kind=kind_phys), intent(in) :: deltim, G, CP, RD, RV,    &
      &                                 cdmbgwd(:), alpha_fd
    real(kind=kind_phys), intent(inout), optional :: dtend(:,:,:)
-   logical, intent(in) :: ldiag3d
+   logical, intent(in) :: ldiag3d, flag_for_gwd_generic_tend
    integer, intent(in) :: dtidx(:,:), index_of_temperature,      &
      &  index_of_process_orographic_gwd, index_of_x_wind, index_of_y_wind
 
@@ -1548,7 +1554,7 @@ endif
    real(kind=kind_phys) ::  rcl, cdmb
    real(kind=kind_phys) ::  g_inv, g_cp, rd_inv
 
-   real(kind=kind_phys), intent(inout) ::                        &
+   real(kind=kind_phys), intent(out) ::                        &
      &                   dudt(:,:),dvdt(:,:),                &
      &                   dtdt(:,:)
    real(kind=kind_phys), intent(out) :: rdxzb(:)
@@ -1674,10 +1680,9 @@ endif
    real(kind=kind_phys), parameter       ::  hmt_min = 50.
    real(kind=kind_phys), parameter       ::  oc_min  = 1.0
    real(kind=kind_phys), parameter       ::  oc_max  = 10.0
-! 7.5 mb -- 33 km ... 0.01 kgm-3 reduce gwd drag above cutoff level
-   real(kind=kind_phys), parameter       ::  pcutoff  = 7.5e2  
-! 0.76 mb -- 50 km ...0.001 kgm-3  --- 0.1 mb 65 km 0.0001 kgm-3
-   real(kind=kind_phys), parameter       ::  pcutoff_den  = 0.01  !  
+   real(kind=kind_phys), parameter       ::  sgmalolev  = 0.5  ! max sigma lvl for dtfac
+   real(kind=kind_phys), parameter       ::  plolevmeso = 70.0 ! pres lvl for mesosphere OGWD reduction (Pa)
+   real(kind=kind_phys), parameter       ::  facmeso    = 0.5  ! fractional velocity reduction for OGWD
 
    integer,parameter    ::  kpblmin = 2
 
@@ -1691,8 +1696,7 @@ endif
                             rcsks,wdir,ti,rdz,tem2,dw2,shr2,      &
                             bvf2,rdelks,wtkbj,tem,gfobnv,hd,fro,  &
                             rim,temc,tem1,efact,temv,dtaux,dtauy, &
-                            dtauxb,dtauyb,eng0,eng1
-   real(kind=kind_phys) ::  denfac
+                            dtauxb,dtauyb,eng0,eng1,dtfac_meso
 !
    logical              ::  ldrag(im),icrilv(im),                 &
                             flag(im)
@@ -1706,7 +1710,7 @@ endif
                             rulow(im),bnv(im),                    &
                             oa(im),ol(im),oc(im),                 &
                             oass(im),olss(im),                    &
-                            roll(im),dtfac(im,km),                   &
+                            roll(im),dtfac(im),                   &
                             brvf(im),xlinv(im),                   &
                             delks(im),delks1(im),                 &
                             bnv2(im,km),usqj(im,km),              &
@@ -1758,8 +1762,12 @@ endif
    udtend = -1
    vdtend = -1
    Tdtend = -1
-
-   if(ldiag3d) then
+   
+   dudt(:,:)  = 0.
+   dvdt(:,:)  = 0.
+   dtdt(:,:)  = 0.
+   
+   if(ldiag3d .and. .not. flag_for_gwd_generic_tend) then
       udtend = dtidx(index_of_x_wind,index_of_process_orographic_gwd)
       vdtend = dtidx(index_of_y_wind,index_of_process_orographic_gwd)
       Tdtend = dtidx(index_of_temperature,index_of_process_orographic_gwd)
@@ -1776,7 +1784,6 @@ endif
    fdir   = mdir / (2.0*pi)
    invgrcs = 1._kind_phys/g*rcs
    kpblmax = km / 2 ! maximum pbl height : # of vertical levels / 2
-   denfac = 1.0
 
    do i=1,im
       if (slmsk(i)==1. .or. slmsk(i)==2.) then !sea/land/ice mask (=0/1/2) in FV3
@@ -1861,6 +1868,7 @@ endif
      oass(i)       = 0.0
      olss(i)       = 0.0
      ulow (i)      = 0.0
+     dtfac(i)      = 1.0
      rstoch(i)     = 0.0
      ldrag(i)      = .false.
      icrilv(i)     = .false.
@@ -1877,7 +1885,6 @@ endif
        taud_bl(i,k) = 0.0
        dtaux2d(i,k) = 0.0
        dtauy2d(i,k) = 0.0
-       dtfac(i,k)   = 1.0
      enddo
    enddo
 !
@@ -2536,30 +2543,38 @@ IF ( (do_gsl_drag_ls_bl) .and.                                       &
             taud_bl(i,klcap) = taud_bl(i,klcap) * factop
          enddo
 !
-!  if the gravity wave drag would force a critical line
-!  in the lower ksmm1 layers during the next deltim timestep,
-!  then only apply drag until that critical line is reached.
+!  if the gravity wave drag + blocking would force a critical line
+!  in the layers below pressure-based 'sigma' level = sgmalolev during the next deltim
+!  timestep, then only apply drag until that critical line is reached, i.e.,
+!  reduce drag to limit resulting wind components to zero
+!  Note: 'sigma' = prsi(k)/prsi(k=1), where prsi(k=1) is the surface pressure
 !
          do k = kts,kpblmax-1
-           if ((taud_ls(i,k)+taud_bl(i,k)).ne.0.)                  then
-               dtfac(i,k) = min(dtfac(i,k),abs(velco(i,k)                 &
+            if (prsi(i,k).ge.sgmalolev*prsi(i,1)) then 
+               if ((taud_ls(i,k)+taud_bl(i,k)).ne.0.)                   &
+                  dtfac(i) = min(dtfac(i),abs(velco(i,k)                &
                        /(deltim*rcs*(taud_ls(i,k)+taud_bl(i,k)))))
-           endif
-         enddo
-! apply limiter to mesosphere drag, reduce the drag by density factor 10-3
-! prevent wind reversal...
-!
-         do k = kpblmax,km-1
-           if ((taud_ls(i,k)+taud_bl(i,k)).ne.0..and.prsl(i,k).le.pcutoff) then
-               denfac = min(ro(i,k)/pcutoff_den,1.)
-               dtfac(i,k) = min(dtfac(i,k),denfac*abs(velco(i,k)          &
-                       /(deltim*rcs*(taud_ls(i,k)+taud_bl(i,k)))))
-           endif
+            else
+               exit
+            endif
          enddo
 !
          do k = kts,km
-            taud_ls(i,k)  = taud_ls(i,k)*dtfac(i,k)* ls_taper(i) *(1.-rstoch(i))
-            taud_bl(i,k)  = taud_bl(i,k)*dtfac(i,k)* ls_taper(i) *(1.-rstoch(i))
+
+            ! Check if well into mesosphere -- if so, perform similar reduction of
+            ! velocity tendency due to mesoscale GWD to prevent sudden reversal of
+            ! wind direction (similar to above)
+            dtfac_meso = 1.0
+            if (prsl(i,k).le.plolevmeso) then 
+               if (taud_ls(i,k).ne.0.)                                          &
+                  dtfac_meso = min(dtfac_meso,facmeso*abs(velco(i,min(k,km-1))  &
+                     /(deltim*rcs*taud_ls(i,k))))
+            end if
+
+            taud_ls(i,k)  = taud_ls(i,k)*dtfac(i)*dtfac_meso*           &    
+                               ls_taper(i) *(1.-rstoch(i))
+            taud_bl(i,k)  = taud_bl(i,k)*dtfac(i)* ls_taper(i) *(1.-rstoch(i))
+
             dtaux  = taud_ls(i,k) * xn(i)
             dtauy  = taud_ls(i,k) * yn(i)
             dtauxb = taud_bl(i,k) * xn(i)

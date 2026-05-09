@@ -6,3 +6,9 @@
   path = physics/MP/TEMPO/tempo_v3
   url = https://github.com/grantfirl/TEMPO.git
   branch = tempo_v3_gjf
+[submodule "physics/SFC_Layer/MYNN/MYNN"]
+  path = physics/SFC_Layer/MYNN/MYNN
+  #url = https://github.com/NCAR/MYNN-SFC
+  #branch = main
+  url = https://github.com/grantfirl/MYNN-SFC
+  branch = feature/tendency_cleanup
