@@ -11,7 +11,7 @@ module mp_tempo
 
       !physical constants that are set from the host
       use module_mp_tempo_params, only : pi, lvap0, lfus, lsub, rv, rdry, cp, t0, r_uni, rho_w
-      use module_mp_tempo_params, only : roverrv
+      use module_mp_tempo_params, only : roverrv, eps, naccn0, naccn1, nain0, nain1
       use module_mp_tempo_params, only : initialize_parameters
       use module_mp_tempo_cfgs, only : ty_tempo_cfgs
       use module_mp_tempo_driver, only : tempo_init, tempo_run, ty_tempo_driver_diags, tempo_aerosol_surface_emissions
