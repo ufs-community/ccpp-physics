@@ -75,7 +75,7 @@ module mp_tempo_condensation
          real(kind_phys) :: ncten(1:km)
          logical         :: l_qc(1:km)                                                                        
          real(kind_phys) :: condensation(is:ie, js:je, 1:km)         
-         real(kind_phys) :: orho, clap, fcd, dfcd, xrc
+         real(kind_phys) :: orho, clap, fcd, dfcd, xrc, odt
          
          ! CCPP error handling
          character(len=*),          intent(  out) :: errmsg
@@ -86,6 +86,7 @@ module mp_tempo_condensation
          ! Initialize the CCPP error handling variables
          errmsg = ''
          errflg = 0
+         odt = 1._kind_phys/real(mdt,kind=kind_phys)
 
          if (need_tempo_params) then
             call initialize_parameters()
@@ -119,7 +120,7 @@ module mp_tempo_condensation
 
                ! returns cloud mass concentration
                call cloud_check_and_update(dt=real(mdt,kind=kind_phys), rho=rho(i,j,:), l_qc=l_qc, &
-                    qc1d=qc_mixing_ratio(i,j,:), nc1d=nc3d(i,j,:), rc=rc, nc=nc, qcten=qcten, ncten=ncten, ilamc=ilamc, mvd_c=mvd_c)
+                    qc1d=qc_mixing_ratio(i,j,:), nc1d=nc3d(i,j,:), rc=rc, nc=nc, qcten=qcten, ncten=ncten, ilamc=ilamc, mvd_c=mvd_c, odt=odt)
                 
                do k = 1, km
                   satw(k) = qv(i,j,k)/qvs(i,j,k)
@@ -158,7 +159,7 @@ module mp_tempo_condensation
                enddo
 
                call cloud_check_and_update(dt=real(mdt,kind=kind_phys), rho=rho(i,j,:), l_qc=l_qc, &
-                    qc1d=qc_mixing_ratio(i,j,:), nc1d=nc3d(i,j,:), rc=rc, nc=nc, qcten=qcten, ncten=ncten, ilamc=ilamc, mvd_c=mvd_c)
+                    qc1d=qc_mixing_ratio(i,j,:), nc1d=nc3d(i,j,:), rc=rc, nc=nc, qcten=qcten, ncten=ncten, ilamc=ilamc, mvd_c=mvd_c, odt=odt)
             enddo
          enddo
 
