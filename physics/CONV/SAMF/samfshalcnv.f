@@ -8,8 +8,6 @@
       use progsigma, only : progsigma_calc
       use progomega, only : progomega_calc
       use mo_conv_kind, only : conv_wp
-      use machine , only : kind_phys
-
       contains
 
       subroutine samfshalcnv_init(imfshalcnv, imfshalcnv_samf,          &
@@ -64,6 +62,7 @@
      &     sigmain,sigmaout,omegain,omegaout,betadcu,betamcu,betascu,   &
      &     cat_adj_shal,errmsg,errflg)
 !
+      use machine , only : kind_phys
       use funcphys , only : fpvs
 
       implicit none
@@ -175,10 +174,9 @@ cc
       real(kind=conv_wp) gravinv,dxcrtas,invdelt,sigmind,sigmins,
      &                     sigminm
 !  local 32-bit arrays for external calls ---
-      real(kind=conv_wp) :: omegain_loc(im,km), omegaout_loc(im,km)
-      real(kind=conv_wp) :: sigmain_loc(im,km), sigmaout_loc(im,km)
-      real(kind=conv_wp) :: qmicro_loc(im,km)
-
+      real(kind=conv_wp) omegaout_loc(im,km), sigmaout_loc(im,km),
+     &                   qmicro_loc(im,km), sigmain_loc(im,km),
+     &                   omegain_loc(im,km)    
       logical flag_shallow,flag_mid
 c  physical parameters
 !     parameter(g=grav,asolfac=0.89)
@@ -262,6 +260,7 @@ c  cloud water
       real(kind=conv_wp) tf, tcr, tcrf
       parameter (tf=233.16_conv_wp, tcr=263.16_conv_wp,
      &           tcrf=1.0_conv_wp/(tcr-tf))
+
 c-----------------------------------------------------------------------
 !
 ! Initialize CCPP error handling variables
@@ -302,7 +301,7 @@ c-----------------------------------------------------------------------
 !>  ## Compute preliminary quantities needed for the static and feedback control portions of the algorithm.
 !>  - Convert input pressure terms to centibar units.
       ps   = real(psp, kind=conv_wp)   * 0.001_conv_wp
-      prsl = real(prslp, kind=conv_wp) * 0.001_conv_wp
+      prsl = prslp * 0.001_conv_wp
       del  = real(delp, kind=conv_wp)  * 0.001_conv_wp
 !************************************************************************
 !
@@ -385,7 +384,8 @@ c
       do i=1,im
         if(gdx(i) < dxcrtc0) then
           tem = gdx(i) / dxcrtc0
-          tem1 = tem**3
+!          tem1 = tem**3
+          tem1 = tem * tem * tem
           c0(i) = c0(i) * tem1
         endif
       enddo
@@ -469,6 +469,7 @@ c
         enddo
       enddo
 !>  - Calculate interface height
+      zi(:,:)   = 0.0_conv_wp
       if(hwrf_samfshal) then
        do k = 1, km1
         do i=1,im
@@ -506,6 +507,7 @@ c
       do i=1,im
         kpbl(i)= min(kpbl(i),kbm(i))
       enddo
+
 c
 c!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c   convert surface pressure to mb from cb
@@ -514,7 +516,7 @@ c
       do k = 1, km
         do i = 1, im
           if (cnvflg(i) .and. k <= kmax(i)) then
-            pfld(i,k) = prsl(i,k) * 10.0_conv_wp
+            pfld(i,k) = prsl(i,k) * 10.0
             eta(i,k)  = 1.0_conv_wp
             rh(i,k)   = 0.0_conv_wp
             hcko(i,k) = 0.0_conv_wp
@@ -570,13 +572,14 @@ c
         enddo
         enddo
       endif
+
 !>  - Calculate saturation specific humidity and enforce minimum moisture values.
       do k = 1, km
         do i=1,im
           if (cnvflg(i) .and. k <= kmax(i)) then
             qeso(i,k) = real(0.01_kind_phys * fpvs(real(to(i,k),
      &                  kind=kind_phys)), kind=conv_wp)
-            qeso(i,k) = real(eps, kind=conv_wp) * qeso(i,k)
+            qeso(i,k) = (real(eps, kind=conv_wp) * qeso(i,k))
      &                / (pfld(i,k) + real(epsm1, kind=conv_wp)
      &                * qeso(i,k))
             val1      = 1.e-8_conv_wp
@@ -600,8 +603,8 @@ c
      &                  + real(cp, kind=conv_wp) * to(i,k)
             heo(i,k)  = tem  + real(hvap, kind=conv_wp) * qo(i,k)
             heso(i,k) = tem  + real(hvap, kind=conv_wp) * qeso(i,k)
-c            heo(i,k)  = min(heo(i,k),heso(i,k))
-          endif
+c           heo(i,k)  = min(heo(i,k),heso(i,k))
+         endif
         enddo
       enddo
 c
@@ -676,7 +679,7 @@ c
           if (cnvflg(i) .and. k <= kmax(i)-1) then
             qeso(i,k) = real(0.01_kind_phys * fpvs(real(to(i,k),
      &                  kind=kind_phys)), kind=conv_wp)
-            qeso(i,k) = real(eps, kind=conv_wp) * qeso(i,k) / (po(i,k)
+            qeso(i,k) = (real(eps, kind=conv_wp) * qeso(i,k)) / (po(i,k)
      &                + real(epsm1, kind=conv_wp)*qeso(i,k))
             val1      = 1.e-8_conv_wp
             qeso(i,k) = max(qeso(i,k), val1)
@@ -691,7 +694,7 @@ c
      &                 + zo(i,k+1)) + real(cp, kind=conv_wp) * to(i,k)
      &                 + real(hvap, kind=conv_wp) * qeso(i,k)
             uo(i,k)   = .5_conv_wp * (uo(i,k) + uo(i,k+1))
-            vo(i,k)   = .5_conv_wp * (vo(i,k) + vo(i,k+1))
+            vo(i,k)   = .5_conv_wp * (vo(i,k) + vo(i,k+1)) 
           endif
         enddo
       enddo
@@ -1212,7 +1215,9 @@ c
           endif
         enddo
       enddo
-!> - Turn off convection if the CIN is less than a critical value (cinacr) which is inversely proportional to the large-scale vertical velocity.
+
+
+!!> - Turn off convection if the CIN is less than a critical value (cinacr) which is inversely proportional to the large-scale vertical velocity.
 
       if (hwrf_samfshal) then
        do i = 1, im
@@ -1557,19 +1562,24 @@ c
       endif
 !
       if (progomega) then
-         do k = 1, km
-            do i = 1, im
-               omegaout_loc(i,k) = 0.0_conv_wp
-            enddo
-         enddo
+         if (present(omegaout)) then
+            omegaout_loc(:,:) = real(omegaout(:,:), kind=conv_wp)
+         else
+            omegaout_loc(:,:) = 0.0_conv_wp
+         endif
+         if (present(omegain)) then
+            omegain_loc(:,:) = real(omegain(:,:), kind=conv_wp)
+         else
+            omegain_loc(:,:) = 0.0_conv_wp
+         endif
 
          call progomega_calc(first_time_step,restart,im,km,kbcon1,ktcon,
-     &                       real(omegain, kind=conv_wp),real(delt,
-     &                       kind=conv_wp),del,zi,cnvflg,omegaout_loc,
+     &                       omegain_loc,real(delt, kind=conv_wp),
+     &                       del,zi,cnvflg,omegaout_loc,
      &                       real(grav, kind=conv_wp),buo,drag,wush,
      &                       xlamue,bb1,bb2)
 
-         ! Copy back output if needed
+!      Copy back output if needed
          if(present(omegaout)) then
             omegaout(:,:) = real(omegaout_loc(:,:), kind=kind_phys)
          endif
@@ -1628,6 +1638,7 @@ c
          enddo
 
       endif !progomega
+
 !  compute updraft velocity averaged over the whole cumulus
 !
 !> - Calculate the mean updraft velocity within the cloud (wc).
@@ -2067,11 +2078,21 @@ c      updraft velcoity
 c
 !> - From Bengtsson et al. (2022) \cite Bengtsson_2022 prognostic closure scheme, equation 8, call progsigma_calc() to compute updraft area fraction based on a moisture budget
       if(progsigma)then
-         do k = 1, km
-            do i = 1, im
-               sigmaout_loc(i,k) = 0.0_conv_wp
-            enddo
-         enddo
+         if (present(sigmaout)) then
+            sigmaout_loc(:,:) = real(sigmaout(:,:), kind=conv_wp)
+         else
+            sigmaout_loc(:,:) = 0.0_conv_wp
+         endif
+         if (present(qmicro)) then
+            qmicro_loc(:,:) = real(qmicro(:,:), kind=conv_wp)
+         else
+            qmicro_loc(:,:) = 0.0_conv_wp
+         endif
+         if (present(sigmain)) then
+            sigmain_loc(:,:) = real(sigmain(:,:), kind=conv_wp)
+         else
+            sigmain_loc(:,:) = 0.0_conv_wp
+         endif
 !      Initial computations, dynamic q-tendency
          if(first_time_step .and. .not.restart)then
             do k = 1,km
@@ -2096,19 +2117,17 @@ c
 
          flag_shallow = .true.
          flag_mid = .false.
-
          call progsigma_calc(im,km,first_time_step,restart,flag_shallow,
-     &        flag_mid,del,tmfq,real(qmicro, kind=conv_wp),dbyo1,zdqca,
+     &        flag_mid,del,tmfq,qmicro_loc,dbyo1,zdqca,
      &        omega_u,zeta,real(hvap, kind=conv_wp),real(delt,
      &        kind=conv_wp),qadv,kb,kbcon1,ktcon,cnvflg,real(betascu,
      &        kind=conv_wp),real(betamcu, kind=conv_wp),real(betadcu,
-     &        kind=conv_wp),sigmind,sigminm,sigmins,real(sigmain,
-     &        kind=conv_wp),sigmaout_loc,sigmab)
+     &        kind=conv_wp),sigmind,sigminm,sigmins,sigmain_loc,
+     &        sigmaout_loc,sigmab)
 
          if(present(sigmaout)) then
            sigmaout(:,:) = real(sigmaout_loc(:,:),kind=kind_phys)
          endif
-
       endif
 
 !> - From Han et al.'s (2017) \cite han_et_al_2017 equation 6, calculate cloud base mass flux as a function of the mean updraft velcoity.
@@ -2183,7 +2202,7 @@ c
           if (cnvflg(i) .and. k <= kmax(i)) then
             qeso(i,k) = real(0.01_kind_phys * fpvs(real(t1(i,k),
      &                  kind=kind_phys)), kind=conv_wp) ! fpvs is in pa
-            qeso(i,k) = real(eps, kind=conv_wp) * qeso(i,k)
+            qeso(i,k) = (real(eps, kind=conv_wp) * qeso(i,k))
      &                / (pfld(i,k) + real(epsm1, kind=conv_wp)
      &                * qeso(i,k))
             val       = 1.e-8_conv_wp
@@ -2191,7 +2210,7 @@ c
           endif
         enddo
       enddo
-c!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!c!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c
 !> - Calculate the temperature tendency from the moist static energy and specific humidity tendencies.
 !> - Update the temperature, specific humidity, and horiztonal wind state variables by multiplying the cloud base mass flux-normalized tendencies by the cloud base mass flux.
@@ -2423,8 +2442,8 @@ c
                     else
                       wet_dep(i,k,n) = 0.0_conv_wp
                       qtr(i,k,kk) = real(real(qtr(i,k,kk), kind=conv_wp)
-     &                         + real(wet_dep(i,k,n), kind=conv_wp)
-     &                         / dp, kind=kind_phys)
+     &                         + (real(wet_dep(i,k,n), kind=conv_wp)
+     &                         / dp), kind=kind_phys)
                     endif
                   endif
                 endif
@@ -2445,7 +2464,7 @@ c
             if(k > kb(i) .and. k <= ktcon(i)) then
               qeso(i,k) = real(0.01_kind_phys * fpvs(real(t1(i,k),
      &                  kind=kind_phys)), kind=conv_wp) ! fpvs is in pa
-              qeso(i,k) = real(eps, kind=conv_wp) * qeso(i,k)
+              qeso(i,k) = (real(eps, kind=conv_wp) * qeso(i,k))
      &                  / (pfld(i,k) + real(epsm1, kind=conv_wp)
      &                  * qeso(i,k))
               val       = 1.e-8_conv_wp
@@ -2454,7 +2473,7 @@ c
           endif
         enddo
       enddo
-c
+!c
 !> - Add up column-integrated convective precipitation by multiplying the normalized value by the cloud base mass flux.
       do i = 1, im
         rntot(i) = 0.0_conv_wp
@@ -2486,8 +2505,8 @@ c
             qevap(i) = 0.0_conv_wp
             if(cnvflg(i)) then
               if(k < ktcon(i) .and. k > kb(i)) then
-                rn(i) = real(real(rn(i), kind=conv_wp) + pwo(i,k)
-     &                * xmb(i) * 0.001_conv_wp * dt2, kind=kind_phys)
+                rn(i) = real(real(rn(i), kind=conv_wp) + (pwo(i,k)
+     &                * xmb(i) * 0.001_conv_wp * dt2), kind=kind_phys)
               endif
             endif
             if(flg(i) .and. k < ktcon(i)) then
@@ -2528,7 +2547,7 @@ c
                 q1(i,k) = real(real(q1(i,k), kind=conv_wp) +
      &                    qevap(i), kind=kind_phys)
                 t1(i,k) = real(real(t1(i,k), kind=conv_wp) -
-     &                    elocp * qevap(i), kind=kind_phys)
+     &                    (elocp * qevap(i)), kind=kind_phys)
                 deltv(i) = - elocp * qevap(i) / dt2
                 delq(i) = + qevap(i) / dt2
                 delqev(i) = delqev(i) + tem * qevap(i)
@@ -2623,10 +2642,10 @@ c
               if (real(qtr(i,k,2), kind=conv_wp) > -999.0_conv_wp) then
                 ! Ice
                 qtr(i,k,1) = real(real(qtr(i,k,1), kind=conv_wp)
-     &                     + tem * tem1, kind=kind_phys)
+     &                     + (tem * tem1), kind=kind_phys)
                 ! Water
                 qtr(i,k,2) = real(real(qtr(i,k,2), kind=conv_wp)
-     &                   + tem * (1.0_conv_wp - tem1), kind=kind_phys)
+     &                   + (tem * (1.0_conv_wp - tem1)), kind=kind_phys)
               else
                 qtr(i,k,1) = real(real(qtr(i,k,1), kind=conv_wp)
      &                     + tem, kind=kind_phys)
@@ -2694,8 +2713,8 @@ c
               endif
               ptem = tem / (tem2 * tem1)
               qtr(i,k,ntk) = real(real(qtr(i,k,ntk), kind=conv_wp)
-     &                     + 0.5_conv_wp * tem2 * ptem * ptem,
-     &                       kind=kind_phys)
+     &                     + (0.5_conv_wp * tem2 * ptem * ptem),
+     &                       kind=kind_phys )
             endif
           endif
         enddo
