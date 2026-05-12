@@ -179,9 +179,6 @@
 !    &                     xqrch,   mbdt,    tem,
      &                     xqrch,   tem,     tem1,    tem2,
      &                     ptem,    ptem1,   ptem2
-     
-      real(kind=conv_wp) :: omegaout_loc(im,km)
-      real(kind=conv_wp) :: sigmaout_loc(im,km)
 !
       integer              kb(im), kb1(im), kbcon(im), kbcon1(im),
      &                     ktcon(im), ktcon1(im), ktconn(im),
@@ -321,6 +318,11 @@ c    &            .743,.813,.886,.947,1.138,1.377,1.896/
       real(kind=conv_wp) tf, tcr, tcrf
       parameter (tf=233.16_conv_wp, tcr=263.16_conv_wp, 
      &           tcrf=1.0_conv_wp/(tcr-tf))
+
+!  local 32-bit arrays for external calls ---
+      real(kind=conv_wp) :: omegain_loc(im,km), omegaout_loc(im,km)
+      real(kind=conv_wp) :: sigmain_loc(im,km), sigmaout_loc(im,km)
+      real(kind=conv_wp) :: qmicro_loc(im,km)
 
       ! Initialize CCPP error handling variables
       errmsg = ''
@@ -1840,16 +1842,20 @@ c
       endif
 !                  
       if (progomega) then
-         do k=1,km
-           do i=1,im
-             omegaout_loc(i,k) = 0.0_conv_wp
-           enddo
-         enddo
-         call progomega_calc(first_time_step,restart,im,km,
-     &        kbcon1,ktcon,real(omegain, kind=conv_wp),real(delt,
-     &        kind=conv_wp),del,zi,cnvflg,omegaout_loc,real(grav,
-     &        kind=conv_wp),buo,drag,wush,tentr,bb1,bb2)
-
+         if (present(omegaout)) then
+            omegaout_loc(:,:) = real(omegaout(:,:), kind=conv_wp)
+         else
+            omegaout_loc(:,:) = 0.0_conv_wp
+         endif
+         if (present(omegain)) then
+            omegain_loc(:,:) = real(omegain(:,:), kind=conv_wp)
+         else
+            omegain_loc(:,:) = 0.0_conv_wp
+         endif
+         call progomega_calc(first_time_step,restart,im,km,kbcon1,ktcon,
+     &        omegain_loc,real(delt,kind=conv_wp),del,zi,cnvflg,
+     &        omegaout_loc,real(grav,kind=conv_wp),buo,drag,wush,tentr,
+     &        bb1,bb2)
          if (present(omegaout)) then
             omegaout(:,:) = real(omegaout_loc(:,:), kind=kind_phys)
          endif
@@ -3068,6 +3074,23 @@ c
       
 !> - From Bengtsson et al. (2022) \cite Bengtsson_2022 prognostic closure scheme, equation 8, call progsigma_calc() to compute updraft area fraction based on a moisture budget
       if(progsigma)then
+        if (present(sigmaout)) then
+            sigmaout_loc(:,:) = real(sigmaout(:,:), kind=conv_wp)
+         else
+            sigmaout_loc(:,:) = 0.0_conv_wp
+         endif
+
+         if (present(qmicro)) then
+            qmicro_loc(:,:) = real(qmicro(:,:), kind=conv_wp)
+         else
+            qmicro_loc(:,:) = 0.0_conv_wp
+         endif
+
+         if (present(sigmain)) then
+            sigmain_loc(:,:) = real(sigmain(:,:), kind=conv_wp)
+         else
+            sigmain_loc(:,:) = 0.0_conv_wp
+         endif
 !Initial computations, dynamic q-tendency                                                                                                                                               
          if(first_time_step .and. (.not.restart 
      &           .or. sigmab_coldstart))then
@@ -3094,19 +3117,13 @@ c
          flag_shallow = .false.
          flag_mid = .false.
 
-         do k=1,km
-            do i=1,im
-               sigmaout_loc(i,k) = 0.0_conv_wp
-            enddo
-         enddo
-
          call progsigma_calc(im,km,first_time_step,restart,flag_shallow,
-     &        flag_mid,del,tmfq,real(qmicro, kind=conv_wp),dbyo1,zdqca,
+     &        flag_mid,del,tmfq,qmicro_loc,dbyo1,zdqca,
      &        omega_u,zeta,real(hvap, kind=conv_wp),real(delt, 
      &        kind=conv_wp),qadv,kb,kbcon1,ktcon,cnvflg,real(betascu, 
      &        kind=conv_wp),real(betamcu, kind=conv_wp),real(betadcu, 
-     &        kind=conv_wp),sigmind,sigminm,sigmins,real(sigmain, 
-     &        kind=conv_wp),sigmaout_loc,sigmab)
+     &        kind=conv_wp),sigmind,sigminm,sigmins,sigmain_loc, 
+     &        sigmaout_loc,sigmab)
 
          if (present(sigmaout)) then
             sigmaout(:,:) = real(sigmaout_loc(:,:), kind=kind_phys)
