@@ -118,7 +118,7 @@ module mp_tempo_condensation
                call get_constant_cloud_number(nc=nc3d(i,j,:))
 
                ! returns cloud mass concentration
-               call cloud_check_and_update(dt=real(mdt,kind=kind_phys), rho=rho(i,j,:), l_qc=l_qc, &
+               call cloud_check_and_update(dt=real(mdt,kind=kind_phys), odt=real(1./mdt, kind=kind_phys), rho=rho(i,j,:), l_qc=l_qc, &
                     qc1d=qc_mixing_ratio(i,j,:), nc1d=nc3d(i,j,:), rc=rc, nc=nc, qcten=qcten, ncten=ncten, ilamc=ilamc, mvd_c=mvd_c)
                 
                do k = 1, km
@@ -157,7 +157,7 @@ module mp_tempo_condensation
                   temp(i,j,k) = temp(i,j,k) + lvap(k)*ocp(k)*condensation(i,j,k)*mdt
                enddo
 
-               call cloud_check_and_update(dt=real(mdt,kind=kind_phys), rho=rho(i,j,:), l_qc=l_qc, &
+               call cloud_check_and_update(dt=real(mdt,kind=kind_phys), odt=real(1./mdt, kind=kind_phys), rho=rho(i,j,:), l_qc=l_qc, &
                     qc1d=qc_mixing_ratio(i,j,:), nc1d=nc3d(i,j,:), rc=rc, nc=nc, qcten=qcten, ncten=ncten, ilamc=ilamc, mvd_c=mvd_c)
             enddo
          enddo
