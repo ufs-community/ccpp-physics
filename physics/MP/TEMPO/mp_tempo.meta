@@ -148,7 +148,7 @@
 [do_sat_adj]
   standard_name = flag_for_saturation_adjustment_for_microphysics_in_dynamics
   long_name = flag for saturation adjustment for microphysics in dynamics
-  units = flag
+  units = none
   dimensions = ()
   type = logical
   intent = in  
