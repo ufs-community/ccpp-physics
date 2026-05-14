@@ -70,7 +70,8 @@
 !!
       subroutine GFS_time_vary_pre_timestep_init (jdat, idat, dtp, nsswr,                        &
                   nslwr, nhfrad, idate, debug, me, master, nscyc, sec, phour, zhour, fhour,      &
-                  kdt, julian, yearlen, ipt, lprnt, lssav, lsswr, lslwr, solhr, errmsg, errflg)
+                  kdt, julian, yearlen, ipt, lprnt, lssav, lsswr, lslwr, solhr, tgrs, ugrs, vgrs,&
+                  qgrs, gt0 , gu0 , gv0 , gq0, errmsg, errflg)
 
         use machine,               only: kind_phys, kind_dbl_prec, kind_sngl_prec
 
@@ -88,7 +89,12 @@
                                                            lslwr
         real(kind=kind_phys),             intent(out)   :: sec, phour, zhour,    &
                                                            fhour, julian, solhr
-
+        
+        real(kind=kind_phys), intent(in ), dimension(:,:)   :: tgrs, ugrs, vgrs
+        real(kind=kind_phys), intent(in ), dimension(:,:,:) :: qgrs
+        real(kind=kind_phys), intent(out), dimension(:,:)   :: gt0, gu0, gv0
+        real(kind=kind_phys), intent(out), dimension(:,:,:) :: gq0
+        
         character(len=*),                 intent(out)   :: errmsg
         integer,                          intent(out)   :: errflg
 
@@ -104,14 +110,21 @@
         ! Initialize CCPP error handling variables
         errmsg = ''
         errflg = 0
-
+        
         ! Check initialization status
         if (.not.is_initialized) then
-           write(errmsg,'(*(a))') "Logic error: GFS_time_vary_pre_timestep_init called before GFS_time_vary_pre_init"
+           write(errmsg,'(*(a))') "Logic error: GFS_time_vary_pre_timestep_init called &
+                                  &before GFS_time_vary_pre_init"
            errflg = 1
            return
         end if
-
+        
+        !--- set current state variables from timestep initial variables
+        gt0(:,:)   = tgrs(:,:)
+        gu0(:,:)   = ugrs(:,:)
+        gv0(:,:)   = vgrs(:,:)
+        gq0(:,:,:) = qgrs(:,:,:)
+        
         !--- jdat is being updated directly inside of FV3GFS_cap.F90
         !--- update calendars and triggers
         call w3kind(w3kindreal, w3kindint)
@@ -121,11 +134,12 @@
            call w3difdat(jdat,idat,4,rinc8)
            sec = rinc8(4)
         else
-           write(errmsg,'(*(a))') "FATAL ERROR: Invalid w3kindreal or w3kindint:", w3kindreal, w3kindint
+           write(errmsg,'(a,2i4)') "FATAL ERROR: Invalid w3kindreal or w3kindint:", w3kindreal, w3kindint
            errflg = 1
            return
         end if
         phour = sec/con_hr
+
         !--- set current bucket hour
         zhour = phour
         fhour = (sec + dtp)/con_hr

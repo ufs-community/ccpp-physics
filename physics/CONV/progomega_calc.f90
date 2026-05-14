@@ -22,7 +22,7 @@
 !!\section gen_progomega progomega_calc General Algorithm
        
    subroutine progomega_calc(first_time_step,flag_restart,im,km,kbcon1,ktcon,omegain,delt,del, &
-        zi,cnvflg,omegaout,grav,buo,drag,wush,tentr,bb1,bb2)
+        zi,cnvflg,omegaout,grav,buo,drag,wush,bb1,bb2)
      
      use machine,  only : kind_phys
      use funcphys, only : fpvs  
@@ -32,20 +32,17 @@
      integer, intent(in)  :: kbcon1(im),ktcon(im)
      real(kind=conv_wp), intent(in)  :: delt,grav,bb1,bb2
      real(kind=conv_wp), intent(in)  :: omegain(im,km), del(im,km),zi(im,km)
-     real(kind=conv_wp), intent(in)  :: drag(im,km),buo(im,km),wush(im,km),tentr(im,km)
+     real(kind=conv_wp), intent(in)  :: drag(im,km),buo(im,km),wush(im,km)
      real(kind=conv_wp), intent(inout) :: omegaout(im,km)
      logical, intent(in)               :: cnvflg(im),first_time_step,flag_restart
      real(kind=conv_wp) :: termA(im,km),termB(im,km),termC(im,km),omega(im,km)
      real(kind=conv_wp) :: RHS(im,km),Kd(im,km)
-     real(kind=conv_wp) :: dp,dz,entrn,Kdn,discr,wush_pa,lbb1,lbb2,lbb3
+     real(kind=conv_wp) :: dp,dz,discr,wush_pa,lbb1,lbb2,lbb3
      integer              :: i,k
 
-     entrn = 0.8E-4_conv_wp !0.5E-4 !m^-1
-     Kdn   = 0.5E-4_conv_wp !2.9E-4 !m^-1
-     lbb1  = 0.5_conv_wp !1.0 
-     lbb2  = 3.2_conv_wp !3.0
-     lbb3  = 0.5_conv_wp !0.5
-     
+     lbb1  = 1.5_conv_wp
+     lbb2  = 0.6_conv_wp
+     lbb3  = 1.2_conv_wp
      
      !Initialization 2D
      do k = 1,km
@@ -58,6 +55,16 @@
         enddo
      enddo
 
+     do k = 1,km
+        do i = 1,im
+           if(cnvflg(i))then
+              if(omega(i,k) < 1.0E-5) then
+                 omega(i,k) = 0.
+              endif
+           endif
+        enddo
+     enddo
+     
      if(first_time_step .and. .not. flag_restart)then
         do k = 1,km
            do i = 1,im
@@ -78,10 +85,7 @@
      do k = 2, km
         do i = 1, im
            if (cnvflg(i)) then
-              if (k > kbcon1(i) .and. k < ktcon(i)) then
-
-                 ! Aerodynamic drag parameter
-                 Kd(i,k) = (tentr(i,k)/entrn)*Kdn
+              if (k >= kbcon1(i) .and. k < ktcon(i)) then
 
                  ! Scale by dp/dz to have equation in Pa/s
                  !(dp/dz > 0)
@@ -93,8 +97,8 @@
                  !termC - Adds buoyancy forcing 
                  
                  !Coefficients for the quadratic equation
-                 termA(i,k) = delt * ((lbb1 * drag(i,k) * (dp/dz)) + (Kd(i,k) * (dp/dz)))
-                 termB(i,k) = -1.0_conv_wp - delt * lbb3 * wush(i,k) * dp/dz
+                 termA(i,k) = delt * ((lbb1 * drag(i,k) * (dp/dz)))
+                 termB(i,k) = 1.0_conv_wp - delt * lbb3 * wush(i,k) * dp/dz
                  termC(i,k) = omega(i,k) - delt * lbb2 * buo(i,k) * (dp/dz) &
                       - delt * omega(i,k) * (omega(i,k-1) - omega(i,k)) / dp
                  !Compute the discriminant
