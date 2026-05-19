@@ -3,8 +3,6 @@
 
     module GFS_DCNV_generic_post
 
-    use mo_conv_kind, only : conv_wp
-
     contains
 
 !> \section arg_table_GFS_DCNV_generic_post_run Argument Table
@@ -200,15 +198,15 @@
             do i=1,im
               cnvw_phy_f3d(i,k) = cnvw(i,k)
               cnvc_phy_f3d(i,k) = cnvc(i,k)
-              cnvw(i,k)         = 0.0_conv_wp
-              cnvc(i,k)         = 0.0_conv_wp
+              cnvw(i,k)         = 0.0
+              cnvc(i,k)         = 0.0
             enddo
           enddo
         elseif (npdf3d == 0 .and. ncnvcld3d == 1) then
           do k=1,levs
             do i=1,im
               cnvw_phy_f3d(i,k) = cnvw(i,k)
-              cnvw(i,k)         = 0.0_conv_wp
+              cnvw(i,k)         = 0.0
             enddo
           enddo
         endif
