@@ -58,8 +58,8 @@
      do k = 1,km
         do i = 1,im
            if(cnvflg(i))then
-              if(omega(i,k) < 1.0E-5) then
-                 omega(i,k) = 0.
+              if(omega(i,k) < 1.0E-5_conv_wp) then
+                 omega(i,k) = 0.0_conv_wp
               endif
            endif
         enddo
