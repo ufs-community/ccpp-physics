@@ -7,7 +7,7 @@
 module mp_tempo_condensation
 
       use mpi_f08
-      use machine, only : kind_phys, kind_dyn
+      use machine, only : kind_phys, kind_dyn, kind_dbl_prec
 
       use module_mp_tempo_params, only : roverrv, rv, rdry, eps, r1, t0, cp, initialize_parameters
       use module_mp_tempo_cfgs, only : ty_tempo_cfgs
@@ -69,7 +69,7 @@ module mp_tempo_condensation
          real(kind_phys) :: lvt2(1:km)                                             
          real(kind_phys) :: rc(1:km)
          real(kind_phys) :: nc(1:km)
-         real(kind_phys) :: ilamc(1:km)
+         real(kind_dbl_prec) :: ilamc(1:km)
          real(kind_phys) :: mvd_c(1:km)
          real(kind_phys) :: qcten(1:km)
          real(kind_phys) :: ncten(1:km)

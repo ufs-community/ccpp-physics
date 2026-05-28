@@ -49,7 +49,7 @@
         aero_dir_fdb, fdb_coef, spp_wts_rad, spp_rad, ico2, ozphys,            &
         errmsg, errflg)
 
-      use machine,                   only: kind_phys
+      use machine,                   only: kind_phys, kind_dbl_prec
 
       use radcons,                   only: itsfc, qmin, qme5, qme6, epsq, prsmin
       use funcphys,                  only: fpvs
@@ -243,9 +243,12 @@
                                   nc_mp, ni_mp, nwfa
       ! tempo
       real(kind=kind_phys), dimension(im,lm+LTP) ::           &
-                                  rc, nc, qcten, ncten, ilamc, mvd_c, &
-                                  ri, ni, qiten, niten, ilami, &
+                                  rc, nc, qcten, ncten, mvd_c, &
+                                  ri, ni, qiten, niten, &
                                   rs, qsten
+
+      real(kind=kind_dbl_prec), dimension(im,lm+LTP) ::       &
+                                  ilamc, ilami
 
       logical,              dimension(im,lm+LTP) ::           &
                                   l_qc, l_qi, l_qs
