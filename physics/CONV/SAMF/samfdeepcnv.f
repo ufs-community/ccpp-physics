@@ -1031,16 +1031,13 @@ c
           if(cnvflg(i)) then
              tkemean(i) = tkemean(i) / sumx(i)
              if(tkemean(i) > tkemx) then
-               clamt(i) = real(clam, kind=conv_wp)
-     &                  + real(clamd, kind=conv_wp)
+               clamt(i) = real(clam, kind=conv_wp) + clamd
              else if(tkemean(i) < tkemn) then
-               clamt(i) = real(clam, kind=conv_wp)
-     &                  - real(clamd, kind=conv_wp)
+               clamt(i) = real(clam, kind=conv_wp) - clamd
              else
                tem = tkemx - tkemean(i)
                tem1 = 1.0_conv_wp - 2.0_conv_wp *  tem / dtke
-               clamt(i) = real(clam, kind=conv_wp)
-     &                  + real(clamd, conv_wp) * tem1
+               clamt(i) = real(clam, kind=conv_wp) + clamd * tem1
              endif
           endif
         enddo
@@ -1050,8 +1047,7 @@ c
                if(cnvflg(i)) then
                   if(real(ca_deep(i), kind=conv_wp) > real(nthresh,
      &               kind=conv_wp))then
-                     clamt(i) = real(clam, kind=conv_wp)
-     &                        - real(clamca, kind=conv_wp)
+                     clamt(i) = real(clam, kind=conv_wp) - clamca
                   else
                      clamt(i) = real(clam, kind=conv_wp)
                   endif
@@ -1084,8 +1080,7 @@ c
                if(cnvflg(i)) then
                   if(real(ca_deep(i), kind=conv_wp) > real(nthresh,
      &               kind=conv_wp))then
-                     clamt(i) = real(clam, kind=conv_wp) -
-     &                          real(clamca, kind=conv_wp)
+                     clamt(i) = real(clam, kind=conv_wp) - clamca
                   else
                      clamt(i) = real(clam, kind=conv_wp)
                   endif
@@ -1118,7 +1113,7 @@ c
           if(cnvflg(i)) then
             dz =zo(i,k+1) - zo(i,k)
             xlamue(i,k) = clamt(i) / (zi(i,k) + dz)
-            xlamue(i,k) = max(xlamue(i,k), real(crtlame, kind=conv_wp))
+            xlamue(i,k) = max(xlamue(i,k), crtlame)
           endif
         enddo
       enddo
@@ -1265,9 +1260,9 @@ c
       do i = 1, im
         if(cnvflg(i)) then
           indx         = kb(i)
-          hcko(i,indx) = real(heo(i,indx), kind=conv_wp)
-          ucko(i,indx) = real(uo(i,indx), kind=conv_wp)
-          vcko(i,indx) = real(vo(i,indx), kind=conv_wp)
+          hcko(i,indx) = heo(i,indx)
+          ucko(i,indx) = uo(i,indx)
+          vcko(i,indx) = vo(i,indx)
           pwavo(i)     = 0.0_conv_wp
         endif
       enddo
@@ -1277,8 +1272,8 @@ c
         do i = 1, im
           if(cnvflg(i)) then
             indx = kb(i)
-            ecko(i,indx,n) = real(ctro(i,indx,n), kind=conv_wp)
-            ercko(i,indx,n) = real(ctro(i,indx,n), kind=conv_wp)
+            ecko(i,indx,n) = ctro(i,indx,n)
+            ercko(i,indx,n) = ctro(i,indx,n)
           endif
         enddo
        enddo
@@ -1627,9 +1622,8 @@ cj
               tem  = 0.25_conv_wp * (xlamue(i,k)+xlamue(i,k-1)) * dz
               tem  = cq * tem
               factor = 1.0_conv_wp + tem
-              qcko(i,k) = ((1.0_conv_wp-tem)*qcko(i,k-1)+tem*
-     &                    (real(qo(i,k), kind=conv_wp)+real(qo(i,k-1),
-     &                    kind=conv_wp)))/factor
+              qcko(i,k) = ((1.0_conv_wp - tem) * qcko(i,k-1) + tem
+     &                  * (qo(i,k) + qo(i,k-1)))/factor
               qrcko(i,k) = qcko(i,k)
 cj
               dq = eta(i,k) * (qcko(i,k) - qrch)
@@ -1817,9 +1811,8 @@ cj
               tem  = 0.25_conv_wp * (xlamue(i,k)+xlamue(i,k-1)) * dz
               tem  = cq * tem
               factor = 1.0_conv_wp + tem
-              qcko(i,k) =((1.0_conv_wp-tem)*qcko(i,k-1)+tem*
-     &                   (real(qo(i,k), kind=conv_wp) + real(qo(i,k-1),
-     &                   kind=conv_wp)))/factor
+              qcko(i,k) = ((1.0_conv_wp - tem) * qcko(i,k-1) + tem
+     &                  * (qo(i,k) + qo(i,k-1))) / factor
               qrcko(i,k) = qcko(i,k)
 cj
               dq = eta(i,k) * (qcko(i,k) - qrch)
@@ -2244,9 +2237,8 @@ cj
               tem  = 0.5_conv_wp * xlamdet(i) * dz
               tem  = cq * tem
               factor = 1.0_conv_wp + tem
-              qcdo(i,k)=  ((1.0_conv_wp-tem)*qrcdo(i,k+1)+tem*
-     &                    (real(qo(i,k), kind=conv_wp)+real(qo(i,k+1),
-     &                    kind=conv_wp)))/factor
+              qcdo(i,k)= ((1.0_conv_wp - tem) * qrcdo(i,k+1) + tem
+     &                 * (qo(i,k) + qo(i,k+1))) / factor
 cj
 !             pwdo(i,k)  = etad(i,k+1) * qcdo(i,k+1) -
 !    &                     etad(i,k) * qrcdo(i,k)
@@ -2733,8 +2725,7 @@ c
             pprime = pfld(i,k+1) + real(epsm1, conv_wp) * es
             qs = real(eps, kind=conv_wp) * es / pprime
             dqsdp = - qs / pprime
-            desdt = es * (real(fact1, kind=conv_wp) / to(i,k+1)
-     &             + real(fact2, kind=conv_wp)  / (to(i,k+1)**2))
+            desdt = es * (fact1 / to(i,k+1) + fact2 / (to(i,k+1)**2))
             dqsdt = qs * pfld(i,k+1) * desdt / (es * pprime)
             gamma = el2orc * qeso(i,k+1) / (to(i,k+1)**2)
             dt = (real(grav, kind=conv_wp)*dz +real(hvap, kind=conv_wp)
@@ -2827,9 +2818,8 @@ cj
               tem  = 0.25_conv_wp * (xlamue(i,k)+xlamue(i,k-1)) * dz
               tem  = cq * tem
               factor = 1.0_conv_wp + tem
-              qcko(i,k) = ((1.0_conv_wp-tem)*qcko(i,k-1)+tem*
-     &                    (real(qo(i,k), kind=conv_wp)+real(qo(i,k-1),
-     &                    kind=conv_wp)))/factor
+              qcko(i,k) = ((1.0_conv_wp - tem) * qcko(i,k-1) + tem
+     &                  * (qo(i,k) + qo(i,k-1))) / factor
 cj
               dq = eta(i,k) * (qcko(i,k) - xqrch)
 c
@@ -2920,9 +2910,8 @@ cj
               tem  = 0.5_conv_wp * xlamdet(i) * dz
               tem  = cq * tem
               factor = 1.0_conv_wp + tem
-              qcdo(i,k) = ((1.0_conv_wp-tem)*qrcd(i,k+1)+tem*
-     &                    (real(qo(i,k), kind=conv_wp)+real(qo(i,k+1),
-     &                     kind=conv_wp)))/factor
+              qcdo(i,k) = ((1.0_conv_wp - tem) * qrcd(i,k+1) + tem
+     &                  * (qo(i,k) + qo(i,k+1))) / factor
 cj
 !             xpwd     = etad(i,k+1) * qcdo(i,k+1) -
 !    &                   etad(i,k) * qrcd(i,k)
@@ -3680,8 +3669,8 @@ c
             if (cnvflg(i) .and. real(rn(i), kind=conv_wp)
      &        > 0.0_conv_wp) then
                if (k >= kbcon(i) .and. k < ktcon(i)) then
-                  cnvw(i,k) = real((real(cnvwt(i,k), kind=conv_wp)
-     &                         * xmb(i) * dt2), kind=kind_phys)
+                  cnvw(i,k) = real(cnvwt(i,k) * xmb(i) * dt2,
+     &                        kind=kind_phys)
                   if(progsigma)then
                      cnvw(i,k) = real(real(cnvw(i,k), kind=conv_wp) *
      &                    real(cscale, kind=conv_wp), kind=kind_phys)
@@ -3897,9 +3886,9 @@ c
             cf_upi(i,k)   = real(cnvc(i,k), kind=kind_phys)
             w_upi(i,k)    = real((real(ud_mf(i,k), kind=conv_wp)
      &                    * new_t1(i,k) * real(rd, kind=conv_wp))
-     &                    / (dt2 * max(real(sigmagfm(i), kind=conv_wp),
-     &                      1.e-12_conv_wp) * real(prslp(i,k),
-     &                      kind=conv_wp)), kind=kind_phys)
+     &                    / (dt2 * max(sigmagfm(i), 1.e-12_conv_wp)
+     &                    * real(prslp(i,k), kind=conv_wp)),
+     &                      kind=kind_phys)
             CNV_MFD(i,k)  = real(real(ud_mf(i,k), kind=conv_wp) / dt2,
      &                          kind=kind_phys)
             CLCN(i,k)     = real(cnvc(i,k), kind=kind_phys)

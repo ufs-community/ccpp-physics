@@ -950,16 +950,13 @@ c
           if(cnvflg(i)) then
              tkemean(i) = tkemean(i) / sumx(i)
              if(tkemean(i) > tkemx) then
-               clamt(i) = real(clam, kind=conv_wp)
-     &                  + real(clamd, kind=conv_wp)
+               clamt(i) = real(clam, kind=conv_wp) + clamd
              else if(tkemean(i) < tkemn) then
-               clamt(i) = real(clam, kind=conv_wp)
-     &                  - real(clamd, kind=conv_wp)
+               clamt(i) = real(clam, kind=conv_wp) - clamd
              else
                tem = tkemx - tkemean(i)
                tem1 = 1.0_conv_wp - 2.0_conv_wp * tem / dtke
-               clamt(i) = real(clam, kind=conv_wp)
-     &                  + real(clamd, kind=conv_wp) * tem1
+               clamt(i) = real(clam, kind=conv_wp) + clamd * tem1
              endif
           endif
         enddo
@@ -1066,9 +1063,9 @@ c
       do i = 1, im
         if(cnvflg(i)) then
           indx         = kb(i)
-          hcko(i,indx) = real(heo(i,indx), kind=conv_wp)
-          ucko(i,indx) = real(uo(i,indx), kind=conv_wp)
-          vcko(i,indx) = real(vo(i,indx), kind=conv_wp)
+          hcko(i,indx) = heo(i,indx)
+          ucko(i,indx) = uo(i,indx)
+          vcko(i,indx) = vo(i,indx)
         endif
       enddo
 !  for tracers
@@ -1077,8 +1074,8 @@ c
         do i = 1, im
           if(cnvflg(i)) then
             indx = kb(i)
-            ecko(i,indx,n) = real(ctro(i,indx,n), kind=conv_wp)
-            ercko(i,indx,n) = real(ctro(i,indx,n), kind=conv_wp)
+            ecko(i,indx,n) = ctro(i,indx,n)
+            ercko(i,indx,n) = ctro(i,indx,n)
           endif
         enddo
       enddo
@@ -1361,9 +1358,8 @@ cj
               tem  = 0.25_conv_wp * (xlamue(i,k)+xlamue(i,k-1)) * dz
               tem  = cq * tem
               factor = 1.0_conv_wp + tem
-              qcko(i,k) = ((1.0_conv_wp-tem)*qcko(i,k-1)+tem*
-     &                    (real(qo(i,k), kind=conv_wp)+real(qo(i,k-1),
-     &                    kind=conv_wp)))/factor
+              qcko(i,k) = ((1.0_conv_wp - tem) * qcko(i,k-1) + tem
+     &                  * (qo(i,k) + qo(i,k-1))) / factor
               qrcko(i,k) = qcko(i,k)
 cj
               dq = eta(i,k) * (qcko(i,k) - qrch)
@@ -1540,9 +1536,8 @@ cj
               tem  = 0.25_conv_wp * (xlamue(i,k)+xlamue(i,k-1)) * dz
               tem  = cq * tem
               factor = 1.0_conv_wp + tem
-              qcko(i,k) = ((1.0_conv_wp-tem)*qcko(i,k-1)+tem*
-     &                    (real(qo(i,k), kind=conv_wp) + real(qo(i,k-1),
-     &                    kind=conv_wp)))/factor
+              qcko(i,k) = ((1.0_conv_wp - tem) * qcko(i,k-1) + tem
+     &                  * (qo(i,k) + qo(i,k-1))) / factor
               qrcko(i,k) = qcko(i,k)
 cj
               dq = eta(i,k) * (qcko(i,k) - qrch)
@@ -2619,8 +2614,8 @@ c      convective cloud water
          do i = 1, im
             if (cnvflg(i)) then
                if (k >= kbcon(i) .and. k < ktcon(i)) then
-                  cnvw(i,k) = real((real(cnvwt(i,k), kind=conv_wp)
-     &                         * xmb(i) * dt2), kind=kind_phys)
+                  cnvw(i,k) = real(cnvwt(i,k) * xmb(i) * dt2,
+     &                        kind=kind_phys)
                   if (progsigma) then
                      cnvw(i,k) = real(real(cnvw(i,k), kind=conv_wp) *
      &                    real(cscale, kind=conv_wp), kind=kind_phys)
