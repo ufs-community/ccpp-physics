@@ -87,10 +87,11 @@
                                            make_DropletNumber_thompson => make_DropletNumber, &
                                            make_RainNumber_thompson    => make_RainNumber
 
+#ifdef FV3
       use module_mp_tempo_main, only : cloud_check_and_update, ice_check_and_update, snow_check_and_update
       use module_mp_tempo_utils, only : get_constant_cloud_number
       use module_mp_tempo_diags, only : effective_radius
-      
+#endif
       ! For NRL Ozone
       use module_ozphys, only: ty_ozphys
       implicit none
@@ -791,6 +792,7 @@
               enddo
             enddo
           endif if_thompson
+#ifdef FV3
           if (imp_physics == imp_physics_tempo) then
             do k=1,LMK
               do i=1,IM
@@ -825,6 +827,7 @@
                     rs=rs(i,:), qsten=qsten(i,:), dt=1., odt=1.)
             enddo
           endif
+#endif         
         endif
         do n=1,ncndl
           do k=1,LMK
@@ -983,6 +986,7 @@
           enddo
 
         elseif (imp_physics == imp_physics_tempo) then       ! Tempo
+#ifdef FV3
           do i=1,im
             islmsk = nint(slmsk(i))
                call effective_radius(temp=tlyr(i,:), l_qc=l_qc(i,:), nc=nc_mp(i,:), &
@@ -998,6 +1002,7 @@
                effri(i,lmk) = re_qi_min_thompson*1.e6
                effrs(i,lmk) = re_qs_min_thompson*1.e6
           end do
+#endif 
           effrr(:,:) = 1000. ! rrain_def=1000.
           ! Update global arrays
           do k=1,lm
