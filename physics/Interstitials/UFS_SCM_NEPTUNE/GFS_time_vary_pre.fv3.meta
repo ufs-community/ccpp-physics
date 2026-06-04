@@ -73,14 +73,14 @@
 [nsswr]
   standard_name = number_of_timesteps_between_shortwave_radiation_calls
   long_name = number of timesteps between shortwave radiation calls
-  units = 
+  units = count
   dimensions = ()
   type = integer
   intent = in
 [nslwr]
   standard_name = number_of_timesteps_between_longwave_radiation_calls
   long_name = number of timesteps between longwave radiation calls
-  units = 
+  units = count
   dimensions = ()
   type = integer
   intent = in
