@@ -1016,7 +1016,7 @@ module mp_thompson
 
          if (.not.is_initialized) return
 
-         call thompson_finalize()
+         call thompson_final()
 
          is_initialized = .false.
 
