@@ -1,7 +1,7 @@
 !>  \file radiation_gases.f
-!!  This file contains routines that set up gas profiles, such as co2, 
-!!  ch4, n2o, o2, and those of cfc gases.  All data are entered as mixing
-!!  ratio by volume
+!!  This file contains routines that set up gas profiles, such as co2,
+!!  ch4, n2o, o2, and those of cfc gases.  All data are entered as 
+!!  mixing ratio by volume
 
 !  ==========================================================  !!!!!
 !              'module_radiation_gases'  description           !!!!!
@@ -87,20 +87,26 @@
 !> \defgroup module_radiation_gases_mod Radiation Gases Module
 !> @{
 !> This module sets up constant gas profiles, such as co2, ch4, n2o, o2,
-!! and those of cfc gases. All data are entered as mixing ratio by volume.
-!!\image html rad_gas_AGGI.png "Figure 1: Atmospheric radiative forcing, relative to 1750, by long-lived greenhouse gases and the 2016 update of the NOAA Annual Greenhouse Gas Index (AGGI)"
+!! and those of cfc gases. All data are entered as mixing ratio by 
+!! volume.
+!! \image html rad_gas_AGGI.png "Figure 1: Atmospheric radiative 
+!! forcing, relative to 1750, by long-lived greenhouse gases and the 
+!! 2016 update of the NOAA Annual Greenhouse Gas Index (AGGI)"
 !! NOAA Annual Greenhouse Gas Index (AGGI) shows that from 1990 to 2016, 
-!! radiative forcing by long-lived greenhouse gases (LLGHGs) increased by
-!! 40%, with \f$CO_2\f$ accounting for about 80% of this increase(WMO 
-!! Greenhouse Gas Bulletin (2017) \cite wmo_greenhouse_gas_bulletin_2017).
+!! radiative forcing by long-lived greenhouse gases (LLGHGs) increased 
+!! by 40%, with \f$CO_2\f$ accounting for about 80% of this increase 
+!! (WMO Greenhouse Gas Bulletin (2017) 
+!! \cite wmo_greenhouse_gas_bulletin_2017).
 !!
 !! Operational GFS selection for gas distribution:
 !!\n CO2 Distribution (namelist control parameter -\b ICO2=2):
-!!\n ICO2=0: use prescribed global annual mean value (currently = 380 ppmv)  
+!!\n ICO2=0: use prescribed global annual mean value (currently=380ppmv)  
 !!\n ICO2=1: use observed global annual mean value
-!!\n ICO2=2: use observed monthly 2-d data table in \f$15^o\f$ horizontal resolution
+!!\n ICO2=2: use observed monthly 2-d data table in \f$15^o\f$ 
+!!           horizontal resolution
 !!
-!! Trace Gases (currently using the global mean climatology in unit of ppmv):
+!! Trace Gases (currently using the global mean climatology in unit of 
+!! ppmv):
 !! \f$CH_4-1.50\times10^{-6}\f$;
 !! \f$N_2O-0.31\times10^{-6}\f$;
 !! \f$O_2-0.209\f$;
@@ -112,8 +118,8 @@
 !!
 !!\version NCEP-Radiation_gases     v5.1  Nov 2012
 
-!> This module sets up constant gas rofiles, such as co2, ch4, n2o, o2, and those 
-!! of cfc gases.
+!> This module sets up constant gas rofiles, such as co2, ch4, n2o, o2,
+!! and those of cfc gases.
       module module_radiation_gases      
       use mpi_f08
       use mpiutil, only: ccpp_bcast
@@ -126,39 +132,50 @@
       private
 
 !  ---  version tag and last revision date
-      character(40), parameter ::                                       &
+      character(40), parameter ::
      &   VTAGGAS='NCEP-Radiation_gases     v5.1  Nov 2012 '
 !    &   VTAGGAS='NCEP-Radiation_gases     v5.0  Aug 2012 '
 
-      integer, parameter, public :: NF_VGAS = 10   ! number of gas species
-      integer, parameter         :: IMXCO2  = 24   ! input CO2 data longitude points
-      integer, parameter         :: JMXCO2  = 12   ! input CO2 data latitude points
-      integer, parameter         :: MINYEAR = 1957 ! earlist year 2D CO2 data available
+      ! number of gas species
+      integer, parameter, public :: NF_VGAS = 10
+      ! input CO2 data longitude points
+      integer, parameter         :: IMXCO2  = 24
+      ! input CO2 data latitude points
+      integer, parameter         :: JMXCO2  = 12
+      ! earlist year 2D CO2 data available
+      integer, parameter         :: MINYEAR = 1957
+      
+      ! horizontal resolution in degree
+      real (kind=kind_phys), parameter :: resco2=15.0
+      ! pressure limitation for 2D CO2 (mb)
+      real (kind=kind_phys), parameter :: prsco2=788.0
+      real (kind=kind_phys)  :: raddeg  ! rad->deg conversion
+      real (kind=kind_phys)  :: hfpi    ! half of pi
 
-      real (kind=kind_phys), parameter :: resco2=15.0            ! horizontal resolution in degree
-      real (kind=kind_phys), parameter :: prsco2=788.0           ! pressure limitation for 2D CO2 (mb)
-      real (kind=kind_phys)  :: raddeg                           ! rad->deg conversion
-      real (kind=kind_phys)  :: hfpi                             ! half of pi
-
-      real (kind=kind_phys), parameter :: co2vmr_def = 350.0e-6  ! parameter constant for CO2 volume mixing ratio
-      real (kind=kind_phys), parameter :: n2ovmr_def = 0.31e-6   ! parameter constant for N2O volume mixing ratio
-      real (kind=kind_phys), parameter :: ch4vmr_def = 1.50e-6   ! parameter constant for CH4 volume mixing ratio
-      real (kind=kind_phys), parameter :: o2vmr_def  = 0.209     ! parameter constant for O2  volume mixing ratio
-      real (kind=kind_phys), parameter :: covmr_def  = 1.50e-8   ! parameter constant for CO  colume mixing ratio
-! aer 2003 value
+      ! parameter constant for CO2 volume mixing ratio
+      real (kind=kind_phys), parameter :: co2vmr_def = 350.0e-6
+      ! parameter constant for N2O volume mixing ratio
+      real (kind=kind_phys), parameter :: n2ovmr_def = 0.31e-6
+      ! parameter constant for CH4 volume mixing ratio
+      real (kind=kind_phys), parameter :: ch4vmr_def = 1.50e-6
+      ! parameter constant for O2  volume mixing ratio
+      real (kind=kind_phys), parameter :: o2vmr_def  = 0.209
+      ! parameter constant for CO  colume mixing ratio
+      real (kind=kind_phys), parameter :: covmr_def  = 1.50e-8
+      ! aer 2003 value
       real (kind=kind_phys), parameter :: f11vmr_def = 3.520e-10
-! aer 2003 value
+      ! aer 2003 value
       real (kind=kind_phys), parameter :: f12vmr_def = 6.358e-10
-! aer 2003 value
+      ! aer 2003 value
       real (kind=kind_phys), parameter :: f22vmr_def = 1.500e-10
-! aer 2003 value
+      ! aer 2003 value
       real (kind=kind_phys), parameter :: cl4vmr_def = 1.397e-10
-! gfdl 1999 value
+      ! gfdl 1999 value
       real (kind=kind_phys), parameter :: f113vmr_def= 8.2000e-11
 
-!  ---  module variables to be set in subroutin gas_init and/or gas_update
+! - module variables to be set in subroutine gas_init and/or gas_update
 
-!  arrays for co2 2-d monthly data and global mean values from observed data
+! arrays for co2 2-d mon. data and global mean values from observed data
 
       real (kind=kind_phys), allocatable :: co2vmr_sav(:,:,:)
       real (kind=kind_phys), allocatable :: co2cyc_sav(:,:,:)
@@ -190,46 +207,46 @@
 !!\param errmsg       error message
 !>\section gas_init_gen gas_init General Algorithm
 !-----------------------------------
-      subroutine gas_init( mpicomm, mpirank, mpiroot, co2usr_file,      &
-     &     co2cyc_file, ico2flg,                                        &
+      subroutine gas_init( mpicomm, mpirank, mpiroot, co2usr_file,
+     &     co2cyc_file, ico2flg,
      &     ictmflg, con_pi, errflg, errmsg)
 
-!  ===================================================================  !
-!                                                                       !
-!  gas_init sets up co2, etc. parameters.                               !
-!                                                                       !
-!  inputs:                                                              !
-!     me          - print message control flag                          !
-!     ico2flg     - co2 data source control flag                        !
-!                   =0: use prescribed co2 global mean value            !
-!                   =1: use input global mean co2 value (co2_glb)       !
-!                   =2: use input 2-d monthly co2 value (co2vmr_sav)    !
-!     ictmflg     - =yyyy#, data ic time/date control flag              !
-!                   =-2: same as 0, but superimpose seasonal cycle      !
-!                        from climatology data set.                     !
-!                   =-1: use user provided external data for the fcst   !
-!                        time, no extrapolation.                        !
-!                   =0: use data at initial cond time, if not existed   !
-!                       then use latest, without extrapolation.         !
-!                   =1: use data at the forecast time, if not existed   !
-!                       then use latest and extrapolate to fcst time.   !
-!                   =yyyy0: use yyyy data for the forecast time, no     !
-!                           further data extrapolation.                 !
-!                   =yyyy1: use yyyy data for the fcst. if needed, do   !
-!                           extrapolation to match the fcst time.       !
-!     co2usr_file - external co2 user defined data table                !
-!     co2cyc_file - external co2 climotology monthly cycle data table   ! 
-!     con_pi      - physical constant Pi                                !
-!                                                                       !
-!  outputs: (CCPP error handling)                                       !
-!     errflg      - error flag                                          !
-!     errmsg      - error message                                       !
-!                                                                       !
-!  usage:    call gas_init                                              !
-!                                                                       !
-!  subprograms called:  none                                            !
-!                                                                       !
-!  ===================================================================  !
+!  =================================================================== !
+!                                                                      !
+!  gas_init sets up co2, etc. parameters.                              !
+!                                                                      !
+!  inputs:                                                             !
+!     me          - print message control flag                         !
+!     ico2flg     - co2 data source control flag                       !
+!                   =0: use prescribed co2 global mean value           !
+!                   =1: use input global mean co2 value (co2_glb)      !
+!                   =2: use input 2-d monthly co2 value (co2vmr_sav)   !
+!     ictmflg     - =yyyy#, data ic time/date control flag             !
+!                   =-2: same as 0, but superimpose seasonal cycle     !
+!                        from climatology data set.                    !
+!                   =-1: use user provided external data for the fcst  !
+!                        time, no extrapolation.                       !
+!                   =0: use data at initial cond time, if not existed  !
+!                       then use latest, without extrapolation.        !
+!                   =1: use data at the forecast time, if not existed  !
+!                       then use latest and extrapolate to fcst time.  !
+!                   =yyyy0: use yyyy data for the forecast time, no    !
+!                           further data extrapolation.                !
+!                   =yyyy1: use yyyy data for the fcst. if needed, do  !
+!                           extrapolation to match the fcst time.      !
+!     co2usr_file - external co2 user defined data table               !
+!     co2cyc_file - external co2 climotology monthly cycle data table  ! 
+!     con_pi      - physical constant Pi                               !
+!                                                                      !
+!  outputs: (CCPP error handling)                                      !
+!     errflg      - error flag                                         !
+!     errmsg      - error message                                      !
+!                                                                      !
+!  usage:    call gas_init                                             !
+!                                                                      !
+!  subprograms called:  none                                           !
+!                                                                      !
+!  =================================================================== !
 !
       implicit none
 
@@ -265,7 +282,7 @@
       raddeg = 180.0/con_pi
       hfpi   = 0.5*con_pi
 
-      if ( mpirank==mpiroot ) print *, VTAGGAS    ! print out version tag
+      if ( mpirank==mpiroot ) print *, VTAGGAS  ! print out version tag
 
       kyrsav  = 0
       kmonsav = 1
@@ -277,13 +294,13 @@
       lab_ico2 : if ( ico2flg == 0 ) then
 
         if ( mpirank==mpiroot ) then
-          print *,' - Using prescribed co2 global mean value=',         &
+          print *,' - Using prescribed co2 global mean value=',
      &              co2vmr_def
         endif
 
       else  lab_ico2
 
-        lab_ictm : if ( ictmflg == -1 ) then      ! input user provided data
+        lab_ictm : if ( ictmflg == -1 ) then ! input user provided data
 
           read_and_broadcast_co2_v1: if ( mpirank==mpiroot ) then
             inquire (file=co2usr_file, exist=file_exist)
@@ -294,7 +311,7 @@
               return
             else
               close (NICO2CN)
-              open(NICO2CN,file=co2usr_file,form='formatted',           &
+              open(NICO2CN,file=co2usr_file,form='formatted',
      &             status='old')
               rewind NICO2CN
               read (NICO2CN, 25) iyr, cline, co2g1, co2g2
@@ -302,7 +319,7 @@
               co2_glb = co2g1 * 1.0e-6
 
               if ( ico2flg == 1 ) then
-                print *,'   - Using co2 global annual mean value from', &
+                print *,'   - Using co2 global annual mean value from',
      &                    ' user provided data set:',co2usr_file
                 print *, iyr,cline(1:94),co2g1,'  GROWTH RATE =', co2g2
               elseif ( ico2flg == 2 ) then
@@ -319,7 +336,7 @@
                   enddo
                 enddo
 
-                print *,' - Using co2 monthly 2-d data from user',      &
+                print *,' - Using co2 monthly 2-d data from user',
      &                  ' provided data set:',co2usr_file
                 print *, iyr,cline(1:94),co2g1,' GROWTH RATE =', co2g2
 
@@ -343,7 +360,7 @@
             endif
           endif read_and_broadcast_co2_v1
 
-        else   lab_ictm                           ! input from observed data
+        else   lab_ictm                     ! input from observed data
 
           if ( ico2flg == 1 ) then
             if ( mpirank==mpiroot ) then
@@ -365,10 +382,10 @@
             read_and_broadcast_co2_v2: if ( mpirank==mpiroot ) then
               inquire (file=co2cyc_file, exist=file_exist)
               if ( .not. file_exist ) then
-                print *,'   Can not find seasonal cycle CO2 data: ',    &
+                print *,'   Can not find seasonal cycle CO2 data: ',
      &               co2cyc_file
                 errflg = 1
-                errmsg = 'ERROR(gas_init): Can not find seasonal cycle '&
+                errmsg = 'ERROR(gas_init): Can not find seasonal cycle '
      &                 // 'CO2 data'
                 return
               else
@@ -376,15 +393,15 @@
 
 !  --- ...  read in co2 2-d seasonal cycle data
                 close (NICO2CN)
-                open (NICO2CN,file=co2cyc_file,form='formatted',        &
+                open (NICO2CN,file=co2cyc_file,form='formatted',
      &                status='old')
                 rewind NICO2CN
                 read (NICO2CN, 35) cline, co2g1, co2g2
   35            format(a98,f7.2,16x,f5.2)
-                read (NICO2CN,cform) co2dat        ! skip annual mean part
+                read (NICO2CN,cform) co2dat      ! skip annual mean part
 
                 print *,' - Superimpose seasonal cycle to mean CO2 data'
-                print *,'   Opened CO2 climatology seasonal cycle data',&
+                print *,'   Opened CO2 climatology seasonal cycle data',
      &                  ' file: ',co2cyc_file
 !check          print *, cline(1:98), co2g1, co2g2
 
@@ -443,58 +460,58 @@
 !!\param errmsg      error message
 !>\section gen_gas_update gas_update General Algorithm
 !-----------------------------------
-      subroutine gas_update(iyear, imon, iday, ihour, ldoco2,           &
-     &      mpicomm, mpirank, mpiroot, co2dat_file, co2gbl_file,        &
+      subroutine gas_update(iyear, imon, iday, ihour, ldoco2,
+     &      mpicomm, mpirank, mpiroot, co2dat_file, co2gbl_file,
      &      ictmflg, ico2flg, errflg, errmsg )
 
-!  ===================================================================  !
-!                                                                       !
-!  gas_update reads in 2-d monthly co2 data set for a specified year.   !
-!  data are in a 15 degree lat/lon horizontal resolution.               !
-!                                                                       !
-!  inputs:                                               dimemsion      !
-!     iyear       - year of the requested data for fcst     1           !
-!     imon        - month of the year                       1           !
-!     iday        - day of the month                        1           !
-!     ihour       - hour of the day                         1           !
-!     ldoco2      - co2 update control flag                 1           !
-!     me          - print message control flag              1           !
-!     ico2flg     - co2 data source control flag                        !
-!                   =0: use prescribed co2 global mean value            !
-!                   =1: use input global mean co2 value (co2_glb)       !
-!                   =2: use input 2-d monthly co2 value (co2vmr_sav)    !
-!     ictmflg     - =yyyy#, data ic time/date control flag              !
-!                   =-2: same as 0, but superimpose seasonal cycle      !
-!                        from climatology data set.                     !
-!                   =-1: use user provided external data for the fcst   !
-!                        time, no extrapolation.                        !
-!                   =0: use data at initial cond time, if not existed   !
-!                       then use latest, without extrapolation.         !
-!                   =1: use data at the forecast time, if not existed   !
-!                       then use latest and extrapolate to fcst time.   !
-!                   =yyyy0: use yyyy data for the forecast time, no     !
-!                           further data extrapolation.                 !
-!                   =yyyy1: use yyyy data for the fcst. if needed, do   !
-!                           extrapolation to match the fcst time.       !
-!     ivflip      - vertical profile indexing flag                      !
-!     co2dat_file - external co2 2d monthly obsv data table             !
-!     co2gbl_file - external co2 global annual mean data table          !
-!                                                                       !
-!  outputs: (CCPP error handling)                                       ! 
-!     errflg      - error flag                                          !
-!     errmsg      - error message                                       !
-!                                                                       !
-!  internal module variables:                                           !
-!     co2vmr_sav - monthly co2 volume mixing ratio     IMXCO2*JMXCO2*12 !
-!     co2cyc_sav - monthly cycle co2 vol mixing ratio  IMXCO2*JMXCO2*12 !
-!     co2_glb    - global annual mean co2 mixing ratio                  !
-!     gco2cyc    - global monthly mean co2 variation       12           !
-!                                                                       !
-!  usage:    call gas_update                                            !
-!                                                                       !
-!  subprograms called:  none                                            !
-!                                                                       !
-!  ===================================================================  !
+!  =================================================================== !
+!                                                                      !
+!  gas_update reads in 2-d monthly co2 data set for a specified year.  !
+!  data are in a 15 degree lat/lon horizontal resolution.              !
+!                                                                      !
+!  inputs:                                               dimemsion     !
+!     iyear       - year of the requested data for fcst     1          !
+!     imon        - month of the year                       1          !
+!     iday        - day of the month                        1          !
+!     ihour       - hour of the day                         1          !
+!     ldoco2      - co2 update control flag                 1          !
+!     me          - print message control flag              1          !
+!     ico2flg     - co2 data source control flag                       !
+!                   =0: use prescribed co2 global mean value           !
+!                   =1: use input global mean co2 value (co2_glb)      !
+!                   =2: use input 2-d monthly co2 value (co2vmr_sav)   !
+!     ictmflg     - =yyyy#, data ic time/date control flag             !
+!                   =-2: same as 0, but superimpose seasonal cycle     !
+!                        from climatology data set.                    !
+!                   =-1: use user provided external data for the fcst  !
+!                        time, no extrapolation.                       !
+!                   =0: use data at initial cond time, if not existed  !
+!                       then use latest, without extrapolation.        !
+!                   =1: use data at the forecast time, if not existed  !
+!                       then use latest and extrapolate to fcst time.  !
+!                   =yyyy0: use yyyy data for the forecast time, no    !
+!                           further data extrapolation.                !
+!                   =yyyy1: use yyyy data for the fcst. if needed, do  !
+!                           extrapolation to match the fcst time.      !
+!     ivflip      - vertical profile indexing flag                     !
+!     co2dat_file - external co2 2d monthly obsv data table            !
+!     co2gbl_file - external co2 global annual mean data table         !
+!                                                                      !
+!  outputs: (CCPP error handling)                                      ! 
+!     errflg      - error flag                                         !
+!     errmsg      - error message                                      !
+!                                                                      !
+!  internal module variables:                                          !
+!     co2vmr_sav - monthly co2 volume mixing ratio     IMXCO2*JMXCO2*12!
+!     co2cyc_sav - monthly cycle co2 vol mixing ratio  IMXCO2*JMXCO2*12!
+!     co2_glb    - global annual mean co2 mixing ratio                 !
+!     gco2cyc    - global monthly mean co2 variation       12          !
+!                                                                      !
+!  usage:    call gas_update                                           !
+!                                                                      !
+!  subprograms called:  none                                           !
+!                                                                      !
+!  =================================================================== !
 !
       implicit none
 
@@ -532,17 +549,17 @@
 
 !> - co2 data section
 
-      if ( ico2flg == 0 ) return    ! use prescribed global mean co2 data
-      if ( ictmflg ==-1 ) return    ! use user provided co2 data
-      if ( .not. ldoco2 ) return    ! no need to update co2 data
+      if ( ico2flg == 0 ) return   ! use prescribed global mean co2 data
+      if ( ictmflg ==-1 ) return   ! use user provided co2 data
+      if ( .not. ldoco2 ) return   ! no need to update co2 data
 
       if ( ictmflg < 0 ) then        ! use user provided external data
         lextpl = .false.                   ! no time extrapolation
         idyr   = iyear                     ! use the model year
       else                           ! use historically observed data
-        lextpl = ( mod(ictmflg,10) == 1 )  ! flag for data extrapolation
-        idyr   = ictmflg / 10              ! year of data source used
-        if ( idyr == 0 ) idyr = iyear      ! not specified, use model year
+        lextpl = ( mod(ictmflg,10) == 1 )! flag for data extrapolation
+        idyr   = ictmflg / 10            ! year of data source used
+        if ( idyr == 0 ) idyr = iyear    ! not specified, use model year
       endif
 
 !  --- ...  auto select co2 2-d data table for required year
@@ -559,9 +576,9 @@
       Lab_if_idyr : if ( idyr < MINYEAR .and. ictmflg > 0 ) then
 
         read_and_broadcast_co2_v1: if ( mpirank==mpiroot ) then
-          print *,'   Requested CO2 data year',iyear,' earlier than',   &
+          print *,'   Requested CO2 data year',iyear,' earlier than',
      &            MINYEAR
-          print *,'   Which is the earliest monthly observation',       &
+          print *,'   Which is the earliest monthly observation',
      &            ' data available.'
           print *,'   Thus, historical global mean data is used'
 
@@ -569,10 +586,10 @@
 
           inquire (file=co2gbl_file, exist=file_exist)
           if ( .not. file_exist ) then
-            print *,'   Requested co2 data file "',co2gbl_file,         &
+            print *,'   Requested co2 data file "',co2gbl_file,
      &              '" not found'
             errflg = 1
-            errmsg = 'ERROR(gas_update): Requested co2 data file not '//&
+            errmsg = 'ERROR(gas_update): Requested co2 data file not '//
      &           'found'
             return
           else
@@ -589,7 +606,7 @@
             if ( idyr < iyr1 ) then
               iyr = iyr1
 !check        if ( me == 0 ) then
-!               print *,'   Using earlist available co2 data, year=',iyr1
+!               print *,' Using earlist available co2 data, year=',iyr1
 !check        endif
             endif
 
@@ -634,16 +651,16 @@
         read_and_broadcast_co2_v2: if ( mpirank==mpiroot ) then
           inquire (file=cfile1, exist=file_exist)
           if ( .not. file_exist ) then
-
-            Lab_if_ictm : if ( ictmflg  > 10 ) then    ! specified year of data not found
-              print *,'   Specified co2 data for year',idyr,            &
+            ! specified year of data not found
+            Lab_if_ictm : if ( ictmflg  > 10 ) then    
+              print *,'   Specified co2 data for year',idyr,
      &               ' not found !!  Need to change namelist ICTM !!'
               errflg = 1
-              errmsg = 'ERROR(gas_update): Specified co2 data for year '&
+              errmsg = 'ERROR(gas_update): Specified co2 data for year '
      &               // 'not found'
               return
-            else Lab_if_ictm                        ! looking for latest available data
-              print *,'   Requested co2 data for year',idyr,            &
+            else Lab_if_ictm      ! looking for latest available data
+              print *,'   Requested co2 data for year',idyr,
      &              ' not found, check for other available data set'
 
               Lab_dowhile2 : do while ( iyr >= MINYEAR )
@@ -661,7 +678,7 @@
               if ( .not. file_exist ) then
                 print *,'   Can not find co2 data source file'
                 errflg = 1
-                errmsg = 'ERROR(gas_update): Can not find co2 data '//  &
+                errmsg = 'ERROR(gas_update): Can not find co2 data '//
      &               'source file'
                 return
               endif
@@ -689,13 +706,13 @@
           endif
 
           co2_glb = (co2g1 + rate) * 1.0e-6
-          print *,'   Global annual mean CO2 data for year',            &
+          print *,'   Global annual mean CO2 data for year',
      &              iyear, co2_glb
-
-          if ( ictmflg == -2 ) then     ! need to calc ic time annual mean first
+          ! need to calc ic time annual mean first
+          if ( ictmflg == -2 ) then
 
             if ( ico2flg == 1 ) then
-              print *,' CHECK: Monthly deviations of climatology ',     &
+              print *,' CHECK: Monthly deviations of climatology ',
      &                'to be superimposed on global annual mean'
               print *, gco2cyc
             elseif ( ico2flg == 2 ) then
@@ -726,10 +743,10 @@
                 enddo
               enddo
 
-              print *,' CHECK: Sample of 2-d annual mean of CO2 ',      &
+              print *,' CHECK: Sample of 2-d annual mean of CO2 ',
      &                'data used for year:',iyear
               print *, co2ann(1,:)
-              print *,' CHECK: AFTER adding seasonal cycle, Sample ',   &
+              print *,' CHECK: AFTER adding seasonal cycle, Sample ',
      &                'of selected months of CO2 data for year:',iyear
               do imo = 1, 12, 3
                 print *,'        Month =',imo
@@ -737,7 +754,7 @@
               enddo
             endif   ! endif_icl2flg_block
 
-          else                  ! no need to calc ic time annual mean first
+          else              ! no need to calc ic time annual mean first
 
             if ( ico2flg == 2 ) then      ! directly save monthly data
               do imo = 1, 12
@@ -751,7 +768,7 @@
                 enddo
               enddo
 
-              print *,' CHECK: Sample of selected months of CO2 ',      &
+              print *,' CHECK: Sample of selected months of CO2 ',
      &                'data used for year:',iyear
               do imo = 1, 12, 3
                 print *,'        Month =',imo
@@ -785,17 +802,17 @@
 !! gases in volume mixing ratio. Currently only co2 has the options
 !! from observed values, all other gases are asigned to the
 !! climatological values.
-!!\param plvl       (IMAX,LMAX+1), pressure at model layer interfaces (mb)
-!!\param xlon       (IMAX), grid longitude in radians, ok both 0->2pi
-!!                  or -pi -> +pi arrangements
-!!\param xlat       (IMAX), grid latitude in radians, default range to
-!!                  pi/2 -> -pi/2, otherwise see in-line comment
-!!\param IMAX       horizontal dimension for output data
-!!\param LMAX       vertical dimension for output data
-!!\param ico2flg    (1), co2 data source control flag
-!!\param top_at_1   (1), vertical ordering flag
-!!\param con_pi     (1), physical constant Pi
-!!\param gasdat     (IMAX,LMAX,NF_VGAS) - gases volume mixing ratioes
+!!\param plvl      (IMAX,LMAX+1), pressure at model layer interfaces(mb)
+!!\param xlon      (IMAX), grid longitude in radians, ok both 0->2pi
+!!                 or -pi -> +pi arrangements
+!!\param xlat      (IMAX), grid latitude in radians, default range to
+!!                 pi/2 -> -pi/2, otherwise see in-line comment
+!!\param IMAX      horizontal dimension for output data
+!!\param LMAX      vertical dimension for output data
+!!\param ico2flg   (1), co2 data source control flag
+!!\param top_at_1  (1), vertical ordering flag
+!!\param con_pi    (1), physical constant Pi
+!!\param gasdat    (IMAX,LMAX,NF_VGAS) - gases volume mixing ratioes
 !!\n                    (:,:,1)           - co2
 !!\n                    (:,:,2)           - n2o
 !!\n                    (:,:,3)           - ch4
@@ -808,60 +825,60 @@
 !!\n                    (:,:,10)          - cfc113
 !!\n
 !> - Internal module variables :
-!!\n     co2vmr_sav - saved monthly co2 concentration from sub gas_update
-!!\n     co2_glb    - saved global annual mean co2 value from  gas_update
-!!\n     gco2cyc    - saved global seasonal variation of co2 climatology
+!!\n    co2vmr_sav - saved monthly co2 concentration from sub gas_update
+!!\n    co2_glb    - saved global annual mean co2 value from  gas_update
+!!\n    gco2cyc    - saved global seasonal variation of co2 climatology
 !!                    in 12-month form
 !>\section gen_getgases getgases General Algorithm
 !-----------------------------------
-      subroutine getgases( plvl, xlon, xlat, IMAX, LMAX, ico2flg,       &
+      subroutine getgases( plvl, xlon, xlat, IMAX, LMAX, ico2flg,
      &     top_at_1, con_pi, gasdat)
-!  ===================================================================  !
-!                                                                       !
-!  getgases set up global distribution of radiation absorbing  gases    !
-!  in volume mixing ratio.  currently only co2 has the options from     !
-!  observed values, all other gases are asigned to the climatological   !
-!  values.                                                              !
-!                                                                       !
-!  inputs:                                                              !
-!     plvl(IMAX,LMAX+1)- pressure at model layer interfaces (mb)        !
-!     xlon(IMAX)       - grid longitude in radians, ok both 0->2pi or   !
-!                        -pi -> +pi arrangements                        !
-!     xlat(IMAX)       - grid latitude in radians, default range to     !
-!                        pi/2 -> -pi/2, otherwise see in-line comment   !
-!     IMAX, LMAX       - horiz, vert dimensions for output data         !
-!     ico2flg          - co2 data source control flag                   !
-!                       =0: use prescribed co2 global mean value        !
-!                       =1: use input global mean co2 value (co2_glb)   !
-!                       =2: use input 2-d monthly co2 value (co2vmr_sav)!
-!     top_at_1         - vertical profile indexing flag                 !
-!     con_pi           - physical constant Pi                           !
-!                                                                       !
-!  outputs:                                                             !
-!     gasdat(IMAX,LMAX,NF_VGAS) - gases volume mixing ratioes           !
-!               (:,:,1)           - co2                                 !
-!               (:,:,2)           - n2o                                 !
-!               (:,:,3)           - ch4                                 !
-!               (:,:,4)           - o2                                  !
-!               (:,:,5)           - co                                  !
-!               (:,:,6)           - cfc11                               !
-!               (:,:,7)           - cfc12                               !
-!               (:,:,8)           - cfc22                               !
-!               (:,:,9)           - ccl4                                !
-!               (:,:,10)          - cfc113                              !
-!                                                                       !
-!     note: for lower atmos co2vmr_sav may have clim monthly deviations !
-!           superimposed on init-cond co2 value, while co2_glb only     !
-!           contains the global mean value, thus needs to add the       !
-!           monthly dglobal mean deviation gco2cyc at upper atmos. for  !
-!           ictmflg/=-2, this value will be zero.                       !
-!                                                                       !
-!  usage:    call getgases                                              !
-!                                                                       !
-!  subprograms called:  none                                            !
-!                                                                       !
-!  ===================================================================  !
-!
+!  =================================================================== !
+!                                                                      !
+!  getgases set up global distribution of radiation absorbing  gases   !
+!  in volume mixing ratio.  currently only co2 has the options from    !
+!  observed values, all other gases are asigned to the climatological  !
+!  values.                                                             !
+!                                                                      !
+!  inputs:                                                             !
+!     plvl(IMAX,LMAX+1)- pressure at model layer interfaces (mb)       !
+!     xlon(IMAX)       - grid longitude in radians, ok both 0->2pi or  !
+!                        -pi -> +pi arrangements                       !
+!     xlat(IMAX)       - grid latitude in radians, default range to    !
+!                        pi/2 -> -pi/2, otherwise see in-line comment  !
+!     IMAX, LMAX       - horiz, vert dimensions for output data        !
+!     ico2flg          - co2 data source control flag                  !
+!                      =0: use prescribed co2 global mean value        !
+!                      =1: use input global mean co2 value (co2_glb)   !
+!                      =2: use input 2-d monthly co2 value (co2vmr_sav)!
+!     top_at_1         - vertical profile indexing flag                !
+!     con_pi           - physical constant Pi                          !
+!                                                                      !
+!  outputs:                                                            !
+!     gasdat(IMAX,LMAX,NF_VGAS) - gases volume mixing ratioes          !
+!               (:,:,1)           - co2                                !
+!               (:,:,2)           - n2o                                !
+!               (:,:,3)           - ch4                                !
+!               (:,:,4)           - o2                                 !
+!               (:,:,5)           - co                                 !
+!               (:,:,6)           - cfc11                              !
+!               (:,:,7)           - cfc12                              !
+!               (:,:,8)           - cfc22                              !
+!               (:,:,9)           - ccl4                               !
+!               (:,:,10)          - cfc113                             !
+!                                                                      !
+!     note: for lower atmos co2vmr_sav may have clim monthly deviations!
+!           superimposed on init-cond co2 value, while co2_glb only    !
+!           contains the global mean value, thus needs to add the      !
+!           monthly dglobal mean deviation gco2cyc at upper atmos. for !
+!           ictmflg/=-2, this value will be zero.                      !
+!                                                                      !
+!  usage:    call getgases                                             !
+!                                                                      !
+!  subprograms called:  none                                           !
+!                                                                      !
+!  =================================================================== !
+
       implicit none
 
 !  ---  input:
@@ -915,9 +932,10 @@
         tmp = raddeg / resco2
         do i = 1, IMAX
           xlon1 = xlon(i)
-          if ( xlon1 < 0.0 ) xlon1 = xlon1 + con_pi  ! if xlon in -pi->pi, convert to 0->2pi
-          xlat1 = hfpi - xlat(i)                     ! if xlat in pi/2 -> -pi/2 range
-!note     xlat1 = xlat(i)                            ! if xlat in 0 -> pi range
+          ! if xlon in -pi->pi, convert to 0->2pi
+          if ( xlon1 < 0.0 ) xlon1 = xlon1 + con_pi  
+          xlat1 = hfpi - xlat(i)       ! if xlat in pi/2 -> -pi/2 range
+!note     xlat1 = xlat(i)              ! if xlat in 0 -> pi range
 
           ilon = min( IMXCO2, int( xlon1*tmp + 1 ))
           ilat = min( JMXCO2, int( xlat1*tmp + 1 ))

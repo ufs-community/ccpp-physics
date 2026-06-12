@@ -236,7 +236,7 @@ contains
       write(error_unit,'(a)') "ccpp_abort: " // trim(str)
 #if defined(__INTEL_COMPILER)
       call tracebackqq("ccpp_abort" // trim(str), user_exit_code=-1)
-#else if defined(__GFORTRAN__)
+#elif defined(__GFORTRAN__)
       call backtrace()
 #endif
       call MPI_ABORT(comm, ierr)

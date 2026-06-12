@@ -4,11 +4,15 @@
   branch = main
 [submodule "physics/MP/TEMPO/TEMPO"]
   path = physics/MP/TEMPO/TEMPO
-  #url = https://github.com/NCAR/TEMPO
-  #branch = main
-  url = https://github.com/climbfuji/TEMPO
-  branch = feature/capgen-ng
+  url = https://github.com/NCAR/TEMPO
+  branch = main
 [submodule "physics/SFC_Layer/MYNN/MYNN"]
   path = physics/SFC_Layer/MYNN/MYNN
   url = https://github.com/NCAR/MYNN-SFC
   branch = ccpp/dev
+[submodule "physics/CONV/C3"]
+  path = physics/CONV/C3
+  url = https://github.com/ufs-community/c3
+  branch = main
+
+

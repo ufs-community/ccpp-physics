@@ -518,8 +518,8 @@
      &     iovr_exp,                     ! Flag for exponential cloud overlap method
      &     iovr_exprand,                 ! Flag for exponential-random cloud overlap method
      &     idcor,
-     &     idcor_con,
-     &     idcor_hogan,
+     &     idcor_con,                   
+     &     idcor_hogan,                 
      &     idcor_oreopoulos
 
 
@@ -600,7 +600,7 @@
         end do
       end do
 
-      if (imp_physics == imp_physics_mg) then !
+      if (imp_physics == imp_physics_mg) then ! 
                   ! unified cloud and/or with MG microphysics
 
         if (uni_cld .and. ncndl >= 2) then
@@ -795,7 +795,7 @@
           ptop1(i,id) = ptopc(id,1) + tem1*max( 0.0, 4.0*rxlat(i)-1.0 )
         enddo
       enddo
-
+        
       ! Compute cloud decorrelation length
       if (idcor == idcor_hogan) then
         call cmp_dcorr_lgth(ix, xlat, con_pi, de_lgth)
@@ -1271,7 +1271,7 @@
           do k = 1, NLAY-1
           do i = 1, IX
              cldtot(i,k) = cld_frac_XuRandall(plyr(i,k), qstl(i,k),     &    
-     &           rhly(i,k), clwf(i,k), xrc3, xr_exp, 0.)
+     &           rhly(i,k), clwf(i,k), xrc3, xr_exp, 0.) 
           end do
           end do
         else
@@ -1280,7 +1280,7 @@
           do k = 1, NLAY-1
           do i = 1, IX
              cldtot(i,k) = cld_frac_XuRandall(plyr(i,k), qstl(i,k),     &    
-     &           rhly(i,k), clwf(i,k), xrc3, xr_exp, 0.)
+     &           rhly(i,k), clwf(i,k), xrc3, xr_exp, 0.) 
           end do
           end do
         endif
@@ -1548,7 +1548,7 @@
                  else
                    rei(i,k)=reice_def
                  endif
-            endif
+            endif       
             crp(i,k) = max(0.0, clw(i,k,ntrw) * gfac * delp(i,k))
             csp(i,k) = max(0.0, (1.-snow2ice)*clw(i,k,ntsw) *
      &             gfac * delp(i,k))
@@ -1586,7 +1586,7 @@
           do k = 1, NLAY-1
           do i = 1, IX
              cldtot(i,k) = cld_frac_XuRandall(plyr(i,k), qstl(i,k),     &    
-     &           rhly(i,k), clwf(i,k), xrc3, xr_exp, 0.)
+     &           rhly(i,k), clwf(i,k), xrc3, xr_exp, 0.) 
           end do
           end do
         else
@@ -1597,7 +1597,7 @@
           do i = 1, IX
              cldtot(i,k) = cld_frac_XuRandall(plyr(i,k), qstl(i,k),     &    
      &          rhly(i,k), clwf(i,k), xrc3, xr_exp, 0.,                 &
-     &          cond_cfrac_onRH)
+     &          cond_cfrac_onRH) 
           end do
           end do
         endif
@@ -1898,8 +1898,8 @@
                   rew(i,k) = 9.5
                else                                                      !--- Land
                   rew(i,k) = 5.5
-               endif
-            endif
+               endif 
+            endif 
             if (qi1d(k).gt.clwmin .and. cldfra1d(k).lt.ovcst) then
                cip(i,k) = qi1d(k) * dz1d(k)*1000.
                idx_rei = int(t1d(k)-179.)
@@ -1907,7 +1907,7 @@
                corr = t1d(k) - int(t1d(k))
                rei(i,K) = max(5.0, retab(idx_rei)*(1.-corr) +           &
      &                                 retab(idx_rei+1)*corr)
-            endif
+            endif 
          enddo
       enddo
 
@@ -2938,20 +2938,19 @@
       k_cldb = k_tropo
       in_cloud = .false.
       k = k_tropo
-      DO WHILE (.not. in_cloud .AND. k.gt.k_m12C+1)
+      outer_loop: DO WHILE (.not. in_cloud .AND. k.gt.k_m12C+1)
          k_cldt = 0
          if (cfr1d(k).ge.0.01) then
             in_cloud = .true.
             k_cldt = MAX(k_cldt, k)
          endif
          if (in_cloud) then
-            DO k2 = k_cldt-1, k_m12C, -1
+            inner_search: DO k2 = k_cldt-1, k_m12C, -1
                if (cfr1d(k2).lt.0.01 .or. k2.eq.k_m12C) then
                   k_cldb = k2+1
-                  goto 87
+                  exit inner_search
                endif
-            ENDDO
- 87         continue
+            END DO inner_search
             in_cloud = .false.
          endif
          if ((k_cldt - k_cldb + 1) .ge. 2) then
@@ -2964,25 +2963,24 @@
             k = k_cldb
          endif
          k = k - 1
-      ENDDO
+      END DO outer_loop
 
       k_cldb = k_m12C + 3
       in_cloud = .false.
       k = k_m12C + 2
-      DO WHILE (.not. in_cloud .AND. k.gt.kbot)
+      outer_loop2: DO WHILE (.not. in_cloud .AND. k.gt.kbot)
          k_cldt = 0
          if (cfr1d(k).ge.0.01) then
             in_cloud = .true.
             k_cldt = MAX(k_cldt, k)
          endif
          if (in_cloud) then
-            DO k2 = k_cldt-1, kbot, -1
+            inner_loop2: DO k2 = k_cldt-1, kbot, -1
                if (cfr1d(k2).lt.0.01 .or. k2.eq.kbot) then
                   k_cldb = k2+1
-                  goto 88
+                  exit inner_loop2
                endif
-            ENDDO
- 88         continue
+            END DO inner_loop2
             in_cloud = .false.
          endif
          if ((k_cldt - k_cldb + 1) .ge. 2) then
@@ -2995,8 +2993,7 @@
             k = k_cldb
          endif
          k = k - 1
-      ENDDO
-
+      END DO outer_loop2
 
       END SUBROUTINE find_cloudLayers
 
@@ -3155,7 +3152,7 @@
 
 !        ! Parameters
 !        real(kind_phys) :: &
-!           lambda = 0.50  ! , &
+!           lambda = 0.50  ! , & 
 !           P      = 0.25
 
         clwt = 1.0e-6 * (p_lay*0.001)
