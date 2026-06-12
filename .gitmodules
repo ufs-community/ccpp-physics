@@ -12,7 +12,5 @@
   branch = ccpp/dev
 [submodule "physics/CONV/C3"]
   path = physics/CONV/C3
-  url = https://github.com/ufs-community/c3
+  url = https://github.com/ufs-community/c3.git
   branch = main
-
-
