@@ -30,7 +30,7 @@ module mp_tempo
 !!
       subroutine mp_tempo_init(ncol, nlev, &
            imp_physics, imp_physics_tempo, &
-           mpicomm, mpirank, mpiroot, &
+           mpirank, mpiroot, &
            tgrs, prsl, phil, con_pi, con_hvap, con_hfus, &
            con_rv, con_g, con_rd, con_cp, &
            con_t0c, con_rgas, rhowater, &
@@ -67,7 +67,6 @@ module mp_tempo
          real(kind_phys),           intent(in   ) :: prsl(:,:)
          real(kind_phys),           intent(in   ) :: phil(:,:)
          ! MPI information
-         type(MPI_Comm),            intent(in   ) :: mpicomm
          integer,                   intent(in   ) :: mpirank
          integer,                   intent(in   ) :: mpiroot
          ! CCPP error handling
@@ -246,8 +245,7 @@ module mp_tempo
 !!
 !>\ingroup aatempo
 !>\section gen_tempo TEMPO MP General Algorithm
-      subroutine mp_tempo_run(ncol, nlev, &
-        mpicomm, mpirank, mpiroot, blkno, &
+      subroutine mp_tempo_run(ncol, nlev, blkno, &
         convert_dry_rho, dtp, dt_inner, &
         spechum, qc, qr, qi, qs, qg, ni, nr, &
         nc, nwfa, nifa, nwfa2d, nifa2d, ng, volg, &
@@ -302,13 +300,10 @@ module mp_tempo
          real(kind_phys),           intent(in   ) :: phii(:,:)
          real(kind_phys),           intent(in   ) :: omega(:,:)
          real(kind_phys),           intent(in   ) :: dtp
-         real,                      intent(in   ) :: dt_inner
+         real(kind=kind_phys),      intent(in   ) :: dt_inner
          logical,                   intent(in   ) :: first_time_step
          ! MPI and block information
          integer,                   intent(in)    :: blkno
-         type(MPI_Comm),            intent(in)    :: mpicomm
-         integer,                   intent(in)    :: mpirank
-         integer,                   intent(in)    :: mpiroot
          
          real(kind_phys),           intent(  out) :: ten_q(:,:,:)
          real(kind_phys),           intent(  out) :: ten_t(:,:)
