@@ -580,7 +580,7 @@ module mp_thompson
          ! Initialize the CCPP error handling variables
          errmsg = ''
          errflg = 0
-         
+
          ten_q    = 0.0 ! Since this scheme is outputting tracer tendencies individually,
                         ! we also need to initialize the entire array to 0, so that when
                         ! tendencies are applied, all tracer tendencies other than those

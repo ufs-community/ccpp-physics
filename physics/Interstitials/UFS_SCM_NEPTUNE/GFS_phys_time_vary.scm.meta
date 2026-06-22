@@ -961,7 +961,7 @@
   type = logical
   intent = in
 [nthrds]
-  standard_name = number_of_openmp_threads
+  standard_name = number_of_physics_threads
   long_name = number of OpenMP threads available for physics schemes
   units = count
   dimensions = ()
@@ -1515,7 +1515,7 @@
   kind = kind_phys
   intent = inout
 [nthrds]
-  standard_name = number_of_openmp_threads
+  standard_name = number_of_physics_threads
   long_name = number of OpenMP threads available for physics schemes
   units = count
   dimensions = ()
