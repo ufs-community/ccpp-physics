@@ -963,7 +963,7 @@
   intent = in
 [nthrds]
   standard_name = number_of_physics_threads
-  long_name = number of OpenMP threads available for physics schemes
+  long_name = number of OpenMP threads available to scheme
   units = count
   dimensions = ()
   type = integer
@@ -1197,7 +1197,7 @@
 [nsswr]
   standard_name = number_of_timesteps_between_shortwave_radiation_calls
   long_name = number of timesteps between shortwave radiation calls
-  units = count
+  units =
   dimensions = ()
   type = integer
   intent = in
@@ -1539,7 +1539,7 @@
   intent = inout
 [nthrds]
   standard_name = number_of_physics_threads
-  long_name = number of OpenMP threads available for physics schemes
+  long_name = number of OpenMP threads available to scheme
   units = count
   dimensions = ()
   type = integer
@@ -1627,7 +1627,7 @@
   units = none
   dimensions = (number_of_lines_in_internal_namelist)
   type = character
-  kind = len=*
+  kind = len=256
   intent = in
 [use_ufo]
   standard_name = flag_for_gcycle_surface_option
@@ -2017,7 +2017,7 @@
   dimensions = (horizontal_dimension)
   type = real
   kind = kind_phys
-  intent = in
+  intent = inout
 [xlon_d]
   standard_name = longitude_in_degree
   long_name = longitude in degree east
@@ -2025,7 +2025,7 @@
   dimensions = (horizontal_dimension)
   type = real
   kind = kind_phys
-  intent = in
+  intent = inout
 [landfrac]
   standard_name = land_area_fraction
   long_name = fraction of horizontal grid area occupied by land

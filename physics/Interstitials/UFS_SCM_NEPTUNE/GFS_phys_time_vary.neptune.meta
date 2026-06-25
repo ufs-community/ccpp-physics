@@ -963,7 +963,7 @@
   intent = in
 [nthrds]
   standard_name = number_of_physics_threads
-  long_name = number of OpenMP threads available for physics schemes
+  long_name = number of OpenMP threads available to scheme
   units = count
   dimensions = ()
   type = integer
@@ -1539,7 +1539,7 @@
   intent = inout
 [nthrds]
   standard_name = number_of_physics_threads
-  long_name = number of OpenMP threads available for physics schemes
+  long_name = number of OpenMP threads available to scheme
   units = count
   dimensions = ()
   type = integer
