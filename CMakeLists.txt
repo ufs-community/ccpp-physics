@@ -131,7 +131,6 @@ endif()
 set(SCHEME_NAMES_SAMF_SP mo_conv_kind.F90
                          samfdeepcnv.f
 			 samfshalcnv.f
-                         samfaerosols.F
                          progomega_calc.f90
                          progsigma_calc.f90)
 set(SCHEMES_SAMFCNV)
