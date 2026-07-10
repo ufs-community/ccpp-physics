@@ -9649,8 +9649,9 @@ END SUBROUTINE nssl_2mom_driver
       real dqvr, dqc, dqr, dqi, dqs
       real qv1m,qvs1m,ss1m,ssi1m,qis1m
       real cwmastmp 
-      real  dcloud,dcloud2 ! ,as, bs
-      real dcrit
+      real  dcloud,dcloud2,dcloudmx ! ,as, bs
+      real dcrit,dcloudcheck
+      integer, parameter :: icondlimit = 1
       real cn(ngs), cnuf(ngs)
       real :: ccwmax
 
@@ -10657,6 +10658,13 @@ END SUBROUTINE nssl_2mom_driver
        dqvii = 0.0
        dqvis = 0.0
 
+       IF ( icondlimit == 1 ) THEN
+         ssmx =  0.001
+
+         CALL QVEXCESS(ngs,mgs,qwvp,qv0,qx(1,lc),pres,thetap,theta0,dcloudmx, &
+     &      pi0,tabqvs,nqsat,fqsat,cbw,fcqv1,felvcp,ssmx,pk,ngscnt)
+       ENDIF
+
        RK2c: DO WHILE ( dt1 .lt. dtp )
           nc = 0
           IF ( n .le. 4 ) THEN
@@ -10747,6 +10755,16 @@ END SUBROUTINE nssl_2mom_driver
           ENDIF
        ENDDO RK2c
 
+       IF ( icondlimit == 1 ) THEN
+        IF ( dqc + dqr > 0.0 .and. dcloudmx > 0.0 .and. dqc + dqr > dcloudmx ) THEN
+        ! backstop for max condensation
+        ! write(0,*) 'dcl,dclmx = ',dqc+dqr,dcloudmx,ssmx,dqc,dqr
+          dcloudcheck = dqc+dqr
+          dqc = dqc*dcloudmx/dcloudcheck
+          dqr = dqr*dcloudmx/dcloudcheck
+        ! write(0,*) 'new dcl,dqc,dqr = ',dqc+dqr,dqc,dqr
+        ENDIF
+       ENDIF
 
         dcloud = dqc ! qx(mgs,lv) - qv1
         thetap(mgs) = thetap(mgs) + e1*(DCLOUD + dqr)

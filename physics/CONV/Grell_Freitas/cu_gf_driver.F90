@@ -240,6 +240,7 @@ contains
    real(kind=kind_phys), dimension (im)  :: hfx,qfx
 !$acc declare create(hfx,qfx)
    real(kind=kind_phys) tem,tem1,tf,tcr,tcrf,psum
+   real(kind=kind_phys) :: cliw_candidate, clcw_candidate, clw_total_candidate
    real(kind=kind_phys) :: cliw_shal,clcw_shal,tem_shal, cliw_both, weight_sum
    real(kind=kind_phys) :: cliw_deep,clcw_deep,tem_deep, clcw_both
    integer :: cliw_deep_idx, clcw_deep_idx, cliw_shal_idx, clcw_shal_idx
@@ -902,7 +903,8 @@ contains
             enddo
 !$acc end kernels
 !
-!$acc parallel loop private(kstop,dtime_max,massflx,trcflx_in1,clw_in1,po_cup)
+!$acc parallel loop private(kstop,dtime_max,massflx,trcflx_in1,clw_in1,po_cup, &
+!$acc                       cliw_candidate,clcw_candidate,clw_total_candidate)
             do i=its,itf
             massflx(:)=0.
             trcflx_in1(:)=0.
@@ -970,8 +972,9 @@ contains
 
              massflx   (1)=0.
              trcflx_in1(1)=0.
-             call fct1d3 (kstop,kte,dtime_max,po_cup,                  &
-                            clw_in1,massflx,trcflx_in1,clw_ten(i,:),g)
+             !Turn off convective subsidence for clcw and ice.
+             !call fct1d3 (kstop,kte,dtime_max,po_cup,                  &
+             !               clw_in1,massflx,trcflx_in1,clw_ten(i,:),g)
 
              do k=1,kstop
                tem  = dt*(outqcs(i,k)*cutens(i)+outqc(i,k)*cuten(i)    &
@@ -979,11 +982,29 @@ contains
                       +clw_ten(i,k)                                    &
                          )
                tem1 = max(0.0, min(1.0, (tcr-t(i,k))*tcrf))
-               if (clcw(i,k) .gt. -999.0) then
-                cliw(i,k) = max(0.,cliw(i,k) + tem * tem1)            ! ice
-                clcw(i,k) = max(0.,clcw(i,k) + tem *(1.0-tem1))       ! water
+               if (clcw(i,k) .gt. -999.0_kind_phys) then
+                  cliw_candidate = cliw(i,k) + tem*tem1
+                  clcw_candidate = clcw(i,k) + tem*(1.0_kind_phys-tem1)
+                  clw_total_candidate = cliw(i,k) + clcw(i,k) + tem
+
+                  ! Preserve the total condensate when the temperature-based
+                  ! partition attempts to remove more than one phase contains.
+                  if (clw_total_candidate < 0.0_kind_phys) then
+                     ! No nonnegative partition can preserve a negative total.
+                     cliw(i,k) = 0.0_kind_phys
+                     clcw(i,k) = 0.0_kind_phys
+                  else if (cliw_candidate < 0.0_kind_phys) then
+                     cliw(i,k) = 0.0_kind_phys
+                     clcw(i,k) = clw_total_candidate
+                  else if (clcw_candidate < 0.0_kind_phys) then
+                     cliw(i,k) = clw_total_candidate
+                     clcw(i,k) = 0.0_kind_phys
+                  else
+                     cliw(i,k) = cliw_candidate
+                     clcw(i,k) = clcw_candidate
+                  endif
                else
-                cliw(i,k) = max(0.,cliw(i,k) + tem)
+                  cliw(i,k) = max(0.0_kind_phys, cliw(i,k) + tem)
                endif
 
              enddo
