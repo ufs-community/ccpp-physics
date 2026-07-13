@@ -2,7 +2,6 @@
   name = base_physics_process
   type = ddt
   dependencies = ../../hooks/machine.F
-  #module_name = module_ccpp_suite_simulator
 
 [ccpp-arg-table]
   name = base_physics_process
