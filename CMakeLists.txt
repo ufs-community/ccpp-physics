@@ -81,11 +81,13 @@ get_filename_component(LOCAL_CURRENT_SOURCE_DIR ${FULL_PATH_TO_CMAKELISTS} DIREC
 
 #------------------------------------------------------------------------------
 
-# special thompson
-set_source_files_properties(${LOCAL_CURRENT_SOURCE_DIR}/physics/MP/Thompson/module_mp_thompson.F90
-PROPERTIES
-COMPILE_OPTIONS "-fp-model=fast;-fprotect-parens;-fimf-precision=high"
-)
+# Flags to speed up Thompson MP; Intel compilers only
+if (${CMAKE_Fortran_COMPILER_ID} STREQUAL "Intel" OR ${CMAKE_Fortran_COMPILER_ID} STREQUAL "IntelLLVM")
+  set_source_files_properties(${LOCAL_CURRENT_SOURCE_DIR}/physics/MP/Thompson/module_mp_thompson.F90
+  PROPERTIES
+  COMPILE_OPTIONS "-fp-model=fast;-fprotect-parens;-fimf-precision=high"
+  )
+endif()
 
 # List of files that should be compiled with RTE-RRTMGP compilation flags
 set(SCHEMES_RTERRTMGP ${LOCAL_CURRENT_SOURCE_DIR}/physics/Radiation/RRTMGP/rte-rrtmgp/gas-optics/mo_gas_optics.F90
@@ -121,12 +123,14 @@ set(SCHEMES_OPENMP_OFF ${SCHEMES_RTERRTMGP})
 # List of files that need to be compiled with different precision
 set(SCHEMES_DYNAMICS)
 
-# special thompson
-if(${LOCAL_CURRENT_SOURCE_DIR}/physics/MP/Thompson/module_mp_thompson.F90 IN_LIST SCHEMES)
-set_source_files_properties(${LOCAL_CURRENT_SOURCE_DIR}/physics/MP/Thompson/module_mp_thompson.F90
-PROPERTIES
-COMPILE_OPTIONS "-fp-model=fast;-fprotect-parens;-fimf-precision=high"
-)
+# special thompson intel compliers only
+if (${CMAKE_Fortran_COMPILER_ID} STREQUAL "Intel" OR ${CMAKE_Fortran_COMPILER_ID} STREQUAL "IntelLLVM")
+  if(${LOCAL_CURRENT_SOURCE_DIR}/physics/MP/Thompson/module_mp_thompson.F90 IN_LIST SCHEMES)
+    set_source_files_properties(${LOCAL_CURRENT_SOURCE_DIR}/physics/MP/Thompson/module_mp_thompson.F90
+    PROPERTIES
+    COMPILE_OPTIONS "-fp-model=fast;-fprotect-parens;-fimf-precision=high"
+    )
+  endif()
 endif()
 
 if(${LOCAL_CURRENT_SOURCE_DIR}/physics/MP/GFDL/fv_sat_adj.F90 IN_LIST SCHEMES)
