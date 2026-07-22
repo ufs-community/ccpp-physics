@@ -10758,11 +10758,9 @@ END SUBROUTINE nssl_2mom_driver
        IF ( icondlimit == 1 ) THEN
         IF ( dqc + dqr > 0.0 .and. dcloudmx > 0.0 .and. dqc + dqr > dcloudmx ) THEN
         ! backstop for max condensation
-        ! write(0,*) 'dcl,dclmx = ',dqc+dqr,dcloudmx,ssmx,dqc,dqr
           dcloudcheck = dqc+dqr
           dqc = dqc*dcloudmx/dcloudcheck
           dqr = dqr*dcloudmx/dcloudcheck
-        ! write(0,*) 'new dcl,dqc,dqr = ',dqc+dqr,dqc,dqr
         ENDIF
        ENDIF
 

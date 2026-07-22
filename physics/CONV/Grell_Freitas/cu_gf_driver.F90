@@ -973,8 +973,6 @@ contains
              massflx   (1)=0.
              trcflx_in1(1)=0.
              !Turn off convective subsidence for clcw and ice.
-             !call fct1d3 (kstop,kte,dtime_max,po_cup,                  &
-             !               clw_in1,massflx,trcflx_in1,clw_ten(i,:),g)
 
              do k=1,kstop
                tem  = dt*(outqcs(i,k)*cutens(i)+outqc(i,k)*cuten(i)    &
