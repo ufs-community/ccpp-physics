@@ -14,8 +14,8 @@
         ntwa, ntia, ntgl, ntoz, ntke, ntkev, nqrimef, trans_aero, ntchs, ntchm,          &
         ntccn, nthl, nthnc, ntgv, nthv, ntrz, ntgz, nthz,                                &
         imp_physics, imp_physics_gfdl, imp_physics_thompson, imp_physics_wsm6,           &
-        imp_physics_mg, imp_physics_fer_hires, imp_physics_nssl,                         &
-        ltaerosol, mraerosol, nssl_ccn_on, nssl_hail_on, nssl_3moment,                   &
+        imp_physics_tempo, lthailaware, imp_physics_mg, imp_physics_fer_hires,           &
+        imp_physics_nssl, ltaerosol, mraerosol, nssl_ccn_on, nssl_hail_on, nssl_3moment, &
         hybedmf, do_shoc, satmedmf, qgrs, vdftra,                                        &
         ugrs, vgrs, tgrs, errmsg, errflg)
         
@@ -31,9 +31,9 @@
       integer, intent(in) :: ntwa, ntia, ntgl, ntoz, ntke, ntkev, nqrimef,ntchs, ntchm
       integer, intent(in) :: ntccn, nthl, nthnc, ntgv, nthv, ntrz, ntgz, nthz
       logical, intent(in) :: trans_aero
-      integer, intent(in) :: imp_physics, imp_physics_gfdl, imp_physics_thompson, imp_physics_wsm6
+      integer, intent(in) :: imp_physics, imp_physics_gfdl, imp_physics_thompson, imp_physics_wsm6, imp_physics_tempo
       integer, intent(in) :: imp_physics_mg, imp_physics_fer_hires
-      logical, intent(in) :: ltaerosol, hybedmf, do_shoc, satmedmf, mraerosol
+      logical, intent(in) :: ltaerosol, hybedmf, do_shoc, satmedmf, mraerosol, lthailaware
       integer, intent(in) :: imp_physics_nssl
       logical, intent(in) :: nssl_hail_on, nssl_ccn_on, nssl_3moment
 
@@ -138,6 +138,43 @@
             enddo
             rtg_ozone_index = 9
           endif
+        elseif (imp_physics == imp_physics_tempo) then
+  ! Tempo
+           do k=1,levs
+              do i=1,im
+                 vdftra(i,k,1)  = qgrs(i,k,ntqv)
+                 vdftra(i,k,2)  = qgrs(i,k,ntcw)
+                 vdftra(i,k,3)  = qgrs(i,k,ntiw)
+                 vdftra(i,k,4)  = qgrs(i,k,ntrw)
+                 vdftra(i,k,5)  = qgrs(i,k,ntsw)
+                 vdftra(i,k,6)  = qgrs(i,k,ntgl)
+                 vdftra(i,k,7)  = qgrs(i,k,ntinc)
+                 vdftra(i,k,8)  = qgrs(i,k,ntrnc)
+                 vdftra(i,k,9)  = qgrs(i,k,ntoz)
+              enddo
+           enddo
+           rtg_ozone_index = 9
+           n = 10
+           
+           if (ltaerosol) then
+              do k=1,levs
+                 do i=1,im
+                    vdftra(i,k,n) = qgrs(i,k,ntlnc)
+                    vdftra(i,k,n+1) = qgrs(i,k,ntwa)
+                    vdftra(i,k,n+2) = qgrs(i,k,ntia)
+                 enddo
+              enddo
+              n = 13
+           endif
+
+           if (lthailaware) then
+              do k=1,levs
+                 do i=1,im              
+                    vdftra(i,k,n) = qgrs(i,k,ntgnc)
+                    vdftra(i,k,n+1) = qgrs(i,k,ntgv)
+                 enddo
+              enddo
+           endif
   ! MG
         elseif (imp_physics == imp_physics_mg) then        ! MG3/2
           if (ntgl > 0) then                               ! MG3
@@ -262,6 +299,7 @@
         if (trans_aero) then
           call set_aerosol_tracer_index(imp_physics, imp_physics_wsm6,          &
                                         imp_physics_thompson, ltaerosol,mraerosol, &
+                                        imp_physics_tempo, lthailaware, &
                                         imp_physics_mg, ntgl, imp_physics_gfdl, &
                                         imp_physics_nssl,                       &
                                         nssl_hail_on, nssl_ccn_on, nssl_3moment, kk, &
