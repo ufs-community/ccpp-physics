@@ -553,7 +553,6 @@ contains
           if (clear_column .or. doSWclrsky) then
              call check_error_msg('rrtmgp_sw_main_rte_sw_clrsky',rte_sw(     &
                   sw_optical_props_accum,           & ! IN  - optical-properties
-                  top_at_1,                         & ! IN  - veritcal ordering flag
                   real(coszen(iCols), kind=rte_wp), & ! IN  - Cosine of solar zenith angle
                   toa_src_sw,                       & ! IN  - incident solar flux at TOA
                   sfc_alb_dir,                      & ! IN  - Shortwave surface albedo (direct)
@@ -612,7 +611,6 @@ contains
              ! Compute fluxes
              call check_error_msg('rrtmgp_sw_main_rte_sw_allsky',rte_sw(     &
                   sw_optical_props_accum,           & ! IN  - optical-properties
-                  top_at_1,                         & ! IN  - veritcal ordering flag
                   real(coszen(iCols), kind=rte_wp), & ! IN  - Cosine of solar zenith angle
                   toa_src_sw,                       & ! IN  - incident solar flux at TOA
                   sfc_alb_dir,                      & ! IN  - Shortwave surface albedo (direct)

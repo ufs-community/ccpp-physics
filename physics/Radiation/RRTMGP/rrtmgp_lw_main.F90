@@ -501,7 +501,6 @@ contains
           if (nGauss_angles .gt. 1) then
              call check_error_msg('rrtmgp_lw_main_lw_rte_clrsky',rte_lw(           &
                   lw_optical_props_clrsky,         & ! IN  - optical-properties
-                  top_at_1,                        & ! IN  - veritcal ordering flag
                   sources,                         & ! IN  - source function
                   sfc_emiss_byband,                & ! IN  - surface emissivity in each LW band
                   flux_clrsky,                     & ! OUT - Fluxes
@@ -509,7 +508,6 @@ contains
           else
              call check_error_msg('rrtmgp_lw_main_lw_rte_clrsky',rte_lw(           &
                   lw_optical_props_clrsky,         & ! IN  - optical-properties
-                  top_at_1,                        & ! IN  - veritcal ordering flag
                   sources,                         & ! IN  - source function
                   sfc_emiss_byband,                & ! IN  - surface emissivity in each LW band
                   flux_clrsky,                     & ! OUT - Fluxes
@@ -549,7 +547,6 @@ contains
              ! Compute LW Jacobians
              call check_error_msg('rrtmgp_lw_main_lw_rte_allsky',rte_lw(           &
                   lw_optical_props_clouds,         & ! IN  - optical-properties
-                  top_at_1,                        & ! IN  - veritcal ordering flag
                   sources,                         & ! IN  - source function
                   sfc_emiss_byband,                & ! IN  - surface emissivity in each LW band
                   flux_allsky,                     & ! OUT - Flxues 
@@ -558,7 +555,6 @@ contains
           else
              call check_error_msg('rrtmgp_lw_main_lw_rte_allsky',rte_lw(           &
                   lw_optical_props_clouds,         & ! IN  - optical-properties
-                  top_at_1,                        & ! IN  - veritcal ordering flag
                   sources,                         & ! IN  - source function
                   sfc_emiss_byband,                & ! IN  - surface emissivity in each LW band
                   flux_allsky,                     & ! OUT - Flxues 
@@ -574,7 +570,6 @@ contains
              ! Compute LW Jacobians
              call check_error_msg('rrtmgp_lw_rte_run',rte_lw(           &
                   lw_optical_props_clrsky,         & ! IN  - optical-properties
-                  top_at_1,                        & ! IN  - veritcal ordering flag
                   sources,                         & ! IN  - source function
                   sfc_emiss_byband,                & ! IN  - surface emissivity in each LW band
                   flux_allsky,                     & ! OUT - Flxues 
@@ -583,7 +578,6 @@ contains
           else
              call check_error_msg('rrtmgp_lw_rte_run',rte_lw(           &
                   lw_optical_props_clrsky,         & ! IN  - optical-properties
-                  top_at_1,                        & ! IN  - veritcal ordering flag
                   sources,                         & ! IN  - source function
                   sfc_emiss_byband,                & ! IN  - surface emissivity in each LW band
                   flux_allsky,                     & ! OUT - Flxues 
