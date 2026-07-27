@@ -6,7 +6,7 @@
   path = physics/MP/TEMPO/tempo_v3
   #url = https://github.com/NCAR/TEMPO
   #branch = main
-  url = https://github.com/climbfuji/TEMPO
+  url = https://github.com/dustinswales/TEMPO
   branch = feature/capgen-ng
 [submodule "physics/SFC_Layer/MYNN/MYNN"]
   path = physics/SFC_Layer/MYNN/MYNN
