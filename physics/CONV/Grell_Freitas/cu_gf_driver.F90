@@ -224,7 +224,7 @@ contains
 
    integer :: i,j,k,icldck,ipr,jpr,jpr_deep,ipr_deep,uidx,vidx,tidx,qidx
    integer :: itf,jtf,ktf,iss,jss,nbegin,nend,cliw_idx,clcw_idx
-   integer :: high_resolution
+   integer :: high_resolution,conv_sub
    real(kind=kind_phys)    :: clwtot,clwtot1,excess,tcrit,tscl_kf,dp,dq,sub_spread,subcenter
    real(kind=kind_phys)    :: dsubclw,dsubclws,dsubclwm,dtime_max,ztm,ztq,hfm,qfm,rkbcon,rktop
    real(kind=kind_phys), dimension(km)   :: massflx,trcflx_in1,clw_in1,po_cup
@@ -261,6 +261,11 @@ contains
      ichoice   = ichoice_in
      ichoicem  = ichoicem_in
      ichoice_s = ichoice_s_in
+
+  !  whether turn off convective subsidence for clcw and ice   
+  ! 0=off, 1=on; 0 for better stability
+     conv_sub = 0
+
      if(do_cap_suppress) then
 !$acc serial
        do itime=1,num_dfi_radar
@@ -973,6 +978,10 @@ contains
              massflx   (1)=0.
              trcflx_in1(1)=0.
              !Turn off convective subsidence for clcw and ice.
+             if (conv_sub .eq. 1)
+                call fct1d3 (kstop,kte,dtime_max,po_cup,              & 
+                            clw_in1,massflx,trcflx_in1,clw_ten(i,:),g)
+             end if
 
              do k=1,kstop
                tem  = dt*(outqcs(i,k)*cutens(i)+outqc(i,k)*cuten(i)    &
