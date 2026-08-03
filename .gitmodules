@@ -2,7 +2,7 @@
   path = physics/Radiation/RRTMGP/rte-rrtmgp
   url = https://github.com/NCAR/rte-rrtmgp
   branch = main
-[submodule "physics/MP/TEMPO/TEMPO"]
+[submodule "physics/MP/TEMPO/tempo_v3"]
   path = physics/MP/TEMPO/tempo_v3
   #url = https://github.com/NCAR/TEMPO
   #branch = main
