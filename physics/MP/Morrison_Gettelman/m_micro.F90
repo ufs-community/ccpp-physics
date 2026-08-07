@@ -43,6 +43,9 @@ subroutine m_micro_init(imp_physics, imp_physics_mg, fprcp, gravit, rair, rh2o, 
                         mg_do_ice_gmao, mg_do_liq_liu, errmsg, errflg)
 
     use machine,            only: kind_phys
+#ifdef NEMS_GSM
+    use cldmacro,           only: cldmacro_init
+#endif
     use cldwat2m_micro,     only: ini_micro
     use micro_mg2_0,        only: micro_mg_init2_0 => micro_mg_init
     use micro_mg3_0,        only: micro_mg_init3_0 => micro_mg_init
@@ -92,7 +95,9 @@ subroutine m_micro_init(imp_physics, imp_physics_mg, fprcp, gravit, rair, rh2o, 
     lsbcp  = (hvap+hfus)*onebcp
 
     if (fprcp <= 0) then
-      call ini_micro (mg_dcs, mg_qcvar, mg_ts_auto_ice(1))
+      call ini_micro (mg_dcs, mg_qcvar, mg_ts_auto_ice(1),              &
+                      gravit, rair, rh2o, eps_in, tmelt, cpair,         &
+                      latvap, latice, pi_in)
     elseif (fprcp == 1) then
       call micro_mg_init2_0(kind_phys, gravit, rair, rh2o, cpair, &
                             eps, tmelt, latvap, latice, mg_rhmini,&
@@ -127,14 +132,18 @@ subroutine m_micro_init(imp_physics, imp_physics_mg, fprcp, gravit, rair, rh2o, 
       errmsg = 'ERROR(m_micro_init): fprcp is not a valid option'
       return
     endif
-    call aer_cloud_init ()
+    call aer_cloud_init (pi_in)
+#ifdef NEMS_GSM
+    call cldmacro_init(tice_in, gravit, cpair, latvap, &
+         latice, pi_in, rair, rh2o)
+#endif
 
     is_initialized = .true.
 
 end subroutine m_micro_init
 
 !> \defgroup mg2mg3 Morrison-Gettelman MP Driver Module
-!! \brief This subroutine is the Morrison-Gettelman MP driver, which computes 
+!! \brief This subroutine is the Morrison-Gettelman MP driver, which computes
 !! grid-scale condensation and evaporation of cloud condensate.
 !!
 !> \section arg_table_m_micro_run Argument Table
@@ -164,7 +173,8 @@ end subroutine m_micro_init
      &,                         ten_t, ten_q, ten_qv, ten_ncpi          &
      &,                         ten_ncpl, ten_rnw, ten_snw, ten_qgl     &
      &,                         ten_ncpr, ten_ncps, ten_ncgl, ten_ql    &
-     &,                         ten_qi, errmsg, errflg)
+     &,                         ten_qi                                  &
+     &,                         errmsg, errflg)
 
 !      use funcphys,      only: fpvs                !< saturation vapor pressure for water-ice mixed
 !      use funcphys,      only: fpvsl, fpvsi, fpvs  !< saturation vapor pressure for water,ice & mixed
@@ -192,7 +202,7 @@ end subroutine m_micro_init
 !      real,   parameter  :: r_air = 3.47d-3
        integer, parameter :: kp = kind_phys
        real(kind=kind_phys), intent(in   ) :: rainmin
-    
+
        integer, parameter :: ncolmicro = 1
        integer,intent(in) :: im, lm, kdt, fprcp, pdfflag, iccn, ntrcaer
        logical,intent(in) :: flipv, skip_macro
@@ -414,7 +424,7 @@ end subroutine m_micro_init
 ! Initialize CCPP error handling variables
        errmsg = ''
        errflg = 0
-       
+
        ten_t = 0.0
        ten_q = 0.0
        ten_qv = 0.0
@@ -727,7 +737,7 @@ end subroutine m_micro_init
 !need an estimate of convective area
 !=======================================================================================================================
 !=======================================================================================================================
-!> -# Nucleation of cloud droplets and ice crystals 
+!> -# Nucleation of cloud droplets and ice crystals
 !! Aerosol cloud interactions. Calculate maxCCN tendency using Fountoukis and Nenes (2005) or Abdul Razzak and Ghan (2002)
 !! liquid Activation Parameterization
 !! Ice activation follows the Barahona & Nenes ice activation scheme, ACP, (2008, 2009).
@@ -835,7 +845,7 @@ end subroutine m_micro_init
 
 
          call gw_prof (1, LM, 1, tm_gw, pm_gw, pi_gw, rhoi_gw, ni_gw,   &
-     &                 ti_gw, nm_gw, q1(i,:))
+     &                 ti_gw, nm_gw, q1(i,:), grav, cp, rgas, VIREPS)
 
          do k=1,lm
            nm_gw(k)    = max(nm_gw(k), 0.005_kp)
@@ -1240,7 +1250,7 @@ end subroutine m_micro_init
 !===========================Two-moment stratiform microphysics ===============================
 !===========This is the implementation of the Morrison and Gettelman (2008) microphysics =====
 !=============================================================================================
-!> -# Two-moment stratiform microphysics: this is the implementation of the Morrison and 
+!> -# Two-moment stratiform microphysics: this is the implementation of the Morrison and
 !! Gettelman (2008) microphysics \cite Morrison_2008
 
       do I=1,IM
@@ -1311,7 +1321,7 @@ end subroutine m_micro_init
 !         else
 !           call init_Aer(AeroAux)
 !         end if
-!>  - Call getinsubset() to extract dust properties 
+!>  - Call getinsubset() to extract dust properties
           call getINsubset(1, AeroAux, AeroAux_b)
           naux = AeroAux_b%nmods
           if (nbincontactdust < naux) then
@@ -1920,15 +1930,13 @@ end subroutine m_micro_init
 
 !===============================================================================
 !>\ingroup mg2mg3
-!> This subroutine computes profiles of background state quantities for 
+!> This subroutine computes profiles of background state quantities for
 !! the multiple gravity wave drag parameterization.
 !!\section gw_prof_gen MG gw_prof General Algorithm
 !> @{
        subroutine gw_prof (pcols, pver, ncol, t, pm, pi, rhoi, ni, ti,  &
-                           nm, sph)
+                           nm, sph, grav, cp, rgas, fv)
        use machine , only : kind_phys
-       use physcons, grav => con_g, cp => con_cp, rgas => con_rd,       &
-                     fv   => con_fvirt
        implicit none
        integer, parameter :: kp = kind_phys
 !-----------------------------------------------------------------------
@@ -1947,19 +1955,27 @@ end subroutine m_micro_init
        real(kind=kind_phys), intent(in) :: pm(pcols,pver)
        real(kind=kind_phys), intent(in) :: pi(pcols,0:pver)
        real(kind=kind_phys), intent(in) :: sph(pcols,pver)
+       real(kind=kind_phys), intent(in) :: grav ! con_g
+       real(kind=kind_phys), intent(in) :: cp ! con_cp
+       real(kind=kind_phys), intent(in) :: rgas ! con_rd
+       real(kind=kind_phys), intent(in) :: fv ! con_fvirt
 
        real(kind=kind_phys), intent(out) :: rhoi(pcols,0:pver)
        real(kind=kind_phys), intent(out) :: ni(pcols,0:pver)
        real(kind=kind_phys), intent(out) :: ti(pcols,0:pver)
        real(kind=kind_phys), intent(out) :: nm(pcols,pver)
 
-       real(kind=kind_phys), parameter :: r=rgas, cpair=cp, g=grav, &
-                                          oneocp=1.0_kp/cp, n2min=1.0e-8_kp
-
 !---------------------------Local storage-------------------------------
+       real(kind=kind_phys), parameter :: n2min=1.0e-8_kp
+       real(kind=kind_phys) :: r, cpair, g, oneocp
        integer :: ix,kx
 
        real :: dtdp, n2
+
+       r=rgas
+       cpair=cp
+       g=grav
+       oneocp=1.0_kp/cp
 
 !-----------------------------------------------------------------------------
 !> -# Determine the interface densities and Brunt-Vaisala frequencies.

@@ -1,21 +1,21 @@
 !***********************************************************************
-!*                   GNU Lesser General Public License                 
+!*                   GNU Lesser General Public License
 !*
 !* This file is part of the FV3 dynamical core.
 !*
-!* The FV3 dynamical core is free software: you can redistribute it 
+!* The FV3 dynamical core is free software: you can redistribute it
 !* and/or modify it under the terms of the
 !* GNU Lesser General Public License as published by the
-!* Free Software Foundation, either version 3 of the License, or 
+!* Free Software Foundation, either version 3 of the License, or
 !* (at your option) any later version.
 !*
-!* The FV3 dynamical core is distributed in the hope that it will be 
-!* useful, but WITHOUT ANYWARRANTY; without even the implied warranty 
-!* of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+!* The FV3 dynamical core is distributed in the hope that it will be
+!* useful, but WITHOUT ANYWARRANTY; without even the implied warranty
+!* of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 !* See the GNU General Public License for more details.
 !*
 !* You should have received a copy of the GNU Lesser General Public
-!* License along with the FV3 dynamical core.  
+!* License along with the FV3 dynamical core.
 !* If not, see <http://www.gnu.org/licenses/>.
 !***********************************************************************
 
@@ -37,8 +37,6 @@ module ccpp_multi_gases_mod
 ! </table>
       use machine, only: kind_dyn
       ! DH* TODO - MAKE THIS INPUT ARGUMENTS
-      use physcons, only : rdgas => con_rd_dyn, &
-                           cp_air => con_cp_dyn
       ! *DH
 
       implicit none
@@ -65,7 +63,7 @@ module ccpp_multi_gases_mod
 
       CONTAINS
 ! --------------------------------------------------------
-      subroutine multi_gases_init(ngas, nwat, ri, cpi, is_master)
+      subroutine multi_gases_init(ngas, nwat, ri, cpi, rdgas, cp_air, is_master)
 !--------------------------------------------
 ! !OUTPUT PARAMETERS
 ! Ouput: vir(i): ri/rdgas - r0/rdgas
@@ -79,6 +77,8 @@ module ccpp_multi_gases_mod
       integer, intent(in):: ngas, nwat
       real(kind=kind_dyn), intent(in):: ri(0:ngas)
       real(kind=kind_dyn), intent(in):: cpi(0:ngas)
+      real(kind=kind_dyn), intent(in):: rdgas
+      real(kind=kind_dyn), intent(in):: cp_air
       logical, intent(in):: is_master
 ! Local:
       integer n
