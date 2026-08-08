@@ -18,7 +18,7 @@ module mp_tempo
 
       implicit none
 
-      public :: mp_tempo_init, mp_tempo_run, mp_tempo_finalize
+      public :: mp_tempo_init, mp_tempo_run, mp_tempo_final
 
       private
 
@@ -245,7 +245,7 @@ module mp_tempo
 !!
 !>\ingroup aatempo
 !>\section gen_tempo TEMPO MP General Algorithm
-      subroutine mp_tempo_run(ncol, nlev, blkno, &
+      subroutine mp_tempo_run(ncol, nlev, &
         convert_dry_rho, dtp, dt_inner, &
         spechum, qc, qr, qi, qs, qg, ni, nr, &
         nc, nwfa, nifa, nwfa2d, nifa2d, ng, volg, &
@@ -302,9 +302,7 @@ module mp_tempo
          real(kind_phys),           intent(in   ) :: dtp
          real(kind=kind_phys),      intent(in   ) :: dt_inner
          logical,                   intent(in   ) :: first_time_step
-         ! MPI and block information
-         integer,                   intent(in)    :: blkno
-         
+
          real(kind_phys),           intent(  out) :: ten_q(:,:,:)
          real(kind_phys),           intent(  out) :: ten_t(:,:)
          real(kind_phys),           intent(  out) :: ten_u(:,:)
@@ -420,7 +418,7 @@ module mp_tempo
            new_volg  = volg
          endif
 
-         if (first_time_step .and. blkno==1) then
+         if (first_time_step) then
             ! Check initialization state
             if (.not.is_initialized) then
                write(errmsg, fmt='((a))') 'mp_tempo_run called before mp_tempo_init'
@@ -577,10 +575,10 @@ module mp_tempo
 
       end subroutine mp_tempo_run
 
-!> \section arg_table_mp_tempo_finalize Argument Table
-!! \htmlinclude mp_tempo_finalize.html
+!> \section arg_table_mp_tempo_final Argument Table
+!! \htmlinclude mp_tempo_final.html
 !!
-      subroutine mp_tempo_finalize(is_initialized, errmsg, errflg)
+      subroutine mp_tempo_final(is_initialized, errmsg, errflg)
         
          logical,                   intent(inout) :: is_initialized
          character(len=*),          intent(  out) :: errmsg
@@ -594,6 +592,6 @@ module mp_tempo
 
          is_initialized = .false.
 
-      end subroutine mp_tempo_finalize
+      end subroutine mp_tempo_final
 
 end module mp_tempo

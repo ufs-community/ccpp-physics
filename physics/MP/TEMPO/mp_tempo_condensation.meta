@@ -233,7 +233,7 @@
   
 ########################################################################
 [ccpp-arg-table]
-  name = mp_tempo_condensation_finalize
+  name = mp_tempo_condensation_final
   type = scheme
 [errmsg]
   standard_name = ccpp_error_message

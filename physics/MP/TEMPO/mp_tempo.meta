@@ -295,13 +295,6 @@
   dimensions = ()
   type = integer
   intent = in
-[blkno]
-  standard_name = ccpp_block_number
-  long_name = number of block for explicit data blocking in CCPP
-  units = index
-  dimensions = ()
-  type = integer
-  intent = in
 [convert_dry_rho]
   standard_name = flag_for_converting_hydrometeors_from_moist_to_dry_air
   long_name = flag for converting hydrometeors from moist to dry air
@@ -348,7 +341,7 @@
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
   kind = kind_phys
-  intent = inout
+  intent = in
 [qi]
   standard_name = cloud_ice_mixing_ratio
   long_name = ice water mixing ratio wrt dry+vapor (no condensates)
@@ -749,7 +742,7 @@
   
 ########################################################################
 [ccpp-arg-table]
-  name = mp_tempo_finalize
+  name = mp_tempo_final
   type = scheme
 [is_initialized]
   standard_name = flag_for_tempo_mp_scheme_initialization

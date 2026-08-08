@@ -40,7 +40,7 @@
 
       private
 
-      public GFS_phys_time_vary_init, GFS_phys_time_vary_timestep_init, GFS_phys_time_vary_finalize
+      public GFS_phys_time_vary_init, GFS_phys_time_vary_timestep_init, GFS_phys_time_vary_final
 
       real(kind=kind_phys), parameter :: con_hr        =  3600.0_kind_phys
       real(kind=kind_phys), parameter :: con_99        =    99.0_kind_phys
@@ -771,10 +771,10 @@
          jday = 0
          call w3doxdat(jdat,jdow,jdoy,jday)
          rjday = jdoy + jdat(5) / 24.
-         if (rjday < ozphys%time(1)) rjday = rjday + 365.
 
 !> - Update ozone concentration.
          if (ntoz > 0) then
+            if (rjday < ozphys%time(1)) rjday = rjday + 365.
             call find_photochem_time_index(ozphys%ntime, ozphys%time, rjday, n1, n2)
 
             call ozphys%update_o3prog(jindx1_o3, jindx2_o3, ddy_o3, rjday, n1, n2, ozpl)
@@ -782,6 +782,7 @@
 
 !> - Update stratospheric h2o concentration.
          if (h2o_phys) then
+            if (rjday < h2ophys%time(1)) rjday = rjday + 365.
             call find_photochem_time_index(h2ophys%ntime, h2ophys%time, rjday, n1, n2)
 
             call h2ophys%update(jindx1_h, jindx2_h, ddy_h, rjday, n1, n2, h2opl)
@@ -849,10 +850,10 @@
       end subroutine GFS_phys_time_vary_timestep_init
 !> @}
 
-!> \section arg_table_GFS_phys_time_vary_finalize Argument Table
-!! \htmlinclude GFS_phys_time_vary_finalize.html
+!> \section arg_table_GFS_phys_time_vary_final Argument Table
+!! \htmlinclude GFS_phys_time_vary_final.html
 !!
-      subroutine GFS_phys_time_vary_finalize(is_initialized, errmsg, errflg)
+      subroutine GFS_phys_time_vary_final(is_initialized, errmsg, errflg)
 
          implicit none
 
@@ -883,6 +884,6 @@
 
          is_initialized = .false.
 
-      end subroutine GFS_phys_time_vary_finalize
+      end subroutine GFS_phys_time_vary_final
 
    end module GFS_phys_time_vary

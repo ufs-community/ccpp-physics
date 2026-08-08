@@ -962,8 +962,8 @@
   type = logical
   intent = in
 [nthrds]
-  standard_name = number_of_openmp_threads
-  long_name = number of OpenMP threads available for physics schemes
+  standard_name = number_of_physics_threads
+  long_name = number of OpenMP threads available to scheme
   units = count
   dimensions = ()
   type = integer
@@ -1074,7 +1074,7 @@
 
 ########################################################################
 [ccpp-arg-table]
-  name = GFS_phys_time_vary_finalize
+  name = GFS_phys_time_vary_final
   type = scheme
 [is_initialized]
   standard_name = flag_for_gfs_phys_time_vary_interstitial_initialization
@@ -1197,7 +1197,7 @@
 [nsswr]
   standard_name = number_of_timesteps_between_shortwave_radiation_calls
   long_name = number of timesteps between shortwave radiation calls
-  units =
+  units = count
   dimensions = ()
   type = integer
   intent = in
@@ -1538,8 +1538,8 @@
   kind = kind_phys
   intent = inout
 [nthrds]
-  standard_name = number_of_openmp_threads
-  long_name = number of OpenMP threads available for physics schemes
+  standard_name = number_of_physics_threads
+  long_name = number of OpenMP threads available to scheme
   units = count
   dimensions = ()
   type = integer
@@ -1627,7 +1627,7 @@
   units = none
   dimensions = (number_of_lines_in_internal_namelist)
   type = character
-  kind = len=256
+  kind = len=*
   intent = in
 [use_ufo]
   standard_name = flag_for_gcycle_surface_option
@@ -2017,7 +2017,7 @@
   dimensions = (horizontal_dimension)
   type = real
   kind = kind_phys
-  intent = inout
+  intent = in
 [xlon_d]
   standard_name = longitude_in_degree
   long_name = longitude in degree east
@@ -2025,7 +2025,7 @@
   dimensions = (horizontal_dimension)
   type = real
   kind = kind_phys
-  intent = inout
+  intent = in
 [landfrac]
   standard_name = land_area_fraction
   long_name = fraction of horizontal grid area occupied by land

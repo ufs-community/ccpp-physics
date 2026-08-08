@@ -14,7 +14,6 @@
   dimensions = ()
   type = logical
   intent = in
-  intent = in
 [isatmedmf]
   standard_name = choice_of_scale_aware_TKE_moist_EDMF_PBL
   long_name = choice of scale-aware TKE moist EDMF PBL scheme
