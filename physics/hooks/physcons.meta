@@ -218,6 +218,111 @@
   dimensions = ()
   type = real
   kind = kind_phys
+[rhoair_IFS]
+  standard_name = density_of_air_IFS
+  long_name = reference density of air used by IFS
+  units = kg m-3
+  dimensions = ()
+  type = real
+  kind = kind_phys
+[rhosnow]
+  standard_name = density_of_snow
+  long_name = density of snow
+  units = kg m-3
+  dimensions = ()
+  type = real
+  kind = kind_phys
+[visd]
+  standard_name = dynamic_viscosity_of_air
+  long_name = dynamic viscosity of air at 0 deg C and 1000 hPa
+  units = kg m-1 s-1
+  dimensions = ()
+  type = real
+  kind = kind_phys
+[visk]
+  standard_name = kinematic_viscosity_of_air
+  long_name = kinematic viscosity of air at 0 deg C and 1000 hPa
+  units = m2 s-1
+  dimensions = ()
+  type = real
+  kind = kind_phys
+[vdifu]
+  standard_name = diffusivity_of_water_vapor_in_air
+  long_name = diffusivity of water vapor in air at 0 deg C and 1000 hPa
+  units = m2 s-1
+  dimensions = ()
+  type = real
+  kind = kind_phys
+[tcond]
+  standard_name = thermal_conductivity_of_air
+  long_name = thermal conductivity of air at 0 deg C and 1000 hPa
+  units = W m-1 K-1
+  dimensions = ()
+  type = real
+  kind = kind_phys
+[cdg]
+  standard_name = drag_coefficient_of_graupel
+  long_name = drag coefficient of graupel
+  units = 1
+  dimensions = ()
+  type = real
+  kind = kind_phys
+[cdh]
+  standard_name = drag_coefficient_of_hail
+  long_name = drag coefficient of hail
+  units = 1
+  dimensions = ()
+  type = real
+  kind = kind_phys
+[rhocw]
+  standard_name = density_of_cloud_water
+  long_name = density of cloud water
+  units = kg m-3
+  dimensions = ()
+  type = real
+  kind = kind_phys
+[rhoci]
+  standard_name = density_of_cloud_ice
+  long_name = density of cloud ice
+  units = kg m-3
+  dimensions = ()
+  type = real
+  kind = kind_phys
+[rhocr]
+  standard_name = density_of_rain
+  long_name = density of rain
+  units = kg m-3
+  dimensions = ()
+  type = real
+  kind = kind_phys
+[rhocg]
+  standard_name = density_of_graupel
+  long_name = density of graupel
+  units = kg m-3
+  dimensions = ()
+  type = real
+  kind = kind_phys
+[rhoch]
+  standard_name = density_of_hail
+  long_name = density of hail
+  units = kg m-3
+  dimensions = ()
+  type = real
+  kind = kind_phys
+[qcmin]
+  standard_name = minimum_mass_mixing_ratio_of_cloud_condensate
+  long_name = minimum value for cloud condensates
+  units = kg kg-1
+  dimensions = ()
+  type = real
+  kind = kind_phys
+[qfmin]
+  standard_name = minimum_mass_mixing_ratio_for_sedimentation
+  long_name = minimum value for sedimentation
+  units = kg kg-1
+  dimensions = ()
+  type = real
+  kind = kind_phys
 [con_csol]
   standard_name = specific_heat_of_ice_at_constant_pressure
   long_name = specific heat of ice at constant pressure
@@ -312,6 +417,13 @@
 [con_amw]
   standard_name = molecular_weight_of_water_vapor
   long_name = molecular weight of water vapor
+  units = g mol-1
+  dimensions = ()
+  type = real
+  kind = kind_phys
+[con_amo3]
+  standard_name = molecular_weight_of_ozone
+  long_name = molecular weight of ozone
   units = g mol-1
   dimensions = ()
   type = real

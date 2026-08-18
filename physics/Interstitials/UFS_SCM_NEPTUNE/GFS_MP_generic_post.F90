@@ -18,7 +18,8 @@
       subroutine GFS_MP_generic_post_run(                                                                                 &
         im, levs, kdt, tend_opt_mp, nrcm, nncl, ntcw, ntrac, imp_physics, imp_physics_gfdl, imp_physics_thompson,         &
         imp_physics_tempo, imp_physics_nssl, imp_physics_mg, imp_physics_fer_hires, cal_pre, cplflx, cplchm, cpllnd,      &
-        progsigma, con_g, rhowater, rainmin, dtf, frain, rainc, rain1, rann, xlat, xlon, ten_t, ten_u, ten_v, ten_q, dudt,&
+        progsigma, con_g, con_eps, con_epsm1, con_epsq, con_fvirt, con_rog, rhowater, rainmin, dtf, frain, rainc, rain1,  &
+        rann, xlat, xlon, ten_t, ten_u, ten_v, ten_q, dudt,                                                               &
         dvdt, dtdt, dqdt, gt0, gu0, gv0, gq0, prsl, prsi, phii, tsfc, ice, phil, htop,                                    &
         refl_10cm, imfshalcnv,imfshalcnv_gf,imfdeepcnv,imfdeepcnv_gf,imfdeepcnv_samf, con_t0c, snow, graupel,             &
         rain0, ice0, snow0, graupel0, del, rain, domr_diag, domzr_diag, domip_diag, doms_diag, tprcp, srflag, sr,         &
@@ -51,7 +52,8 @@
       real(kind=kind_phys), dimension(:,:,:),  intent(inout) :: dqdt
       real(kind=kind_phys), dimension(:,:),    intent(inout) :: gt0,gu0,gv0,refl_10cm
 
-      real(kind=kind_phys),                    intent(in)    :: dtf, frain, con_g, rainmin, rhowater
+      real(kind=kind_phys),                    intent(in)    :: dtf, frain, con_g, con_eps, con_epsm1, con_epsq
+      real(kind=kind_phys),                    intent(in)    :: con_fvirt, con_rog, rainmin, rhowater
       real(kind=kind_phys), dimension(:),      intent(in)    :: rain1, xlat, xlon, tsfc
       real(kind=kind_phys), dimension(:),      intent(inout) :: ice, snow, graupel, rainc
       real(kind=kind_phys), dimension(:),      intent(in), optional :: rain0, ice0, snow0, graupel0
@@ -364,6 +366,8 @@
                             rann, xlat, xlon, gt0,           &
                             gq0(:,:,1), prsl, prsi,          &
                             rain, phii, tsfc,                &  ! input
+                            con_g, con_eps, con_epsm1,       &  ! input
+                            con_epsq, con_fvirt, con_rog,    &  ! input
                             domr, domzr, domip, doms)           ! output
 !
 !       HCHUANG: use new precipitation type to decide snow flag for LSM snow accumulation

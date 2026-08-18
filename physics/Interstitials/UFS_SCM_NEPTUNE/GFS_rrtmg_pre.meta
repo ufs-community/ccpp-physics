@@ -2,7 +2,7 @@
   name = GFS_rrtmg_pre
   type = scheme
   dependencies_path = ../../
-  dependencies = tools/funcphys.f90,hooks/machine.F,hooks/physcons.F90
+  dependencies = tools/funcphys.f90,hooks/machine.F
   dependencies = MP/TEMPO/tempo_v3/src/module_mp_tempo_params.F90
   dependencies = MP/TEMPO/tempo_v3/src/module_mp_tempo_cfgs.F90
   dependencies = MP/TEMPO/tempo_v3/src/module_mp_tempo_ml.F90
