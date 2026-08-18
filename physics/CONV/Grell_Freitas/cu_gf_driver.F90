@@ -166,7 +166,7 @@ contains
    real(kind_phys), dimension(:,:), intent(out) :: ten_t, ten_u, ten_v, dcliw, dclcw
    real(kind_phys), dimension(:,:,:), intent(out) :: ten_q
    real(kind_phys), intent(in) :: qamin
-
+   
    character(len=*), intent(out) :: errmsg
    integer,          intent(out) :: errflg
 
@@ -263,7 +263,7 @@ contains
   ! initialize ccpp error handling variables
      errmsg = ''
      errflg = 0
-
+     
      ten_t = 0.0
      ten_u = 0.0
      ten_v = 0.0
@@ -272,7 +272,7 @@ contains
      dclcw = 0.0
      new_clcw = clcw
      new_cliw = cliw
-
+     
      ichoice   = ichoice_in
      ichoicem  = ichoicem_in
      ichoice_s = ichoice_s_in
@@ -343,11 +343,11 @@ contains
        rand_mom(:)    = 0.
        rand_vmas(:)   = 0.
        rand_clos(:,:) = 0.
-     else
+     else 
        do i=1,im
          spp_wts_cu_deep_tmp=min(max(-1.0_kind_phys, spp_wts_cu_deep(i,1)),1.0_kind_phys)
-         rand_mom(i)    = spp_wts_cu_deep_tmp
-         rand_vmas(i)   = spp_wts_cu_deep_tmp
+         rand_mom(i)    = spp_wts_cu_deep_tmp 
+         rand_vmas(i)   = spp_wts_cu_deep_tmp 
          rand_clos(i,:) = spp_wts_cu_deep_tmp
        end do
      end if
@@ -363,7 +363,7 @@ contains
      kte=km
      ktf=kte-1
 !$acc kernels
-!
+! 
      tropics(:)=0
 !
 !> - Set tuning constants for radiation coupling
@@ -506,7 +506,7 @@ contains
 !$acc end kernels
      ierrc(:)=" "
 !$acc kernels
-
+     
 
      kbcon(:)=0
      kbcons(:)=0
@@ -949,7 +949,7 @@ contains
                cnvw(i,k)=cnvwt(i,k)*xmb(i)*dt+cnvwts(i,k)*xmbs(i)*dt+cnvwtm(i,k)*xmbm(i)*dt
                ud_mf(i,k)=cuten(i)*zu(i,k)*xmb(i)*dt
                dd_mf(i,k)=cuten(i)*zd(i,k)*edt(i)*xmb(i)*dt
-
+               
                ten_t(i,k) = (cutens(i)*outts(i,k)+cutenm(i)*outtm(i,k)+outt(i,k)*cuten(i))
                qv(i,k)=max(1.e-16,qv(i,k)+dt*(cutens(i)*outqs(i,k)+cutenm(i)*outqm(i,k)+outq(i,k)*cuten(i)))
                gdc(i,k,7)=sqrt(us(i,k)**2 +vs(i,k)**2)
@@ -1007,7 +1007,7 @@ contains
                 new_cliw(i,k) = max(0.,cliw(i,k) + tem)
                 dcliw(i,k) = (new_cliw(i,k) - cliw(i,k))/dt
                endif
-
+               
              enddo
 
             gdc(i,1,10)=forcing(i,1)

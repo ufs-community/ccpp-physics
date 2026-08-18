@@ -1,17 +1,17 @@
 !>\file mfpbltq.f
-!! This file contains the subroutine that computes mass flux and
+!! This file contains the subroutine that computes mass flux and 
 !! updraft parcel properties for
 !! thermals driven by surface heating
 
 !> This module contains the subroutine that calculates mass flux and
-!! updraft parcel properties for thermals driven by surface heating
+!! updraft parcel properties for thermals driven by surface heating 
 !! for use in the TKE-EDMF PBL scheme (updated version).
       module mfpbltq_mod
       contains
 !>\ingroup module_satmedmfvdifq
 !! This subroutine computes mass flux and updraft parcel properties for
-!! thermals driven by surface heating.
-!!\section mfpbltq_gen GFS mfpblt General Algorithm
+!! thermals driven by surface heating. 
+!!\section mfpbltq_gen GFS mfpblt General Algorithm 
 !> @{
       subroutine mfpbltq(im,ix,km,kmpbl,ntcw,ntrac1,delt,
      &   cnvflg,zl,zm,q1,t1,u1,v1,plyr,pix,thlx,thvx,
@@ -35,7 +35,7 @@
      &                     plyr(im,km),pix(im,km),thlx(im,km),
      &                     thvx(im,km),zl(im,km), zm(im,km),
      &                     gdx(im),    hpbl(im),  vpert(im),
-     &                     buo(im,km), wush(im,km),
+     &                     buo(im,km), wush(im,km), 
      &                     tkemean(im),vez0fun(im),xmf(im,km),
      &                     tcko(im,km),qcko(im,km,ntrac1),
      &                     ucko(im,km),vcko(im,km),
@@ -127,11 +127,11 @@ c  local variables and arrays
       enddo
 !
 !> - Compute entrainment rate
-!
+!     
 !  if tkemean>tkcrt, ce0t=sqrt(tkemean/tkcrt)*ce0
 !
       do i=1,im
-        if(cnvflg(i)) then
+        if(cnvflg(i)) then 
           ce0t(i) = ce0 * vez0fun(i)
           if(tkemean(i) > tkcrt) then
             tem = sqrt(tkemean(i)/tkcrt)
@@ -208,7 +208,7 @@ c  local variables and arrays
         enddo
       enddo
 !
-!> - Compute updraft velocity square(wu2, eqn 13 in
+!> - Compute updraft velocity square(wu2, eqn 13 in 
 !! Han et al.(2019) \cite Han_2019)
 !
 !     tem = 1.-2.*f1
@@ -294,7 +294,7 @@ c  local variables and arrays
           if(kpbl(i) <= 1) cnvflg(i)=.false.
         endif
       enddo
-!
+! 
 !> - Update entrainment rate
 !
       do i=1,im
@@ -315,7 +315,7 @@ c  local variables and arrays
               tem = max((hpbl(i)-zm(i,k)+delz(i)) ,delz(i))
               ptem1 = 1./tem
               xlamue(i,k) = ce0t(i) * (ptem+ptem1)
-            else
+            else 
               xlamue(i,k) = xlamax(i)
             endif
 !
@@ -369,7 +369,7 @@ c  local variables and arrays
         endif
       enddo
 !
-!> - Compute scale-aware function based on
+!> - Compute scale-aware function based on 
 !! Arakawa and Wu (2013) \cite arakawa_and_wu_2013
 !
       do i = 1, im
@@ -478,7 +478,7 @@ c  local variables and arrays
              dz   = zl(i,k) - zl(i,k-1)
              tem  = 0.5 * xlamueq(i,k-1) * dz
              factor = 1. + tem
-!
+! 
              qcko(i,k,n) = ((1.-tem)*qcko(i,k-1,n)+tem*
      &                    (q1(i,k,n)+q1(i,k-1,n)))/factor
           endif
@@ -499,7 +499,7 @@ c  local variables and arrays
              dz   = zl(i,k) - zl(i,k-1)
              tem  = 0.5 * xlamueq(i,k-1) * dz
              factor = 1. + tem
-!
+! 
              qcko(i,k,n) = ((1.-tem)*qcko(i,k-1,n)+tem*
      &                    (q1(i,k,n)+q1(i,k-1,n)))/factor
           endif

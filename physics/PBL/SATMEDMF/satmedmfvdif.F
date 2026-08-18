@@ -27,7 +27,7 @@
 
 ! Consistency checks
       if (.not. satmedmf) then
-        write(errmsg,fmt='(*(a))') 'Logic error: satmedmf = .false.'
+        write(errmsg,fmt='(*(a))') 'Logic error: satmedmf = .false.'        
         errflg = 1
         return
       end if
@@ -41,7 +41,7 @@
 
       end subroutine satmedmfvdif_init
 
-!> \defgroup satmedmf GFS Scale-aware TKE-based Moist Eddy-Diffusivity Mass-flux (TKE-EDMF) Scheme Module
+!> \defgroup satmedmf GFS Scale-aware TKE-based Moist Eddy-Diffusivity Mass-flux (TKE-EDMF) Scheme Module 
 !! \brief This subroutine contains all of the logic for the
 !! scale-aware TKE-based moist eddy-diffusion mass-flux (TKE-EDMF) scheme.
 !!
@@ -52,13 +52,13 @@
 !! satmedmfvdif_run() computes subgrid vertical turbulence mixing
 !! using the scale-aware TKE-based moist eddy-diffusion mass-flux (EDMF) parameterization of
 !! Han and Bretherton (2019) \cite Han_2019 .
-!! -# The local turbulent mixing is represented by an eddy-diffusivity scheme which
+!! -# The local turbulent mixing is represented by an eddy-diffusivity scheme which 
 !! is a function of a prognostic TKE.
-!! -# For the convective boundary layer, nonlocal transport by large eddies
+!! -# For the convective boundary layer, nonlocal transport by large eddies 
 !! (mfpblt.f), is represented using a mass flux approach (Siebesma et al.(2007) \cite Siebesma_2007 ).
 !! -# A mass-flux approach is also used to represent the stratocumulus-top-induced turbulence
 !! (mfscu.f).
-!! \section detail_satmedmfvidf GFS satmedmfvdif Detailed Algorithm
+!! \section detail_satmedmfvidf GFS satmedmfvdif Detailed Algorithm 
       subroutine satmedmfvdif_run(im,km,ntrac,ntcw,ntiw,ntke,           &
      &     grav,rd,cp,rv,hvap,hfus,fv,eps,epsm1,                        &
      &     rtg,u1,v1,t1,q1,swh,hlw,xmu,garea,                           &
@@ -214,7 +214,7 @@
 !
       real(kind=kind_phys) qlcr, zstblmax
 !
-      real(kind=kind_phys) h1
+      real(kind=kind_phys) h1 
       integer :: idtend
 !!
       parameter(wfac=7.0,cfac=4.5)
@@ -261,7 +261,7 @@
       km1 = km - 1
       kmpbl = km / 2
       kmscu = km / 2
-!>  - Compute physical height of the layer centers and interfaces from
+!>  - Compute physical height of the layer centers and interfaces from 
 !! the geopotential height (\p zi and \p zl)
       do k=1,km
         do i=1,im
@@ -287,7 +287,7 @@
       do i=1,im
         gdx(i) = sqrt(garea(i))
       enddo
-!>  - Initialize tke value at vertical layer centers and interfaces
+!>  - Initialize tke value at vertical layer centers and interfaces 
 !! from tracer (\p tke and \p tkeh)
       do k=1,km
         do i=1,im
@@ -381,7 +381,7 @@
       enddo
 !
 !>  - Compute \f$\theta\f$(theta), and \f$q_l\f$(qlx), \f$\theta_e\f$(thetae),
-!! \f$\theta_v\f$(thvx),\f$\theta_{l,v}\f$ (thlvx) including ice water
+!! \f$\theta_v\f$(thvx),\f$\theta_{l,v}\f$ (thlvx) including ice water 
       do k=1,km
         do i=1,im
           pix(i,k)   = psk(i) / prslk(i,k)
@@ -409,7 +409,7 @@
         enddo
       enddo
 !
-!>  - The background vertical diffusivities in the inversion layers are limited
+!>  - The background vertical diffusivities in the inversion layers are limited 
 !! to be less than or equal to xkzinv
 !
       do k = 1,km1
@@ -422,7 +422,7 @@
         enddo
       enddo
 !
-!>  - Compute an empirical cloud fraction based on
+!>  - Compute an empirical cloud fraction based on 
 !! Xu and Randall (1996) \cite xu_and_randall_1996
       do k = 1, km
         do i = 1, im
@@ -473,7 +473,7 @@
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-!>  - Initialize diffusion coefficients to 0 and calculate the total
+!>  - Initialize diffusion coefficients to 0 and calculate the total 
 !! radiative heating rate (dku, dkt, radx)
       do k=1,km1
         do i=1,im
@@ -488,7 +488,7 @@
       enddo
 !>  - Compute stable/unstable PBL flag (pblflg) based on the total
 !! surface energy flux (\e false if the total surface energy flux
-!! is into the surface)
+!! is into the surface) 
       do i = 1,im
          sflux(i)  = heat(i) + evap(i)*fv*theta(i,1)
          if(.not.sfcflg(i) .or. sflux(i) <= 0.) pblflg(i)=.false.
@@ -497,10 +497,10 @@
 !>  - Compute critical bulk Richardson number (\f$Rb_{cr}\f$) (crb)
 !!   - For the unstable PBL, crb is a constant (0.25)
 !!   - For the stable boundary layer (SBL), \f$Rb_{cr}\f$ varies
-!!     with the surface Rossby number, \f$R_{0}\f$, as given by
+!!     with the surface Rossby number, \f$R_{0}\f$, as given by 
 !!     Vickers and Mahrt (2004) \cite Vickers_2004
 !!\f[
-!!      Rb_{cr}=0.16(10^{-7}R_{0})^{-0.18},
+!!      Rb_{cr}=0.16(10^{-7}R_{0})^{-0.18},  
 !!
 !!      R_{0}=\frac{U_{10}}{f_{0}z_{0}}
 !!\f]
@@ -534,7 +534,7 @@
          ustar(i) = sqrt(stress(i))
       enddo
 !
-!>  - Compute buoyancy \f$\frac{\partial \theta_v}{\partial z}\f$ (bf)
+!>  - Compute buoyancy \f$\frac{\partial \theta_v}{\partial z}\f$ (bf) 
 !! and the wind shear squared (shr2)
 !
       do k = 1, km1
@@ -555,10 +555,10 @@
          flg(i) = .false.
          rbup(i) = rbsoil(i)
       enddo
-!>  - Given the thermal's properties and the critical Richardson number,
-!! a loop is executed to find the first level above the surface (kpblx) where
+!>  - Given the thermal's properties and the critical Richardson number, 
+!! a loop is executed to find the first level above the surface (kpblx) where 
 !! the modified Richardson number is greater than the critical Richardson
-!! number, using equation 10a from Troen and Mahrt (1996) \cite troen_and_mahrt_1986
+!! number, using equation 10a from Troen and Mahrt (1996) \cite troen_and_mahrt_1986 
 !! (also equation 8 from Hong and Pan (1996) \cite hong_and_pan_1996):
       do k = 1, kmpbl
       do i = 1, im
@@ -605,7 +605,7 @@
 !!  \f[
 !!  \zeta = Ri_{sfc}\frac{F_m^2}{F_h} = \frac{z}{L}
 !!  \f]
-!!  where \f$F_m\f$ and \f$F_h\f$ are surface Monin-Obukhov stability functions calculated in sfc_diff.f and
+!!  where \f$F_m\f$ and \f$F_h\f$ are surface Monin-Obukhov stability functions calculated in sfc_diff.f and 
 !! \f$L\f$ is the Obukhov length.
       do i=1,im
          zol(i) = max(rbsoil(i)*fm(i)*fm(i)/fh(i),rimin)
@@ -639,14 +639,14 @@
 !
 !>  - The \f$z/L\f$ (zol) is used as the stability criterion for the PBL.Currently,
 !! strong unstable (convective) PBL for \f$z/L < -0.02\f$ and weakly and moderately
-!! unstable PBL for \f$0>z/L>-0.02\f$
+!! unstable PBL for \f$0>z/L>-0.02\f$ 
 !>  - Compute the velocity scale \f$w_s\f$ (wscale) (eqn 22 of Han et al. 2019). It
 !! is represented by the value scaled at the top of the surface layer:
 !!\f[
 !!  w_s=(u_*^3+7\alpha\kappa w_*^3)^{1/3}
 !!\f]
 !!  where \f$u_*\f$ (ustar) is the surface friction velocity,\f$\alpha\f$ is the ratio
-!! of the surface layer height to the PBL height (specified as sfcfrac =0.1),
+!! of the surface layer height to the PBL height (specified as sfcfrac =0.1), 
 !! \f$\kappa =0.4\f$ is the von Karman constant, and \f$w_*\f$ is the convective velocity
 !! scale defined as eqn23 of Han et al.(2019):
 !!\f[
@@ -666,7 +666,7 @@
         endif
       enddo
 !
-!>  - Compute a thermal excess.
+!>  - Compute a thermal excess. 
 !
       do i = 1,im
          if(pcnvflg(i)) then
@@ -680,7 +680,7 @@
       enddo
 !
 !>  - Compute enhance the pbl height by considering the thermal excess.
-!! The PBL height calculation follows the same procedure above, except
+!! The PBL height calculation follows the same procedure above, except 
 !! that is uses an updated virtual potential temperature for the thermal.
 !     (overshoot pbl top)
 !
@@ -714,7 +714,7 @@
              rbint = (crb(i)-rbdn(i))/(rbup(i)-rbdn(i))
            endif
            hpbl(i) = zl(i,k-1) + rbint*(zl(i,k)-zl(i,k-1))
-           if(hpbl(i) < zi(i,kpbl(i))) then
+           if(hpbl(i) < zi(i,kpbl(i))) then 
              kpbl(i) = kpbl(i) - 1
            endif
            if(kpbl(i) <= 1) then
@@ -729,7 +729,7 @@
 !> -# Determine whether stratocumulus layers exist and compute quantities
 !!  - Starting at the PBL top and going downward, if the level is less than 2.5 km
 !! and \f$q_l\geq q_{lcr}\f$ then set kcld = k (find the cloud top index in the PBL.
-!! If no cloud water above the threshold is hound, \e scuflg is set to F.
+!! If no cloud water above the threshold is hound, \e scuflg is set to F. 
       do i=1,im
          flg(i)  = scuflg(i)
       enddo
@@ -757,11 +757,11 @@
       do i = 1, im
         if(scuflg(i) .and. kcld(i)==km1) scuflg(i)=.false.
       enddo
-!>  - Starting at the PBL top and going downward, if the level is less
+!>  - Starting at the PBL top and going downward, if the level is less 
 !! than the cloud top, find the level of the minimum radiative heating
-!! rate wihin the cloud. If the level of the minimum is the lowest model
+!! rate wihin the cloud. If the level of the minimum is the lowest model 
 !! level or the minimum radiative heating rate is positive, then set
-!! scuflg to F.
+!! scuflg to F. 
       do i = 1, im
         flg(i)=scuflg(i)
       enddo
@@ -787,7 +787,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !> -# Compute components for mass flux mixing by large thermals
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!>  - If the PBL is convective, the updraft properties are initialized
+!>  - If the PBL is convective, the updraft properties are initialized 
 !! to be the same as the state variables.
       do k = 1, km
         do i = 1, im
@@ -816,14 +816,14 @@
       enddo
       enddo
 !>  - Call mfpblt(), which is an EDMF parameterization (Siebesma et al.(2007) \cite Siebesma_2007)
-!! to take into account nonlocal transport by large eddies.
+!! to take into account nonlocal transport by large eddies. 
       call mfpblt(im,im,km,kmpbl,ntcw,ntrac1,dt2,
      &    pcnvflg,zl,zm,q1,t1,u1,v1,plyr,pix,thlx,thvx,
      &    gdx,hpbl,kpbl,vpert,buou,xmf,
      &    tcko,qcko,ucko,vcko,xlamue,
      &    grav,cp,rv,hvap,
      &    fv,eps,epsm1)
-!>  - Call mfscu(), which is a new mass-flux parameterization for
+!>  - Call mfscu(), which is a new mass-flux parameterization for 
 !! stratocumulus-top-induced turbulence mixing.
       call mfscu(im,im,km,kmscu,ntcw,ntrac1,dt2,
      &    scuflg,zl,zm,q1,t1,u1,v1,plyr,pix,
@@ -835,13 +835,13 @@
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !> -# Compute Prandtl number \f$P_r\f$ (prn) and exchange coefficient varying with height
-!!  - Within PBL,\f$P_r\f$ is given as \f$P_r=\phi_h/\phi_m\f$, where
+!!  - Within PBL,\f$P_r\f$ is given as \f$P_r=\phi_h/\phi_m\f$, where 
 !! \f$\phi_h\f$ and \f$\phi_m\f$ are the surface layer (\f$z\leq0.1h\f$, where \f$h\f$
-!! is the PBL height) non-dimensional gradient functions for heat and momentum,
-!! respectively.
-!!   - We assume that \f$P_r=0.67\f$ in the stratocumulus and the unstable
+!! is the PBL height) non-dimensional gradient functions for heat and momentum, 
+!! respectively. 
+!!   - We assume that \f$P_r=0.67\f$ in the stratocumulus and the unstable 
 !! layers above PBL (prscu).
-!!   - For the stable layers above PBL, \f$P_r\f$ is given as \f$P_r=1+2.1R_i\f$
+!!   - For the stable layers above PBL, \f$P_r\f$ is given as \f$P_r=1+2.1R_i\f$ 
 !! (prnum) (Kennedy and Shapiro (1980)\cite kennedy_and_shapiro_1980 )
       do k = 1, kmpbl
         do i = 1, im
@@ -890,7 +890,7 @@
                   tem2 = min(ptem, -zfmin)
                 endif
                 ptem1 = (bsum - tke(i,k)) / tem2
-                zlup = zlup - ptem1 * dz
+                zlup = zlup - ptem1 * dz 
                 zlup = max(zlup, 0.)
                 mlenflg = .false.
               endif
@@ -920,7 +920,7 @@
                   tem2 = min(ptem, -zfmin)
                 endif
                 ptem1 = (bsum - tke(i,k)) / tem2
-                zldn = zldn - ptem1 * dz
+                zldn = zldn - ptem1 * dz 
                 zldn = max(zldn, 0.)
                 mlenflg = .false.
               endif
@@ -935,7 +935,7 @@
 !!   l_2=min(l_{up},l_{down})
 !!\f]
 !! and dissipation length scale \f$l_d\f$ is given by:
-!!\f[
+!!\f[ 
 !!   l_d=(l_{up}l_{down})^{1/2}
 !!\f]
 !!    where \f$l_{up}\f$ and \f$l_{down}\f$ are the distances that a parcel
@@ -953,7 +953,7 @@
 !
         enddo
       enddo
-!>  - Compute the surface layer length scale (\f$l_1\f$) following
+!>  - Compute the surface layer length scale (\f$l_1\f$) following 
 !! Nakanishi (2001) \cite Nakanish_2001 (eqn 9 of Han et al.(2019) \cite Han_2019)
       do k = 1, km1
         do i = 1, im
@@ -967,7 +967,7 @@
           else
             ptem = 1. + 2.7 * zol(i)
             zk = tem / ptem
-          endif
+          endif 
           elm(i,k) = zk*rlam(i,k)/(rlam(i,k)+zk)
 !
           dz = zi(i,k+1) - zi(i,k)
@@ -1043,7 +1043,7 @@
       enddo
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!> -# Compute buoyancy and shear productions of TKE
+!> -# Compute buoyancy and shear productions of TKE 
 !
       do k = 1, km1
         do i = 1, im
@@ -1166,7 +1166,7 @@
       enddo
 !
 !----------------------------------------------------------------------
-!> -# First predict tke due to tke production & dissipation(diss)
+!> -# First predict tke due to tke production & dissipation(diss) 
 !
       do k = 1,km1
         do i=1,im

@@ -649,7 +649,7 @@
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
   kind = kind_phys
-  intent = in
+  intent = in  
 [ncgl_i]
   standard_name = mass_number_concentration_of_graupel
   long_name = number concentration of graupel

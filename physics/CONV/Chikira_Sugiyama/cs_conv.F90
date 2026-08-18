@@ -8,7 +8,7 @@ module cs_conv
 !>---------------------------------------------------------------------------------
 ! Purpose:
 !
-!> Interface for Chikira-Sugiyama convection scheme
+!> Interface for Chikira-Sugiyama convection scheme 
 !!
 !! Author: Minoru Chikira
 !---------------------------------------------------------------------------------
@@ -74,7 +74,7 @@ module cs_conv
 !  PUBLIC: interfaces
 !
    public  cs_conv_run         ! CS scheme main driver
-
+  
    contains
 
 !>\defgroup cs_scheme Chikira-Sugiyama Cumulus Scheme Module
@@ -111,7 +111,7 @@ module cs_conv
 !!                             Also, added an extra iteration in this k loop. Reduced some memory.
 !! - June   2018  : S. Moorthi - the output mass fluxes ud_mf, dd_mf and dt_mf are over time step delta
 !!
-!! \b Arakawa-Wu \b implemtation:
+!! \b Arakawa-Wu \b implemtation: 
 !! for background, consult An Introduction to the
 !! General Circulation of the Atmosphere, Randall, chapter six.
 !! Traditional parameterizations compute tendencies like those in eq 103, 105 and 106.
@@ -129,7 +129,7 @@ module cs_conv
 !!
 !!
 !! JLS NOTE:  The convective mass fluxes (dt_mf, dd_mf and ud_mf) passed in and out of cs_conv have not been multiplied by
-!!            the timestep (kg/m2/sec) as they are in all other convective schemes.  EMC is aware of this problem,
+!!            the timestep (kg/m2/sec) as they are in all other convective schemes.  EMC is aware of this problem, 
 !!            and in the future will be fixing this discrepancy.  In the meantime, CCPP will use the same mass flux standard_name
 !!            and long_name as the other convective schemes, where the units are in kg/m2. (Aug 2018)
 !!
@@ -196,24 +196,24 @@ module cs_conv
 !  updraft, downdraft, and detrainment mass flux (kg/m2/s)
    real(kind_phys), intent(inout), dimension(:,:) :: ud_mf
    real(kind_phys), intent(inout), dimension(:,:) :: dd_mf, dt_mf
-
+   
    real(kind_phys), intent(out)   :: rain1(:)        ! lwe thickness of deep convective precipitation amount (m)
    real(kind_phys), intent(out), dimension(:,:), optional :: qlcn, qicn, w_upi,cnv_mfd, &
                                                    cnv_dqldt, clcn, cnv_fice, &
                                                    cnv_ndrop, cnv_nice, cf_upi
-
+ 
    logical, intent(in)    :: lprnt
    integer, intent(in)    :: ipr
    integer, intent(inout) :: kcnv(:)          ! zero if no deep convection and 1 otherwise
-
+   
    real(kind_phys), intent(out), dimension(:,:) :: ten_t, ten_u, ten_v
    real(kind_phys), intent(out), dimension(:,:,:) :: ten_q, ten_clw
-
+   
    character(len=*), intent(out) :: errmsg
    integer,          intent(out) :: errflg
 
 !DDsigma - output added for AW sigma diagnostics
-!  interface sigma and vertical velocity by cloud type (1=sfc)
+!  interface sigma and vertical velocity by cloud type (1=sfc) 
 !  real(kind_phys), intent(out), dimension(:,:,:)  :: sigmai, vverti
    real(kind_phys), intent(out), dimension(:,:)    :: sigma  ! sigma  sigma totaled over cloud type - on interfaces (1=sfc)
 !   sigma  terms in eq 91 and 92
@@ -292,7 +292,7 @@ module cs_conv
    ! Initialize CCPP error handling variables
    errmsg = ''
    errflg = 0
-
+   
    ten_t = 0.0
    ten_u = 0.0
    ten_v = 0.0
@@ -357,8 +357,8 @@ module cs_conv
    enddo
 
 !DD following adapted from ras
-!> -# Following the Relaxed Arakawa Schubert Scheme (RAS;
-!! Moorthi and Suarez 1992 \cite moorthi_and_suarez_1992 ),
+!> -# Following the Relaxed Arakawa Schubert Scheme (RAS;  
+!! Moorthi and Suarez 1992 \cite moorthi_and_suarez_1992 ), 
 !! separate total condensate between ice and water.
 !! The ratio of cloud ice to cloud water is determined by a linear function
 !! of temperature:
@@ -366,7 +366,7 @@ module cs_conv
 !! F_i(T)= (T_2-T)/(T_2-T_1)
 !!\f]
 !! where T is temperature, and\f$T_1\f$ and \f$T_2\f$ are set as tcf=263.16
-!! and tf= 233.16
+!! and tf= 233.16 
    if (new_clw(1,1,2) <= -999.0) then  ! input ice/water are together
      do k=1,kmax
        do i=1,IJSDIM
@@ -498,7 +498,7 @@ module cs_conv
            qicn(i,k)      = max(0.0, clw(i,k,1)-gdq(i,k,2))
            qlcn(i,k)      = max(0.0, clw(i,k,2)-gdq(i,k,3))
 
-
+           
            wrk = qicn(i,k) + qlcn(i,k)
            if (wrk > 1.0e-12) then
              cnv_fice(i,k)  = qicn(i,k) / wrk
@@ -539,7 +539,7 @@ module cs_conv
            qicn(i,k)      = max(0.0, clw(i,k,1)-gdq(i,k,2))
            qlcn(i,k)      = max(0.0, clw(i,k,2)-gdq(i,k,3))
            cnv_fice(i,k)  = qicn(i,k) / max(1.0e-10,qicn(i,k)+qlcn(i,k))
-!
+! 
 !          CNV_MFD(i,k)   = dt_mf(i,k) * (1/delta)
            CNV_MFD(i,k)   = dt_mf(i,k)
            CNV_DQLDT(i,k) = (qicn(i,k)+qlcn(i,k)) / delta
@@ -549,7 +549,7 @@ module cs_conv
            cf_upi(i,k)    = max(0.0,min(0.01*log(1.0+500*ud_mf(i,k)),0.1))
 !    &                                               500*ud_mf(i,k)),0.60))
 !          CLCN(i,k)      = cf_upi(i,k)                     !downdraft is below updraft
-
+           
            w_upi(i,k)     = ud_mf(i,k)*(t(i,k)+epsvt*gdq(i,k,1)) * rair &
                           / (max(cf_upi(i,k),1.e-12)*gdp(i,k))
          enddo
@@ -558,7 +558,7 @@ module cs_conv
    endif
 
 !****************************************************************************
-
+ 
    KTMAX = 1
    do n=1,nctp
      do i=1,IJSDIM
@@ -594,7 +594,7 @@ module cs_conv
 !  if (lprnt) then
 !    write(0,*)' aft cs_cum prec=',prec(ipr),'GTPRP=',GTPRP(ipr,1)
 !  endif
-
+  
 
 !    if (do_aw) then
 !    call moist_bud(ijsdim,ijsdim,im,kmax,mype,kdt,grav,delta,delp,prec &
@@ -652,7 +652,7 @@ module cs_conv
                          emeltocp, emelt)
 !
    IMPLICIT NONE
-
+      
    real(kind_phys), intent(in) :: oneocp, gravi, grav, gocp, fact2, fact1, &
         esubocp, epsvt, epsvm1, epsv, elocp, el, cpoesub, cpoemelt, cpoel, &
         cp, epsln, emeltocp, emelt
@@ -687,7 +687,7 @@ module cs_conv
    real(kind_phys), intent(out)   :: sigmai(IM,KMAX+1,nctp)  !DDsigma  sigma by cloud type - on interfaces (1=sfc)
    real(kind_phys), intent(out)   :: vverti(IM,KMAX+1,nctp)  !DDsigma  vert. vel. by cloud type - on interfaces (1=sfc)
    real(kind_phys), intent(out)   :: sigma(IM,KMAX+1)        !DDsigma  sigma totaled over cloud type - on interfaces (1=sfc)
-
+   
 ! for computing AW flux form of tendencies
 !  real(kind_phys), dimension(IM,KMAX) ::    &  !DDsigmadiag
 !      sfluxterm, qvfluxterm
@@ -816,7 +816,7 @@ module cs_conv
 
    REAL(kind_phys)     HBGT ( IJSDIM )     ! imbalance in column heat
    REAL(kind_phys)     WBGT ( IJSDIM )     ! imbalance in column water
-
+   
    !DDsigma begin local work variables - all on model interfaces (sfc=1)
    REAL(kind_phys)     lamdai( IJSDIM, KMAX+1, nctp )         ! lamda for cloud type ctp
    REAL(kind_phys)     lamdaprod( IJSDIM, KMAX+1   )   ! product of (1+lamda) through cloud type ctp
@@ -826,7 +826,7 @@ module cs_conv
    REAL(kind_phys)     gdtrm(ntrq:ntr)           ! tracer
    character(len=4) :: cproc  !DDsigmadiag
 
-   ! the following are new arguments to cumup to get them out
+   ! the following are new arguments to cumup to get them out 
    REAL(kind_phys)     wcv( IJSDIM, KMAX+1, nctp)        ! in-cloud vertical velocity
    REAL(kind_phys)     GCTM  ( IJSDIM, KMAX+1 )   ! cloud T (half lev)   !DDsigmadiag make output
    REAL(kind_phys)     GCQM  ( IJSDIM, KMAX+1, nctp )   ! cloud q (half lev)   !DDsigmadiag make output
@@ -835,11 +835,11 @@ module cs_conv
    REAL(kind_phys)     GClM  ( IJSDIM, KMAX+1 )   ! cloud q (half lev)   !DDsigmadiag make output
    REAL(kind_phys)     GChM  ( IJSDIM, KMAX+1, nctp )   ! cloud q (half lev)   !DDsigmadiag make output
    REAL(kind_phys)   GCtrM (IJSDIM, KMAX, ntrq:ntr) ! cloud tracer (half lev) !DDsigmadiag make output
-
+      
 ! these are the fluxes at the interfaces - AW will operate on them
    REAL(kind_phys), dimension(ijsdim,Kmax+1,nctp) :: sfluxtem, qvfluxtem, qlfluxtem, qifluxtem
    REAL(kind_phys), dimension(ijsdim,Kmax+1,ntrq:ntr,nctp) :: trfluxtem  ! tracer
-
+      
    REAL(kind_phys), dimension(ijsdim,Kmax+1) :: dtcondtem, dqcondtem, dtfrztem, dqprectem,dfrzprectem
    REAL(kind_phys), dimension(ijsdim,Kmax) :: dtevap, dqevap, dtmelt, dtsubl
    REAL(kind_phys), dimension(ijsdim) :: moistening_aw
@@ -990,7 +990,7 @@ module cs_conv
        GDW(i,k)  = GDQ(i,k,1) + GDQ(i,k,ITL) + GDQ(i,k,iti)
      enddo
    enddo
-!> -# Compute layer saturate moisture \f$Q_i\f$(GDQS) and
+!> -# Compute layer saturate moisture \f$Q_i\f$(GDQS) and 
 !! saturate moist static energy (GDHS; see Appendix B in
 !! Chikira and Sugiyama (2010) \cite Chikira_2010)
    DO K=1,KMAX
@@ -1079,7 +1079,7 @@ module cs_conv
      enddo
    enddo
 
-   do ctp=1,nctp
+   do ctp=1,nctp 
      do k=1,kp1
        do i=1,ijsdim
          lamdai(i,k,ctp) = zero
@@ -1146,7 +1146,7 @@ module cs_conv
                  KT   (:,CTP), KTMX(CTP)  , KB       ,              & ! input
                  DELTI       , ISTS       , IENS     ,              & ! input
                  oneocp, el, epsln )
-
+                 
 !DDsigma -  begin sigma computation
 ! At this point cbmfx is updated and we have everything we need to compute sigma
 
@@ -1181,12 +1181,12 @@ module cs_conv
 
 
 !> -# Compute lamda for a cloud type and then updraft area fraction
-!! (sigmai) following Equations 23 and 12 of
+!! (sigmai) following Equations 23 and 12 of 
 !! Arakawa and Wu (2013) \cite arakawa_and_wu_2013 , respectively
 
              lamdai(i,k,ctp) = mflx_e * rair * gdtm(i,k)*(one+epsvt*gdqm)         &
                     / (gdpm(i,k)*wcv(i,k,ctp))
-
+                    
 ! just compute lamdai here, we will compute sigma, sigmai, and vverti outside
 !    the cloud type loop after we can sort lamdai
 !             lamdaprod(i,k)  = lamdaprod(i,k) * (one+lamdai(i,k,ctp))
@@ -1295,9 +1295,9 @@ module cs_conv
          enddo     ! end of k=kbi,kk loop
 
        endif       ! end of if(cbmfl > zero)
-
-
-
+    
+    
+        
      enddo           ! end of i loop
     endif         ! if (flx_form)
 !
@@ -1317,7 +1317,7 @@ module cs_conv
 !         gcut(i,ctp)  = tem * gcut(i,ctp)
 !         gcvt(i,ctp)  = tem * gcvt(i,ctp)
 !         do k=1,kmax
-!           kk = kb(i)
+!           kk = kb(i)         
 !           if (k < kk) then
 !             tem  = one - sigma(i,kk)
 !             tem1 = tem
@@ -1345,7 +1345,7 @@ module cs_conv
                  ISTS          , IENS                               )    ! input
 
    ENDDO      ! end of cloud type ctp loop
-
+   
 !> -# Compute net updraft mass flux for all clouds
    do k=1,kmax
      do i=ists,iens
@@ -1400,7 +1400,7 @@ module cs_conv
               sigmai(i,k,loclamdamax)          = lamdai(i,k,loclamdamax) / lamdaprod(i,k)
               sigma(i,k)      = max(zero, min(one, sigma(i,k) + sigmai(i,k,loclamdamax)))
               vverti(i,k,loclamdamax) = sigmai(i,k,loclamdamax) * wcv(i,k,loclamdamax)
-
+              
               ! make this lamdai negative so it won't be counted again
               lamdai(i,k,loclamdamax) = -lamdai(i,k,loclamdamax)
               ! get new lamdamax
@@ -1453,8 +1453,8 @@ module cs_conv
          enddo     ! end of k=kbi,kk loop
 
        endif       ! end of if(cbmfl > zero)
-
-
+    
+    
 ! get tendencies by difference of fluxes, sum over cloud type
 
          do k = 1,kk
@@ -1468,11 +1468,11 @@ module cs_conv
 !     if (lprnt .and. i == ipr) write(0,*)' k=',k,' trfluxtem=',trfluxtem(k+1,ntr),trfluxtem(k,ntr),&
 !       ' ctp=',ctp,' trfluxterm=',trfluxterm(i,k,ntr)
          enddo
-
+        
      enddo           ! end of i loop
    enddo  ! end of nctp loop
   endif
-!downdraft sigma and mass-flux tendency terms are now put into
+!downdraft sigma and mass-flux tendency terms are now put into 
 ! the nctp+1 slot of the cloud-type dimensiond variables
 
     do k=1,kmax
@@ -1481,7 +1481,7 @@ module cs_conv
       enddo
     enddo
 
-!> -# Call cumdwn() to compute cumulus downdraft and assocated melt, freeze
+!> -# Call cumdwn() to compute cumulus downdraft and assocated melt, freeze 
 !! and evaporation
    CALL CUMDWN(IM, IJSDIM, KMAX, NTR, ntrq, nctp,        & ! DD dimensions
                GTT   , GTQ   , GTU   , GTV   ,           & ! modified
@@ -1560,7 +1560,7 @@ module cs_conv
 !                GMFLX , KTMXT , OTSPT2,                   & ! input
 !                ISTS  , IENS            )                   ! input
 
-   endif
+   endif   
 
 ! if this tracer not advected zero it out
    DO n = ntrq,NTR
@@ -1572,12 +1572,12 @@ module cs_conv
        ENDDO
      endif
    ENDDO
-
+     
 !  if(do_aw .and. flx_form) then ! compute AW tendencies
 !> -# Compute AW tendencies of T, ql and qi
    if(flx_form) then ! compute AW tendencies
                                  ! AW lump all heating together, compute qv term
-
+                                 
 ! sigma interpolated to the layer for condensation, etc. terms, precipitation
      if(do_aw) then
        do k=1,kmax
@@ -1611,13 +1611,13 @@ module cs_conv
            teme = -dtevap(i,k) * delp(i,k) * tem2
            tems = -dtsubl(i,k) * delp(i,k) * tem3
            GSNWP(I,k) = GSNWP(I,kp1) + fsigma(i,k) * (GSNWI(i,k) - tem - tems)
-           GPRCP(I,k) = GPRCP(I,kp1) + fsigma(i,k) * (GPRCI(i,k) + tem - teme)
+           GPRCP(I,k) = GPRCP(I,kp1) + fsigma(i,k) * (GPRCI(i,k) + tem - teme) 
          ENDDO
        ENDDO
      endif
 
 
-! some of the above routines have set the tendencies and they need to be
+! some of the above routines have set the tendencies and they need to be 
 !    reinitialized, gtt not needed, but gtq needed Anning 5/25/2020
      do n=1,ntr
        do k=1,kmax
@@ -1640,14 +1640,14 @@ module cs_conv
      enddo
 
 
-! diabatic terms from updraft and downdraft models
+! diabatic terms from updraft and downdraft models          
      DO K=1,KMAX
        DO I=ISTS,IENS
          tem = frzterm(i,k)*cpoEMELT - prectermfrz(i,k)
 !        gtt(i,k)         = gtt(i,k) + fsigma(i,k)*(dtmelt(i,k) + dtevap(i,k)) + condtermt(i,k)
 !        gtq(i,k,1)       = gtq(i,k,1) + fsigma(i,k)*dqevap(i,k) + condtermq(i,k)
-!        gtq(i,k,itl)     = gtq(i,k,itl) -  (condtermq(i,k)  + prectermq(i,k) + tem)
-!        gtq(i,k,iti)     = gtq(i,k,iti) + tem
+!        gtq(i,k,itl)     = gtq(i,k,itl) -  (condtermq(i,k)  + prectermq(i,k) + tem) 
+!        gtq(i,k,iti)     = gtq(i,k,iti) + tem 
          gtt(i,k)         = dtdwn(i,k)  + condtermt(i,k)         &
                           + fsigma(i,k)*(dtmelt(i,k) + dtevap(i,k))
          gtq(i,k,1)       = dqvdwn(i,k) + condtermq(i,k)         &
@@ -1671,11 +1671,11 @@ module cs_conv
            DO K=1,kk
              kp1 = k+1
              gtt(i,k) = gtt(i,k) - (fsigma(i,kp1)*sfluxtem(i,kp1,ctp)   &
-                                        - fsigma(i,k)*sfluxtem(i,k,ctp))  * delpinv(i,k)
+                                        - fsigma(i,k)*sfluxtem(i,k,ctp))  * delpinv(i,k)      
              gtq(i,k,1) = gtq(i,k,1) - (fsigma(i,kp1)*qvfluxtem(i,kp1,ctp)   &
-                                        - fsigma(i,k)*qvfluxtem(i,k,ctp))  * delpinv(i,k)
+                                        - fsigma(i,k)*qvfluxtem(i,k,ctp))  * delpinv(i,k)         
              gtq(i,k,itl) = gtq(i,k,itl) - (fsigma(i,kp1)*qlfluxtem(i,kp1,ctp)   &
-                                        - fsigma(i,k)*qlfluxtem(i,k,ctp))  * delpinv(i,k)
+                                        - fsigma(i,k)*qlfluxtem(i,k,ctp))  * delpinv(i,k) 
              gtq(i,k,iti) = gtq(i,k,iti) - (fsigma(i,kp1)*qifluxtem(i,kp1,ctp)   &
                                         - fsigma(i,k)*qifluxtem(i,k,ctp))  * delpinv(i,k)
            ENDDO
@@ -1721,7 +1721,7 @@ module cs_conv
            gtt(i,k)       = gtt(i,k) + elocp*(gtq(i,k,1)-tem1)
            gtq(i,k,1)     = tem1
          endif
-
+           
 ! column-integrated total water tendency - to be used to impose water conservation
          moistening_aw(i) = moistening_aw(i)                                       &
                           + (gtq(i,k,1)+gtq(i,k,itl)+gtq(i,k,iti)) * delp(i,k) * gravi
@@ -1792,11 +1792,11 @@ module cs_conv
 !      HBGT(I) = HBGT(I) + (CP*GTT(I,K) + EL*GTQ(I,K,1)                         &
 !                          - EMELT*GTQ(I,K,ITI)) * tem
 !                          - EMELT*(GTQ(I,K,ITI)+GTIDET(I,K))) * tem
-!      WBGT(I) = WBGT(I) + (GTQ(I,K,1)   + GTQ(I,K,ITL) + GTQ(I,K,ITI)) * tem
+!      WBGT(I) = WBGT(I) + (GTQ(I,K,1)   + GTQ(I,K,ITL) + GTQ(I,K,ITI)) * tem 
 !                                        + GTLDET(I,K)  + GTIDET(I,K)) * tem
 !    ENDDO
 !  ENDDO
-
+  
 
 !
 !  DO I=ISTS,IENS
@@ -1823,7 +1823,7 @@ module cs_conv
 !    ENDIF
 !  ENDDO
 !
-!> -# Ensures conservation of water.
+!> -# Ensures conservation of water. 
 !In fact, no adjustment of the precip
 !   is occuring now which is a good sign! DD
    if(flx_form) then
@@ -1836,7 +1836,7 @@ module cs_conv
        endif
      END DO
    endif
-
+   
 ! second method of determining sfc precip only
 ! if(flx_form) then
 !    DO I = ISTS, IENS
@@ -1881,7 +1881,7 @@ module cs_conv
 !DD provide GFS with a separate downdraft mass flux
      if(do_aw) then
      DO K = 1, KMAX+1
-        DO I = ISTS, IENS
+        DO I = ISTS, IENS           
            fsigma(i,k)     = one - sigma(i,k)
            GMFX0( I,K ) = GMFX0( I,K ) * fsigma(i,k)
            GMFLX( I,K ) = GMFLX( I,K ) * fsigma(i,k)
@@ -1889,13 +1889,13 @@ module cs_conv
      END DO
      endif
      DO K = 1, KMAX+1
-        DO I = ISTS, IENS
+        DO I = ISTS, IENS           
            GMFX1( I,K ) = GMFX0( I,K ) - GMFLX( I,K )
         END DO
      END DO
-
+     
    if (allocated(gprcc)) deallocate(gprcc)
-
+     
 !
       END SUBROUTINE CS_CUMLUS
 !> @}
@@ -2025,7 +2025,7 @@ module cs_conv
         if (qsl(i) > zero) tx1(i) = tx1(i) / qsl(i)
         if (tx1(i) < crtrh) kb(i) = -1
       enddo
-
+          
 !
       KBMX = 1
       DO I=ISTS,IENS
@@ -2270,7 +2270,7 @@ module cs_conv
 !     REAL(kind_phys) ::  wfn_neg = 0.25
 !     REAL(kind_phys) ::  wfn_neg = 0.30
 !     REAL(kind_phys) ::  wfn_neg = 0.35
-
+      
       REAL(kind_phys) ::  esat, tem
 !     REAL(kind_phys) ::  esat, tem, rhs_h, rhs_q
 !
@@ -2401,7 +2401,7 @@ module cs_conv
           GDQM  = half * (GDQ(I,K,1)     + GDQ(I,K-1,1))
           GDCM  = half * (GDQ(I,K,ITL)   + GDQI(I,K)                &
                        +  GDQ(I,K-1,ITL) + GDQI(I,K-1))
-
+                       
 !
           BUOYM(I,K) = (DCTM*tem + EPSVT*(GCQM(I,K)-GDQM) - GCCM + GDCM )*GRAV
 !
@@ -2640,7 +2640,7 @@ module cs_conv
         kk = max(1, kt(i)+1)
         do k=kk,kmax
           GCYM  (I,K) = zero
-          GCLZ  (I,K) = zero
+          GCLZ  (I,K) = zero 
           GCIZ  (I,K) = zero
           GPRCIZ(I,K) = zero
           GSNWIZ(I,K) = zero
@@ -2798,7 +2798,7 @@ module cs_conv
 !
 !
       IMPLICIT NONE
-
+      
       INTEGER, INTENT(IN) :: IJSDIM, KMAX  ! DD, for GFS, pass in
       real(kind_phys), intent(in) :: oneocp, el, epsln
 !
@@ -2979,7 +2979,7 @@ module cs_conv
 !
 !   [INTERNAL WORK]
       REAL(kind_phys)     GTHCI, GTQVCI, GTXCI
-      integer      I, K, CTP, kk,n
+      integer      I, K, CTP, kk,n 
 !
 
       DO CTP=1,NCTP
@@ -3367,24 +3367,24 @@ module cs_conv
           GMDD  (I,k) = zero
           GTEVP (I,k) = zero
           EVAPD (I,k) = zero
-          SUBLD (I,k) = zero
-          EVAPE (I,k) = zero
-          SUBLE (I,k) = zero
-          EVAPX (I,k) = zero
-          SUBLX (I,k) = zero
-          GMDDE (I,k) = zero
-          SNMLT (I,k) = zero
-          GCHDD (I,k) = zero
-          GCWDD (I,k) = zero
-          GTTEV (I,k) = zero
-          GTQEV (I,k) = zero
-          GCdseD(I,k) = zero
-          GCqvD (I,k) = zero
-!         GCqlD (I,k) = zero
-!         GCqiD (I,k) = zero
-          gtevap(I,k) = zero
-          gtmelt(I,k) = zero
-          gtsubl(I,k) = zero
+          SUBLD (I,k) = zero 
+          EVAPE (I,k) = zero 
+          SUBLE (I,k) = zero 
+          EVAPX (I,k) = zero 
+          SUBLX (I,k) = zero 
+          GMDDE (I,k) = zero 
+          SNMLT (I,k) = zero 
+          GCHDD (I,k) = zero 
+          GCWDD (I,k) = zero 
+          GTTEV (I,k) = zero 
+          GTQEV (I,k) = zero 
+          GCdseD(I,k) = zero 
+          GCqvD (I,k) = zero 
+!         GCqlD (I,k) = zero 
+!         GCqiD (I,k) = zero 
+          gtevap(I,k) = zero 
+          gtmelt(I,k) = zero 
+          gtsubl(I,k) = zero 
         enddo
       enddo
 
@@ -3413,7 +3413,7 @@ module cs_conv
       enddo
       do n=ntrq,ntr
         do i=ists,iens
-          GCtrD (I,n) = zero
+          GCtrD (I,n) = zero 
         enddo
       enddo
 !
@@ -3595,7 +3595,7 @@ module cs_conv
           if (kb(i) > 0) then
             wrk = DELPI(I,k)
             tx1 = DELPI(I,kp1)
-
+              
             GTTEV(I,K) = GTTEV(I,K) - wrk                              &
                        * (ELocp*EVAPE(I,K)+(ELocp+EMELTocp)*SUBLE(I,K))
             GTT(I,K)   = GTT(I,K) + GTTEV(I,K)
@@ -3683,12 +3683,12 @@ module cs_conv
       REAL(kind_phys) :: CLMIN  = 1.e-3_kind_phys   !> cloudiness Min.
       REAL(kind_phys) :: CLMAX  = 0.1_kind_phys     !> cloudiness Max.
       REAL(kind_phys), SAVE :: FACLF
-!
+!     
       IF ( OFIRST ) THEN
          FACLF = (CLMAX-CLMIN)/LOG(CMFMAX/CMFMIN)
          OFIRST = .FALSE.
       END IF
-
+                       
       CUMFRC(ISTS:IENS) = zero
       DO K=1,KTMX
         DO I=ISTS,IENS

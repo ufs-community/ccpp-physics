@@ -1,15 +1,15 @@
-!>\file funcphys.f90
+!>\file funcphys.f90 
 !! This file includes API for basic thermodynamic physics.
 
 !>\defgroup func_phys GFS Physics Function Module
 !! This module provides API for computing basic thermodynamic physics
-!! functions.
+!! functions. 
 
 !> This module provides an Application Program Interface (API) for computing
 !! basic thermodynamic physics functions, in particular:
 !! -# saturation vapor pressure as a function of temperature;
 !! -# dewpoint temperature as a function of vapor pressure;
-!! -# equivalent potential temperature as a function of temperature and
+!! -# equivalent potential temperature as a function of temperature and 
 !! scaled pressure to the kappa power;
 !! -# temperature and specific humidity along a moist adiabat as functions
 !! of equivalent potential temperature and scaled pressure to the kappa power;
@@ -18,7 +18,7 @@
 !! and dewpoint depression.
 !!
 !! The entry points required to set up lookup tables start with a "g".
-!! All the other entry points are functions starting with an "f" or
+!! All the other entry points are functions starting with an "f" or 
 !! are subroutines starting with an "s". These other functions and subroutines
 !! are elemental; that is, they return a scalar if they are passed only scalars,
 !! but they return an array if they are passed an array. These other functions
@@ -331,10 +331,10 @@ module funcphys
   public gfuncphys
 
   interface fpvsl
-     module procedure fpvsl_r4, fpvsl_r8
+     module procedure fpvsl_r4, fpvsl_r8 
   end interface fpvsl
   interface fpvsi
-     module procedure fpvsi_r4, fpvsi_r8
+     module procedure fpvsi_r4, fpvsi_r8 
   end interface fpvsi
 contains
 !-------------------------------------------------------------------------------
@@ -390,7 +390,7 @@ contains
 !> This funtion computes saturation vapor pressure from the temperature.
 !! A linear interpolation is done between values in a lookup table computed
 !! in gpvsl(). See documentation for fpvslx() for details. Input values
-!! outside table range are reset to table extrema.
+!! outside table range are reset to table extrema. 
 !>\author N phillips
 
   elemental function fpvsl_r4(t)
@@ -482,8 +482,8 @@ contains
 
 
 !-------------------------------------------------------------------------------
-!> This function computes saturation vapor pressure from the temperature.
-!! A quadratic interpolation is done between values in a lookup table
+!> This function computes saturation vapor pressure from the temperature. 
+!! A quadratic interpolation is done between values in a lookup table 
 !! computed in gpvsl(). See documentaion for fpvslx() for details.
 !! Input values outside table range are reset to table extrema.
   elemental function fpvslq(t)
@@ -537,7 +537,7 @@ contains
 !> This function exactly computes saturation vapor pressure from temperature.
 !! The water model assumes a perfect gas, constant specific heats
 !! for gas and liquid, and neglects the volume of the liquid.
-!! The model does account for the variation of the latent heat
+!! The model does account for the variation of the latent heat 
 !! of condensation with temperature. The ice option is not included.
 !! The Clausius-Clapeyron equation is integrated from the triple point
 !! to get the formula:
@@ -591,10 +591,10 @@ contains
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   end function
 !-------------------------------------------------------------------------------
-!> This subroutine computes saturation vapor pressure table as a function of
+!> This subroutine computes saturation vapor pressure table as a function of 
 !! temperature for the table lookup function fpvsi(). Exact saturation vapor
 !! pressures are calculated in subprogram fpvsix(). The current implementation
-!! computes a table with a length of 7501 for temperatures ranging from 180.
+!! computes a table with a length of 7501 for temperatures ranging from 180. 
 !! to 330. Kelvin.
 !>\author N Phillips
   subroutine gpvsi
@@ -643,7 +643,7 @@ contains
   end subroutine
 !-------------------------------------------------------------------------------
 !> This function computes saturation vapor pressure from the temperature.
-!! A linear interpolation is done between values in a lookup table
+!! A linear interpolation is done between values in a lookup table 
 !! computed in gpvsi(). See documentation for fpvsix() for details.
 !! Input values outside table range are reset to table extrema.
 !>\author N Phillips
@@ -794,10 +794,10 @@ contains
 !! The water model assumes a perfect gas, constant specific heats
 !! for gas and ice, and neglects the volume of the ice. The model does
 !! account for the variation of the latent heat of condensation with temperature.
-!! The liquid option is not included. The Clausius- Clapeyron equation is
+!! The liquid option is not included. The Clausius- Clapeyron equation is 
 !! integrated from the triple point to get the formula:
 !!\n pvsi=con_psat*(tr**xa)*exp(xb*(1.-tr))
-!!\n where tr is ttp/t and other values are physical constants.
+!!\n where tr is ttp/t and other values are physical constants. 
 !! This function should be expanded inline in the calling routine.
 !>\param[in]  t        real, temperature in Kelvin
 !\param[out] fpvsix   real, saturation vapor pressure in Pascals
@@ -850,7 +850,7 @@ contains
 !! temperature for the table lookup function fpvs().
 !! Exact saturation vapor pressures are calculated in subprogram fpvsx().
 !! The current implementation computes a table with a length
-!! of 7501 for temperatures ranging from 180. to 330. Kelvin.
+!! of 7501 for temperatures ranging from 180. to 330. Kelvin. 
   subroutine gpvs
 !$$$     Subprogram Documentation Block
 !
@@ -2526,7 +2526,7 @@ contains
 !>\param[in]  tg   real, guess parcel temperature in Kelvin
 !>\param[in]  the  real, equivalent potential temperature in Kelvin
 !>\param[in]  pk   real, pressure over 1e5 Pa to the kappa power
-!>\param[out] tma  real, parcel temperature in Kelvin
+!>\param[out] tma  real, parcel temperature in Kelvin 
 !>\param[out] qma  real, parcel specific humidity in kg/kg
   subroutine stmaxg(tg,the,pk,tma,qma)
 !$$$     Subprogram Documentation Block
@@ -2761,7 +2761,7 @@ contains
 !! using a rational weighted chebyshev approximation.
 !! The numerator is of order 2 and the denominator is of order 4.
 !! The pressure range is 40000-110000 Pa and kappa is defined in fpkapx().
-!>\param[in]   p        real, surface pressure in Pascals p should be in the
+!>\param[in]   p        real, surface pressure in Pascals p should be in the 
 !! range 40000 to 110000
 !\param[out]  fpkapo   real, p over 1e5 Pa to the kappa power
   function fpkapo(p)

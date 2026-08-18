@@ -996,14 +996,14 @@
               aa2(i) = aa2(i) +
      &                 dz1 * (g / (cp * to(i,k)))
      &                 * dbyo(i,k) / (1. + gamma)
-     &                 * rfact
+     &                 * rfact            
 !NRL MNM: Limit overshooting not to be deeper than half the actual cloud
               tem  = 0.5 * (zi(i,ktcon(i))-zi(i,kbcon(i)))
               tem1 = zi(i,k)-zi(i,ktcon(i))
               if(aa2(i) < 0. .or. tem1 >= tem) then
                 ktcon1(i) = k
                 flg(i) = .false.
-              endif
+              endif        
             endif
           endif
         enddo

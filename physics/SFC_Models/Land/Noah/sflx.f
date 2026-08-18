@@ -9,7 +9,7 @@
 !! It is a soil/veg/snowpack land-surface model to update soil moisture, soil
 !! ice, soil temperature, skin temperature, snowpack water content, snowdepth,
 !! and all terms of the surface energy balance and surface water balance
-!! (excluding input atmospheric forcings of downward radiation and
+!! (excluding input atmospheric forcings of downward radiation and 
 !! precipitation).
 !!
 !! The land-surface model component was substantially upgraded from the Oregon
@@ -334,7 +334,7 @@
      &       psisat, quartz, rch, refkdt, rr, rgl, rsmax, sndens,       &
      &       sncond, sbeta, sn_new, slope, snup, salp, soilwm, soilww,  &
      &       t1v, t24, t2v, th2v, topt, tsnow, zbot, z0
-
+      
       real (kind=kind_phys) ::  shdfac0
       real (kind=kind_phys), dimension(nsold) :: rtdis, zsoil
       real (kind=kind_phys) :: tfreez
@@ -595,7 +595,7 @@
 
       endif   ! end if_snowng_block
 
-!> - Determine snowcover fraction and albedo fraction over sea-ice,
+!> - Determine snowcover fraction and albedo fraction over sea-ice, 
 !! glacial-ice, and land.
 
       if (ice /= 0) then

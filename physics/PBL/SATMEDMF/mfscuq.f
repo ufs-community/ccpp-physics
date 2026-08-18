@@ -174,7 +174,7 @@ c  physical parameters
       enddo
 !
 !> - First-guess level of downdraft extension (mrad)
-!
+! 
       do i = 1, im
         flg(i) = cnvflg(i)
         mrad(i) = krad(i)
@@ -259,7 +259,7 @@ c  physical parameters
             dz = zl(i,k+1) - zl(i,k)
             tem  = 0.5 * xlamde(i,k) * dz
             factor = 1. + tem
-!
+! 
             thld(i,k) = ((1.-tem)*thld(i,k+1)+tem*
      &                     (thlx(i,k)+thlx(i,k+1)))/factor
 !
@@ -442,7 +442,7 @@ c
         endif
       enddo
 !
-!> - Compute scale-aware function based on
+!> - Compute scale-aware function based on 
 !! Arakawa and Wu (2013) \cite arakawa_and_wu_2013
 !
       do i = 1, im
@@ -496,7 +496,7 @@ c
 !
       do k = kmscu,1,-1
         do i=1,im
-          if(cnvflg(i) .and.
+          if(cnvflg(i) .and. 
      &       (k >= mrad(i) .and. k < krad(i))) then
             dz = zl(i,k+1) - zl(i,k)
             tem  = 0.5 * xlamde(i,k) * dz
@@ -561,7 +561,7 @@ c
               dz = zl(i,k+1) - zl(i,k)
               tem  = 0.5 * xlamdeq(i,k) * dz
               factor = 1. + tem
-!
+! 
               qcdo(i,k,n) = ((1.-tem)*qcdo(i,k+1,n)+tem*
      &                       (q1(i,k,n)+q1(i,k+1,n)))/factor
             endif
@@ -584,7 +584,7 @@ c
               dz = zl(i,k+1) - zl(i,k)
               tem  = 0.5 * xlamdeq(i,k) * dz
               factor = 1. + tem
-!
+! 
               qcdo(i,k,n) = ((1.-tem)*qcdo(i,k+1,n)+tem*
      &                       (q1(i,k,n)+q1(i,k+1,n)))/factor
             endif

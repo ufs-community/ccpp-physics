@@ -7,7 +7,7 @@ module gfdl_cloud_microphys_v3
    use gfdl_cloud_microphys_v3_mod, only: gfdl_cloud_microphys_v3_mod_init,         &
                                              gfdl_cloud_microphys_v3_mod_driver,       &
                                              gfdl_cloud_microphys_v3_mod_end,          &
-                                             rad_ref, cld_eff_rad
+                                             rad_ref, cld_eff_rad    
 
    implicit none
 
@@ -184,7 +184,7 @@ contains
       integer,              intent(in   ) :: levs, im
       real(kind=kind_phys), intent(in   ) :: con_g, con_fvirt, con_rd, con_eps, rainmin
       real(kind=kind_phys), intent(in   ) :: con_one, con_p001, con_secinday
-      real(kind=kind_phys), intent(in   ), dimension(:)     :: garea, slmsk, snowd, oro
+      real(kind=kind_phys), intent(in   ), dimension(:)     :: garea, slmsk, snowd, oro 
       real(kind=kind_phys), intent(in   ), dimension(:,:)   :: gq0, gq0_ntcw, gq0_ntrw, gq0_ntiw, &
                                                                gq0_ntsw, gq0_ntgl, gq0_ntclamt
       real(kind_phys),      intent(in   ), dimension(:,:,:) :: aerfld
@@ -200,7 +200,7 @@ contains
       real(kind_phys),      intent(out  ), dimension(:), optional :: graupel0
       real(kind_phys),      intent(out  ), dimension(:) :: prcp0
       real(kind_phys),      intent(out  ), dimension(:) :: sr
-
+      
       real(kind_phys),      intent(out  ), dimension(:,:)    :: ten_t, ten_u, ten_v, ten_qv, ten_ql, ten_qr, ten_qi, ten_qs, ten_qg, ten_cldfrc
       real(kind_phys),      intent(out  ), dimension(:,:,:)  :: ten_q
 
@@ -209,7 +209,7 @@ contains
 
       logical, intent (in) :: lradar
       real(kind=kind_phys), intent(inout), dimension(:,:) :: refl_10cm
-      logical, intent (in) :: reset, effr_in
+      logical, intent (in) :: reset, effr_in                                  
       real(kind=kind_phys), intent(inout), dimension(:,:), optional :: rew, rei, rer, res, reg
       logical, intent (in) :: cplchm
       ! ice and liquid water 3d precipitation fluxes - only allocated if cplchm is .true.
@@ -221,9 +221,9 @@ contains
       ! local variables
       integer :: iis, iie, jjs, jje, kks, kke, kbot, ktop
       integer :: i, k, kk
-      real(kind=kind_phys), dimension(1:im,1:levs) :: delp, dz, uin, vin, pt, qv1, ql1, qi1, qr1, qs1, qg1,    &
+      real(kind=kind_phys), dimension(1:im,1:levs) :: delp, dz, uin, vin, pt, qv1, ql1, qi1, qr1, qs1, qg1,    &  
                                                       qa1, qnl, qni, w, p123, refl
-      real(kind=kind_phys), dimension(1:im,1:levs) :: q_con, cappa !for inline MP option
+      real(kind=kind_phys), dimension(1:im,1:levs) :: q_con, cappa !for inline MP option  
       real(kind=kind_phys), dimension(1:im,1,1:levs) :: pfils, pflls
       real(kind=kind_phys), dimension(1:im,1,1:levs) :: adj_vmr, te
       real(kind=kind_phys), dimension(1:im,1:levs) :: prefluxw, prefluxr, prefluxi, prefluxs, prefluxg
@@ -239,7 +239,7 @@ contains
       ! Initialize CCPP error handling variables
       errmsg = ''
       errflg = 0
-
+      
       ten_t = 0.0
       ten_u = 0.0
       ten_v = 0.0
@@ -251,7 +251,7 @@ contains
       ten_qs = 0.0
       ten_qg = 0.0
       ten_cldfrc = 0.0
-
+      
       iis = 1
       iie = im
       jjs = 1
@@ -267,14 +267,14 @@ contains
       do k = 1, levs
          kk = levs-k+1
          do i = 1, im
-            qnl(i,k)   = aerfld(i,kk,11) ! sulfate
-            prefluxw(i,k) =0.0
-            prefluxi(i,k) =0.0
-            prefluxr(i,k) =0.0
-            prefluxs(i,k) =0.0
-            prefluxg(i,k) =0.0
+            qnl(i,k)   = aerfld(i,kk,11) ! sulfate 
+            prefluxw(i,k) =0.0 
+            prefluxi(i,k) =0.0 
+            prefluxr(i,k) =0.0 
+            prefluxs(i,k) =0.0 
+            prefluxg(i,k) =0.0 
 
-            ! flip vertical (k) coordinate top =1
+            ! flip vertical (k) coordinate top =1 
             qv1(i,k)  = gq0(i,kk)
             ql1(i,k)  = gq0_ntcw(i,kk)
             qr1(i,k)  = gq0_ntrw(i,kk)
@@ -291,8 +291,8 @@ contains
             dz(i,k)   = (phii(i,kk)-phii(i,kk+1))*onebg
             p123(i,k) = prsl(i,kk)
             qni(i,k)  = 10.
-            q_con(i,k) = 0.0
-            cappa(i,k) = 0.0
+            q_con(i,k) = 0.0 
+            cappa(i,k) = 0.0 
          enddo
       enddo
 
@@ -302,7 +302,7 @@ contains
       ice0      = 0
       snow0     = 0
       graupel0  = 0
-
+ 
       ! Call MP driver
       last_step = .false.
       do_inline_mp = .false.
@@ -402,7 +402,7 @@ contains
               new_t(i,k)     = pt(i,kk)
            enddo
          enddo
-
+         
          call cld_eff_rad (1, im, 1, levs, slmsk(1:im),          &
             prsl(1:im,1:levs),  del(1:im,1:levs),                &
             new_t(1:im,1:levs), new_qv(1:im,1:levs),               &
@@ -413,20 +413,20 @@ contains
             res(1:im,1:levs), reg(1:im,1:levs),snowd(1:im))
       endif
 
-      if(lradar) then
+      if(lradar) then 
          call rad_ref (1, im, 1, 1, qv1(1:im,1:levs), qr1(1:im,1:levs), &
-	          qs1(1:im,1:levs),qg1(1:im,1:levs),pt(1:im,1:levs),          &
-            delp(1:im,1:levs), dz(1:im,1:levs), refl(1:im,1:levs), levs, hydrostatic,  &
+	          qs1(1:im,1:levs),qg1(1:im,1:levs),pt(1:im,1:levs),          & 
+            delp(1:im,1:levs), dz(1:im,1:levs), refl(1:im,1:levs), levs, hydrostatic,  & 
             do_inline_mp, 1)
 
          do k=1,levs
            kk = levs-k+1
            do i=1,im
               refl_10cm(i,k)   = max(-35.,refl(i,kk))
-           enddo
-         enddo
+           enddo 
+         enddo 
       endif
-
+      
       if(effr_in) then
          deallocate(new_qv, new_ql, new_qi, new_qr, new_qs, new_qg, new_qa, new_t)
       end if

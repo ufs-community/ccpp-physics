@@ -1,17 +1,17 @@
 !>\file mfpblt.f
 !! This file contains the subroutine that calculates mass flux and
-!! updraft parcel properties for thermals driven by surface heating
+!! updraft parcel properties for thermals driven by surface heating 
 !! for use in the TKE-EDMF PBL scheme.
 
 !> This module contains the subroutine that calculates mass flux and
-!! updraft parcel properties for thermals driven by surface heating
+!! updraft parcel properties for thermals driven by surface heating 
 !! for use in the TKE-EDMF PBL scheme.
       module mfpblt_mod
       contains
 
 !> This subroutine computes mass flux and updraft parcel properties for
-!! thermals driven by surface heating.
-!!\section mfpblt_gen GFS mfpblt General Algorithm
+!! thermals driven by surface heating. 
+!!\section mfpblt_gen GFS mfpblt General Algorithm 
 !> @{
       subroutine mfpblt(im,ix,km,kmpbl,ntcw,ntrac1,delt,                &
      &   cnvflg,zl,zm,q1,t1,u1,v1,plyr,pix,thlx,thvx,                   &
@@ -134,7 +134,7 @@ c  local variables and arrays
               tem = max((hpbl(i)-zm(i,k)+dz) ,dz)
               ptem1 = 1./tem
               xlamue(i,k) = ce0 * (ptem+ptem1)
-            else
+            else 
               xlamue(i,k) = ce0 / dz
             endif
             xlamuem(i,k) = cm * xlamue(i,k)
@@ -178,7 +178,7 @@ c  local variables and arrays
         enddo
       enddo
 !
-!> - Compute updraft velocity square(wu2, eqn 13 in
+!> - Compute updraft velocity square(wu2, eqn 13 in 
 !! Han et al.(2019) \cite Han_2019)
 !
 !     tem = 1.-2.*f1
@@ -251,7 +251,7 @@ c  local variables and arrays
            hpblx(i) = zm(i,k-1) + rbint*(zm(i,k)-zm(i,k-1))
         endif
       enddo
-!
+! 
       do i = 1,im
         if(cnvflg(i)) then
           if(kpbl(i) > kpblx(i)) then
@@ -272,7 +272,7 @@ c  local variables and arrays
               tem = max((hpbl(i)-zm(i,k)+dz) ,dz)
               ptem1 = 1./tem
               xlamue(i,k) = ce0 * (ptem+ptem1)
-            else
+            else 
               xlamue(i,k) = ce0 / dz
             endif
             xlamuem(i,k) = cm * xlamue(i,k)
@@ -330,7 +330,7 @@ c  local variables and arrays
         endif
       enddo
 !
-!> - Compute scale-aware function based on
+!> - Compute scale-aware function based on 
 !! Arakawa and Wu (2013) \cite arakawa_and_wu_2013
 !
       do i = 1, im
@@ -433,7 +433,7 @@ c  local variables and arrays
              dz   = zl(i,k) - zl(i,k-1)
              tem  = 0.5 * xlamue(i,k-1) * dz
              factor = 1. + tem
-!
+! 
              qcko(i,k,n) = ((1.-tem)*qcko(i,k-1,n)+tem*
      &                    (q1(i,k,n)+q1(i,k-1,n)))/factor
           endif
@@ -454,7 +454,7 @@ c  local variables and arrays
              dz   = zl(i,k) - zl(i,k-1)
              tem  = 0.5 * xlamue(i,k-1) * dz
              factor = 1. + tem
-!
+! 
              qcko(i,k,n) = ((1.-tem)*qcko(i,k-1,n)+tem*
      &                    (q1(i,k,n)+q1(i,k-1,n)))/factor
           endif

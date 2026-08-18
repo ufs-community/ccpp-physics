@@ -1,18 +1,18 @@
 !>\file module_ozphys.F90
 !!
 
-!> The operational GFS currently parameterizes ozone production and destruction based on
+!> The operational GFS currently parameterizes ozone production and destruction based on 
 !! monthly mean coefficients ( global_o3prdlos.f77) provided by Naval Research Laboratory
 !! through CHEM2D chemistry model (McCormack et al. (2006) \cite mccormack_et_al_2006).
 !!
 !! There are two implementations of this parameterization within this module.
 !! run_o3prog_2006 - Relies on either two/four mean monthly coefficients. This is explained
 !!                   in (https://doi.org/10.5194/acp-6-4943-2006. See Eq.(4)).
-!! run_o3prog_2015 - Relies on six mean monthly coefficients, specifically for NRL
+!! run_o3prog_2015 - Relies on six mean monthly coefficients, specifically for NRL 
 !!                   parameterization and climatological T and O3 are in location 5 and 6 of
 !!                   the coefficient array.
-!!
-!! Both of these rely on the scheme being setup correctly by invoking the load(), setup(),
+!! 
+!! Both of these rely on the scheme being setup correctly by invoking the load(), setup(), 
 !! and update() procedures prior to calling the run() procedure.
 !!
 !! load_o3prog()   - Read in data and load into type ty_ozphys (called once from host)
@@ -40,8 +40,8 @@ module module_ozphys
 
   public ty_ozphys
 
-! #########################################################################################
-!> \section arg_table_ty_ozphys Argument Table
+! ######################################################################################### 
+!> \section arg_table_ty_ozphys Argument Table 
 !! \htmlinclude ty_ozphys.html
 !!
 !! Derived type containing data and procedures needed by ozone photochemistry parameterization
@@ -69,7 +69,7 @@ module module_ozphys
      real(kind_phys), allocatable :: pstr(:)       !<
      real(kind_phys), allocatable :: datac(:,:,:)  !< Ozone climotological data
      integer                      :: k1oz          !< Lower interpolation index in datac(dim=3), time dim
-     integer                      :: k2oz          !< Upper interpolation index in datac(dim=3), time dim
+     integer                      :: k2oz          !< Upper interpolation index in datac(dim=3), time dim 
      real(kind_phys)              :: facoz         !< Parameter for ozone climotology
      contains
        procedure, public :: load_o3prog
@@ -82,7 +82,7 @@ module module_ozphys
        procedure, public :: update_o3clim
        procedure, public :: run_o3clim
   end type ty_ozphys
-
+  
 contains
 
 !> Procedure (type-bound) for loading data for prognostic ozone.
@@ -104,24 +104,24 @@ contains
     read (fileID, iostat=ierr, iomsg=err_message) this%ncf, this%nlat, this%nlev, this%ntime
     if (ierr /= 0 ) return
     rewind(fileID)
-
+    
     allocate (this%lat(this%nlat))
     allocate (this%pres(this%nlev))
     allocate (this%po3(this%nlev))
     allocate (this%time(this%ntime+1))
     allocate (this%data(this%nlat,this%nlev,this%ncf,this%ntime))
-
+    
     allocate(lat4(this%nlat), pres4(this%nlev), time4(this%ntime+1))
     read (fileID, iostat=ierr, iomsg=err_message) this%ncf, this%nlat, this%nlev, this%ntime, lat4, pres4, time4
     if (ierr /= 0 ) return
-
-    ! Store
+    
+    ! Store 
     this%pres(:) = pres4(:)
     this%po3(:)  = log(100.0*this%pres(:)) ! from mb to ln(Pa)
     this%lat(:)  = lat4(:)
     this%time(:) = time4(:)
     deallocate(lat4, pres4, time4)
-
+    
     allocate(tempin(this%nlat))
     do i1=1,this%ntime
        do i2=1,this%ncf
@@ -137,7 +137,7 @@ contains
 
   end function load_o3prog
 
-!> Procedure (type-bound) for setting up interpolation indices between data-grid and
+!> Procedure (type-bound) for setting up interpolation indices between data-grid and 
 !! model-grid. Called once during initialization
   subroutine setup_o3prog(this, lat, idx1, idx2, idxh)
     class(ty_ozphys), intent(in)  :: this
@@ -178,7 +178,7 @@ contains
 
     tx1 = (this%time(idxt2) - rjday) / (this%time(idxt2) - this%time(idxt1))
     tx2 = 1.0 - tx1
-
+ 
     do nc=1,this%ncf
        do l=1,this%nlev
           do j=1,size(ozpl(:,1,1))
@@ -473,7 +473,7 @@ contains
           j2   = this%nlatc
           tem1 = 1.0
        endif
-
+       
        tem2 = 1.0 - tem1
        do j = 1, this%nlevc
           tem3        = tem2*this%datac(j1,j,this%k1oz) + tem1*this%datac(j2,j,this%k1oz)
@@ -499,7 +499,7 @@ contains
              endif
           enddo
        enddo
-
+       
        do iCol = 1, nCol
           if (wk1(iCol) > this%pkstr(this%nlevc)) oz(iCol,ll) = o3i(iCol,this%nlevc)
           if (wk1(iCol) < this%pkstr(1))          oz(iCol,ll) = o3i(iCol,1)
@@ -570,7 +570,7 @@ contains
        do iLev = 1, this%nlevc
           read (fileID) pstr4(iLev)
        enddo
-
+       
        do imo = 1, 12
           do iLev = 1, this%nlevc
               read (fileID,iostat=ierr,iomsg=err_message) (o3clim4(iLat,iLev,imo),iLat=1,this%nlatc)
@@ -586,13 +586,13 @@ contains
            enddo
         enddo
      enddo
-
+     
      do iLev = 1, this%nlevc
         this%pstr(iLev)  = pstr4(iLev)
         ! following line equivalent to funcphys's fpkapx=(p/1.e5_krealfp)**con_rocp
         this%pkstr(iLev) = (this%pstr(iLev)*1.0e-3_kind_phys)**con_rocp
      enddo
-
+     
    end function load_o3clim
 
 !> Procedure (type-bound) for updating temporal interpolation index when using climotological
@@ -608,7 +608,7 @@ contains
 
      midmon = mdays(imon)/2 + 1
      change = loz1st .or. ( (iday==midmon) .and. (ihour==0) )
-
+    
      if ( change ) then
         if ( iday < midmon ) then
            this%k1oz = mod(imon+10, 12) + 1
@@ -622,13 +622,13 @@ contains
            midp = mdays(this%k2oz)/2 + 1 + mdays(this%k1oz)
         endif
      endif
-
+    
      if (iday < midmon) then
         id = iday + mdays(this%k1oz)
      else
         id = iday
      endif
-
+    
      this%facoz = float(id - midm) / float(midp - midm)
 
    end subroutine update_o3clim

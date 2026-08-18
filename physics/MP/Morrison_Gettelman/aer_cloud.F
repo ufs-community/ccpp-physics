@@ -2,12 +2,12 @@
 !! This file contains the models of Nenes and Seinfeld (2003) \cite Nenes_2003 ,
 !! Fountoukis and Nenes (2005) \cite Fountoukis_2005 and Barahona and
 !! Nenes (2008, 2009) \cite Barahona_2008 \cite Barahona_2009 .
-!>\author Donifan Barahona  donifan.o.barahona@nasa.gov
+!>\author Donifan Barahona  donifan.o.barahona@nasa.gov 
 
 !>\ingroup mg2mg3
 !>\defgroup aer_cloud_mod Morrison-Gettelman MP aer_cloud Module
-!! according to the models of Nenes & Seinfeld (2003) \cite Nenes_2003,
-!! Fountoukis and Nenes (2005) \cite Fountoukis_2005
+!! according to the models of Nenes & Seinfeld (2003) \cite Nenes_2003, 
+!! Fountoukis and Nenes (2005) \cite Fountoukis_2005 
 !! and Barahona and Nenes (2008, 2009) \cite Barahona_2008 \cite Barahona_2009 .
 !! *** Code Developer: Donifan Barahona donifan.o.barahona@nasa.gov
        MODULE aer_cloud
@@ -192,7 +192,7 @@
      & cdncr8, smaxliqr8, incr8, smaxicer8, nheticer8, INimmr8,         &
      & dINimmr8, Ncdepr8, Ncdhfr8, sc_icer8, fdust_immr8, fdust_depr8,  &
      & fdust_dhfr8, nlimr8, use_average_v, CCN_param, IN_param, fd_dust,&
-     & fd_soot, pfrz_inc_r8, sigma_nuc, rhi_cell,nccn)
+     & fd_soot, pfrz_inc_r8, sigma_nuc, rhi_cell,nccn)  
 !    & fd_soot, pfrz_inc_r8, sigma_nuc, rhi_cell,nccn, lprnt)
 
 
@@ -1831,7 +1831,7 @@
        m=(n+1)/2d0
        xm=0.5d0*(x2+x1)
        xl=0.5d0*(x2-x1)
-
+       
        do i=1,m
        z=cos(pi_par*(i-.25d0)/(n+.5d0))
        do

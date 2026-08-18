@@ -419,7 +419,7 @@
   standard_name = magnitude_of_perturbation_of_vegetation_fraction
   long_name = magnitude of perturbation of vegetation fraction
   units = frac
-  dimensions = ()
+  dimensions = () 
   type = real
   kind = kind_phys
   intent = in

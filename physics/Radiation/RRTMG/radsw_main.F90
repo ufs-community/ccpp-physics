@@ -298,9 +298,9 @@
 !!!!!                         end descriptions                         !!!!!
 !!!!!  ==============================================================  !!!!!
 
-!> This module contains the CCPP-compliant NCEP's modifications of the
-!! rrtmg-sw radiation code from aer inc.
-      module rrtmg_sw
+!> This module contains the CCPP-compliant NCEP's modifications of the 
+!! rrtmg-sw radiation code from aer inc.     
+      module rrtmg_sw 
 !
       use machine,          only : rb => kind_phys, im => kind_io4,     &
      &                             kind_phys, kind_dbl_prec
@@ -591,7 +591,7 @@
 !   iovr_max     - choice of cloud-overlap: maximum                     !
 !   iovr_dcorr   - choice of cloud-overlap: decorrelation length        !
 !   iovr_exp     - choice of cloud-overlap: exponential                 !
-!   iovr_exprand - choice of cloud-overlap: exponential random          !
+!   iovr_exprand - choice of cloud-overlap: exponential random          !   
 !                                                                       !
 !  output variables:                                                    !
 !   hswc  (npts,nlay): total sky heating rates (k/sec or k/day)         !
@@ -694,8 +694,8 @@
       real (kind=kind_phys), dimension(:,:), intent(in) ::              &
      &       plyr, tlyr, qlyr, olyr, dzlyr, delpin
 
-      real (kind=kind_phys),dimension(:),intent(in):: sfcalb_nir_dir
-      real (kind=kind_phys),dimension(:),intent(in):: sfcalb_nir_dif
+      real (kind=kind_phys),dimension(:),intent(in):: sfcalb_nir_dir 
+      real (kind=kind_phys),dimension(:),intent(in):: sfcalb_nir_dif 
       real (kind=kind_phys),dimension(:),intent(in):: sfcalb_uvis_dir
       real (kind=kind_phys),dimension(:),intent(in):: sfcalb_uvis_dif
 
@@ -1518,7 +1518,7 @@
         heatfac = con_g * 1.0e-2 / con_cp           !   (in k/second)
       endif
 
-!> - Define exponential lookup tables for transmittance.
+!> - Define exponential lookup tables for transmittance. 
 !          tau is  computed as a function of the \a tau transition function, and
 !           transmittance is calculated as a function of tau.  all tables
 !           are computed at intervals of 0.0001.  the inverse of the
@@ -2158,13 +2158,13 @@
 !       For exponential cloud overlap, the correlation is applied across layers
 !       without regard to the configuration of clear and cloudy layers.
 
-!       For exponential-random cloud overlap, a new exponential transition is
-!       performed within each group of adjacent cloudy layers and blocks of
-!       cloudy layers with clear layers between them are correlated randomly.
+!       For exponential-random cloud overlap, a new exponential transition is 
+!       performed within each group of adjacent cloudy layers and blocks of 
+!       cloudy layers with clear layers between them are correlated randomly. 
 !
-!       NOTE: The code below is identical for case (4) and (5) because the
-!       distinction in the vertical correlation between EXP and ER is already
-!       built into the specification of alpha (in subroutine get_alpha_exper).
+!       NOTE: The code below is identical for case (4) and (5) because the 
+!       distinction in the vertical correlation between EXP and ER is already 
+!       built into the specification of alpha (in subroutine get_alpha_exper). 
 
 !  ---  setup 2 sets of random numbers
 
@@ -2189,7 +2189,7 @@
           enddo
 
 !  ---  then working upward from the surface:
-!       if a random number (from an independent set: cdfun2) is smaller than
+!       if a random number (from an independent set: cdfun2) is smaller than 
 !       alpha, then use the previous layer's number, otherwise use a new random
 !       number (keep the originally assigned one in cdfunc for that layer).
 
@@ -2679,11 +2679,11 @@
           zasy3 = 0.75 * zasy1
 
 !>  - Perform general two-stream expressions:
-!!\n  control parameters provided by host-model
-!!\n    iswmode - control flag for 2-stream transfer schemes
-!!\n              = 1 delta-eddington    (joseph et al., 1976)
-!!\n              = 2 pifm               (zdunkowski et al., 1980)
-!!\n              = 3 discrete ordinates (liou, 1973)
+!!\n  control parameters provided by host-model                             
+!!\n    iswmode - control flag for 2-stream transfer schemes               
+!!\n              = 1 delta-eddington    (joseph et al., 1976)             
+!!\n              = 2 pifm               (zdunkowski et al., 1980)         
+!!\n              = 3 discrete ordinates (liou, 1973)                      
           if ( iswmode == 1 ) then
             zgam1 = 1.75 - zssa1 * (f_one + zasy3)
             zgam2 =-0.25 + zssa1 * (f_one - zasy3)
@@ -3274,7 +3274,7 @@
 !    iswmode - control flag for 2-stream transfer schemes               !
 !              = 1 delta-eddington    (joseph et al., 1976)             !
 !              = 2 pifm               (zdunkowski et al., 1980)         !
-!              = 3 discrete ordinates (liou, 1973)                      !
+!              = 3 discrete ordinates (liou, 1973)                      ! 
 !                                                                       !
 !  output variables:                                                    !
 !    fxupc   - real, tot sky upward flux                     nlp1*nbdsw !
@@ -3473,10 +3473,10 @@
           zasy3 = 0.75 * zasy1
 
 !>  - Perform general two-stream expressions:
-!!\n control parameters provided by host-model
-!!\n iswmode - control flag for 2-stream transfer schemes
-!!\n           = 1 delta-eddington (joseph et al., 1976)
-!!\n           = 2 pifm (zdunkowski et al., 1980)
+!!\n control parameters provided by host-model 
+!!\n iswmode - control flag for 2-stream transfer schemes 
+!!\n           = 1 delta-eddington (joseph et al., 1976) 
+!!\n           = 2 pifm (zdunkowski et al., 1980) 
 !!\n           = 3 discrete ordinates (liou, 1973)
           if ( iswmode == 1 ) then
             zgam1 = 1.75 - zssa1 * (f_one + zasy3)
@@ -3714,7 +3714,7 @@
               endif
               zgam4 = f_one - zgam3
 
-!>  - Compute homogeneous reflectance and transmittance for both convertive
+!>  - Compute homogeneous reflectance and transmittance for both convertive 
 !! and non-convertive scattering.
 
               if ( zssaw >= zcrit ) then    ! for conservative scattering

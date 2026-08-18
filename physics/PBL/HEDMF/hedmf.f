@@ -213,7 +213,7 @@
       real :: ttend_fac
 
       integer :: idtend1, idtend2
-
+      
       !! for hurricane application
       real(kind=kind_phys) wspm(im,km-1)
       integer kLOC ! RGF
@@ -879,12 +879,12 @@ c
 
                 zfac=max(zfac,zfmin)
                 ashape=max(ABS(moninq_fac),0.2)  ! should not be smaller than 0.2, otherwise too much adjustment(?)
-                if (useshape == 1) then
+                if (useshape == 1) then 
                  ashape=(1.0 - ((sz2h*zfac/smax)**0.25) *(1.0 - ashape))
                  tem = zi(i,k+1) * (zfac) * ashape
                 elseif (useshape == 2) then   !only adjus K that is > K_surface_top
                   ashape1=1.0
-                  if (skmax > sksfc) then
+                  if (skmax > sksfc) then 
                     ashape1=(skmax*ashape-sksfc)/(skmax-sksfc)
                   endif
                   skminusk0 = zi(i,k+1)*zfac - hpbl(i)*sksfc
@@ -930,7 +930,7 @@ c
 ! (2) alpha test
 ! if alpha < 0, find alpha for each column and do the loop again
 ! if alpha > 0, we are finished
-
+      
 !GJF: redundant check for moninq_fac < 0?
             if (moninq_fac .lt. 0.) then      ! variable alpha test
 ! k-level of layer around 500 m
@@ -951,7 +951,7 @@ c
                   wspm(i,3) = wspm(i,1)/xDKU  ! ratio of cap to Km at k-level, store in WSPM(i,3)
                   !WSPM(i,4) = amin1(WSPM(I,3),1.0) ! this is new column alpha. cap at 1. ! should never be needed
                   wspm(i,4) = min(wspm(i,3),1.0) ! this is new column alpha. cap at 1. ! should never be needed
- !! recalculate K capped by WSPM(i,1)
+ !! recalculate K capped by WSPM(i,1)           
                   do k = 1, kmpbl
                     if(k < kpbl(i)) then
 !                     zfac = max((1.-(zi(i,k+1)-zl(i,1))/
@@ -970,16 +970,16 @@ c
                         skmax=hmax*(1.0-hmax)**pfac
                         sksfc=min(zi(i,2)/hpbl(i),0.05)  ! surface layer top, 0.05H or ZI(2) (Zi(1)=0)
                         sksfc=sksfc*(1-sksfc)**pfac
-
+                                
                         zfac=max(zfac,zfmin)
                         ashape=max(wspm(i,4),0.2)  !! adjustment coef should not smaller than 0.2
-                        if(useshape ==1) then
+                        if(useshape ==1) then 
                           ashape=(1.0 - ((sz2h*zfac/smax)**0.25)*
      &                           (1.0 - ashape))
                           tem = zi(i,k+1) * (zfac) * ashape
                         elseif (useshape == 2) then !only adjus K that is > K_surface_top 
                           ashape1=1.0
-                          if (skmax > sksfc) then
+                          if (skmax > sksfc) then 
                             ashape1=(skmax*ashape-sksfc)/(skmax-sksfc)
                           endif
                           skminusk0=zi(i,k+1)*zfac - hpbl(i)*sksfc
@@ -1341,7 +1341,7 @@ c
         else
           ttend_fac = 0.5
         endif
-
+      
         do i = 1,im
           tem   = govrth(i)*sflux(i)
           tem1  = tem + stress(i)*spd1(i)/zl(i,1)

@@ -1,21 +1,21 @@
 !>\file fv_sat_adj.F90
 !! This file contains the GFDL in-core fast saturation adjustment.
-!! and it is an "intermediate physics" implemented in the remapping Lagrangian to
+!! and it is an "intermediate physics" implemented in the remapping Lagrangian to 
 !! Eulerian loop of FV3 solver.
 !***********************************************************************
 !*                   GNU Lesser General Public License
 !*
 !* This file is part of the GFDL Cloud Microphysics.
 !*
-!* The GFDL Cloud Microphysics is free software: you can
+!* The GFDL Cloud Microphysics is free software: you can 
 !8 redistribute it and/or modify it under the terms of the
 !* GNU Lesser General Public License as published by the
-!* Free Software Foundation, either version 3 of the License, or
+!* Free Software Foundation, either version 3 of the License, or 
 !* (at your option) any later version.
 !*
 !* The GFDL Cloud Microphysics is distributed in the hope it will be
-!* useful, but WITHOUT ANYWARRANTY; without even the implied warranty
-!* of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+!* useful, but WITHOUT ANYWARRANTY; without even the implied warranty 
+!* of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
 !* See the GNU General Public License for more details.
 !*
 !* You should have received a copy of the GNU Lesser General Public
@@ -23,7 +23,7 @@
 !* If not, see <http://www.gnu.org/licenses/>.
 !***********************************************************************
 
-!> This module contains the GFDL in-core fast saturation adjustment
+!> This module contains the GFDL in-core fast saturation adjustment  
 !! called in FV3 dynamics solver.
 module fv_sat_adj
 ! Modules Included:
@@ -66,7 +66,7 @@ module fv_sat_adj
 #endif
 
     implicit none
-
+    
     private
 
     public fv_sat_adj_init, fv_sat_adj_run, fv_sat_adj_final
@@ -432,9 +432,9 @@ end subroutine fv_sat_adj_run
 subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te, te0, &
 #ifdef MULTI_GASES
         qvi, &
-#else
+#else 
         qv, &
-#endif
+#endif 
         ql, qi, qr, qs, qg, hs, dpln, delz, pt, dp, q_con, cappa, &
         area, dtdt, out_dt, last_step, do_qa, qa)
 
@@ -479,28 +479,28 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
 #endif
     sdt = 0.5 * mdt                   ! half remapping time step
     dt_bigg = mdt                     ! bigg mechinism time step
-
+    
     tice0 = tice - 0.01               ! 273.15, standard freezing temperature
-
+    
     ! -----------------------------------------------------------------------
     !> - Define conversion scalar / factor.
     ! -----------------------------------------------------------------------
-
+    
     fac_i2s = 1. - exp (- mdt / tau_i2s)
     fac_v2l = 1. - exp (- sdt / tau_v2l)
     fac_r2g = 1. - exp (- mdt / tau_r2g)
     fac_l2r = 1. - exp (- mdt / tau_l2r)
-
+    
     fac_l2v = 1. - exp (- sdt / tau_l2v)
     fac_l2v = min (sat_adj0, fac_l2v)
-
+    
     fac_imlt = 1. - exp (- sdt / tau_imlt)
     fac_smlt = 1. - exp (- mdt / tau_smlt)
-
+    
     ! -----------------------------------------------------------------------
     !> - Define heat capacity of dry air and water vapor based on hydrostatical property.
     ! -----------------------------------------------------------------------
-
+    
     if (hydrostatic) then
         c_air = cp_air
         c_vap = cp_vap
@@ -512,9 +512,9 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
     lv00 = hlv - d0_vap * tice
     ! dc_vap = cp_vap - c_liq ! - 2339.5
     ! d0_vap = cv_vap - c_liq ! - 2801.0
-
+    
     do j = js, je ! start j loop
-
+        
         do i = is, ie
             q_liq (i) = ql (i, j) + qr (i, j)
             q_sol (i) = qi (i, j) + qs (i, j) + qg (i, j)
@@ -531,11 +531,11 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
             t0 (i) = pt1 (i) ! true temperature
             qpz (i) = qpz (i) + qv (i, j) ! total_wat conserved in this routine
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Define air density based on hydrostatical property.
         ! -----------------------------------------------------------------------
-
+        
         if (hydrostatic) then
             do i = is, ie
                 den (i) = dp (i, j) / (dpln (i, j) * rdgas * pt (i, j))
@@ -545,11 +545,11 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
                 den (i) = - dp (i, j) / (grav * delz (i, j)) ! moist_air density
             enddo
         endif
-
+        
         ! -----------------------------------------------------------------------
         !> - Define heat capacity and latend heat coefficient.
         ! -----------------------------------------------------------------------
-
+        
         do i = is, ie
 #ifdef MULTI_GASES
             if (hydrostatic) then
@@ -563,11 +563,11 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
             lhi (i) = li00 + dc_ice * pt1 (i)
             icp2 (i) = lhi (i) / cvm (i)
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Fix energy conservation.
         ! -----------------------------------------------------------------------
-
+        
         if (consv_te) then
             if (hydrostatic) then
                 do i = is, ie
@@ -589,22 +589,22 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
                 enddo
             endif
         endif
-
+        
         ! -----------------------------------------------------------------------
         !> - Fix negative cloud ice with snow.
         ! -----------------------------------------------------------------------
-
+        
             do i = is, ie
             if (qi (i, j) < 0.) then
                 qs (i, j) = qs (i, j) + qi (i, j)
                 qi (i, j) = 0.
             endif
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Melting of cloud ice to cloud water and rain.
         ! -----------------------------------------------------------------------
-
+        
         do i = is, ie
             if (qi (i, j) > 1.e-8 .and. pt1 (i) > tice) then
                 sink (i) = min (qi (i, j), fac_imlt * (pt1 (i) - tice) / icp2 (i))
@@ -621,20 +621,20 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
                 pt1 (i) = pt1 (i) - sink (i) * lhi (i) / cvm (i)
             endif
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Update latend heat coefficient.
         ! -----------------------------------------------------------------------
-
+        
             do i = is, ie
             lhi (i) = li00 + dc_ice * pt1 (i)
             icp2 (i) = lhi (i) / cvm (i)
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Fix negative snow with graupel or graupel with available snow.
         ! -----------------------------------------------------------------------
-
+        
         do i = is, ie
             if (qs (i, j) < 0.) then
                 qg (i, j) = qg (i, j) + qs (i, j)
@@ -645,13 +645,13 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
                 qs (i, j) = qs (i, j) - tmp
             endif
         enddo
-
+        
         ! after this point cloud ice & snow are positive definite
-
+        
         ! -----------------------------------------------------------------------
         !> - Fix negative cloud water with rain or rain with available cloud water.
         ! -----------------------------------------------------------------------
-
+        
             do i = is, ie
             if (ql (i, j) < 0.) then
                 tmp = min (- ql (i, j), max (0., qr (i, j)))
@@ -663,7 +663,7 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
                 qr (i, j) = qr (i, j) + tmp
             endif
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Enforce complete freezing of cloud water to cloud ice below - 48 c.
         ! -----------------------------------------------------------------------
@@ -680,11 +680,11 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
                 pt1 (i) = pt1 (i) + sink (i) * lhi (i) / cvm (i)
             endif
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Update latend heat coefficient.
         ! -----------------------------------------------------------------------
-
+        
            do i = is, ie
             lhl (i) = lv00 + d0_vap * pt1 (i)
             lhi (i) = li00 + dc_ice * pt1 (i)
@@ -692,13 +692,13 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
             icp2 (i) = lhi (i) / cvm (i)
             tcp3 (i) = lcp2 (i) + icp2 (i) * min (1., dim (tice, pt1 (i)) /48.)
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Condensation/evaporation between water vapor and cloud water.
         ! -----------------------------------------------------------------------
-
+        
             call wqs2_vect (is, ie, pt1, den, wqsat, dq2dt)
-
+        
             adj_fac = sat_adj0
         do i = is, ie
             dq0 = (qv (i, j) - wqsat (i)) / (1. + tcp3 (i) * dq2dt (i))
@@ -721,11 +721,11 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
             cvm (i) = mc_air (i) + qv (i, j) * c_vap + q_liq (i) * c_liq + q_sol (i) * c_ice
             pt1 (i) = pt1 (i) + src (i) * lhl (i) / cvm (i)
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Update latend heat coefficient.
         ! -----------------------------------------------------------------------
-
+        
         do i = is, ie
             lhl (i) = lv00 + d0_vap * pt1 (i)
             lhi (i) = li00 + dc_ice * pt1 (i)
@@ -733,17 +733,17 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
             icp2 (i) = lhi (i) / cvm (i)
             tcp3 (i) = lcp2 (i) + icp2 (i) * min (1., dim (tice, pt1 (i)) / 48.)
         enddo
-
+        
         if (last_step) then
-
+            
             ! -----------------------------------------------------------------------
             !> - condensation/evaporation between water vapor and cloud water, last time step
             !! enforce upper (no super_sat) & lower (critical rh) bounds.
             ! final iteration:
             ! -----------------------------------------------------------------------
-
+            
             call wqs2_vect (is, ie, pt1, den, wqsat, dq2dt)
-
+            
             do i = is, ie
                 dq0 = (qv (i, j) - wqsat (i)) / (1. + tcp3 (i) * dq2dt (i))
                 if (dq0 > 0.) then ! remove super - saturation, prevent super saturation over water
@@ -765,24 +765,24 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
                 cvm (i) = mc_air (i) + qv (i, j) * c_vap + q_liq (i) * c_liq + q_sol (i) * c_ice
                 pt1 (i) = pt1 (i) + src (i) * lhl (i) / cvm (i)
             enddo
-
+            
             ! -----------------------------------------------------------------------
             !> - Update latend heat coefficient.
             ! -----------------------------------------------------------------------
-
+            
             do i = is, ie
                 lhl (i) = lv00 + d0_vap * pt1 (i)
                 lhi (i) = li00 + dc_ice * pt1 (i)
                 lcp2 (i) = lhl (i) / cvm (i)
                 icp2 (i) = lhi (i) / cvm (i)
             enddo
-
+            
         endif
-
+        
         ! -----------------------------------------------------------------------
         !> - Homogeneous freezing of cloud water to cloud ice.
         ! -----------------------------------------------------------------------
-
+        
         do i = is, ie
             dtmp = t_wfr - pt1 (i) ! [ - 40, - 48]
             if (ql (i, j) > 0. .and. dtmp > 0.) then
@@ -795,20 +795,20 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
                 pt1 (i) = pt1 (i) + sink (i) * lhi (i) / cvm (i)
             endif
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Update latend heat coefficient.
         ! -----------------------------------------------------------------------
-
+        
         do i = is, ie
             lhi (i) = li00 + dc_ice * pt1 (i)
             icp2 (i) = lhi (i) / cvm (i)
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - bigg mechanism (heterogeneous freezing of cloud water to cloud ice).
         ! -----------------------------------------------------------------------
-
+        
         do i = is, ie
             tc = tice0 - pt1 (i)
             if (ql (i, j) > 0.0 .and. tc > 0.) then
@@ -822,20 +822,20 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
                 pt1 (i) = pt1 (i) + sink (i) * lhi (i) / cvm (i)
             endif
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Update latend heat coefficient.
         ! -----------------------------------------------------------------------
-
+        
         do i = is, ie
             lhi (i) = li00 + dc_ice * pt1 (i)
             icp2 (i) = lhi (i) / cvm (i)
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Freezing of rain to graupel.
         ! -----------------------------------------------------------------------
-
+        
             do i = is, ie
             dtmp = (tice - 0.1) - pt1 (i)
             if (qr (i, j) > 1.e-7 .and. dtmp > 0.) then
@@ -849,20 +849,20 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
                 pt1 (i) = pt1 (i) + sink (i) * lhi (i) / cvm (i)
             endif
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Update latend heat coefficient.
         ! -----------------------------------------------------------------------
-
+        
             do i = is, ie
             lhi (i) = li00 + dc_ice * pt1 (i)
             icp2 (i) = lhi (i) / cvm (i)
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Melting of snow to rain or cloud water.
         ! -----------------------------------------------------------------------
-
+        
             do i = is, ie
             dtmp = pt1 (i) - (tice + 0.1)
             if (qs (i, j) > 1.e-7 .and. dtmp > 0.) then
@@ -879,11 +879,11 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
                 pt1 (i) = pt1 (i) - sink (i) * lhi (i) / cvm (i)
             endif
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Autoconversion from cloud water to rain.
         ! -----------------------------------------------------------------------
-
+        
             do i = is, ie
             if (ql (i, j) > ql0_max) then
                 sink (i) = fac_l2r * (ql (i, j) - ql0_max)
@@ -891,11 +891,11 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
                 ql (i, j) = ql (i, j) - sink (i)
             endif
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Update latend heat coefficient.
         ! -----------------------------------------------------------------------
-
+        
             do i = is, ie
             lhi (i) = li00 + dc_ice * pt1 (i)
             lhl (i) = lv00 + d0_vap * pt1 (i)
@@ -903,11 +903,11 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
             icp2 (i) = lhi (i) / cvm (i)
             tcp2 (i) = lcp2 (i) + icp2 (i)
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Sublimation/deposition between water vapor and cloud ice.
         ! -----------------------------------------------------------------------
-
+        
             do i = is, ie
             src (i) = 0.
             if (pt1 (i) < t_sub) then ! too cold to be accurate; freeze qv as a fix
@@ -940,11 +940,11 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
             cvm (i) = mc_air (i) + qv (i, j) * c_vap + q_liq (i) * c_liq + q_sol (i) * c_ice
             pt1 (i) = pt1 (i) + src (i) * (lhl (i) + lhi (i)) / cvm (i)
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Virtual temperature updated.
         ! -----------------------------------------------------------------------
-
+        
             do i = is, ie
 #ifdef USE_COND
             q_con (i, j) = q_liq (i) + q_sol (i)
@@ -965,11 +965,11 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
 #endif
 #endif
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Fix negative graupel with available cloud ice.
         ! -----------------------------------------------------------------------
-
+        
             do i = is, ie
             if (qg (i, j) < 0.) then
                 tmp = min (- qg (i, j), max (0., qi (i, j)))
@@ -977,11 +977,11 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
                 qi (i, j) = qi (i, j) - tmp
             endif
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Autoconversion from cloud ice to snow.
         ! -----------------------------------------------------------------------
-
+        
             do i = is, ie
             qim = qi0_max / den (i)
             if (qi (i, j) > qim) then
@@ -990,17 +990,17 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
                 qs (i, j) = qs (i, j) + sink (i)
             endif
         enddo
-
+        
             if (out_dt) then
             do i = is, ie
                 dtdt (i, j) = dtdt (i, j) + pt1 (i) - t0 (i)
             enddo
         endif
-
+        
         ! -----------------------------------------------------------------------
         !> - Fix energy conservation.
         ! -----------------------------------------------------------------------
-
+        
             if (consv_te) then
             do i = is, ie
                 if (hydrostatic) then
@@ -1020,11 +1020,11 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
                 endif
             enddo
         endif
-
+        
         ! -----------------------------------------------------------------------
         !> - Update latend heat coefficient.
         ! -----------------------------------------------------------------------
-
+        
             do i = is, ie
             lhi (i) = li00 + dc_ice * pt1 (i)
             lhl (i) = lv00 + d0_vap * pt1 (i)
@@ -1032,17 +1032,17 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
             lcp2 (i) = lhl (i) / cvm (i)
             icp2 (i) = lhi (i) / cvm (i)
         enddo
-
+        
         ! -----------------------------------------------------------------------
         !> - Compute cloud fraction.
         ! -----------------------------------------------------------------------
-
+        
         if (do_qa .and. last_step) then
-
+            
             ! -----------------------------------------------------------------------
             !>  - If it is the last step, combine water species.
             ! -----------------------------------------------------------------------
-
+            
             if (rad_snow) then
                 if (rad_graupel) then
                     do i = is, ie
@@ -1070,25 +1070,25 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
             do i = is, ie
                 q_cond (i) = q_sol (i) + q_liq (i)
             enddo
-
+            
             ! -----------------------------------------------------------------------
             !>  - Use the "liquid - frozen water temperature" (tin) to compute saturated specific humidity.
             ! -----------------------------------------------------------------------
-
+            
             do i = is, ie
-
-                if(tintqs) then
+                
+                if(tintqs) then 
                   tin = pt1(i)
-                else
+                else 
                   tin = pt1 (i) - (lcp2 (i) * q_cond (i) + icp2 (i) * q_sol (i)) ! minimum temperature
                 ! tin = pt1 (i) - ((lv00 + d0_vap * pt1 (i)) * q_cond (i) + &
                 ! (li00 + dc_ice * pt1 (i)) * q_sol (i)) / (mc_air (i) + qpz (i) * c_vap)
-                endif
-
+                endif 
+                
                 ! -----------------------------------------------------------------------
                 ! determine saturated specific humidity
                 ! -----------------------------------------------------------------------
-
+                
                 if (tin <= t_wfr) then
                     ! ice phase:
                     qstar (i) = iqs1 (tin, den (i))
@@ -1111,21 +1111,21 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
                 dw = dw_ocean + (dw_land - dw_ocean) * min (1., abs (hs (i, j)) / (10. * grav))
                 !>   - "scale - aware" subgrid variability: 100 - km as the base
                 hvar (i) = min (0.2, max (0.01, dw * sqrt (sqrt (area (i, j)) / 100.e3)))
-
+                
                 ! -----------------------------------------------------------------------
                 !>   - calculate partial cloudiness by pdf;
                 !! assuming subgrid linear distribution in horizontal; this is effectively a smoother for the
                 !! binary cloud scheme; qa = 0.5 if qstar (i) == qpz
                 ! -----------------------------------------------------------------------
-
+                
                 rh = qpz (i) / qstar (i)
-
+                
                 ! -----------------------------------------------------------------------
                 ! icloud_f = 0: bug - fixed
                 ! icloud_f = 1: old fvgfs gfdl) mp implementation
                 ! icloud_f = 2: binary cloud scheme (0 / 1)
                 ! -----------------------------------------------------------------------
-
+                
                 if (rh > 0.75 .and. qpz (i) > 1.e-8) then
                     dq = hvar (i) * qpz (i)
                     q_plus = qpz (i) + dq
@@ -1162,19 +1162,19 @@ subroutine fv_sat_adj_work(mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te,
                 else
                     qa (i, j) = 0.
                 endif
-
+                
             enddo
-
+            
         endif
-
+        
     enddo ! end j loop
-
+    
 end subroutine fv_sat_adj_work
 !> @}
 
 ! =======================================================================
 !>\ingroup fast_sat_adj
-!>\brief the function 'wqs1' computes the
+!>\brief the function 'wqs1' computes the 
 !! saturated specific humidity for table ii.
 ! =======================================================================
 real(kind=kind_dyn) function wqs1 (ta, den)
@@ -1201,7 +1201,7 @@ end function wqs1
 
 ! =======================================================================
 !>\ingroup fast_sat_adj
-!>\brief the function 'wqs1' computes the  saturated specific humidity
+!>\brief the function 'wqs1' computes the  saturated specific humidity 
 !! for table iii
 ! =======================================================================
 real(kind=kind_dyn) function iqs1 (ta, den)
@@ -1228,7 +1228,7 @@ end function iqs1
 
 ! =======================================================================
 !>\ingroup fast_sat_adj
-!>\brief The function 'wqs2'computes the gradient of saturated specific
+!>\brief The function 'wqs2'computes the gradient of saturated specific 
 !! humidity for table ii
 ! =======================================================================
 real(kind=kind_dyn) function wqs2 (ta, den, dqdt)
@@ -1260,7 +1260,7 @@ end function wqs2
 
 ! =======================================================================
 !>\ingroup fast_sat_adj
-!>\brief The function wqs2_vect computes the gradient of saturated
+!>\brief The function wqs2_vect computes the gradient of saturated 
 !! specific humidity for table ii.
 !! It is the same as "wqs2", but written as vector function.
 ! =======================================================================
@@ -1298,7 +1298,7 @@ end subroutine wqs2_vect
 
 ! =======================================================================
 !>\ingroup fast_sat_adj
-!>\brief The function 'iqs2' computes the gradient of saturated specific
+!>\brief The function 'iqs2' computes the gradient of saturated specific 
 !! humidity for table iii.
 ! =======================================================================
 real(kind=kind_dyn) function iqs2 (ta, den, dqdt)
@@ -1335,22 +1335,22 @@ end function iqs2
 ! =======================================================================
 
 subroutine qs_table (n)
-
+    
     implicit none
-
+    
     integer, intent (in) :: n
     real (kind_grid) :: delt = 0.1
     real (kind_grid) :: tmin, tem, esh20
     real (kind_grid) :: wice, wh2o, fac0, fac1, fac2
     real (kind_grid) :: esupc (200)
     integer :: i
-
+    
     tmin = tice - 160.
-
+    
     ! -----------------------------------------------------------------------
     ! compute es over ice between - 160 deg c and 0 deg c.
     ! -----------------------------------------------------------------------
-
+    
     do i = 1, 1600
         tem = tmin + delt * real (i - 1)
         fac0 = (tem - tice) / (tem * tice)
@@ -1358,11 +1358,11 @@ subroutine qs_table (n)
         fac2 = (d2ice * log (tem / tice) + fac1) / rvgas
         table (i) = e00 * exp (fac2)
     enddo
-
+    
     ! -----------------------------------------------------------------------
     ! compute es over water between - 20 deg c and 102 deg c.
     ! -----------------------------------------------------------------------
-
+    
     do i = 1, 1221
         tem = 253.16 + delt * real (i - 1)
         fac0 = (tem - tice) / (tem * tice)
@@ -1375,18 +1375,18 @@ subroutine qs_table (n)
             table (i + 1400) = esh20
         endif
     enddo
-
+    
     ! -----------------------------------------------------------------------
     ! derive blended es over ice and supercooled water between - 20 deg c and 0 deg c
     ! -----------------------------------------------------------------------
-
+    
     do i = 1, 200
         tem = 253.16 + delt * real (i - 1)
         wice = 0.05 * (tice - tem)
         wh2o = 0.05 * (tem - 253.16)
         table (i + 1400) = wice * table (i + 1400) + wh2o * esupc (i)
     enddo
-
+    
 end subroutine qs_table
 
 ! =======================================================================
@@ -1396,20 +1396,20 @@ end subroutine qs_table
 ! =======================================================================
 
 subroutine qs_tablew (n)
-
+    
     implicit none
-
+    
     integer, intent (in) :: n
     real (kind_grid) :: delt = 0.1
     real (kind_grid) :: tmin, tem, fac0, fac1, fac2
     integer :: i
-
+    
     tmin = tice - 160.
-
+    
     ! -----------------------------------------------------------------------
     ! compute es over water
     ! -----------------------------------------------------------------------
-
+    
     do i = 1, n
         tem = tmin + delt * real (i - 1)
         fac0 = (tem - tice) / (tem * tice)
@@ -1417,7 +1417,7 @@ subroutine qs_tablew (n)
         fac2 = (dc_vap * log (tem / tice) + fac1) / rvgas
         tablew (i) = e00 * exp (fac2)
     enddo
-
+    
 end subroutine qs_tablew
 
 ! =======================================================================
@@ -1427,16 +1427,16 @@ end subroutine qs_tablew
 ! =======================================================================
 
 subroutine qs_table2 (n)
-
+    
     implicit none
-
+    
     integer, intent (in) :: n
     real (kind_grid) :: delt = 0.1
     real (kind_grid) :: tmin, tem0, tem1, fac0, fac1, fac2
     integer :: i, i0, i1
-
+    
     tmin = tice - 160.
-
+    
     do i = 1, n
         tem0 = tmin + delt * real (i - 1)
         fac0 = (tem0 - tice) / (tem0 * tice)
@@ -1455,18 +1455,18 @@ subroutine qs_table2 (n)
         endif
         table2 (i) = e00 * exp (fac2)
     enddo
-
+    
     ! -----------------------------------------------------------------------
     ! smoother around 0 deg c
     ! -----------------------------------------------------------------------
-
+    
     i0 = 1600
     i1 = 1601
     tem0 = 0.25 * (table2 (i0 - 1) + 2. * table (i0) + table2 (i0 + 1))
     tem1 = 0.25 * (table2 (i1 - 1) + 2. * table (i1) + table2 (i1 + 1))
     table2 (i0) = tem0
     table2 (i1) = tem1
-
+    
 end subroutine qs_table2
 
 end module fv_sat_adj

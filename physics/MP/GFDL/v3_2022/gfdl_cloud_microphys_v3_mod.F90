@@ -1332,7 +1332,7 @@ subroutine mpdrv (hydrostatic, ua, va, wa, delp, pt, qv, ql, qr, qi, qs, qg, &
             qs (i, k) = qsz (k)
             qg (i, k) = qgz (k)
             qa (i, k) = qaz (k)
-
+   
             ! -----------------------------------------------------------------------
             ! calculate some more variables needed outside
             ! -----------------------------------------------------------------------
@@ -1701,10 +1701,10 @@ subroutine mp_full (ks, ke, ntimes, tz, qv, ql, qr, qi, qs, qg, dp, dz, u, v, w,
             ! -----------------------------------------------------------------------
             ! temperature sentive high vertical resolution processes
             ! -----------------------------------------------------------------------
-
+         
             call subgrid_z_proc (ks, ke, den, denfac, dts, rh_adj, tz, qv, ql, &
                 qr, qi, qs, qg, dp, ccn, cin, cond, dep, reevap, sub, last_step)
-
+         
             condensation = condensation + cond * convt
             deposition = deposition + dep * convt
             evaporation = evaporation + reevap * convt
@@ -5866,7 +5866,7 @@ subroutine cld_eff_rad (is, ie, ks, ke, lsm, p, delp, t, qv, qw, qi, qr, qs, qg,
                          (8.0 + (14.0 - 8.0) * min (1.0, max (0.0, - tc / 30.0))) * &
                          (1.0 - abs (mask - 1.0))
                     rew (i, k) = rew (i, k) + (14.0 - rew (i, k)) * &
-                        min (1.0, max (0.0, snowd (i) / 1000.0)) ! snowd is in mm
+                        min (1.0, max (0.0, snowd (i) / 1000.0)) ! snowd is in mm 
                     rew (i, k) = max (rewmin, min (rewmax, rew (i, k)))
                 else
                     qcw (i, k) = 0.0
@@ -6140,7 +6140,7 @@ subroutine rad_ref (is, ie, js, je, qv, qr, qs, qg, pt, delp, &
 
     real(kind_phys), intent (in), dimension (is:ie, js:je, npz) :: pt, delp
 
-    real(kind_phys), intent (in), dimension (is:ie, js:je, npz) :: qv, qr, qs, qg
+    real(kind_phys), intent (in), dimension (is:ie, js:je, npz) :: qv, qr, qs, qg 
 
     !real(kind_phys), intent (in), dimension (is:ie, npz + 1, js:je) :: peln
 

@@ -143,7 +143,7 @@ subroutine m_micro_init(imp_physics, imp_physics_mg, fprcp, gravit, rair, rh2o, 
 end subroutine m_micro_init
 
 !> \defgroup mg2mg3 Morrison-Gettelman MP Driver Module
-!! \brief This subroutine is the Morrison-Gettelman MP driver, which computes
+!! \brief This subroutine is the Morrison-Gettelman MP driver, which computes 
 !! grid-scale condensation and evaporation of cloud condensate.
 !!
 !> \section arg_table_m_micro_run Argument Table
@@ -202,7 +202,7 @@ end subroutine m_micro_init
 !      real,   parameter  :: r_air = 3.47d-3
        integer, parameter :: kp = kind_phys
        real(kind=kind_phys), intent(in   ) :: rainmin
-
+    
        integer, parameter :: ncolmicro = 1
        integer,intent(in) :: im, lm, kdt, fprcp, pdfflag, iccn, ntrcaer
        logical,intent(in) :: flipv, skip_macro
@@ -424,7 +424,7 @@ end subroutine m_micro_init
 ! Initialize CCPP error handling variables
        errmsg = ''
        errflg = 0
-
+       
        ten_t = 0.0
        ten_q = 0.0
        ten_qv = 0.0
@@ -737,7 +737,7 @@ end subroutine m_micro_init
 !need an estimate of convective area
 !=======================================================================================================================
 !=======================================================================================================================
-!> -# Nucleation of cloud droplets and ice crystals
+!> -# Nucleation of cloud droplets and ice crystals 
 !! Aerosol cloud interactions. Calculate maxCCN tendency using Fountoukis and Nenes (2005) or Abdul Razzak and Ghan (2002)
 !! liquid Activation Parameterization
 !! Ice activation follows the Barahona & Nenes ice activation scheme, ACP, (2008, 2009).
@@ -1250,7 +1250,7 @@ end subroutine m_micro_init
 !===========================Two-moment stratiform microphysics ===============================
 !===========This is the implementation of the Morrison and Gettelman (2008) microphysics =====
 !=============================================================================================
-!> -# Two-moment stratiform microphysics: this is the implementation of the Morrison and
+!> -# Two-moment stratiform microphysics: this is the implementation of the Morrison and 
 !! Gettelman (2008) microphysics \cite Morrison_2008
 
       do I=1,IM
@@ -1321,7 +1321,7 @@ end subroutine m_micro_init
 !         else
 !           call init_Aer(AeroAux)
 !         end if
-!>  - Call getinsubset() to extract dust properties
+!>  - Call getinsubset() to extract dust properties 
           call getINsubset(1, AeroAux, AeroAux_b)
           naux = AeroAux_b%nmods
           if (nbincontactdust < naux) then
@@ -1930,7 +1930,7 @@ end subroutine m_micro_init
 
 !===============================================================================
 !>\ingroup mg2mg3
-!> This subroutine computes profiles of background state quantities for
+!> This subroutine computes profiles of background state quantities for 
 !! the multiple gravity wave drag parameterization.
 !!\section gw_prof_gen MG gw_prof General Algorithm
 !> @{
