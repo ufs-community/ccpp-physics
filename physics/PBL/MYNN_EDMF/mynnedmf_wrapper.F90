@@ -156,6 +156,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &  imp_physics, imp_physics_gfdl,                     &
      &  imp_physics_thompson, imp_physics_wsm6,            &
      &  imp_physics_fa, imfdeepcnv, imfdeepcnv_c3,         &
+     &  imp_physics_tempo, &
      &  imfdeepcnv_samf,                                   &
      &  chem3d, frp, mix_chem, rrfs_sd, enh_mix,           &
      &  nchem, ndvel, vdep, smoke_dbg,                     &
@@ -206,6 +207,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &       bl_mynn_output,                                &
      &       imp_physics, imp_physics_wsm6,                 &
      &       imp_physics_thompson, imp_physics_gfdl,        &
+     &       imp_physics_tempo, &
      &       imp_physics_nssl, imp_physics_fa, imfdeepcnv,  &
      &       imfdeepcnv_c3, imfdeepcnv_samf,                &
      &       spp_pbl,                                       &
@@ -450,7 +452,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
               qnbca(i,k) = 0.
             enddo
           enddo
-        elseif (imp_physics == imp_physics_thompson) then
+        elseif (imp_physics == imp_physics_thompson .or. imp_physics == imp_physics_tempo) then
   ! Thompson
           if(ltaerosol) then
             FLAG_QI = .true.
@@ -475,7 +477,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
                 qnbca(i,k) = 0.
               enddo
             enddo
-          else if(mraerosol) then
+          else if(mraerosol .and. imp_physics == imp_physics_thompson) then
             FLAG_QI = .true.
             FLAG_QNI= .true.
             FLAG_QC = .true.
@@ -860,7 +862,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
            !    !dqdt_ozone(i,k)        = 0.0
            !  enddo
            !enddo
-        elseif (imp_physics == imp_physics_thompson) then
+        elseif (imp_physics == imp_physics_thompson .or. imp_physics == imp_physics_tempo) then
            ! Thompson-Aerosol
            if(ltaerosol) then
              do k=1,levs
@@ -897,7 +899,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
              !    !qgrs_ice_aer_num_conc(i,k)       = qgrs_ice_aer_num_conc(i,k)       + RQNIFABLTEN(i,k)*delt
              !  enddo
              !enddo
-           else if(mraerosol) then
+           else if(mraerosol .and. imp_physics == imp_physics_thompson) then
              do k=1,levs
                do i=1,im
                  dqdt_water_vapor(i,k)             = RQVBLTEN(i,k) !/(1.0 + qv(i,k))
