@@ -566,6 +566,38 @@
   type = real
   kind = kind_phys
   intent = in
+[lbb1]
+  standard_name = tuning_param_for_updraft_vel_entr_term
+  long_name = tuning param for updraft velocity entrainment term
+  units = none
+  dimensions = ()
+  type = real
+  kind = kind_phys
+  intent = in
+[lbb2]
+  standard_name = tuning_param_for_updraft_vel_buoy_term
+  long_name = tuning param for updraft velocity	buoyancy term
+  units = none
+  dimensions = ()
+  type = real
+  kind = kind_phys
+  intent = in
+[lbb3]
+  standard_name = tuning_param_for_updraft_vel_shear_term
+  long_name = tuning param for updraft velocity	shear term
+  units = none
+  dimensions = ()
+  type = real
+  kind = kind_phys
+  intent = in
+[dt_decay]
+  standard_name = tuning_param_for_updraft_decay_time
+  long_name = tuning param for updraft decay time
+  units = none
+  dimensions = ()
+  type = real
+  kind = kind_phys
+  intent = in
 [maxMF]
   standard_name = maximum_mass_flux
   long_name = maximum mass flux within a column

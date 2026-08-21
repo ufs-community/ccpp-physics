@@ -59,7 +59,7 @@
      &     ten_q, dot,ncloud,hpbl,ud_mf,dt_mf,cnvw,cnvc,                &
      &     clam,c0s,c1,evef,pgcon,asolfac,hwrf_samfshal,                & 
      &     sigmain,sigmaout,omegain,omegaout,betadcu,betamcu,betascu,   &
-     &     cat_adj_shal,errmsg,errflg)
+     &     lbb1,lbb2,lbb3,dt_decay,cat_adj_shal,errmsg,errflg)
 !
       use machine , only : kind_phys
       use funcphys , only : fpvs
@@ -70,7 +70,7 @@
       integer, intent(in)  :: islimsk(:)
       real(kind=kind_phys), intent(in) :: cliq, cp, cvap,               &
      &   eps, epsm1, fv, grav, hvap, rd, rv, t0c, betascu, betadcu,     &
-     &   betamcu
+     &   betamcu, lbb1, lbb2, lbb3, dt_decay
       real(kind=kind_phys), intent(in) ::  delt, cscale
       real(kind=kind_phys), intent(in) :: psp(:), delp(:,:),            &
      &   prslp(:,:), garea(:), hpbl(:), dot(:,:), phil(:,:),            &
@@ -1554,7 +1554,7 @@ c
       if (progomega) then
          call progomega_calc(first_time_step,restart,im,km,
      &        kbcon1,ktcon,omegain,delt,del,zi,cnvflg,omegaout,
-     &        grav,buo,drag,wush,bb1,bb2)
+     &        grav,buo,drag,wush,lbb1,lbb2,lbb3,dt_decay)
          do k = 1, km
             do i = 1, im
                if (cnvflg(i)) then

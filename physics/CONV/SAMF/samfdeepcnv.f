@@ -85,7 +85,8 @@
      &    clam,c0s,c1,betal,betas,evef,pgcon,asolfac,cscale,            &
      &    do_ca, ca_closure, ca_entr, ca_trigger, nthresh,ca_deep,      &
      &    rainevap,sigmain,sigmaout,omegain,omegaout,betadcu,betamcu,   &
-     &    betascu,maxMF,do_mynnedmf,sigmab_coldstart,cat_adj_deep,      &
+     &    betascu,lbb1,lbb2,lbb3,dt_decay,maxMF,do_mynnedmf,            &
+     &    sigmab_coldstart,cat_adj_deep,                                &
      &    errmsg,errflg)
 
 !
@@ -105,7 +106,7 @@
       logical, intent(in)  :: first_time_step,restart,hwrf_samfdeep,    &
      &     progsigma,progomega,do_mynnedmf,sigmab_coldstart
       real(kind=kind_phys), intent(in) :: nthresh,betadcu,betamcu,      &
-     &                                    betascu
+     &     betascu,lbb1,lbb2,lbb3,dt_decay
       real(kind=kind_phys), intent(in), optional :: ca_deep(:)
       real(kind=kind_phys), intent(in), optional :: sigmain(:,:),       &
      &     qmicro(:,:),  prevsq(:,:), omegain(:,:)
@@ -213,7 +214,7 @@ cj
      &                     tkcrt,   cmxfac
 cj
 !
-!  parameters for updraft velocity calculation
+!  parameters for diagnostic updraft velocity calculation
       real(kind=kind_phys) bb1, bb2, csmf, wucb
 !
 !  parameters for prognostic sigma closure                                                                                                                                                      
@@ -1817,7 +1818,7 @@ c
       if (progomega) then
          call progomega_calc(first_time_step,restart,im,km,
      &        kbcon1,ktcon,omegain,delt,del,zi,cnvflg,omegaout,
-     &        grav,buo,drag,wush,bb1,bb2)
+     &        grav,buo,drag,wush,lbb1,lbb2,lbb3,dt_decay)
          do k = 1, km
             do i = 1, im
                if (cnvflg(i)) then
