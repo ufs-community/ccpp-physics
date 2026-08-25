@@ -216,28 +216,17 @@ contains
           do i = 1,im
 
              if (cnvflg(i)) then
-
                 if (k > kbcon1(i) .and. k < ktcon(i)) then
-
                    dp = 1000.0_kind_phys * del(i,k)
-
                    if (dp > 0.0_kind_phys) then
-
                       active_point_found = .true.
-
                       if (abs(omega(i,k)) > omega_eps) then
-
                          dt_cfl = min(dt_cfl,                       &
                               cfl_target * dp / abs(omega(i,k)))
-
                       endif
-
                    endif
-
                 endif
-
              endif
-
           enddo
        enddo
 
@@ -255,7 +244,7 @@ contains
        !---------------------------------------------------------------
        ! Start new substep from previous-substep profile.
        !
-       ! This ensures every vertical level uses the same old-time
+       ! This ensures every vertical level uses the same 
        ! profile for the explicit vertical-advection term.
        !---------------------------------------------------------------
 
@@ -270,9 +259,7 @@ contains
           do i = 1,im
 
              if (cnvflg(i)) then
-
                 if (k >= kbcon1(i) .and. k < ktcon(i)) then
-
                    ! Cloud-base boundary condition.
                    omega_new(i,kbcon1(i)) = 0.0_kind_phys
 
@@ -294,16 +281,12 @@ contains
                         * buo(i,k) * pi_conv
 
                    if (k == kbcon1(i)) then
-
                       adv_term = 0.0_kind_phys
-
                    else
-
                       adv_term = -dt_sub * omega(i,k)             &
                            * (omega(i,k-1)-omega(i,k)) / dp
 
                    endif
-
                    rhs_exp = memory_term + buoy_term + adv_term
 
                    !----------------------------------------------------
@@ -327,14 +310,10 @@ contains
                    if (abs(termA(i,k)) < a_eps) then
 
                       if (abs(termB(i,k)) > b_eps) then
-
                          omega_new(i,k) = -termC(i,k) / termB(i,k)
-
                       else
-
                          ! Degenerate case: retain previous state.
                          omega_new(i,k) = omega(i,k)
-
                       endif
 
                    else
