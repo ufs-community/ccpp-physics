@@ -1,3 +1,11 @@
+!>\file progomega_calc.f90
+
+!> This module contains the subroutine that calculates the prognostic
+!! updraft velocity that is used for closure computations in
+!! saSAS deep and shallow convection
+!! as described in Bengtsson et al. 2026 \cite Bengtsson_2026.
+
+
 module progomega
 
   implicit none
@@ -5,14 +13,12 @@ module progomega
   public progomega_calc
 
 contains
-
-!>\ingroup SAMFdeep
-!>\ingroup SAMF_shal
-!! Lisa Bengtsson:
+  
+!> This subroutine computes a prognostic updraft velocity
 !! This file contains the subroutine that calculates the prognostic
 !! updraft vertical velocity that is used for closure computations in
 !! saSAS and C3 deep and shallow convection.
-
+!!\section gen_progomega progomega_calc General Algorithm
   subroutine progomega_calc(first_time_step,flag_restart,im,km,kbcon1,ktcon,omegain,delt,del, &
        zi,cnvflg,omegaout,grav,buo,drag,wush,lbb1,lbb2,lbb3,dt_decay)
 
