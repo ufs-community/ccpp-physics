@@ -599,31 +599,31 @@
   kind = kind_phys
   intent = in
 [lbb1]
-  standard_name = tuning_param_for_updraft_vel_entr_term
-  long_name = tuning param for updraft velocity entrainment term
+  standard_name = tuning_parameter_for_updraft_velocity_entrainment_term
+  long_name = tuning parameter for updraft velocity entrainment term
   units = none
   dimensions = ()
   type = real
   kind = kind_phys
   intent = in
 [lbb2]
-  standard_name = tuning_param_for_updraft_vel_buoy_term
-  long_name = tuning param for updraft velocity buoyancy term
+  standard_name = tuning_parameter_for_updraft_velocity_buoyancy_term
+  long_name = tuning parameter for updraft velocity buoyancy term
   units = none
   dimensions = ()
   type = real
   kind = kind_phys
   intent = in
 [lbb3]
-  standard_name = tuning_param_for_updraft_vel_shear_term
-  long_name = tuning param for updraft velocity shear term
+  standard_name = tuning_parameter_for_updraft_velocity_shear_term
+  long_name = tuning paramameter for updraft velocity shear term
   units = none
   dimensions = ()
   type = real
   kind = kind_phys
   intent = in
 [dt_decay]
-  standard_name = tuning_param_for_updraft_decay_time
+  standard_name = tuning_parameter_for_updraft_decay_time
   long_name = tuning param for updraft decay time
   units = none
   dimensions = ()
