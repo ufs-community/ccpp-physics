@@ -217,7 +217,8 @@ c  local variables and arrays
 c  variables for tracer wet deposition,
       real(kind=kind_phys), dimension(im,km,ntc) :: chem_c, chem_pw,
      &  wet_dep
-      real(kind=kind_phys), parameter :: escav   = 0.8 ! wet scavenging efficiency
+ ! wet scavenging efficiency
+      real(kind=kind_phys), parameter :: escav   = 0.8
 !
 !  for updraft velocity calculation
       real(kind=kind_phys) wu2(im,km),     buo(im,km),    drag(im,km),
