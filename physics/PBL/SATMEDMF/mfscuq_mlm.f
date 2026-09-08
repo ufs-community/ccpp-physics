@@ -1,91 +1,118 @@
 !>\file mfscuq_mlm.f
 !!
-!! This file contains the mass flux and downdraft parcel preperties
-!! parameterization for stratocumulus-top-driven turbulence (updated version).
+!! This file contains downdraft parcel properties
+!! parameterization for stratocumulus-top-driven turbulence based
+!! on a Mixed-Layer-Model (MLM) following Solomon et al. 2026.
+
       module mfscuq_mlm_mod
       contains
 
 !>\ingroup satmedmfvdifq
-!! This subroutine computes mass flux and downdraft parcel properties
-!! for stratocumulus-top-driven turbulence.
+!! This subroutine computes downdraft parcel properties
+!! for stratocumulus-top-driven turbulence using a
+!! Mixed-Layer-Model (MLM) following Solomon et al. 2026
 !! \section mfscuq GFS mfscu General Algorithm
 !> @{
-      subroutine mfscuq_mlm(im,ix,km,ntcw,ntsw,ntiw,             
-     &   nqni,ntke,ntrac1,cnvflg,zl,zm,q1,t1,u1,v1,r,ep1,   
-     &   radx,prec,rad,buop,pres,liwse,mse,thlvx,                
+      subroutine mfscuq_mlm(im,ix,km,ntcw,ntsw,ntiw,
+     &   nqni,ntke,ntrac1,cnvflg,zl,zm,q1,t1,u1,v1,r,ep1,
+     &   radx,prec,rad,buop,pres,liwse,mse,thlvx,
      &   uflux,vflux,tdt,du,dv,tke,rtg,dt2,
      &   eflux,hflux,rflux,wflux,qflux,pflux)
 !
-      use machine , only : kind_phys
-      use funcphys , only : fpvs
-      use physcons, grav => con_g, cp => con_cp
-     &,             rv => con_rv, hvap => con_hvap
-     &,             hfus => con_hfus, fv => con_fvirt
-     &,             eps => con_eps, epsm1 => con_epsm1
+      use machine,  only : kind_phys
+      use physcons, grav => con_g, cp => con_cp,
+     &              hvap => con_hvap, hfus => con_hfus
 !
       implicit none
 !
+!  Dummy arguments
 !
-      intrinsic max,min
-      integer   im,ix,km,ntcw,ntsw,ntiw,nqni,ntke,ntrac1,icycle
+!  Dimensions and tracer indices
+      integer, intent(in) :: im, ix, km
+      integer, intent(in) :: ntcw, ntsw, ntiw
+      integer, intent(in) :: nqni, ntke, ntrac1
 !
-      logical cnvflg(im)
-      REAL,    INTENT(IN) ::  EP1, R
-      real(kind=kind_phys) q1(ix,km,ntrac1),t1(ix,km), 
-     &                     dt2, u1(ix,km),  v1(ix,km),   
-     &                     zl(im,km),     zm(im,km),     
-     &                     radx(im,km),   prec(im,km),    
-     &                     pres(im,km),   rad(im,km),     
-     &                     buop(im,km),   liwse(im,km),   
-     &                     mse(im,km),    tke(im,km),     
-     &                     qcflux(im,km), qvflux(im,km),  
-     &                     tflux(im,km), qsflux(im,km),   
-     &                     uflux(im,km), vflux(im,km),   
-     &                     du(im,km),    dv(im,km),      
-     &                     thlvx(im,km), radmin(im),     
-     &                     tdt(im,km), rtg(im,km,ntrac1), 
-     &                     dliwse(im,km)
+!  Column flag; may be disabled by MLM
+      logical, intent(inout) :: cnvflg(im)
 !
-!  local variables and arrays
+!  Scalar inputs
+!  EP1 and R retain their original default REAL kind.
+      real, intent(in) :: ep1, r
+      real(kind=kind_phys), intent(in) :: dt2
 !
-      integer   i,indx, k, n, kk, ndc, klim
-      integer   cldbase(im),cldtop(im),mlmb(im),mlmt(im),krad(im)
+!  Atmospheric state
+      real(kind=kind_phys), intent(in) :: q1(ix,km,ntrac1)
+      real(kind=kind_phys), intent(in) :: t1(ix,km)
+      real(kind=kind_phys), intent(in) :: u1(ix,km)
+      real(kind=kind_phys), intent(in) :: v1(ix,km)
 !
-      real(kind=kind_phys) g,gocp,qmin,qlmin,T0,elocp,slocp, 
-     &                     qs,es,ts1,es1,qs1,ts2,es2,qs2,    
-     &                     alphaX,wezm,wezp,                 
-     &                     cb_max,cb_min,ct_max,ct_min,      
-     &                     mb_max,mb_min,mt_max,mt_min
+!  Vertical coordinates and input diagnostics
+      real(kind=kind_phys), intent(in) :: zl(im,km)
+      real(kind=kind_phys), intent(in) :: zm(im,km)
+      real(kind=kind_phys), intent(in) :: radx(im,km)
+      real(kind=kind_phys), intent(in) :: prec(im,km)
+      real(kind=kind_phys), intent(in) :: rad(im,km)
+      real(kind=kind_phys), intent(in) :: pres(im,km)
+      real(kind=kind_phys), intent(in) :: liwse(im,km)
+      real(kind=kind_phys), intent(in) :: mse(im,km)
+      real(kind=kind_phys), intent(in) :: thlvx(im,km)
+      real(kind=kind_phys), intent(in) :: tke(im,km)
 !
-      real(kind=kind_phys) wd2(im,km), thlvd(im), b(im,km),  
-     &                     qtx(im,km), qtd(im,km),           
-     &                     svl(im,km), dmse(im,km),           
-     &                     eflux(im,km), wflux(im,km),        
-     &                     hflux(im,km), qflux(im,km),        
-     &                     rflux(im,km), pflux(im,km),        
-     &                     bflux(im,km), qiflux(im,km),      
-     &                     qniflux(im,km),    
-     &                     dtke(im,km), buopa(im),                            
-     &                     dqtx(im,km), rho, xfact, xfact2
+!  Buoyancy flux is read on entry and updated by MLM
+      real(kind=kind_phys), intent(inout) :: buop(im,km)
 !
-      logical totflg, flg(im), flg2(im)
+!  Existing tendencies are incremented/modified by MLM
+      real(kind=kind_phys), intent(inout) :: tdt(im,km)
+      real(kind=kind_phys), intent(inout) :: du(im,km)
+      real(kind=kind_phys), intent(inout) :: dv(im,km)
+      real(kind=kind_phys), intent(inout) :: rtg(im,km,ntrac1)
 !
-      real(kind=kind_phys) v_mean(im), u_mean(im), co1, co2, beta
-      real(kind=kind_phys) qi_mean(im), qs_mean(im), qni_mean(im)
-      real(kind=kind_phys) qtx_mean(im), mse_mean(im), tke_mean(im)
-      real(kind=kind_phys) qns_mean(im), dqsdT(im), dsvt(im)
-      real(kind=kind_phys) em(im), ep(im), wm(im), wp(im), dsvb(im)
-      real(kind=kind_phys) dlb(im), dlt(im), dmse2(im,km), dm1, dm2
-      real(kind=kind_phys) C0,C1,C2,C3,C4,C5,C6,C7,C8,xtime,tem1,x1
+!  Fluxes generated by MLM
+      real(kind=kind_phys), intent(out) :: uflux(im,km)
+      real(kind=kind_phys), intent(out) :: vflux(im,km)
+      real(kind=kind_phys), intent(out) :: eflux(im,km)
+      real(kind=kind_phys), intent(out) :: hflux(im,km)
+      real(kind=kind_phys), intent(out) :: rflux(im,km)
+      real(kind=kind_phys), intent(out) :: wflux(im,km)
+      real(kind=kind_phys), intent(out) :: qflux(im,km)
+      real(kind=kind_phys), intent(out) :: pflux(im,km)
 !
-!  physical parameters
+!  Local variables and arrays
+!
+      integer :: i, k, klim, icycle
+      integer :: cldbase(im), cldtop(im), mlmb(im), mlmt(im)
+!
+      logical :: totflg, flg(im)
+!
+      real(kind=kind_phys) :: g, T0, elocp, slocp
+      real(kind=kind_phys) :: ts1, es1, qs1, ts2, es2, qs2
+      real(kind=kind_phys) :: alphaX, wezm, wezp
+!
+      real(kind=kind_phys) :: b(im,km), qtx(im,km)
+      real(kind=kind_phys) :: dmse(im,km), dliwse(im,km)
+      real(kind=kind_phys) :: qcflux(im,km), qvflux(im,km)
+      real(kind=kind_phys) :: tflux(im,km), qsflux(im,km)
+      real(kind=kind_phys) :: bflux(im,km), qiflux(im,km)
+      real(kind=kind_phys) :: qniflux(im,km), qsnow(im,km)
+      real(kind=kind_phys) :: dtke(im,km)
+      real(kind=kind_phys) :: radmin(im), buopa(im)
+!
+      real(kind=kind_phys) :: v_mean(im), u_mean(im)
+      real(kind=kind_phys) :: qi_mean(im), qs_mean(im), qni_mean(im)
+      real(kind=kind_phys) :: qtx_mean(im), mse_mean(im)
+      real(kind=kind_phys) :: dqsdT(im), dsvt(im), dsvb(im)
+      real(kind=kind_phys) :: em(im), ep(im), wm(im), wp(im)
+      real(kind=kind_phys) :: dlb(im), dlt(im)
+      real(kind=kind_phys) :: xfact, xfact2
+!
+      real(kind=kind_phys) :: C0,C1,C2,C3,C4,C5,C6,C7,C8,xtime
+!
+!  Physical parameters
       parameter(g     =  grav)
-      parameter(gocp  =  g/cp)
       parameter(elocp =  hvap/cp, slocp=hfus/cp)
-      parameter(qmin  =  1.e-8, qlmin=1.e-12)
       parameter(T0    =  273.15)
-      parameter(C0    =  6.11239921) 
-      parameter(C1    =  0.443987641) 
+      parameter(C0    =  6.11239921)
+      parameter(C1    =  0.443987641)
       parameter(C2    =  0.142986287e-1)
       parameter(C3    =  0.264847430e-3)
       parameter(C4    =  0.302950461e-5)
@@ -95,9 +122,21 @@
       parameter(C8    = -0.976195544e-15)
       parameter(xtime = 1800.0)
       parameter(klim  = 3)
-      
+
 !************************************************************************
-!      
+!
+
+      do k=1,km
+         do i=1,im
+            if (ntsw.gt.1) then
+               qsnow(i,k) = q1(i,k,ntsw)
+            else
+               qsnow(i,k) = 0.
+            end if
+         enddo
+      enddo
+
+
       do k=1,km
          do i=1,im
             qvflux(i,k) = 0.0
@@ -116,15 +155,13 @@
             rflux(i,k)  = 0.0
             pflux(i,k)  = 0.0
             dmse(i,k)   = 0.0
-            dmse2(i,k)  = 0.0
             dtke(i,k)   = 0.0
-!Lisa:
-            qtx(i,k)    = 0.0
-            
+            qtx(i,k)  = q1(i,k,1)+q1(i,k,ntcw)+qsnow(i,k)+q1(i,k,ntiw)
+
             if (k.gt.1.and.k.lt.km) bflux(i,k) = buop(i,k)*T0/g
          enddo
       enddo
-            
+
       do i=1,im
          flg(i)     = .true.
          cldbase(i) = 1
@@ -135,31 +172,29 @@
          dlt(i)     = 0.0
          buopa(i)     = 0.0
       enddo
-         
+
       totflg = .true.
       do i=1,im
          totflg = totflg .and. (.not. cnvflg(i))
       enddo
       if (totflg) return
-            
+
       do k = klim-1, km-2
          do i = 1, im
-         qtx(i,k)  = q1(i,k,1)+q1(i,k,ntcw)+q1(i,k,ntsw)+q1(i,k,ntiw)
-         svl(i,k)  = liwse(i,k)*(1.0 + 0.609*qtx(i,k))
          dmse(i,k) = ((mse(i,k+1)-mse(i,k))/(zm(i,k+1)-zm(i,k))/cp)
          dliwse(i,k) =((liwse(i,k+1)-liwse(i,k))/(zm(i,k+1)-zm(i,k))/cp)
          b(i,k)    = t1(i,k)*(1.0 + 0.61*q1(i,k,1) - q1(i,k,ntcw) -
-     $        q1(i,k,ntsw) - q1(i,k,ntiw))
+     $        qsnow(i,k) - q1(i,k,ntiw))
          if (q1(i,k,ntcw).gt.1.0e-10) then
                cldtop(i) = k
-         endif   
+         endif
          enddo
       enddo
 
       do i = 1, im
          if (cldtop(i).eq.km-1) cnvflg(i) = .false.
       enddo
-         
+
       do k = km-1, klim,-1
          do i = 1, im
             if (cnvflg(i).and.q1(i,k,ntcw).lt.1.0e-8.and.k.lt.cldtop(i)
@@ -203,7 +238,7 @@
             flg(i)    = .true.
          endif
       enddo
-      
+
 !calculate mlm base; tunable parameter set to 0.005
       do k = km-1,  klim-1, -1
          do i = 1, im
@@ -216,8 +251,8 @@
      $              abs(dmse(i,k)).lt.0.005) then
                mlmb(i) = k+1
                dlb(i) = dmse(i,k)
-               flg(i) = .false.               
-            endif 
+               flg(i) = .false.
+            endif
          enddo
       enddo
 
@@ -225,7 +260,7 @@
          if (mlmb(i).eq.1)  cnvflg(i) = .false.
          if (mlmb(i).ge.mlmt(i)) cnvflg(i) = .false.
       enddo
-         
+
       do i = 1, im
          u_mean(i)   = 0.0
          v_mean(i)   = 0.0
@@ -235,15 +270,15 @@
          mse_mean(i) = 0.0
          qtx_mean(i) = 0.0
       enddo
-         
+
       do k = 1, km-1
-         do i = 1, im         
+         do i = 1, im
 
             if (k.ge.mlmb(i).and.k.le.mlmt(i)) then
                u_mean(i)   = u_mean(i)   + u1(i,k)
                v_mean(i)   = v_mean(i)   + v1(i,k)
                qi_mean(i)  = qi_mean(i)  + q1(i,k,ntiw)
-               qs_mean(i)  = qs_mean(i)  + q1(i,k,ntsw)
+               qs_mean(i)  = qs_mean(i)  + qsnow(i,k)
                qni_mean(i) = qni_mean(i) + q1(i,k,nqni)
                mse_mean(i) = mse_mean(i) + mse(i,k)
                qtx_mean(i) = qtx_mean(i) + qtx(i,k)
@@ -251,7 +286,7 @@
          enddo
       enddo
 
-!mixed-layer mean values         
+!mixed-layer mean values
       do i = 1, im
          u_mean(i)   = u_mean(i)/(mlmt(i)-mlmb(i)+1)
          v_mean(i)   = v_mean(i)/(mlmt(i)-mlmb(i)+1)
@@ -261,7 +296,7 @@
          mse_mean(i) = mse_mean(i)/(mlmt(i)-mlmb(i)+1)
          qtx_mean(i) = qtx_mean(i)/(mlmt(i)-mlmb(i)+1)
       enddo
-         
+
       do k = 1, km
          do i = 1, im
             uflux(i,k)   = 0.0
@@ -269,12 +304,10 @@
             qiflux(i,k)  = 0.0
             qsflux(i,k)  = 0.0
             qniflux(i,k) = 0.0
-            dmse2(i,k)  = 0.0
-            dqtx(i,k)   = 0.0
          enddo
       enddo
 
-!fields without equations damped to mixed-layer mean for now (1 hour damping)     
+!fields without equations damped to mixed-layer mean for now (1 hour damping)
       do k = 1, km
          do i = 1, im
             if (k.ge.mlmb(i).and.k.le.mlmt(i).and.cnvflg(i)) then
@@ -285,18 +318,16 @@
                qiflux(i,k+1) = qiflux(i,k)  +
      $              (zm(i,k+1)-zm(i,k))*(q1(i,k,ntiw)-qi_mean(i))/xtime
                qsflux(i,k+1) = qsflux(i,k)  +
-     $              (zm(i,k+1)-zm(i,k))*(q1(i,k,ntsw)-qs_mean(i))/xtime
+     $              (zm(i,k+1)-zm(i,k))*(qsnow(i,k)-qs_mean(i))/xtime
                qniflux(i,k+1)= qniflux(i,k) +
      $              (zm(i,k+1)-zm(i,k))*(q1(i,k,nqni)-qni_mean(i))/xtime
-!               dmse2(i,k+1)  = dmse2(i,k)   + (zm(i,k+1)-zm(i,k))*(mse(i,k)-mse_mean(i))/xtime/cp
-!               dqtx(i,k+1)   = dqtx(i,k)    + (zm(i,k+1)-zm(i,k))*(qtx(i,k)-qtx_mean(i))/xtime
             endif
          enddo
       enddo
 
       do i = 1, im
         if (cnvflg(i)) then
-!water vapor at saturation in liquid layer          
+!water vapor at saturation in liquid layer
          ts1 = t1(i,cldbase(i))-T0
          es1 = (C0+ts1*(C1+ts1*(C2+ts1*(C3+ts1*(C4+ts1*
      $        (C5+ts1*(C6+ts1*(C7+ts1*C8))))))))
@@ -307,19 +338,19 @@
          qs2 = 0.622*es2/(1.e-2*pres(i,cldtop(i))-es2)
          dqsdT(i) = (qs2-qs1)/(ts2-ts1)
 !added because dqsdT can be negative(?)
-!        print*,'dqsdT ',dqsdT          
+!        print*,'dqsdT ',dqsdT
          if (dqsdT(i).lt.5.e-5) dqsdT(i) = 5.0e-5
-         if (dqsdT(i).gt.1.e-3) dqsdT(i) = 1.0e-3                     
+         if (dqsdT(i).gt.1.e-3) dqsdT(i) = 1.0e-3
         endif
       enddo
-      
+
 !need to cycle through to update bflux and entrainment velocities; tunable entrainment parameters
       do icycle = 1,3
 
          do i = 1, im
             buopa(i) = 0.0
          enddo
-         
+
          do k = 1, km
             do i = 1, im
                if (k.ge.mlmb(i).and.k.le.mlmt(i).and.cnvflg(i)) then
@@ -327,11 +358,11 @@
                endif
             enddo
          enddo
-            
+
          do i = 1, im
-            
+
             if (cnvflg(i)) then
-               
+
                dsvb(i) = (b(i,mlmb(i))-b(i,mlmb(i)-1))*
      $              (zm(i,mlmt(i)+1)-zm(i,mlmb(i)))
                dsvt(i) = (b(i,mlmt(i)+1)-b(i,mlmt(i)))*
@@ -339,20 +370,10 @@
 
                wezm = -0.2*buopa(i)/dsvb(i)
                wezp =  0.2*buopa(i)/dsvt(i)
-                                          
-!               if (icycle.eq.3) print*,'WE1 ',wezm,wezp,buopa(i),
-!     $              dsvb(i),dsvt(i)
 
-!les               wezm = -0.0124
-!les               wezp =  0.0038
-            
                wezm = max(min(wezm,  0.005), -0.02)
                wezp = max(min(wezp,  0.005), -0.001)
-               
-!               if (icycle.eq.3) print*,'WE2 ',wezm,wezp,mlmb(i),mlmt(i)
-!               if (icycle.eq.3) print*,'WE3 ',b(i,mlmb(i)-1),
-!     $              b(i,mlmb(i)-2),b(i,mlmt(i)+2),b(i,mlmt(i)+1)
-                              
+
                em(i) = rad(i,mlmb(i)+1)    - wezm*(mse_mean(i)
      $              - mse(i,mlmb(i)-1))/cp
                ep(i) = rad(i,mlmt(i)+2)  - wezp*(mse(i,mlmt(i)+1)
@@ -360,69 +381,64 @@
                wm(i) = prec(i,mlmb(i)+1)   - wezm*(qtx_mean(i)
      $              - qtx(i,mlmb(i)-1))
                wp(i) = prec(i,mlmt(i)+2) - wezp*(qtx(i,mlmt(i)+1)
-     $              - qtx_mean(i))                 
+     $              - qtx_mean(i))
 
            endif
          enddo
-           
+
          do k = 1, km
             do i = 1, im
                if (k.ge.mlmb(i).and.k.le.mlmt(i)+1.and.cnvflg(i)) then
-         
+
 !total energy and water fluxes are linear from mlmb to mlmt
                   rflux(i,k) = rad(i,k+1)
                   pflux(i,k) = prec(i,k+1)
 
-               eflux(i,k) = 
+               eflux(i,k) =
      &                 em(i)*(1.0-(zm(i,k)-zm(i,mlmb(i)))/
-     $                 (zm(i,mlmt(i)+1)-zm(i,mlmb(i)))) + 
+     $                 (zm(i,mlmt(i)+1)-zm(i,mlmb(i)))) +
      &                 ep(i)*(zm(i,k)-zm(i,mlmb(i)))/
      $                 (zm(i,mlmt(i)+1)-zm(i,mlmb(i)))
-               wflux(i,k) =  
+               wflux(i,k) =
      &              wm(i)*(1.0-(zm(i,k)-zm(i,mlmb(i)))/
-     $              (zm(i,mlmt(i)+1)-zm(i,mlmb(i)))) + 
+     $              (zm(i,mlmt(i)+1)-zm(i,mlmb(i)))) +
      &              wp(i)*(zm(i,k)-zm(i,mlmb(i)))/
      $              (zm(i,mlmt(i)+1)-zm(i,mlmb(i)))
-            
-!estimate fmse and qt fluxes from total water, total energy, precip, and radiation fluxes            
+
+!estimate fmse and qt fluxes from total water, total energy, precip, and radiation fluxes
                hflux(i,k) = eflux(i,k) - rflux(i,k)
                qflux(i,k) = wflux(i,k) - pflux(i,k)
-           
-!calculate fluxes below liquid layer (1.e-10 correct threshold?)          
+
+!calculate fluxes below liquid layer (1.e-10 correct threshold?)
                if (q1(i,k,ntcw).lt.1.e-10) then
-                  
-!frozen moist static energy and total water equations                 
-              qvflux(i,k) = qflux(i,k)+dqtx(i,k)-qsflux(i,k)-qiflux(i,k)
-              tflux(i,k)  = hflux(i,k) + dmse2(i,k) - elocp*qvflux(i,k)
+
+!frozen moist static energy and total water equations
+              qvflux(i,k) = qflux(i,k)-qsflux(i,k)-qiflux(i,k)
+              tflux(i,k)  = hflux(i,k)-elocp*qvflux(i,k)
      $             + slocp*qsflux(i,k) + slocp*qiflux(i,k)
               qcflux(i,k) = 0.0
 
-!calculate fluxes in liquid layer          
-               else              
+!calculate fluxes in liquid layer
+               else
                   alphaX      = dqsdT(i)*elocp
-!frozen moist static energy and total water equations          
-                  tflux(i,k)  = (hflux(i,k)+dmse2(i,k)+slocp*qsflux(i,k)
+!frozen moist static energy and total water equations
+                  tflux(i,k)  = (hflux(i,k)+slocp*qsflux(i,k)
      $                 + slocp*qiflux(i,k))/(1.0 + alphaX)
                   qvflux(i,k) = dqsdT(i)*tflux(i,k)
-                  qcflux(i,k) = qflux(i,k) + dqtx(i,k) - qvflux(i,k)
+                  qcflux(i,k) = qflux(i,k) - qvflux(i,k)
      $                 - qsflux(i,k) - qiflux(i,k)
                endif
 
-!update buoyancy flux and pass out of routine       
+!update buoyancy flux and pass out of routine
                bflux(i,k) = tflux(i,k) + T0*(0.61*qvflux(i,k) -
      $              qcflux(i,k) - qsflux(i,k) - qiflux(i,k))
                buop(i,k)  = bflux(i,k)*g/T0
-        
-!assume snow number flux is proportional to snow flux (1.e-8 correct threshold?)              
-!removed for UFS               if (q1(i,k,ntsw).gt.1.e-8) then
-!                  qnsflux(i,k) = qsflux(i,k)*q1(i,k,nqns)/q1(i,k,ntsw)
-!               endif
 
              endif !limit k
-           enddo   !im    
-         enddo     !km     
-      enddo        !icycle        
-     
+           enddo   !im
+         enddo     !km
+      enddo        !icycle
+
 !     update tendencies
       do k = 1, km
          do i = 1, im
@@ -468,7 +484,7 @@
      $           (zm(i,k+1)-zm(i,k))
             rtg(i,k,nqni) = rtg(i,k,nqni) - xfact2*xfact*qniflux(i,k+1)/
      $           (zm(i,k+1)-zm(i,k))
-            
+
             k = mlmt(i)+1
             du(i,k)       = du(i,k)       + xfact*uflux(i,k)/
      $           (zm(i,k+1)-zm(i,k))
@@ -490,16 +506,17 @@
 !smooth discontinuity at cloud liquid base
             if (cldbase(i).gt.2) then
                tdt(i,cldbase(i)-1)      =  0.5*(tdt(i,cldbase(i))
-     $              + tdt(i,cldbase(i)-2)) 
+     $              + tdt(i,cldbase(i)-2))
                rtg(i,cldbase(i)-1,1)    =  0.5*(rtg(i,cldbase(i),1)
-     $              + rtg(i,cldbase(i)-2,1)) 
+     $              + rtg(i,cldbase(i)-2,1))
                rtg(i,cldbase(i)-1,ntcw) =  0.5*(rtg(i,cldbase(i),ntcw)
      $              + rtg(i,cldbase(i)-2,ntcw))
-            endif   
+            endif
          endif
-      enddo      
+      enddo
 
       return
-      end 
+      end
 !> @}
       end module mfscuq_mlm_mod
+    
