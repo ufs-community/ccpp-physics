@@ -41,7 +41,6 @@ module unified_ugwp
     use cires_ugwp_triggers
     use ugwp_driver_v0
     use drag_suite, only: drag_suite_run, drag_suite_psl
-    use ugwp_common_v0, only: ugwp_common_v0_init
 
     implicit none
 
@@ -127,9 +126,6 @@ contains
     end if
 
     if (is_initialized) return
-
-    call ugwp_common_v0_init(con_pi, con_rerth, con_g, con_cp, con_rd, &
-                             con_rv, con_fvirt)
 
     if ( do_ugwp_v0 .or. do_ugwp_v0_nst_only ) then
        ! if (do_ugwp .or. cdmbgwd(3) > 0.0) then (deactivate effect of do_ugwp)
