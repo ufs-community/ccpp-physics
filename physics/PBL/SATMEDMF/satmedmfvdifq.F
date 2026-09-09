@@ -2140,10 +2140,10 @@
 !tke updated with transport fluxes following Solomon et al. 2026
       if (mlm) then
 ! EDG - omit ntsnc    call mfscuq_mlm(im,im,km,ntcw,ntsw,ntiw,ntsnc,ntinc,ntke,
-         call mfscuq_mlm(im,im,km,ntcw,ntsw,ntiw,ntinc,ntke,
+         call mfscuq_mlm(im,im,km,ntcw,ntsw,ntiw,ntinc,
      &        ntrac1,scuflg,zl,zm,q1,t1,u1,v1,rd,ep1,
      &        radx,prec,rad,buoy,prsl,slx,hx,thlvx,
-     &        uflux,vflux,tdt,du,dv,tke,rtg,dt2,
+     &        uflux,vflux,tdt,du,dv,rtg,dt2,
      &        eflux,hflux,rflux,wflux,qflux,pflux)
 
          do k = 1, km1

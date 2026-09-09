@@ -14,9 +14,9 @@
 !! \section mfscuq GFS mfscu General Algorithm
 !> @{
       subroutine mfscuq_mlm(im,ix,km,ntcw,ntsw,ntiw,
-     &   nqni,ntke,ntrac1,cnvflg,zl,zm,q1,t1,u1,v1,r,ep1,
+     &   nqni,ntrac1,cnvflg,zl,zm,q1,t1,u1,v1,r,ep1,
      &   radx,prec,rad,buop,pres,liwse,mse,thlvx,
-     &   uflux,vflux,tdt,du,dv,tke,rtg,dt2,
+     &   uflux,vflux,tdt,du,dv,rtg,dt2,
      &   eflux,hflux,rflux,wflux,qflux,pflux)
 !
       use machine,  only : kind_phys
@@ -30,7 +30,7 @@
 !  Dimensions and tracer indices
       integer, intent(in) :: im, ix, km
       integer, intent(in) :: ntcw, ntsw, ntiw
-      integer, intent(in) :: nqni, ntke, ntrac1
+      integer, intent(in) :: nqni, ntrac1
 !
 !  Column flag; may be disabled by MLM
       logical, intent(inout) :: cnvflg(im)
@@ -56,7 +56,6 @@
       real(kind=kind_phys), intent(in) :: liwse(im,km)
       real(kind=kind_phys), intent(in) :: mse(im,km)
       real(kind=kind_phys), intent(in) :: thlvx(im,km)
-      real(kind=kind_phys), intent(in) :: tke(im,km)
 !
 !  Buoyancy flux is read on entry and updated by MLM
       real(kind=kind_phys), intent(inout) :: buop(im,km)
@@ -94,7 +93,7 @@
       real(kind=kind_phys) :: tflux(im,km), qsflux(im,km)
       real(kind=kind_phys) :: bflux(im,km), qiflux(im,km)
       real(kind=kind_phys) :: qniflux(im,km), qsnow(im,km)
-      real(kind=kind_phys) :: dtke(im,km)
+      real(kind=kind_phys) :: qice(im,km), qcloud(im,km), qnice(im,km)
       real(kind=kind_phys) :: radmin(im), buopa(im)
 !
       real(kind=kind_phys) :: v_mean(im), u_mean(im)
@@ -128,13 +127,42 @@
 
       do k=1,km
          do i=1,im
-            if (ntsw.gt.1) then
-               qsnow(i,k) = q1(i,k,ntsw)
-            else
-               qsnow(i,k) = 0.
-            end if
+           qsnow(i,k) = 0.
+           qice(i,k) = 0.
+           qcloud(i,k) = 0.
+           qnice(i,k) = 0.
          enddo
       enddo
+
+      ! Test for existence of hydrometeors and ice number conc.
+      if (ntcw.gt.1) then
+        do k=1,km
+           do i=1,im
+             qcloud(i,k) = q1(i,k,ntcw)
+           enddo
+        enddo
+      end if
+      if (ntiw.gt.1) then
+        do k=1,km
+           do i=1,im
+             qice(i,k) = q1(i,k,ntiw)
+           enddo
+        enddo
+      end if
+      if (ntsw.gt.1) then
+        do k=1,km
+           do i=1,im
+             qsnow(i,k) = q1(i,k,ntsw)
+           enddo
+        enddo
+      end if
+      if (nqni.gt.1) then
+        do k=1,km
+           do i=1,im
+             qnice(i,k) = q1(i,k,nqni)
+           enddo
+        enddo
+      end if
 
 
       do k=1,km
@@ -155,8 +183,7 @@
             rflux(i,k)  = 0.0
             pflux(i,k)  = 0.0
             dmse(i,k)   = 0.0
-            dtke(i,k)   = 0.0
-            qtx(i,k)  = q1(i,k,1)+q1(i,k,ntcw)+qsnow(i,k)+q1(i,k,ntiw)
+            qtx(i,k)  = q1(i,k,1)+qcloud(i,k)+qsnow(i,k)+qice(i,k)
 
             if (k.gt.1.and.k.lt.km) bflux(i,k) = buop(i,k)*T0/g
          enddo
@@ -183,9 +210,9 @@
          do i = 1, im
          dmse(i,k) = ((mse(i,k+1)-mse(i,k))/(zm(i,k+1)-zm(i,k))/cp)
          dliwse(i,k) =((liwse(i,k+1)-liwse(i,k))/(zm(i,k+1)-zm(i,k))/cp)
-         b(i,k)    = t1(i,k)*(1.0 + 0.61*q1(i,k,1) - q1(i,k,ntcw) -
-     $        qsnow(i,k) - q1(i,k,ntiw))
-         if (q1(i,k,ntcw).gt.1.0e-10) then
+         b(i,k)    = t1(i,k)*(1.0 + 0.61*q1(i,k,1) - qcloud(i,k) -
+     $        qsnow(i,k) - qice(i,k))
+         if (qcloud(i,k).gt.1.0e-10) then
                cldtop(i) = k
          endif
          enddo
@@ -197,7 +224,7 @@
 
       do k = km-1, klim,-1
          do i = 1, im
-            if (cnvflg(i).and.q1(i,k,ntcw).lt.1.0e-8.and.k.lt.cldtop(i)
+            if (cnvflg(i).and.qcloud(i,k).lt.1.0e-8.and.k.lt.cldtop(i)
      $           .and.flg(i)) then
                cldbase(i) = k+1
                flg(i) = .false.
@@ -277,9 +304,9 @@
             if (k.ge.mlmb(i).and.k.le.mlmt(i)) then
                u_mean(i)   = u_mean(i)   + u1(i,k)
                v_mean(i)   = v_mean(i)   + v1(i,k)
-               qi_mean(i)  = qi_mean(i)  + q1(i,k,ntiw)
+               qi_mean(i)  = qi_mean(i)  + qice(i,k)
                qs_mean(i)  = qs_mean(i)  + qsnow(i,k)
-               qni_mean(i) = qni_mean(i) + q1(i,k,nqni)
+               qni_mean(i) = qni_mean(i) + qnice(i,k)
                mse_mean(i) = mse_mean(i) + mse(i,k)
                qtx_mean(i) = qtx_mean(i) + qtx(i,k)
             endif
@@ -316,11 +343,11 @@
                vflux(i,k+1)  = vflux(i,k)   +
      $              (zm(i,k+1)-zm(i,k))*(v1(i,k)-v_mean(i))/xtime
                qiflux(i,k+1) = qiflux(i,k)  +
-     $              (zm(i,k+1)-zm(i,k))*(q1(i,k,ntiw)-qi_mean(i))/xtime
+     $              (zm(i,k+1)-zm(i,k))*(qice(i,k)-qi_mean(i))/xtime
                qsflux(i,k+1) = qsflux(i,k)  +
      $              (zm(i,k+1)-zm(i,k))*(qsnow(i,k)-qs_mean(i))/xtime
                qniflux(i,k+1)= qniflux(i,k) +
-     $              (zm(i,k+1)-zm(i,k))*(q1(i,k,nqni)-qni_mean(i))/xtime
+     $              (zm(i,k+1)-zm(i,k))*(qnice(i,k)-qni_mean(i))/xtime
             endif
          enddo
       enddo
@@ -410,7 +437,7 @@
                qflux(i,k) = wflux(i,k) - pflux(i,k)
 
 !calculate fluxes below liquid layer (1.e-10 correct threshold?)
-               if (q1(i,k,ntcw).lt.1.e-10) then
+               if (qcloud(i,k).lt.1.e-10) then
 
 !frozen moist static energy and total water equations
               qvflux(i,k) = qflux(i,k)-qsflux(i,k)-qiflux(i,k)
