@@ -60,7 +60,7 @@
      &     ten_q, dot,ncloud,hpbl,ud_mf,dt_mf,cnvw,cnvc,                &
      &     clam,c0s,c1,evef,pgcon,asolfac,hwrf_samfshal,                & 
      &     sigmain,sigmaout,omegain,omegaout,betadcu,betamcu,betascu,   &
-     &     cat_adj_shal,errmsg,errflg)
+     &     lbb1,lbb2,lbb3,dt_decay,cat_adj_shal,errmsg,errflg)
 !
       use machine , only : kind_phys
       use funcphys , only : fpvs
@@ -71,7 +71,7 @@
       integer, intent(in)  :: islimsk(:)
       real(kind=kind_phys), intent(in) :: cliq, cp, cvap,               &
      &   eps, epsm1, fv, grav, hvap, rd, rv, t0c, betascu, betadcu,     &
-     &   betamcu
+     &   betamcu, lbb1, lbb2, lbb3, dt_decay
       real(kind=kind_phys), intent(in) ::  delt, cscale
       real(kind=kind_phys), intent(in) :: psp(:), delp(:,:),            &
      &   prslp(:,:), garea(:), hpbl(:), dot(:,:), phil(:,:),            &
@@ -222,7 +222,8 @@ c  local variables and arrays
 c  variables for tracer wet deposition,
       real(kind=conv_wp), dimension(im,km,ntc) :: chem_c, chem_pw,
      &  wet_dep
-      real(kind=conv_wp), parameter :: escav   = 0.8_conv_wp ! wet scavenging efficiency
+! wet scavenging efficiency
+      real(kind=conv_wp), parameter :: escav   = 0.8_conv_wp
 !
 !  for updraft velocity calculation
       real(kind=conv_wp) wu2(im,km),      buo(im,km),     drag(im,km),
@@ -399,11 +400,13 @@ c
        enddo
       endif
 !>  - Return to the calling routine if deep convection is present or the surface buoyancy flux is negative.
-      totflg = .true.
-      do i=1,im
-        totflg = totflg .and. (.not. cnvflg(i))
-      enddo
-      if(totflg) return
+      if (.not. progomega) then
+         totflg = .true.
+         do i=1,im
+            totflg = totflg .and. (.not. cnvflg(i))
+         enddo
+         if(totflg) return
+      endif
 !!
 !>  - determine aerosol-aware rain conversion parameter over land
       do i=1,im
@@ -766,11 +769,13 @@ c
       enddo
 !!
 !> - If no LFC, return to the calling routine without modifying state variables.
-      totflg = .true.
-      do i=1,im
-        totflg = totflg .and. (.not. cnvflg(i))
-      enddo
-      if(totflg) return
+      if (.not. progomega) then
+         totflg = .true.
+         do i=1,im
+            totflg = totflg .and. (.not. cnvflg(i))
+         enddo
+         if(totflg) return
+      endif
 !!
 !> - Determine the vertical pressure velocity at the LFC. After Han and Pan (2011) \cite han_and_pan_2011 , determine the maximum pressure thickness between a parcel's starting level and the LFC. If a parcel doesn't reach the LFC within the critical thickness, then the convective inhibition is deemed too great for convection to be triggered, and the subroutine returns to the calling routine without modifying the state variables.
       do i=1,im
@@ -819,11 +824,13 @@ c
         endif
       enddo
 !!
-      totflg = .true.
-      do i=1,im
-        totflg = totflg .and. (.not. cnvflg(i))
-      enddo
-      if(totflg) return
+      if (.not. progomega) then
+         totflg = .true.
+         do i=1,im
+            totflg = totflg .and. (.not. cnvflg(i))
+         enddo
+         if(totflg) return
+      endif
 !
 ! re-define kb & kbcon
 !
@@ -865,11 +872,13 @@ c
         endif
       enddo
 !!
-      totflg = .true.
-      do i=1,im
-        totflg = totflg .and. (.not. cnvflg(i))
-      enddo
-      if(totflg) return
+      if (.not. progomega) then
+         totflg = .true.
+         do i=1,im
+            totflg = totflg .and. (.not. cnvflg(i))
+         enddo
+         if(totflg) return
+      endif
 !!
       do i=1,im
         if(cnvflg(i)) then
@@ -904,11 +913,14 @@ c
         endif
       enddo
 !!
-      totflg = .true.
-      do i=1,im
-        totflg = totflg .and. (.not. cnvflg(i))
-      enddo
-      if(totflg) return
+
+      if (.not. progomega) then
+         totflg = .true.
+         do i=1,im
+            totflg = totflg .and. (.not. cnvflg(i))
+         enddo
+         if(totflg) return
+      endif
 !!
 !
 ! turbulent entrainment rate assumed to be proportional
@@ -1209,11 +1221,13 @@ c
         endif
       enddo
 !!
-      totflg = .true.
-      do i = 1, im
-        totflg = totflg .and. (.not. cnvflg(i))
-      enddo
-      if(totflg) return
+      if (.not. progomega) then
+         totflg = .true.
+         do i = 1, im
+            totflg = totflg .and. (.not. cnvflg(i))
+         enddo
+         if(totflg) return
+      endif
 !!
 c
 c  calculate convective inhibition
@@ -1285,11 +1299,13 @@ c
        enddo
       endif
 !!
-      totflg = .true.
-      do i=1,im
-        totflg = totflg .and. (.not. cnvflg(i))
-      enddo
-      if(totflg) return
+      if (.not. progomega) then
+         totflg = .true.
+         do i=1,im
+            totflg = totflg .and. (.not. cnvflg(i))
+         enddo
+         if(totflg) return
+      endif
 !!
 c
 c  determine first guess cloud top as the level of zero buoyancy
@@ -1467,12 +1483,15 @@ c
         if(cnvflg(i) .and. aa1(i) <= 0.0_conv_wp) cnvflg(i) = .false.
       enddo
 !!
-!> - If the updraft cloud work function is negative, convection does not occur, and the scheme returns to the calling routine.
-      totflg = .true.
-      do i=1,im
-        totflg = totflg .and. (.not. cnvflg(i))
-      enddo
-      if(totflg) return
+!     > - If the updraft cloud work function is negative, convection does not occur, and the scheme returns to the calling routine.
+
+      if (.not. progomega) then
+         totflg = .true.
+         do i=1,im
+            totflg = totflg .and. (.not. cnvflg(i))
+         enddo
+         if(totflg) return
+      endif
 !!
 c
 c  estimate the onvective overshooting as the level
@@ -1600,7 +1619,8 @@ c
      &                       omegain_loc,real(delt, kind=conv_wp),
      &                       del,zi,cnvflg,omegaout_loc,
      &                       real(grav, kind=conv_wp),buo,drag,wush,
-     &                       bb1,bb2)
+     &        real(lbb1,kind=conv_wp),real(lbb2,kind=conv_wp),
+     &        real(lbb3,kind=conv_wp),real(dt_decay,kind=conv_wp))
 
 !      Copy back output if needed
          if(present(omegaout)) then
