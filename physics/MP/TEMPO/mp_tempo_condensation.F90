@@ -16,7 +16,7 @@ module mp_tempo_condensation
 
       implicit none
 
-      public :: mp_tempo_condensation_init, mp_tempo_condensation_run, mp_tempo_condensation_finalize
+      public :: mp_tempo_condensation_init, mp_tempo_condensation_run, mp_tempo_condensation_final
 
       private
 
@@ -175,16 +175,16 @@ module mp_tempo_condensation
          
       end subroutine mp_tempo_condensation_run
 
-!> \section arg_table_mp_tempo_condensation_finalize Argument Table
-!! \htmlinclude mp_tempo_condensation_finalize.html
+!> \section arg_table_mp_tempo_condensation_final Argument Table
+!! \htmlinclude mp_tempo_condensation_final.html
 !!
-      subroutine mp_tempo_condensation_finalize(errmsg, errflg)
+      subroutine mp_tempo_condensation_final(errmsg, errflg)
 
          character(len=*),          intent(  out) :: errmsg
          integer,                   intent(  out) :: errflg
 
          errmsg = ''
          errflg = 0
-      end subroutine mp_tempo_condensation_finalize
+      end subroutine mp_tempo_condensation_final
 
 end module mp_tempo_condensation
