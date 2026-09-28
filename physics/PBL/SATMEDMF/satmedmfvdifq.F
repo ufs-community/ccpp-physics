@@ -602,16 +602,13 @@
         enddo
       enddo
 !
-!    Initialize output fluxes associated with MLM:
-      do k=1,km
-         do i=1,im
-            eflux(i,k)=0.0
-            rflux(i,k)=0.0
-            wflux(i,k)=0.0
-            pflux(i,k)=0.0
-         enddo
-      enddo      
-!>  - Some output variables and logical flags are initialized
+!     Initialize optional output fluxes associated with MLM
+      if (present(eflux)) eflux(:,:) = 0.0_kind_phys
+      if (present(rflux)) rflux(:,:) = 0.0_kind_phys
+      if (present(wflux)) wflux(:,:) = 0.0_kind_phys
+      if (present(pflux)) pflux(:,:) = 0.0_kind_phys
+      
+!     >  - Some output variables and logical flags are initialized
       do i = 1,im
          z0(i)    = 0.01 * zorl(i)
          rho_a(i) = prsl(i,1)/(rd*t1(i,1)*(1.+fv*max(q1(i,1,1),qmin)))
