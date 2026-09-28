@@ -514,7 +514,7 @@
 
 ########################################################################
 [ccpp-arg-table]
-  name = lsm_ruc_finalize
+  name = lsm_ruc_final
   type = scheme
 [errmsg]
   standard_name = ccpp_error_message
@@ -791,7 +791,7 @@
   units = index
   dimensions = (horizontal_loop_extent)
   type = integer
-  intent = in
+  intent = inout
 [vtype]
   standard_name = vegetation_type_classification
   long_name = vegetation type at each grid cell

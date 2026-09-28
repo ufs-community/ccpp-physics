@@ -112,6 +112,13 @@
   dimensions = ()
   type = logical
   intent = in
+[cplcat]
+  standard_name = flag_for_catchem_coupling
+  long_name = flag controlling cplcat collection (default off)
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
 [cplwav]
   standard_name = flag_for_ocean_wave_coupling
   long_name = flag controlling cplwav collection (default off)
@@ -461,7 +468,7 @@
   dimensions = (horizontal_loop_extent)
   type = real
   kind = kind_phys
-  intent = in
+  intent = inout
   optional = True
 [epi]
   standard_name = instantaneous_surface_potential_evaporation

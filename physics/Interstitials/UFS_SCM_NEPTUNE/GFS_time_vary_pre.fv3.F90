@@ -9,7 +9,7 @@
 
       private
 
-      public GFS_time_vary_pre_init, GFS_time_vary_pre_timestep_init, GFS_time_vary_pre_finalize
+      public GFS_time_vary_pre_init, GFS_time_vary_pre_timestep_init, GFS_time_vary_pre_final
 
       logical :: is_initialized = .false.
 
@@ -42,10 +42,10 @@
       end subroutine GFS_time_vary_pre_init
 
 
-!> \section arg_table_GFS_time_vary_pre_finalize Argument Table
-!! \htmlinclude GFS_time_vary_pre_finalize.html
+!> \section arg_table_GFS_time_vary_pre_final Argument Table
+!! \htmlinclude GFS_time_vary_pre_final.html
 !!
-      subroutine GFS_time_vary_pre_finalize(errmsg, errflg)
+      subroutine GFS_time_vary_pre_final(errmsg, errflg)
 
          implicit none
 
@@ -62,7 +62,7 @@
 
          is_initialized = .false.
 
-      end subroutine GFS_time_vary_pre_finalize
+      end subroutine GFS_time_vary_pre_final
 
 
 !> \section arg_table_GFS_time_vary_pre_timestep_init Argument Table
@@ -113,7 +113,8 @@
         
         ! Check initialization status
         if (.not.is_initialized) then
-           write(errmsg,'(*(a))') "Logic error: GFS_time_vary_pre_timestep_init called before GFS_time_vary_pre_init"
+           write(errmsg,'(*(a))') "Logic error: GFS_time_vary_pre_timestep_init called &
+                                  &before GFS_time_vary_pre_init"
            errflg = 1
            return
         end if
@@ -133,11 +134,12 @@
            call w3difdat(jdat,idat,4,rinc8)
            sec = rinc8(4)
         else
-           write(errmsg,'(*(a))') "FATAL ERROR: Invalid w3kindreal or w3kindint:", w3kindreal, w3kindint
+           write(errmsg,'(a,2i4)') "FATAL ERROR: Invalid w3kindreal or w3kindint:", w3kindreal, w3kindint
            errflg = 1
            return
         end if
         phour = sec/con_hr
+
         !--- set current bucket hour
         zhour = phour
         fhour = (sec + dtp)/con_hr
