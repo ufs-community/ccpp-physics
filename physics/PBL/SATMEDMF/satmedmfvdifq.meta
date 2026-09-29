@@ -223,7 +223,7 @@
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
   kind = kind_phys
-  intent = out
+  intent = inout
   optional = True
 [rflux]
   standard_name = radiative_flux
@@ -232,7 +232,7 @@
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
   kind = kind_phys
-  intent = out
+  intent = inout
   optional = True
 [wflux]
   standard_name = total_water_flux
@@ -241,7 +241,7 @@
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
   kind = kind_phys
-  intent = out
+  intent = inout
   optional = True
 [pflux]
   standard_name = precipitation_flux
@@ -250,7 +250,7 @@
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
   kind = kind_phys
-  intent = out
+  intent = inout
   optional = True
 [rtg]
   standard_name = tendency_of_vertically_diffused_tracer_concentration

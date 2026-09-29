@@ -135,7 +135,7 @@
 !+mlm    For mixed-layer option 
       real(kind=kind_phys), optional, intent(in) ::                     &
      &     pfl_lsan(:,:),    pfi_lsan(:,:)
-      real(kind=kind_phys), optional, intent(out)::                     &
+      real(kind=kind_phys), optional, intent(inout)::                     &
      &                     eflux(:,:),   pflux(:,:),                    &
      &                     wflux(:,:),   rflux(:,:)
 !-mlm              
@@ -601,13 +601,7 @@
           endif
         enddo
       enddo
-!
-!     Initialize optional output fluxes associated with MLM
-      if (present(eflux)) eflux(:,:) = 0.0_kind_phys
-      if (present(rflux)) rflux(:,:) = 0.0_kind_phys
-      if (present(wflux)) wflux(:,:) = 0.0_kind_phys
-      if (present(pflux)) pflux(:,:) = 0.0_kind_phys
-      
+!      
 !     >  - Some output variables and logical flags are initialized
       do i = 1,im
          z0(i)    = 0.01 * zorl(i)
