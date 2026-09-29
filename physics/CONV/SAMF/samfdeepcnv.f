@@ -13,7 +13,7 @@
 
       contains
 
-      subroutine samfdeepcnv_init(imfdeepcnv,imfdeepcnv_samf,            &
+      subroutine samfdeepcnv_init(imfdeepcnv,imfdeepcnv_samf,
      &                            errmsg, errflg)
 
       integer,                   intent(in) :: imfdeepcnv
@@ -24,7 +24,7 @@
 
       ! Consistency checks
       if (imfdeepcnv/=imfdeepcnv_samf) then
-        write(errmsg,'(*(a))') 'Logic error: namelist choice of',        &
+        write(errmsg,'(*(a))') 'Logic error: namelist choice of',
      &    ' deep convection is different from SAMF scheme'
            errflg = 1
         return
@@ -74,20 +74,20 @@
 !!  -# For the "feedback control", calculate updated values of the state variables by multiplying the cloud base mass flux and the tendencies calculated per unit cloud base mass flux from the static control.
 !!
 !!  \section samfdeep_detailed GFS samfdeepcnv Detailed Algorithm
-      subroutine samfdeepcnv_run (im,km,nn,first_time_step,restart,     &
-     &    tmf,qmicro,itc,ntc,cliq,cp,cvap,                              &
-     &    eps,epsm1,fv,grav,hvap,rd,rv,                                 &
-     &    t0c,delt,ntk,ntr,delp, ten_t, ten_u, ten_v, ten_q,            &
-     &    prslp,psp,phil,tkeh,qtr,dqtr,prevsq,q,q1,t1,u1,v1,fscav,      &
-     &    hwrf_samfdeep,progsigma,progomega,cldwrk,rn,kbot,ktop,kcnv,   &
-     &    islimsk,garea,dot,ncloud,hpbl,ud_mf,dd_mf,dt_mf,cnvw,cnvc,    &
-     &    QLCN, QICN, w_upi, cf_upi, CNV_MFD,                           &
-     &    CNV_DQLDT,CLCN,CNV_FICE,CNV_NDROP,CNV_NICE,mp_phys,mp_phys_mg,&
-     &    clam,c0s,c1,betal,betas,evef,pgcon,asolfac,cscale,            &
-     &    do_ca, ca_closure, ca_entr, ca_trigger, nthresh,ca_deep,      &
-     &    rainevap,sigmain,sigmaout,omegain,omegaout,betadcu,betamcu,   &
-     &    betascu,lbb1,lbb2,lbb3,dt_decay,maxMF,do_mynnedmf,            &
-     &    sigmab_coldstart,cat_adj_deep,                                &
+      subroutine samfdeepcnv_run (im,km,nn,first_time_step,restart,
+     &    tmf,qmicro,itc,ntc,cliq,cp,cvap,                              
+     &    eps,epsm1,fv,grav,hvap,rd,rv,                                 
+     &    t0c,delt,ntk,ntr,delp, ten_t, ten_u, ten_v, ten_q,            
+     &    prslp,psp,phil,tkeh,qtr,dqtr,prevsq,q,q1,t1,u1,v1,fscav,      
+     &    hwrf_samfdeep,progsigma,progomega,cldwrk,rn,kbot,ktop,kcnv,   
+     &    islimsk,garea,dot,ncloud,hpbl,ud_mf,dd_mf,dt_mf,cnvw,cnvc,    
+     &    QLCN, QICN, w_upi, cf_upi, CNV_MFD,                           
+     &    CNV_DQLDT,CLCN,CNV_FICE,CNV_NDROP,CNV_NICE,mp_phys,mp_phys_mg,
+     &    clam,c0s,c1,betal,betas,evef,pgcon,asolfac,cscale,            
+     &    do_ca, ca_closure, ca_entr, ca_trigger, nthresh,ca_deep,      
+     &    rainevap,sigmain,sigmaout,omegain,omegaout,betadcu,betamcu,   
+     &    betascu,lbb1,lbb2,lbb3,dt_decay,maxMF,do_mynnedmf,            
+     &    sigmab_coldstart,cat_adj_deep,                                
      &    errmsg,errflg)
 !
       use machine , only : kind_phys
@@ -105,7 +105,7 @@
       real(kind=kind_phys), dimension(:), intent(in) :: fscav
       logical, intent(in)  :: first_time_step,restart,hwrf_samfdeep,    
      &     progsigma,progomega,do_mynnedmf,sigmab_coldstart
-      real(kind=kind_phys), intent(in) :: nthresh,betadcu,betamcu,      &
+      real(kind=kind_phys), intent(in) :: nthresh,betadcu,betamcu,
      &     betascu,lbb1,lbb2,lbb3,dt_decay
       real(kind=kind_phys), intent(in), optional :: ca_deep(:)
       real(kind=kind_phys), intent(in), optional :: sigmain(:,:),       
@@ -119,7 +119,7 @@
       logical, intent(in)  :: do_ca,ca_closure,ca_entr,ca_trigger
       integer, intent(inout)  :: kcnv(:)
       ! DH* TODO - check dimensions of qtr, ntr+2 correct?  *DH
-      real(kind=kind_phys), intent(inout) :: cnvw(:,:),  cnvc(:,:),     &
+      real(kind=kind_phys), intent(inout) :: cnvw(:,:),  cnvc(:,:),
      &                                       tkeh(:,:)
       
       real(kind=kind_phys), intent(in) :: qtr(:,:,:), q1(:,:)
@@ -130,8 +130,8 @@
      &   rn(:),                                                         
      &   dd_mf(:,:), dt_mf(:,:)
       real(kind=kind_phys), intent(out) :: ud_mf(:,:)
-      real(kind=kind_phys), dimension(:,:), intent(inout), optional ::  &
-     &   qlcn, qicn, w_upi, cnv_mfd, cnv_dqldt, clcn                    &
+      real(kind=kind_phys), dimension(:,:), intent(inout), optional ::
+     &   qlcn, qicn, w_upi, cnv_mfd, cnv_dqldt, clcn
      &,  cnv_fice, cnv_ndrop, cnv_nice, cf_upi
       integer, intent(in) :: mp_phys, mp_phys_mg
 
@@ -845,8 +845,8 @@ c
       do i=1,im
         if(cnvflg(i)) then
 !         pdot(i)  = 10.* dot(i,kbcon(i))
-          pdot(i)  = 0.01_conv_wp * 
-     &               real(dot(i,kbcon(i)), kind=conv_wp) ! Now dot is in Pa/s
+          pdot(i)  = 0.01_conv_wp * real(dot(i,kbcon(i)), 
+     &               kind=conv_wp) ! Now dot is in Pa/s
         endif
       enddo
 c
@@ -964,8 +964,8 @@ c
       do i=1,im
         if(cnvflg(i)) then
 !         pdot(i)  = 10.* dot(i,kbcon(i))
-          pdot(i)  = 0.01_conv_wp * 
-     &               real(dot(i,kbcon(i)), kind=conv_wp) ! Now dot is in Pa/s
+          pdot(i)  = 0.01_conv_wp * real(dot(i,kbcon(i)), 
+     &               kind=conv_wp) ! Now dot is in Pa/s
         endif
       enddo
 !
@@ -3548,7 +3548,7 @@ c
           if (cnvflg(i) .and. k <= kmax(i)) then
             if(k <= ktcon(i)) then
               qeso(i,k) = real(0.01_kind_phys * fpvs(real(new_t1(i,k),
-     &                    kind=kind_phys)), kind=conv_wp) ! fpvs is in pa
+     &                    kind=kind_phys)), kind=conv_wp) !fpvs is in pa
               qeso(i,k) = real(eps, kind=conv_wp) * qeso(i,k)
      &                  / (pfld(i,k) + real(epsm1, conv_wp) * qeso(i,k))
               val       = 1.e-8_conv_wp
