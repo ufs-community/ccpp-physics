@@ -202,40 +202,40 @@
   kind = kind_phys
   intent = in
 [u]
-  standard_name = x_wind
-  long_name = x component of layer wind
+  standard_name = physics_timestep_initial_x_wind
+  long_name = initial x component of layer wind
   units = m s-1
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
   kind = kind_phys
   intent = in
 [v]
-  standard_name = y_wind
-  long_name = y component of layer wind
+  standard_name = physics_timestep_initial_y_wind
+  long_name = initial y component of layer wind
   units = m s-1
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
   kind = kind_phys
   intent = in
 [t3d]
-  standard_name = air_temperature
-  long_name = layer mean air temperature
+  standard_name = physics_timestep_initial_air_temperature
+  long_name = initial layer mean air temperature
   units = K
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
   kind = kind_phys
   intent = in
 [qvsh]
-  standard_name = specific_humidity
-  long_name = water vapor specific humidity
+  standard_name = physics_timestep_initial_specific_humidity
+  long_name = initial water vapor specific humidity
   units = kg kg-1
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
   kind = kind_phys
   intent = in
 [qc]
-  standard_name = cloud_liquid_water_mixing_ratio
-  long_name = ratio of mass of cloud water to mass of dry air plus vapor (without condensates)
+  standard_name = physics_timestep_initial_cloud_liquid_water_mixing_ratio
+  long_name = initial ratio of mass of cloud water to mass of dry air plus vapor (without condensates)
   units = kg kg-1
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
