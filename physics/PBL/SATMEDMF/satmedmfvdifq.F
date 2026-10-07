@@ -479,7 +479,6 @@
             wush(i,k) = 0.
             ckz(i,k) = ck1
             chz(i,k) = ch1
-            tcdo(i,k) = 0.
             rlmnz(i,k) = rlmn0
 !+mlm
             if (mlm) then
@@ -515,8 +514,8 @@
       do k=1,km
         do i=1,im
           te(i,k) = max(q1(i,k,ntke), tkmin)
-          tkeh(i,k) = 0.
-          tteh(i,k) = 0.
+          tkeh(i,k) = 0
+          tteh(i,k) = 0
         enddo
       enddo
       if(tte_edmf) then
