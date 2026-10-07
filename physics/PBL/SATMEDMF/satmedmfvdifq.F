@@ -56,7 +56,7 @@
 ! Initialize CCPP error handling variables
       errmsg = ''
       errflg = 0
-      
+
 ! Consistency checks
       if (.not. satmedmf) then
         write(errmsg,fmt='(*(a))') 'Logic error: satmedmf = .false.'
@@ -274,7 +274,7 @@
 !
       logical  pblflg(im), sfcflg(im), flg(im)
       logical  scuflg(im), pcnvflg(im)
-!+mlm
+!+mlm amy
       logical  mscuflg(im)
 !-mlm
       logical  mlenflg
@@ -381,9 +381,7 @@
       parameter(aphi5=5.,aphi16=16.)
       parameter(elmfac=1.0,elefac=1.0,cql=100.)
       parameter(dw2min=1.e-4,dkmax=1000.,xkgdx=1000.)
-!+mlm
       parameter(qlcr=3.5e-5)
-!-mlm      
       parameter(xkinv1=0.15,xkinv2=0.3)
       parameter(h1=0.33333333,hcrinv=250.)
       parameter(vegflo=0.1,vegfup=1.0,z0lo=0.1,z0up=1.0)
@@ -481,11 +479,11 @@
             wush(i,k) = 0.
             ckz(i,k) = ck1
             chz(i,k) = ch1
-            rlmnz(i,k) = rlmn0
             tcdo(i,k) = 0.
-
+            rlmnz(i,k) = rlmn0
 !+mlm
             if (mlm) then
+               if (k.lt.km) xlamde(i,k) = 0.
                rad(i,k) = 0.
                tdt(i,k) = 0.
                du(i,k) = 0.
@@ -601,8 +599,8 @@
           endif
         enddo
       enddo
-!      
-!     >  - Some output variables and logical flags are initialized
+!
+!>  - Some output variables and logical flags are initialized
       do i = 1,im
          z0(i)    = 0.01 * zorl(i)
          rho_a(i) = prsl(i,1)/(rd*t1(i,1)*(1.+fv*max(q1(i,1,1),qmin)))
@@ -1067,8 +1065,8 @@
       do i=1,im
         if(pblflg(i)) then
           if(zol(i) < zolcru) then
-            pcnvflg(i) = .true.
-          endif      
+              pcnvflg(i) = .true.
+          endif
           wst3(i) = gotvx(i,1)*sflux(i)*hpbl(i)
           wstar(i)= wst3(i)**h1
           ust3(i) = ustar(i)**3.
@@ -1268,7 +1266,7 @@
       do i = 1, im
         if(scuflg(i) .and. krad(i) <= 1) scuflg(i)=.false.
         if(scuflg(i) .and. radmin(i)>=0.) scuflg(i)=.false.
-!+mlm
+!+mlm amy
         if (scuflg(i) .and. mlm) then
             mscuflg(i) = scuflg(i)
             scuflg(i) = .false.
@@ -1288,11 +1286,18 @@
             ucko(i,k) = u1(i,k)
             vcko(i,k) = v1(i,k)
           endif
-          if(scuflg(i).or.mscuflg(i)) then
+          if(scuflg(i)) then
             tcdo(i,k) = t1(i,k)
             ucdo(i,k) = u1(i,k)
             vcdo(i,k) = v1(i,k)
           endif
+!+mlm          
+          if (mscuflg(i)) then
+            tcdo(i,k) = 0.0
+            ucdo(i,k) = 0.0
+            vcdo(i,k) = 0.0
+          endif
+!-mlm          
         enddo
       enddo
       do n = 1, ntrac1
@@ -1301,9 +1306,14 @@
           if(pcnvflg(i)) then
             qcko(i,k,n) = q1(i,k,n)
           endif
-          if(scuflg(i).or.mscuflg(i)) then
+          if(scuflg(i)) then
             qcdo(i,k,n) = q1(i,k,n)
           endif
+!+mlm          
+          if (mscuflg(i)) then
+            qcdo(i,k,n) = 0.0
+          endif
+!-mlm          
         enddo
       enddo
       enddo
@@ -2119,10 +2129,11 @@
           else
             prod(i,k) = buop + shrp
           endif
-
+!+mlm
           buoy(i,k)  = buop
           shear(i,k) = shrp
-
+!-mlm
+          
         enddo
       enddo
 !+mlm !stratocumulus mixed-layer model for turbulent fluxes
@@ -2132,8 +2143,7 @@
      &        ntrac1,mscuflg,zl,zm,q1,t1,u1,v1,rd,
      &        prec,rad,buoy,prsl,slx,hx,thlvx,
      &        radmin, kcld, krad,         
-     &        uflux,vflux,tdt,du,dv,dt2,
-     &        ucdo,vcdo,tcdo,qcdo,         
+     &        uflux,vflux,tdt,du,dv,rtg,
      &        eflux,rflux,wflux,pflux)
 
          do k = 1, km1
@@ -2174,7 +2184,9 @@
            tem1 = prod(i,k) + te(i,k) / dtn
            disste=max(min(disste, tem1), 0.)
            if(.not. tte_edmf) diss(i,k) = disste
+!          tem=2.0*def_3(i,k)
            tem=def_3(i,k)
+!          tem=min(tem,1.0)
            te(i,k) = te(i,k) + dtn * (prod(i,k)-disste+tem)
            te(i,k) = max(te(i,k), tkmnz(i,k))
         enddo
@@ -2237,7 +2249,6 @@
           if(scuflg(i)) then
             qcdo(i,k,ntke) = te(i,k)
           endif
-!-mlm          
         enddo
       enddo
       do k = 2, kmpbl
@@ -2445,7 +2456,6 @@ c
 !>  - Call tridit() to solve tridiagonal problem for TKE
 c
       call tridit(im,km,1,al,ad,au,f1,au,f1)
-!
 ! Negative TKE or TTE are set to zero after borrowing it from positive
 !   values within the mass-flux transport layers
 !
@@ -2551,12 +2561,13 @@ c
         enddo
       enddo
 
+
 c
 !>  - Recover the tendency of TKE or TTE
 c
       do k = 1,km
          do i = 1,im
-            if (mlm) f1(i,k) = max(f1(i,k), 0.0)
+!           f1(i,k) = max(f1(i,k), tkmin)
             qtend = (f1(i,k)-q1(i,k,ntke))*rdt
             rtg(i,k,ntke) = rtg(i,k,ntke)+qtend
          enddo
@@ -2697,7 +2708,6 @@ c
 !> - Call tridin() to solve tridiagonal problem for heat and moisture
 c
       call tridin(im,km,ntrac1,al,ad,au,f1,f2,au,f1,f2)
-
 !
 ! Negative moisture is set to zero after borrowing it from
 !   positive values within the mass-flux transport layers
@@ -2992,16 +3002,21 @@ c
 !
         enddo
       endif
-
 c
 !> - Recover the tendencies of heat and moisture
 c
       do  k = 1,km
          do i = 1,im
-           if (mlm) f2(i,k) = max(f2(i,k),0.0)
             ten_t(i,k)   = (f1(i,k)-t1(i,k))*rdt
             qtend        = (f2(i,k)-q1(i,k,1))*rdt
             rtg(i,k,1)   = rtg(i,k,1)+qtend
+!+mlm      
+            if (mlm) then
+               ten_t(i,k)   = ten_t(i,k) + tdt(i,k)
+            endif            
+!-mlm      
+!           dtsfc(i)   = dtsfc(i)+cont*del(i,k)*ttend
+!           dqsfc(i)   = dqsfc(i)+conq*del(i,k)*qtend
          enddo
       enddo
 !
@@ -3036,9 +3051,6 @@ c
           is = (n-1) * km
           do k = 1, km
             do i = 1, im
-             if (mlm) then
-               f2(i,k+is) = max(f2(i,k+is),0.0)
-             endif
               qtend = (f2(i,k+is)-q1(i,k,n))*rdt
               rtg(i,k,n) = rtg(i,k,n)+qtend
             enddo
@@ -3154,9 +3166,20 @@ c
          do i = 1,im
             ten_u(i,k) = (f1(i,k)-u1(i,k))*rdt
             ten_v(i,k) = (f2(i,k)-v1(i,k))*rdt
+!           dusfc(i) = dusfc(i)+conw*del(i,k)*utend
+!           dvsfc(i) = dvsfc(i)+conw*del(i,k)*vtend
          enddo
       enddo
-
+!+mlm            
+      if (mlm) then
+        do k = 1,km
+           do i = 1,im
+              ten_u(i,k) = ten_u(i,k) + du(i,k)
+              ten_v(i,k) = ten_v(i,k) + dv(i,k)
+           enddo
+        enddo
+      endif
+!-mlm            
       if (use_oceanuv) then
         do i = 1,im
           spd1_m=sqrt( (u1(i,1)-usfco(i))**2+(v1(i,1)-vsfco(i))**2 )
@@ -3216,5 +3239,3 @@ c
       end subroutine satmedmfvdifq_run
 !> @}
       end module satmedmfvdifq
-
-      

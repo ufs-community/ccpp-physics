@@ -1602,61 +1602,63 @@ c
       enddo
       endif
 !
-      if (present(omegaout)) then
-         omegaout_loc(:,:) = real(omegaout(:,:), kind=conv_wp)
-      else
-         omegaout_loc(:,:) = 0.0_conv_wp
-      endif
-
-      if (present(omegain)) then
-         omegain_loc(:,:) = real(omegain(:,:), kind=conv_wp)
-      else
-         omegain_loc(:,:) = 0.0_conv_wp
-      endif
-      
-! Allow convection if there is updraft memory
-      do i = 1, im
-         if (kcnv(i) == 1) then
-            cnvflg(i) = .false.
-         else if (minval(omegain_loc(i,:)) < -1.0_conv_wp) then
-            cnvflg(i) = .true.
+      if(progomega)then
+         
+         if (present(omegaout)) then
+            omegaout_loc(:,:) = real(omegaout(:,:), kind=conv_wp)
+         else
+            omegaout_loc(:,:) = 0.0_conv_wp
          endif
          
-         if (kbcon(i) == kmax(i)) cnvflg(i) = .false.
-      enddo
-      
-      call progomega_calc(first_time_step,restart,im,km,
-     &     kbcon1,ktcon,omegain_loc,real(delt,kind=conv_wp),
-     &     del,zi,cnvflg,omegaout_loc,real(grav,kind=conv_wp),
-     &     buo,drag,wush,real(lbb1,kind=conv_wp),
-     &     real(lbb2,kind=conv_wp),real(lbb3,kind=conv_wp),
-     &     real(dt_decay,kind=conv_wp),2)
-      
-!     Copy back output if needed
-      if (present(omegaout)) then
-         omegaout(:,:) = real(omegaout_loc(:,:), kind=kind_phys)
-      endif
-      
-      do k = 1, km
+         if (present(omegain)) then
+            omegain_loc(:,:) = real(omegain(:,:), kind=conv_wp)
+         else
+            omegain_loc(:,:) = 0.0_conv_wp
+         endif
+         
+!     Allow convection if there is updraft memory
          do i = 1, im
-            if (cnvflg(i)) then
-               if(k >= kbcon1(i) .and. k < ktcon(i)) then
-                  omega_u(i,k)=omegaout_loc(i,k)
-                  omega_u(i,k)=MAX(omega_u(i,k),-80.0_conv_wp)
-!     Convert to m/s for use in convective time-scale:
-                  rho = po(i,k)*100.0_conv_wp / (real(rd,
-     &                 kind=conv_wp) * to(i,k))
-                  tem = (-omega_u(i,k)) / ((rho * real(grav,
-     &                 kind=conv_wp)))
-                  wu2(i,k) = tem**2
-                  wu2(i,k) = max(wu2(i,k), 0.0_conv_wp)
-               endif
+            if (kcnv(i) == 1) then
+               cnvflg(i) = .false.
+            else if (minval(omegain_loc(i,:)) < -1.0_conv_wp) then
+               cnvflg(i) = .true.
             endif
+            
+            if (kbcon(i) == kmax(i)) cnvflg(i) = .false.
          enddo
-      enddo
+         
+         call progomega_calc(first_time_step,restart,im,km,
+     &        kbcon1,ktcon,omegain_loc,real(delt,kind=conv_wp),
+     &        del,zi,cnvflg,omegaout_loc,real(grav,kind=conv_wp),
+     &        buo,drag,wush,real(lbb1,kind=conv_wp),
+     &        real(lbb2,kind=conv_wp),real(lbb3,kind=conv_wp),
+     &        real(dt_decay,kind=conv_wp),2)
+         
+!     Copy back output if needed
+         if (present(omegaout)) then
+            omegaout(:,:) = real(omegaout_loc(:,:), kind=kind_phys)
+         endif
       
+         do k = 1, km
+            do i = 1, im
+               if (cnvflg(i)) then
+                  if(k >= kbcon1(i) .and. k < ktcon(i)) then
+                     omega_u(i,k)=omegaout_loc(i,k)
+                     omega_u(i,k)=MAX(omega_u(i,k),-80.0_conv_wp)
+!     Convert to m/s for use in convective time-scale:
+                     rho = po(i,k)*100.0_conv_wp / (real(rd,
+     &                    kind=conv_wp) * to(i,k))
+                     tem = (-omega_u(i,k)) / ((rho * real(grav,
+     &                    kind=conv_wp)))
+                     wu2(i,k) = tem**2
+                     wu2(i,k) = max(wu2(i,k), 0.0_conv_wp)
+                  endif
+               endif
+            enddo
+         enddo
+         
       else
-!      diagnostic updraft velocity
+!     diagnostic updraft velocity
          do k = 2, km1
             do i = 1, im
                if (cnvflg(i)) then
