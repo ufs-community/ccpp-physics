@@ -223,7 +223,7 @@ cj
      &     omegac(im),zeta(im,km),dbyo1(im,km),sigmab(im),qadv(im,km)
       real(kind=conv_wp) gravinv,invdelt,sigmind,sigminm,sigmins,
      &     wc_min, wc_eff 
-      logical flag_shallow, flag_mid
+      logical flag_shallow, flag_mid, shallow_veto(im)
 c  physical parameters
 !     parameter(grav=grav,asolfac=0.958)
 !     parameter(elocp=hvap/cp,el2orc=hvap*hvap/(rv*cp))
@@ -400,7 +400,8 @@ c
       wet_dep = 0.0_conv_wp
 !
       do i=1,im
-        cnvflg(i) = .true.
+         cnvflg(i) = .true.
+         shallow_veto(i) = .false.
         if(do_mynnedmf) then
             if(real(maxMF(i), kind=conv_wp) .gt. 0.0_conv_wp)
      &         cnvflg(i) = .false.
@@ -1547,7 +1548,10 @@ c
              ktcon(i) = ktconn(i)
           endif
           tem = pfld(i,kbcon(i))-pfld(i,ktcon(i))
-          if(tem < cthk) cnvflg(i) = .false.
+          if(tem < cthk) then
+             cnvflg(i) = .false.
+             shallow_veto(i) = .true.
+          endif
         endif
       enddo
 
@@ -1880,24 +1884,41 @@ c
       endif
 !                  
       if (progomega) then
+         
          if (present(omegaout)) then
             omegaout_loc(:,:) = real(omegaout(:,:), kind=conv_wp)
          else
             omegaout_loc(:,:) = 0.0_conv_wp
          endif
+
          if (present(omegain)) then
             omegain_loc(:,:) = real(omegain(:,:), kind=conv_wp)
          else
             omegain_loc(:,:) = 0.0_conv_wp
          endif
-         call progomega_calc(first_time_step,restart,im,km,kbcon1,ktcon,
-     &        omegain_loc,real(delt,kind=conv_wp),del,zi,cnvflg,
-     &        omegaout_loc,real(grav,kind=conv_wp),buo,drag,wush,
-     &        real(lbb1,kind=conv_wp),real(lbb2,kind=conv_wp),
-     &        real(lbb3,kind=conv_wp),real(dt_decay,kind=conv_wp))
+
+         ! Allow convection if there is updraft memory
+         do i = 1, im
+            if (.not. cnvflg(i) .and. .not. shallow_veto(i)) then
+               if (minval(omegain_loc(i,:)) < -1.0_conv_wp) then
+                  cnvflg(i) = .true.
+               endif
+            endif
+
+            if (kbcon(i) == kmax(i)) cnvflg(i) = .false.
+         enddo
+
+         call progomega_calc(first_time_step,restart,im,km,
+     &        kbcon1,ktcon,omegain_loc,real(delt,kind=conv_wp),
+     &        del,zi,cnvflg,omegaout_loc,real(grav,kind=conv_wp),
+     &        buo,drag,wush,real(lbb1,kind=conv_wp),
+     &        real(lbb2,kind=conv_wp),real(lbb3,kind=conv_wp),
+     &        real(dt_decay,kind=conv_wp),1)
+
          if (present(omegaout)) then
             omegaout(:,:) = real(omegaout_loc(:,:), kind=kind_phys)
          endif
+         
          do k = 1, km
             do i = 1, im
                if (cnvflg(i)) then
@@ -1915,6 +1936,7 @@ c
               endif
             enddo
          enddo
+         
       else
 !     diagnostic method:
          do k = 2, km1
