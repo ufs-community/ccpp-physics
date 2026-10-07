@@ -1884,6 +1884,7 @@ c
       endif
 !                  
       if (progomega) then
+         
          if (present(omegaout)) then
             omegaout_loc(:,:) = real(omegaout(:,:), kind=conv_wp)
          else
@@ -1935,6 +1936,7 @@ c
               endif
             enddo
          enddo
+         
       else
 !     diagnostic method:
          do k = 2, km1

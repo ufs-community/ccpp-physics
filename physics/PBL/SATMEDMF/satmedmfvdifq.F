@@ -615,6 +615,7 @@
          pftke(i)=1.0
          pblflg(i)= .true.
          sfcflg(i)= .true.
+         mscuflg(i) = .false.
          if(rbsoil(i) > 0.) sfcflg(i) = .false.
          pcnvflg(i)= .false.
          scuflg(i)= .true.
