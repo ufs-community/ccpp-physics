@@ -926,15 +926,6 @@
   kind = kind_phys
   intent = inout
   optional = True
-[cqs]
-  standard_name = surface_exchange_coefficient_for_moisture_in_rucdiags
-  long_name = exchange coefficient for moisture in ruc diags
-  units = m s-1
-  dimensions = (horizontal_dimension)
-  type = real
-  kind = kind_phys
-  intent = inout
-  optional = True
 [spp_wts_sfc]
   standard_name = spp_weights_for_surface_layer_scheme
   long_name = spp weights for surface layer scheme

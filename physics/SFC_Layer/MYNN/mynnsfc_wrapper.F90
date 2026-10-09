@@ -111,7 +111,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
      &  RMOL, WSPD, ch, HFLX, QFLX, LH,    &
      &  FLHC, FLQC,                        &
      &  U10, V10, TH2, T2, Q2,             &
-     &  wstar, CHS2, CQS2, CQS,            &
+     &  wstar, CHS2, CQS2,                 &
      &  spp_wts_sfc, spp_sfc,              &
      &  lprnt, errmsg, errflg              )
 
@@ -200,7 +200,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
      &        FLHC, FLQC, U10, V10, TH2, T2, Q2,            &
      &        rmol, ch,   pblh
       real(kind_phys), dimension(:), intent(inout), optional :: &
-     &        ustm, zol, mol, lh, wstar, CHS2, CQS2, CQS
+     &        ustm, zol, mol, lh, wstar, CHS2, CQS2
       !LOCAL
       real(kind_phys), dimension(im) ::                     &
      &        hfx, znt, psim, psih,                         &
@@ -319,7 +319,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  znt=znt_lnd, ust=ust_lnd,cm=cm_lnd,ch=ch_lnd, br=rb_lnd,         &  !intent(inout)
                  stress=stress_lnd,fm=fm_lnd, fh=fh_lnd,fm10=fm10_lnd,            &  !intent(inout)
                  fh2=fh2_lnd, hflx=hflx_lnd, qflx=qflx_lnd, CHS=chs,CHS2=chs2,    &
-                 CQS2=cqs2,CQS=cqs,CPM=cpm,USTM=ustm,ZOL=zol,MOL=mol,RMOL=rmol,   &
+                 CQS2=cqs2,CPM=cpm,USTM=ustm,ZOL=zol,MOL=mol,RMOL=rmol,           &
                  psim=psim,psih=psih,HFX=hfx,QFX=qfx,LH=lh,FLHC=flhc,FLQC=flqc,   &
                  QGH=qgh,U10=u10,V10=v10,TH2=th2,T2=t2,Q2=q2,                     &
                  GZ1OZ0=GZ1OZ0,WSPD=wspd,                                         &
@@ -347,7 +347,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  znt=znt_wat, ust=ust_wat,cm=cm_wat,ch=ch_wat, br=rb_wat,         &  !intent(inout)
                  stress=stress_wat,fm=fm_wat, fh=fh_wat,fm10=fm10_wat,            &  !intent(inout)
                  fh2=fh2_wat,  hflx=hflx_wat, qflx=qflx_wat, CHS=chs,CHS2=chs2,   &
-                 CQS2=cqs2,CQS=cqs,CPM=cpm,USTM=ustm,ZOL=zol,MOL=mol,RMOL=rmol,   &
+                 CQS2=cqs2,CPM=cpm,USTM=ustm,ZOL=zol,MOL=mol,RMOL=rmol,           &
                  psim=psim,psih=psih,HFX=hfx,QFX=qfx,LH=lh,FLHC=flhc,FLQC=flqc,   &
                  QGH=qgh,U10=u10,V10=v10,TH2=th2,T2=t2,Q2=q2,                     &
                  GZ1OZ0=GZ1OZ0,WSPD=wspd,                                         &
@@ -375,7 +375,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  znt=znt_ice, ust=ust_ice,cm=cm_ice,ch=ch_ice, br=rb_ice,         &  !intent(inout)
                  stress=stress_ice,fm=fm_ice, fh=fh_ice,fm10=fm10_ice,            &  !intent(inout)
                  fh2=fh2_wat,  hflx=hflx_wat, qflx=qflx_wat, CHS=chs,CHS2=chs2,   &
-                 CQS2=cqs2,CQS=cqs,CPM=cpm,USTM=ustm,ZOL=zol,MOL=mol,RMOL=rmol,   &
+                 CQS2=cqs2,CPM=cpm,USTM=ustm,ZOL=zol,MOL=mol,RMOL=rmol,           &
                  psim=psim,psih=psih,HFX=hfx,QFX=qfx,LH=lh,FLHC=flhc,FLQC=flqc,   &
                  QGH=qgh,U10=u10,V10=v10,TH2=th2,T2=t2,Q2=q2,                     &
                  GZ1OZ0=GZ1OZ0,WSPD=wspd,                                         &
