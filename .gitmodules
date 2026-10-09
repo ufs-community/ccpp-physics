@@ -8,8 +8,8 @@
   branch = main
 [submodule "physics/SFC_Layer/MYNN/MYNN"]
   path = physics/SFC_Layer/MYNN/MYNN
-  url = https://github.com/NCAR/MYNN-SFC
-  branch = ccpp/dev
+  url = https://github.com/XiaSun-Atmos/MYNN-SFC
+  branch = mynnsfc_ccpp
 [submodule "physics/CONV/C3"]
   path = physics/CONV/C3
   url = https://github.com/ufs-community/c3
