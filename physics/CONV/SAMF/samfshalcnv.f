@@ -55,6 +55,8 @@
      &     t0c,delt,ntk,ntr,delp,first_time_step,restart,               & 
      &     tmf,qmicro,progsigma,progomega,                              &
      &     prslp,psp,phil,tkeh,qtr,dqtr,prevsq,q,q1,t1,u1,v1,fscav,     &
+!The following variables are for Leonard term
+     &     leo_u,leo_v,leo_t,leo_q,leonard,leofac,                      &
      &     rn,kbot,ktop,kcnv,islimsk,garea,cscale,ten_t, ten_u, ten_v,  &
      &     ten_q, dot,ncloud,hpbl,ud_mf,dt_mf,cnvw,cnvc,                &
      &     clam,c0s,c1,evef,pgcon,asolfac,hwrf_samfshal,                & 
@@ -81,7 +83,6 @@
      &     omegain(:,:)
 !
       real(kind=kind_phys), dimension(:), intent(in) :: fscav
-      integer, intent(inout)  :: kcnv(:)
       ! DH* TODO - check dimensions of qtr, ntr+2 correct?  *DH
       real(kind=kind_phys), intent(inout) :: tkeh(:,:)
       real(kind=kind_phys), intent(in) ::   qtr(:,:,:),                 &
@@ -89,11 +90,18 @@
 
       real(kind=kind_phys), intent(in) :: t1(:,:), u1(:,:), v1(:,:)
 !
-      integer, intent(out) :: kbot(:), ktop(:)
-      real(kind=kind_phys), intent(out) :: rn(:),                       &
-     &   cnvw(:,:), cnvc(:,:), dt_mf(:,:)
+! for Leonard term
+      logical, intent(in)  :: leonard !flag for leonard term
+      real(kind=kind_phys), intent(in) :: leofac  !parameter for Leonard term
+      real(kind=kind_phys), intent(in) ::
+     &                     leo_u(:,:),  leo_v(:,:),                     &
+     &                     leo_t(:,:),  leo_q(:,:,:)
 !
-      real(kind=kind_phys), intent(out) :: ud_mf(:,:)
+      integer, intent(inout) :: kbot(:), ktop(:), kcnv(:)
+      real(kind=kind_phys), intent(out) :: rn(:)
+      real(kind=kind_phys), intent(inout) :: cnvw(:,:), cnvc(:,:),      &
+     &               ud_mf(:,:), dt_mf(:,:)
+!
       real(kind=kind_phys), intent(inout), optional :: sigmaout(:,:),   &
      &   omegaout(:,:)
 
@@ -243,6 +251,11 @@ c  cloud water
      &                     sumx(im),       tx1(im),       cnvwt(im,km)
      &,                    rhbar(im)
 !
+!    parameters for leonard term
+      real(kind=kind_phys) leodx1,leodx2,leodx3,leodx4
+      real(kind=kind_phys) saleofac(im)
+      parameter(leodx1=15000.,leodx2=1500.,leodx3=500.,leodx4=50.)
+!
 !  variables for Total Variation Diminishing (TVD) flux-limiter scheme
 !     on environmental subsidence and uplifting
 !
@@ -363,6 +376,7 @@ c
         advfac(i) = 0.
         gdx(i) = sqrt(garea(i))
         xmb(i) = 0.
+        saleofac(i) = 0.
           scaldfunc(i)=-1.0  ! wang initialized
           sigmagfm(i)=-1.0
        enddo
@@ -388,7 +402,28 @@ c
 !       vshear(i) = 0.
         gdx(i) = sqrt(garea(i))
         xmb(i) = 0.
+        saleofac(i) = 0.
        enddo
+      endif
+!
+!>  - Compute scale dependent leonard factor (\p saleofac)
+!
+      if(leonard) then
+        do i=1,im
+          if(gdx(i) >= leodx1 .or. gdx(i) <= leodx4) then
+            saleofac(i) = 0.
+          else if(gdx(i) < leodx1 .and. gdx(i) > leodx2) then
+            tem = leodx2 / gdx(i)
+!           tem = (leodx2 / gdx(i))**2.0
+            saleofac(i) = leofac * tem
+          else if(gdx(i) < leodx3 .and. gdx(i) > leodx4) then
+            tem = gdx(i) / leodx3
+!           tem = (gdx(i) / leodx3)**2.0
+            saleofac(i) = leofac * tem
+          else if(gdx(i) < leodx2 .and. gdx(i) > leodx3) then
+            saleofac(i) = leofac
+          endif
+        enddo
       endif
 !!      
 !>  - Return to the calling routine if deep convection is present or the surface buoyancy flux is negative.
@@ -431,22 +466,6 @@ c
         enddo
       enddo
 !
-!>  - Initialize convective cloud water and cloud cover to zero.
-      do k = 1, km
-        do i = 1, im
-          cnvw(i,k) = 0.
-          cnvc(i,k) = 0.
-        enddo
-      enddo
-! hchuang code change
-!>  - Initialize updraft mass fluxes to zero.
-      do k = 1, km
-        do i = 1, im
-          ud_mf(i,k) = 0.
-          dt_mf(i,k) = 0.
-        enddo
-      enddo
-c
       dt2   = delt
 !
 c  model tunable parameters are all here
@@ -2207,6 +2226,52 @@ c
           endif
         enddo
       enddo
+!
+!  compute change due to leonard term
+!
+      if(leonard) then
+!
+        do i = 1, im
+          if(cnvflg(i)) then
+            if(gdx(i) < dxcrt) then
+              tem = 1. - scaldfunc(i) * advfac(i)
+              tem1 = min(max(tem, 0.), 1.)
+              saleofac(i) = saleofac(i) * tem1
+            else
+              saleofac(i) = 0.
+            endif
+          endif
+        enddo
+!
+        do k = 2, km
+          do i = 1, im
+            if(cnvflg(i) .and. gdx(i) < dxcrt) then
+              if(zo(i,k) >= hpbl(i) .and.
+     &         (k > kbcon(i) .and. k <= ktcon(i))) then
+!    &           (k > kb(i) .and. k <= ktcon(i))) then
+!             if(zo(i,k) > hpbl(i) .and.
+!    &           (k > kb(i) .and. k < ktcon(i))) then
+!             if(k > kb(i) .and. k < ktcon(i)) then
+!             if(k >= kbcon(i) .and. k < ktcon(i)) then
+                dz = zo(i,k+1) - zi(i,k-1)
+                tem = leo_t(i,k+1)-leo_t(i,k-1)
+                tem1 = saleofac(i) * tem / dz
+                new_t1(i,k) = new_t1(i,k) + tem1 * dt2
+                tem = leo_q(i,k+1,1)-leo_q(i,k-1,1)
+                tem1 = saleofac(i) * tem / dz
+                new_q1(i,k) = new_q1(i,k) + tem1 * dt2
+!               tem = leo_u(i,k+1)-leo_u(i,k-1)
+!               tem1 = saleofac(i) * tem / dz
+!               new_u1(i,k) = new_u1(i,k) + tem1 * dt2
+!               tem = leo_v(i,k+1)-leo_v(i,k-1)
+!               tem1 = saleofac(i) * tem / dz
+!               new_v1(i,k) = new_v1(i,k) + tem1 * dt2
+              endif
+            endif
+          enddo
+        enddo
+!
+      endif
 !
 ! Negative moisture is set to zero after borrowing it from
 !   positive values within the mass-flux transport layers
