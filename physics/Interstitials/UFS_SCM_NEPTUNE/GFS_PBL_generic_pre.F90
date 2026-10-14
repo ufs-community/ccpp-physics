@@ -16,7 +16,7 @@
         imp_physics, imp_physics_gfdl, imp_physics_thompson, imp_physics_wsm6,           &
         imp_physics_tempo, lthailaware, imp_physics_mg, imp_physics_fer_hires,           &
         imp_physics_nssl, ltaerosol, mraerosol, nssl_ccn_on, nssl_hail_on, nssl_3moment, &
-        hybedmf, do_shoc, satmedmf, qgrs, vdftra,                                        &
+        hybedmf, do_shoc, satmedmf, qgrs, vdftra, def_4, def4q,                          &
         ugrs, vgrs, tgrs, errmsg, errflg)
         
       use machine,                only : kind_phys
@@ -37,9 +37,9 @@
       integer, intent(in) :: imp_physics_nssl
       logical, intent(in) :: nssl_hail_on, nssl_ccn_on, nssl_3moment
 
-      real(kind=kind_phys), dimension(:,:,:), intent(in) :: qgrs
+      real(kind=kind_phys), dimension(:,:,:), intent(in) :: qgrs, def_4
       real(kind=kind_phys), dimension(:,:), intent(in) :: ugrs, vgrs, tgrs
-      real(kind=kind_phys), dimension(:,:, :), intent(inout) :: vdftra
+      real(kind=kind_phys), dimension(:,:,:), intent(inout) :: vdftra, def4q
 
       ! CCPP error handling variables
       character(len=*), intent(out) :: errmsg
@@ -58,6 +58,7 @@
 !DH: dvdftra is only used if nvdiff != ntrac or (nvdiff == ntrac .and. )
       if (nvdiff == ntrac .and. (hybedmf .or. do_shoc .or. satmedmf)) then
         vdftra = qgrs
+        def4q = def_4
         rtg_ozone_index = ntoz
       else
         if (imp_physics == imp_physics_wsm6) then
@@ -321,6 +322,7 @@
           do k=1,levs
             do i=1,im
               vdftra(i,k,ntkev) = qgrs(i,k,ntke)
+              def4q(i,k,ntkev) = def_4(i,k,ntke)
             enddo
           enddo
         endif

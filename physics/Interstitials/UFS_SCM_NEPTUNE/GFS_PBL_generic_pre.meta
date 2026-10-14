@@ -373,6 +373,22 @@
   type = real
   kind = kind_phys
   intent = inout
+[def_4]
+  standard_name = horizontal_turbulent_eddy_diffusion_for_tracers
+  long_name = horizontal turbulent eddy diffusion for tracers calculated from dynamics
+  units = kg kg-1 s-1
+  dimensions = (horizontal_dimension,vertical_layer_dimension,number_of_tracers)
+  type = real
+  kind = kind_phys
+  intent = in
+[def4q]
+  standard_name = horizontal_turbulent_eddy_diffusion_for_vertically_diffused_tracers
+  long_name = horizontal turbulent eddy diffusion for vertically diffused tracers calculated from dynamics
+  units = kg kg-1 s-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension,number_of_vertical_diffusion_tracers)
+  type = real
+  kind = kind_phys
+  intent = inout
 [ugrs]
   standard_name = x_wind
   long_name = zonal wind
