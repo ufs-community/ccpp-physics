@@ -2753,7 +2753,7 @@ c
          do k = 1, km
             do i = 1, im
                if (kcnv(i) == 0) then
-                  omegaout(i,k) = omegain(i,k) * decay_fac
+                  omegaout(i,k) = real(real(omegain(i,k), kind=conv_wp) * decay_fac, kind=kind_phys)
                endif
             enddo
          enddo
