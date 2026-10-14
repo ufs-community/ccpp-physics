@@ -22,7 +22,7 @@ contains
 !! saSAS and C3 deep and shallow convection.
 !!\section gen_progomega progomega_calc General Algorithm
     subroutine progomega_calc(first_time_step,flag_restart,im,km,kbcon1,ktcon,omegain,delt,del, &
-       zi,cnvflg,omegaout,grav,buo,drag,wush,lbb1,lbb2,lbb3,dt_decay,conv_type)
+       zi,cnvflg,omegaout,grav,buo,drag,wush,lbb1,lbb2,lbb3,conv_type)
 
     implicit none
 
@@ -31,7 +31,7 @@ contains
     integer, intent(in) :: conv_type
 
     real(kind=conv_wp), intent(in) :: delt,grav
-    real(kind=conv_wp), intent(in) :: lbb1,lbb2,lbb3,dt_decay
+    real(kind=conv_wp), intent(in) :: lbb1,lbb2,lbb3
     real(kind=conv_wp), intent(in) :: omegain(im,km)
     real(kind=conv_wp), intent(in) :: del(im,km),zi(im,km)
     real(kind=conv_wp), intent(in) :: drag(im,km)
@@ -58,7 +58,6 @@ contains
     real(kind=conv_wp) :: termB(im,km)
     real(kind=conv_wp) :: termC(im,km)
     real(kind=conv_wp) :: memory_term,buoy_term,adv_term
-    real(kind=conv_wp) :: decay_fac
 
     ! Height-dependent effective perturbation-pressure coefficients:
     ! bb2_prof = 1 - Cb for buoyancy forcing
@@ -125,9 +124,6 @@ contains
     a_eps     = 1.0e-12_conv_wp
     b_eps     = 1.0e-12_conv_wp
     disc_eps  = 1.0e-12_conv_wp
-
-    ! Decay applied over one host physics timestep.
-    decay_fac = exp(-delt/dt_decay)
 
     !--------------------------------------------------------------------
     ! Construct height-dependent perturbation-pressure coefficients.

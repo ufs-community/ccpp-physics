@@ -1631,8 +1631,7 @@ c
      &        kbcon1,ktcon,omegain_loc,real(delt,kind=conv_wp),
      &        del,zi,cnvflg,omegaout_loc,real(grav,kind=conv_wp),
      &        buo,drag,wush,real(lbb1,kind=conv_wp),
-     &        real(lbb2,kind=conv_wp),real(lbb3,kind=conv_wp),
-     &        real(dt_decay,kind=conv_wp),2)
+     &        real(lbb2,kind=conv_wp),real(lbb3,kind=conv_wp),2)
          
 !     Copy back output if needed
          if (present(omegaout)) then

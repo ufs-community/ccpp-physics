@@ -14,7 +14,7 @@
 !! \section mfscuq GFS mfscu General Algorithm
 !> @{
       subroutine mfscuq_mlm(im,ix,km,ntcw,ntsw,ntiw,
-     &   nqni,ntrac1,cnvflg,zl,zm,q1,t1,u1,v1,r,
+     &   nqni,ntrac1,cnvflg,zl,zm,q1,t1,u1,v1,
      &   prec,rad,buop,pres,liwse,mse,thlvx,
      &   radmin, cldtop, krad,              
      &   uflux,vflux,tdt,du,dv,rtg,
@@ -35,10 +35,6 @@
 !
 !  Column flag; may be disabled by MLM
       logical, intent(inout) :: cnvflg(im)
-!
-!  Scalar inputs
-!  R retain their original default REAL kind.
-      real, intent(in) :: r
 !
 !  Atmospheric state
       real(kind=kind_phys), intent(in) :: q1(ix,km,ntrac1)
@@ -128,6 +124,14 @@
 
 !************************************************************************
 !
+      ! Initialize output fluxes before potential early return
+      uflux = 0.0_kind_phys
+      vflux = 0.0_kind_phys
+      eflux = 0.0_kind_phys
+      rflux = 0.0_kind_phys
+      wflux = 0.0_kind_phys
+      pflux = 0.0_kind_phys
+      
       totflg = .true.
       do i=1,im
          totflg = totflg .and. (.not. cnvflg(i))

@@ -206,7 +206,6 @@
       real(kind=kind_phys) shear(im,km),buoy(im,km)
       real(kind=kind_phys) uflux(im,km),vflux(im,km)
       real(kind=kind_phys) hx(im,km),rad(im,km),prec(im,km)
-      real(kind=kind_phys) r
       real(kind=kind_phys) tdt(im,km), du(im,km), dv(im,km)
 !-mlm      
 !
@@ -2140,7 +2139,7 @@
 !tke updated with transport fluxes following Solomon et al. 2026
       if (mlm) then
          call mfscuq_mlm(im,im,km,ntcw,ntsw,ntiw,ntinc,
-     &        ntrac1,mscuflg,zl,zm,q1,t1,u1,v1,rd,
+     &        ntrac1,mscuflg,zl,zm,q1,t1,u1,v1,
      &        prec,rad,buoy,prsl,slx,hx,thlvx,
      &        radmin, kcld, krad,         
      &        uflux,vflux,tdt,du,dv,rtg,

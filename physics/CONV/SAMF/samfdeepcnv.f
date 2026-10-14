@@ -86,7 +86,7 @@
      &    clam,c0s,c1,betal,betas,evef,pgcon,asolfac,cscale,            
      &    do_ca, ca_closure, ca_entr, ca_trigger, nthresh,ca_deep,      
      &    rainevap,sigmain,sigmaout,omegain,omegaout,betadcu,betamcu,   
-     &    betascu,lbb1,lbb2,lbb3,dt_decay,maxMF,do_mynnedmf,            
+     &    betascu,lbb1,lbb2,lbb3,maxMF,do_mynnedmf,            
      &    sigmab_coldstart,cat_adj_deep,                                
      &    errmsg,errflg)
 !
@@ -106,7 +106,7 @@
       logical, intent(in)  :: first_time_step,restart,hwrf_samfdeep,    
      &     progsigma,progomega,do_mynnedmf,sigmab_coldstart
       real(kind=kind_phys), intent(in) :: nthresh,betadcu,betamcu,
-     &     betascu,lbb1,lbb2,lbb3,dt_decay
+     &     betascu,lbb1,lbb2,lbb3
       real(kind=kind_phys), intent(in), optional :: ca_deep(:)
       real(kind=kind_phys), intent(in), optional :: sigmain(:,:),       
      &     qmicro(:,:),  prevsq(:,:), omegain(:,:)
@@ -1912,8 +1912,7 @@ c
      &        kbcon1,ktcon,omegain_loc,real(delt,kind=conv_wp),
      &        del,zi,cnvflg,omegaout_loc,real(grav,kind=conv_wp),
      &        buo,drag,wush,real(lbb1,kind=conv_wp),
-     &        real(lbb2,kind=conv_wp),real(lbb3,kind=conv_wp),
-     &        real(dt_decay,kind=conv_wp),1)
+     &        real(lbb2,kind=conv_wp),real(lbb3,kind=conv_wp),1)
 
          if (present(omegaout)) then
             omegaout(:,:) = real(omegaout_loc(:,:), kind=kind_phys)
