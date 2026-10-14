@@ -63,7 +63,7 @@
         end if 
 
          ! initialize tables for psih and psim (stable and unstable)
-         CALL PSI_INIT(psi_opt,errmsg,errflg)
+         CALL mynnsfc_init(.true.,errmsg,errflg)
 
          IF (debug_code >= 1) THEN
            print*,"CHECK INITIALIZATION OF PSI:"
