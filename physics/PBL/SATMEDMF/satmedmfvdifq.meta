@@ -257,9 +257,41 @@
   kind = kind_phys
   intent = in
 [def_3]
-  standard_name = horizontal_transfer_rate_of_tke_due_to_dynamics
-  long_name = rate of horizontal TKE transfer and pressure correlation calculated from dynamics
-  units =  m2 s-3
+  standard_name = horizontal_turbulent_eddy_diffusion_for_temperature
+  long_name = horizontal turbulent eddy diffusion for temperature calculated from dynamics
+  units = K s-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
+[def4q]
+  standard_name = horizontal_turbulent_eddy_diffusion_for_vertically_diffused_tracers
+  long_name = horizontal turbulent eddy diffusion for vertically diffused tracers calculated from dynamics
+  units = kg kg-1 s-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension,number_of_vertical_diffusion_tracers)
+  type = real
+  kind = kind_phys
+  intent = in
+[coldpool]
+  standard_name = do_cold_pool_parameterization
+  long_name = flag for cold pool parameterization in deep cumulus scheme
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
+[buoyexcsgrs]
+  standard_name = downdraft_buoyancy_excess_in_convection
+  long_name = downdraft buoyancy excess in convection
+  units = m2 s-2
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = inout
+  optional = True
+[cpadv]
+  standard_name = cold_pool_propagation_term
+  long_name = cold pool propagation term calculated from dynamics
+  units = m2 s-3
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
   kind = kind_phys

@@ -87,9 +87,9 @@
 !! (mfscuq.f).
 !! \section detail_satmedmfvidfq GFS satmedmfvdifq Detailed Algorithm
       subroutine satmedmfvdifq_run(im,km,ntrac,ntcw,ntrw,               &
-     &     ntiw,ntke,grav,pi,rd,cp,rv,hvap,hfus,fv,eps,epsm1,              &
-!The following three variables are for SA-3D-TKE
-     &     def_1,def_2,def_3,sa3dtke,dku3d_h,dku3d_e,                   &
+     &     ntiw,ntke,grav,pi,rd,cp,rv,hvap,hfus,fv,eps,epsm1,           &
+!The following variables are for SA-3D-TKE
+     &     def_1,def_2,def_3,def4q,sa3dtke,dku3d_h,dku3d_e,             &
      &     rtg,u1,v1,t1,q1,usfco,vsfco,use_oceanuv,                     &
      &     swh,hlw,xmu,garea,zvfun,sigmaf,                              &
      &     psk,rbsoil,zorl,u10m,v10m,fm,fh,                             &
@@ -98,6 +98,8 @@
      &     dspheat,dusfc,dvsfc,dtsfc,dqsfc,hpbl,dkt,dku,tkeh,           &
      &     kinver,xkzm_m,xkzm_h,xkzm_s,dspfac,bl_upfr,bl_dnfr,          &
      &     rlmx,elmx,sfc_rlm,tc_pbl,use_lpt,                            &
+! Cold pool
+     &     coldpool, buoyexcsgrs, cpadv,                                &
      &     do_canopy, cplaqm, claie, cfch, cfrt, cclu, cpopu,           &
      &     ntqv,dtend,dtidx,index_of_temperature,index_of_x_wind,       &
      &     index_of_y_wind,index_of_process_pbl,gen_tend,ldiag3d,       &
@@ -135,8 +137,9 @@
      &                     u1(:,:),     v1(:,:),                        &
      &                     usfco(:),    vsfco(:),                       &
      &                     t1(:,:),     q1(:,:,:),                      &
-!The following two variables are for SA-3D-TKE
-     &                     def_1(:,:),  def_2(:,:), def_3(:,:),         &
+!The following 4 variables are for SA-3D-TKE
+     &                     def_1(:,:),  def_2(:,:),                     &
+     &                     def_3(:,:),  def4q(:,:,:),                   &
      &                     swh(:,:),    hlw(:,:),                       &
      &                     xmu(:),       garea(:),                      &
      &                     zvfun(:),     sigmaf(:),                     &
@@ -149,6 +152,10 @@
      &                     prsi(:,:), del(:,:),                         &
      &                     prsl(:,:),   prslk(:,:),                     &
      &                     phii(:,:), phil(:,:)
+!The following variable is for cold pool
+      real(kind=kind_phys), intent(inout), optional :: buoyexcsgrs(:,:)
+      real(kind=kind_phys), intent(in) :: cpadv(:,:)
+!
       real(kind=kind_phys), intent(inout), dimension(:,:,:), optional ::&
      &     dtend
       integer, intent(in) :: dtidx(:,:), index_of_temperature,          &
@@ -163,6 +170,8 @@
 
 !
       logical, intent(in)  :: sa3dtke !flag for SA-3D-TKE scheme
+!
+      logical, intent(in)  :: coldpool !flag for cold pool
 !
 !  flag for tke dissipative heating
       logical, intent(in)  :: dspheat
@@ -224,7 +233,7 @@
 !
       real(kind=kind_phys) elm(im,km),   ele(im,km),
      &                     ckz(im,km),   chz(im,km),
-     &                     diss(im,km-1),prod(im,km-1),
+     &                     diss(im,km-1),prod(im,km-1), rik(im,km-1),
      &                     bf(im,km-1),  shr2(im,km-1), wush(im,km),
      &                     xlamue(im,km-1), xlamde(im,km-1),
      &                     gotvx(im,km), rlam(im,km-1)
@@ -283,22 +292,25 @@
      &                     tkmin,   tkbmx,  disste, xkgdx,
      &                     xkinv1,  xkinv2,
      &                     zlup,    zldn,   cs0,    csmf,
-     &                     tem,     tem1,   tem2,   tem3,
+     &                     tem,     tem1,   tem2,
      &                     ptem,    ptem0,  ptem1,  ptem2
 !
 !The following variables are for SA-3D-TKE
-      integer kk
       real(kind=kind_phys) thetal(im,km),dku_les(im,km),dkt_les(im,km),
      &                     elmh(im,km),ele_les(im,km),pftke(im),
      &                     dkq_les(im,km),pfl(im),pfdx(im),
      &                     dku_h(im,km),dkq_h(im,km),
-     &                     elmhfac,elmhmx,ckh,elm_les,
+     &                     elmhfac,elmhmx,elm_les,
      &                     cpl1,cpl2,cpl3,cpl4,cpl5,cpl6,
      &                     cptke1,cptke2,cptke3
       integer ktkemax(im)
       real(kind=kind_phys) tkemax(im),scl(im)
       real(kind=kind_phys) sclmax,sclmin,dkmaxles
 ! end of SA-3D-TKE variables
+!
+!    variable for cold pool
+      real(kind=kind_phys) bux(im,km), buxi(im,km-1),
+     &                     bcko(im,km), bcdo(im,km)
 !
       real(kind=kind_phys) slfac
 !
@@ -369,7 +381,8 @@
       parameter(cpl4=0.153,cpl5=0.278,cpl6=0.720)
       parameter(cptke1=0.07,cptke2=0.142,cptke3=0.071)
       parameter(dkmaxles=300.0,sclmin=500.,sclmax=2500.)
-      parameter(elmhfac=1.5,elmhmx=1000.,ckh=0.4)
+!     parameter(elmhfac=1.5,elmhmx=1000.)
+      parameter(elmhfac=2.0,elmhmx=2000.)
 
 !PCC_CANOPY------------------------------------
       if (do_canopy) then
@@ -395,14 +408,24 @@
         cfac  = 3.0
         prmax = 6.0
         prscu = 0.4
-        ck1   = 0.16
-        ch1   = 0.16
+        if(sa3dtke) then
+          ck1   = 0.18
+          ch1   = 0.18
+        else
+          ck1   = 0.16
+          ch1   = 0.16
+        endif
       else
         cfac  = 4.5
         prmax = 4.0
         prscu = 0.67
-        ck1   = 0.15
-        ch1   = 0.15
+        if(sa3dtke) then
+          ck1   = 0.17
+          ch1   = 0.17
+        else
+          ck1   = 0.15
+          ch1   = 0.15
+        endif
       endif
 
       gravi = 1.0 / grav
@@ -455,6 +478,20 @@
       do i=1,im
         gdx(i) = sqrt(garea(i))
       enddo
+!
+! cold pool
+      if(coldpool)then
+!
+! advect cold pool by its propagation speed
+!
+        do k = 1,km
+          do i = 1,im
+            bux(i,k) = buoyexcsgrs(i,k) + cpadv(i,k) * dt2
+          enddo
+        enddo
+!
+      endif
+!
 !>  - Initialize tke value at vertical layer centers and interfaces
 !! from tracer (\p tke and \p tkeh)
       do k=1,km
@@ -1064,8 +1101,6 @@
 !  compute tke using tte & ri for TTE-EDMF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-      if(tte_edmf) then
-!
       do i = 1, im
         tem = phims(i) * phims(i)
         ris(i) = zol(i) * phihs(i) / tem
@@ -1075,7 +1110,7 @@
         do i = 1, im
           ptem = sfcfrac*hpbl(i)
           if (zl(i,k) <= ptem) then
-            ri = ris(i)
+            rik(i,k) = ris(i)
           else
             if(k == 1) then
               tem = gotvx(i,1) * (thlvx(i,1)-thvs(i))
@@ -1084,19 +1119,26 @@
               ptem = max((u1(i,1)**2+v1(i,1)**2), 1.)
               ptem1 = ptem / (zl(i,1) * zl(i,1))
               ptem1 = 0.5 * (ptem1 + shr2(i,1))
-              ri = max(tem1/ptem1, rimin)
+              rik(i,k) = max(tem1/ptem1, rimin)
             else
               tem1 = 0.5 * (bf(i,k-1) + bf(i,k))
               ptem1 = 0.5 * (shr2(i,k-1) + shr2(i,k))
-              ri = max(tem1/ptem1, rimin)
+              rik(i,k) = max(tem1/ptem1, rimin)
             endif
           endif
-          if(ri < 0) then
-            tem = 2. * ri - pr0
-            epotte = ri / tem
+        enddo
+      enddo
+!
+      if(tte_edmf) then
+!
+      do k = 1, km1
+        do i = 1, im
+          if(rik(i,k) < 0) then
+            tem = 2. * rik(i,k) - pr0
+            epotte = rik(i,k) / tem
           else
-            tem = pr0 + 3. * ri
-            epotte = ri / tem
+            tem = pr0 + 3. * rik(i,k)
+            epotte = rik(i,k) / tem
           endif
           tke(i,k) = te(i,k) * (1. - epotte)
         enddo
@@ -1655,10 +1697,70 @@
 !
 ! 2. compute MS horizontal km
 !
-        do k = 1, km
+        if(tte_edmf) then
+!
+        do k = 1, km1
           do i = 1, im
-            dku_h(i,k)=ckh*elmh(i,k)*sqrt(tke(i,k))
-            dkq_h(i,k)=dku_h(i,k)
+             tesq(i,k) = tke(i,k) / sqrt(te(i,k))
+          enddo
+        enddo
+!
+        else
+!
+        do k = 1, km1
+          do i = 1, im
+             tesq(i,k) = sqrt(tke(i,k))
+          enddo
+        enddo
+!
+        endif
+!
+        do k = 1, km1
+          do i = 1, im
+           tem = elmh(i,k) * tesq(i,k)
+           if(k < kpbl(i)) then
+             if(pcnvflg(i)) then
+               dku_h(i,k) = ckz(i,k) * tem
+               dkq_h(i,k) = dku_h(i,k) / prn(i,k)
+             else
+               if(rik(i,k) < 0.) then ! unstable regime
+                 dku_h(i,k) = ckz(i,k) * tem
+                 dkq_h(i,k) = dku_h(i,k) / prn(i,k)
+               else             ! stable regime
+                 dkq_h(i,k) = chz(i,k) * tem
+                 dku_h(i,k) = dkq_h(i,k) * prn(i,k)
+               endif
+             endif
+           else
+             if(rik(i,k) < 0.) then ! unstable regime
+               dku_h(i,k) = ck1 * tem
+               dkq_h(i,k) = rchck * dku_h(i,k)
+             else             ! stable regime
+               dkq_h(i,k) = ch1 * tem
+               prnum = pr0 + 2.1 * rik(i,k)
+               prnum = min(prnum,prmax)
+               dku_h(i,k) = dkq_h(i,k) * prnum
+             endif
+           endif
+!
+           if(scuflg(i)) then
+             if(k >= mrad(i) .and. k < krad(i)) then
+               if(tte_edmf) then
+                 tem1 = ck0 * tem
+               else
+                 tem1 = ckz(i,k) * tem
+               endif
+               ptem1 = tem1 / prscu
+               dku_h(i,k) = max(dku_h(i,k), tem1)
+               dkq_h(i,k) = max(dkq_h(i,k), ptem1)
+             endif
+           endif
+!
+           dkq_h(i,k) = min(dkq_h(i,k),dkmax)
+           dkq_h(i,k) = max(dkq_h(i,k),xkzo(i,k))
+           dku_h(i,k) = min(dku_h(i,k),dkmax)
+           dku_h(i,k) = max(dku_h(i,k),xkzmo(i,k))
+!
           enddo
         enddo
 !
@@ -2048,9 +2150,7 @@
            tem1 = prod(i,k) + te(i,k) / dtn
            disste=max(min(disste, tem1), 0.)
            if(.not. tte_edmf) diss(i,k) = disste
-!          tem=2.0*def_3(i,k)
-           tem=def_3(i,k)
-!          tem=min(tem,1.0)
+           tem=def4q(i,k,ntke)
            te(i,k) = te(i,k) + dtn * (prod(i,k)-disste+tem)
 !          te(i,k) = max(te(i,k), tkmin)
            te(i,k) = max(te(i,k), tkmnz(i,k))
@@ -2437,19 +2537,299 @@ c
      &        (f1(1:im,1:km)-q1(1:im,1:km,ntke))*rdt
          endif
       endif
+!
+! Compute vertical diffusion for cold pool
+!
+      if(coldpool) then
+!
+      do k = 1, km
+        do i = 1, im
+          if(pcnvflg(i)) then
+            bcko(i,k) = bux(i,k)
+          endif
+          if(scuflg(i)) then
+            bcdo(i,k) = bux(i,k)
+          endif
+        enddo
+      enddo
+      do k = 2, kmpbl
+        do i = 1, im
+          if (pcnvflg(i) .and. k <= kpbl(i)) then
+             dz   = zl(i,k) - zl(i,k-1)
+             tem  = 0.5 * xlamue(i,k-1) * dz
+             factor = 1. + tem
+             bcko(i,k)=((1.-tem)*bcko(i,k-1)+tem*
+     &                (bux(i,k)+bux(i,k-1)))/factor
+          endif
+        enddo
+      enddo
+      do k = kmscu, 1, -1
+        do i = 1, im
+          if (scuflg(i) .and. k < krad(i)) then
+            if(k >= mrad(i)) then
+              dz = zl(i,k+1) - zl(i,k)
+              tem  = 0.5 * xlamde(i,k) * dz
+              factor = 1. + tem
+              bcdo(i,k)=((1.-tem)*bcdo(i,k+1)+tem*
+     &                 (bux(i,k)+bux(i,k+1)))/factor
+            endif
+          endif
+        enddo
+      enddo
+!
+!  compute variables for TVD flux-limiter scheme
+!     on environmental subsidence and uplifting
+!     for cold pool
+!
+      do k=1,kps
+        do i=1,im
+          buxi(i,k) = 0.5 * (bux(i,k)+bux(i,k+1))
+        enddo
+      enddo
+!
+      do k=1,kps
+        do i=1,im
+          e_diff(i,k) = bux(i,k) - bux(i,k+1)
+        enddo
+      enddo
+      do i=1,im
+        if(bux(i,1) >= 0.) then
+          e_diff(i,0) = max(0.,2.*bux(i,1)-bux(i,2))-
+     &                        bux(i,1)
+        else
+          e_diff(i,0) = min(0.,2.*bux(i,1)-bux(i,2))-
+     &                          bux(i,1)
+        endif
+      enddo
+!
+      do k = 1, kps
+        do i = 1, im
+          kmx = max(kpbl(i), krad(i))
+          e_half(i,k) = buxi(i,k)
+          if((pcnvflg(i) .or. scuflg(i)) .and. (k < kmx)) then
+            tem = 0.
+            if(pcnvflg(i) .and. k < kpbl(i)) then
+              tem = xmf(i,k)
+            endif
+            if(scuflg(i) .and.
+     &          (k >= mrad(i) .and. k < krad(i))) then
+              tem = tem - xmfd(i,k)
+            endif
+            if(tem > 0.) then
+              rrkp = 0.
+              if(abs(e_diff(i,k)) > 1.e-22)
+     &               rrkp = e_diff(i,k+1) / e_diff(i,k)
+              phkp = (rrkp+abs(rrkp)) / (1.+abs(rrkp))
+              e_half(i,k) = bux(i,k+1) +
+     &                   phkp*(buxi(i,k)-bux(i,k+1))
+            elseif (tem < 0.) then
+              rrkp = 0.
+              if(abs(e_diff(i,k)) > 1.e-22)
+     &               rrkp = e_diff(i,k-1) / e_diff(i,k)
+              phkp = (rrkp+abs(rrkp)) / (1.+abs(rrkp))
+              e_half(i,k) = bux(i,k) +
+     &                  phkp*(buxi(i,k)-bux(i,k))
+            endif
+          endif
+        enddo
+      enddo
+
+!----------------------------------------------------------------------
+!>  - Compute tridiagonal matrix elements for bux (buoyancy excess in cold pool)
+!
+      do i=1,im
+         ad(i,1) = 1.0
+         f1(i,1) = bux(i,1)
+      enddo
+!
+      do k = 1,km1
+        do i=1,im
+          dtodsd  = dt2/del(i,k)
+          dtodsu  = dt2/del(i,k+1)
+          dsig    = prsl(i,k)-prsl(i,k+1)
+          rdz     = rdzt(i,k)
+          tem1    = dsig * dkq(i,k) * rdz
+          dsdz2   = tem1 * rdz
+          au(i,k) = -dtodsd*dsdz2
+          al(i,k) = -dtodsu*dsdz2
+          ad(i,k) = ad(i,k)-au(i,k)
+          ad(i,k+1)= 1.-al(i,k)
+          tem2    = dsig * rdz
+!
+          if(pcnvflg(i) .and. k < kpbl(i)) then
+             ptem      = 0.5 * tem2 * xmf(i,k)
+             ptem1     = dtodsd * ptem
+             ptem2     = dtodsu * ptem
+             ptem      = bcko(i,k) + bcko(i,k+1)
+             f1(i,k)   = f1(i,k) - ptem * ptem1
+             f1(i,k+1) = bux(i,k+1) + ptem * ptem2
+          else
+             f1(i,k+1) = bux(i,k+1)
+          endif
+!
+          if(scuflg(i)) then
+            if(k >= mrad(i) .and. k < krad(i)) then
+              ptem      = 0.5 * tem2 * xmfd(i,k)
+              ptem1     = dtodsd * ptem
+              ptem2     = dtodsu * ptem
+              ptem      = bcdo(i,k) + bcdo(i,k+1)
+              f1(i,k)   = f1(i,k) + ptem * ptem1
+              f1(i,k+1) = f1(i,k+1) - ptem * ptem2
+            endif
+          endif
+!
+          kmx = max(kpbl(i), krad(i))
+          if((pcnvflg(i) .or. scuflg(i)) .and. (k < kmx)) then
+            ptem  = tem2 * (xmf(i,k) - xmfd(i,k))
+            ptem1 = dtodsd * ptem
+            ptem2 = dtodsu * ptem
+            f1(i,k)   = f1(i,k) + e_half(i,k) * ptem1
+            f1(i,k+1) = f1(i,k+1) - e_half(i,k) * ptem2
+          endif
+!
+        enddo
+      enddo
+c
+!>  - Call tridit() to solve tridiagonal problem for bux
+c
+      call tridit(im,km,1,al,ad,au,f1,au,f1)
+!
+! Negative bux are set to zero after borrowing it from positive
+!   values within the mass-flux transport layers
+!
+      do i = 1,im
+        tsumn(i) = 0.
+        tsump(i) = 0.
+        rtnp(i) = 1.
+      enddo
+      do k = 1,kps
+        do i = 1,im
+          if(pcnvflg(i) .and. scuflg(i)) then
+            kbx = 1
+            kmx = max(kpbl(i), krad(i))
+          elseif(pcnvflg(i) .and. .not. scuflg(i)) then
+            kbx = 1
+            kmx = kpbl(i)
+          elseif(.not. pcnvflg(i) .and. scuflg(i)) then
+            kbx = mrad(i)
+            kmx = krad(i)
+          endif
+          if((pcnvflg(i) .or. scuflg(i)) .and.
+     &       (k >= kbx .and. k <= kmx)) then
+            tem = f1(i,k) * del(i,k) * gravi
+            if(f1(i,k) < 0.) tsumn(i) = tsumn(i) + tem
+            if(f1(i,k) > 0.) tsump(i) = tsump(i) + tem
+          endif
+        enddo
+      enddo
+      do i = 1,im
+        if(pcnvflg(i) .or. scuflg(i)) then
+          if(tsump(i) > 0. .and. tsumn(i) < 0.) then
+            if(tsump(i) > abs(tsumn(i))) then
+              rtnp(i) = tsumn(i) / tsump(i)
+            else
+              rtnp(i) = tsump(i) / tsumn(i)
+            endif
+          endif
+        endif
+      enddo
+      do k = 1,kps
+        do i = 1,im
+          if(pcnvflg(i) .and. scuflg(i)) then
+            kbx = 1
+            kmx = max(kpbl(i), krad(i))
+          elseif(pcnvflg(i) .and. .not. scuflg(i)) then
+            kbx = 1
+            kmx = kpbl(i)
+          elseif(.not. pcnvflg(i) .and. scuflg(i)) then
+            kbx = mrad(i)
+            kmx = krad(i)
+          endif
+          if((pcnvflg(i) .or. scuflg(i)) .and.
+     &       (k >= kbx .and. k <= kmx)) then
+            if(rtnp(i) < 0.) then
+              if(tsump(i) > abs(tsumn(i))) then
+                if(f1(i,k) < 0.) f1(i,k) = 0.
+                if(f1(i,k) > 0.) f1(i,k) = (1.+rtnp(i))*f1(i,k)
+              else
+                if(f1(i,k) < 0.) f1(i,k) = (1.+rtnp(i))*f1(i,k)
+                if(f1(i,k) > 0.) f1(i,k) = 0.
+              endif
+            endif
+          endif
+        enddo
+      enddo
+!
+! To remove negative buxs which were leaked out of the mass-flux transport layers
+!   by eddy diffusion or potential negative buxs from the diffusion scheme,
+!   positive buxs are borrowed again now from the entire layers
+!
+      do i = 1,im
+        tsumn(i) = 0.
+        tsump(i) = 0.
+        rtnp(i) = 1.
+      enddo
+      do k = 1,km
+        do i = 1,im
+          tem = f1(i,k) * del(i,k) * gravi
+          if(f1(i,k) < 0.) tsumn(i) = tsumn(i) + tem
+          if(f1(i,k) > 0.) tsump(i) = tsump(i) + tem
+        enddo
+      enddo
+      do i = 1,im
+        if(tsump(i) > 0. .and. tsumn(i) < 0.) then
+          if(tsump(i) > abs(tsumn(i))) then
+            rtnp(i) = tsumn(i) / tsump(i)
+          else
+            rtnp(i) = tsump(i) / tsumn(i)
+          endif
+        endif
+      enddo
+      do k = 1,km
+        do i = 1,im
+          if(rtnp(i) < 0.) then
+            if(tsump(i) > abs(tsumn(i))) then
+              if(f1(i,k) < 0.) f1(i,k) = 0.
+              if(f1(i,k) > 0.) f1(i,k) = (1.+rtnp(i))*f1(i,k)
+            else
+              if(f1(i,k) < 0.) f1(i,k) = (1.+rtnp(i))*f1(i,k)
+              if(f1(i,k) > 0.) f1(i,k) = 0.
+            endif
+          endif
+        enddo
+      enddo
+!
+!  update buoyexcs with gust front advection and vertical turbulent mixing
+!
+      do k = 1,km
+         do i = 1,im
+            buoyexcsgrs(i,k) = f1(i,k)
+         enddo
+      enddo
+!
+      endif   !end of cold pool
 c
 !> ## Compute tridiagonal matrix elements for heat and moisture
 c
       do i=1,im
-         ad(i,1) = 1.
-         f1(i,1) = t1(i,1)   + dtdz1(i) * heat(i)
-         f2(i,1) = q1(i,1,1) + dtdz1(i) * evap(i)
+        ad(i,1) = 1.
+        if(sa3dtke) then
+          f1(i,1)=t1(i,1)  +dtdz1(i)*heat(i)+def_3(i,1)*dt2
+          f2(i,1)=q1(i,1,1)+dtdz1(i)*evap(i)+def4q(i,1,1)*dt2
+        else
+          f1(i,1)=t1(i,1)  +dtdz1(i)*heat(i)
+          f2(i,1)=q1(i,1,1)+dtdz1(i)*evap(i)
+        endif
       enddo
       if(ntrac1 >= 2) then
         do n = 2, ntrac1
           is = (n-1) * km
           do i = 1, im
-            f2(i,1+is) = q1(i,1,n)
+            if(sa3dtke) then
+              f2(i,1+is) = q1(i,1,n) + def4q(i,1,n)*dt2
+            else
+              f2(i,1+is) = q1(i,1,n)
+            endif
           enddo
         enddo
       endif
@@ -2481,13 +2861,24 @@ c
              ptem      = tcko(i,k) + tcko(i,k+1)
              f1(i,k)   = f1(i,k)+dtodsd*dsdzt-(ptem-tem)*ptem1
              f1(i,k+1) = t1(i,k+1)-dtodsu*dsdzt+(ptem-tem)*ptem2
+             if(sa3dtke) then
+               f1(i,k+1) = f1(i,k+1) + def_3(i,k+1)*dt2
+             endif
              ptem      = qcko(i,k,1) + qcko(i,k+1,1)
              f2(i,k)   = f2(i,k) - ptem * ptem1
              f2(i,k+1) = q1(i,k+1,1) + ptem * ptem2
+             if(sa3dtke) then
+               f2(i,k+1) = f2(i,k+1) + def4q(i,k+1,1)*dt2
+             endif
           else
              f1(i,k)   = f1(i,k)+dtodsd*dsdzt
-             f1(i,k+1) = t1(i,k+1)-dtodsu*dsdzt
-             f2(i,k+1) = q1(i,k+1,1)
+             if(sa3dtke) then
+               f1(i,k+1)=t1(i,k+1)+def_3(i,k+1)*dt2-dtodsu*dsdzt
+               f2(i,k+1)=q1(i,k+1,1)+def4q(i,k+1,1)*dt2
+             else
+               f1(i,k+1)=t1(i,k+1)-dtodsu*dsdzt
+               f2(i,k+1)=q1(i,k+1,1)
+             endif
           endif
 !
           if(scuflg(i)) then
@@ -2534,8 +2925,15 @@ c
                 ptem  = qcko(i,k,n) + qcko(i,k+1,n)
                 f2(i,k+is) = f2(i,k+is) - ptem * ptem1
                 f2(i,k+1+is)= q1(i,k+1,n) + ptem * ptem2
+                if(sa3dtke) then
+                  f2(i,k+1+is)=f2(i,k+1+is)+def4q(i,k+1,n)*dt2
+                endif
               else
-                f2(i,k+1+is) = q1(i,k+1,n)
+                if(sa3dtke) then
+                  f2(i,k+1+is)=q1(i,k+1,n)+def4q(i,k+1,n)*dt2
+                else
+                  f2(i,k+1+is)=q1(i,k+1,n)
+                endif
               endif
 !
               if(scuflg(i)) then
