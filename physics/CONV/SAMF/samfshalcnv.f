@@ -2748,11 +2748,13 @@ c
 !! shallow convection are inactive.
 
       if(progomega)then
-         decay_fac = exp(-real(delt, kind=conv_wp) / real(dt_decay, kind=conv_wp))
+         decay_fac = exp(-real(delt, kind=conv_wp)
+     &        / real(dt_decay, kind=conv_wp))
          do k = 1, km
             do i = 1, im
                if (kcnv(i) == 0) then
-                  omegaout(i,k) = real(real(omegain(i,k), kind=conv_wp) * decay_fac, kind=kind_phys)
+                  omegaout(i,k) = real(real(omegain(i,k), kind=conv_wp)
+     &                 * decay_fac, kind=kind_phys)
                endif
             enddo
          enddo
