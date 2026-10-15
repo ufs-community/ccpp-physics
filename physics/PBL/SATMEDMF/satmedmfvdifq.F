@@ -430,8 +430,6 @@
 !+mlm   
       zstblmax = 2500.
       if (mlm) then
-        ck1   = 0.15
-        ch1   = 0.15
         zstblmax = 5000.
       endif              
 !-mlm      
@@ -1290,13 +1288,6 @@
             ucdo(i,k) = u1(i,k)
             vcdo(i,k) = v1(i,k)
           endif
-!+mlm          
-          if (mscuflg(i)) then
-            tcdo(i,k) = 0.0
-            ucdo(i,k) = 0.0
-            vcdo(i,k) = 0.0
-          endif
-!-mlm          
         enddo
       enddo
       do n = 1, ntrac1
@@ -1308,11 +1299,6 @@
           if(scuflg(i)) then
             qcdo(i,k,n) = q1(i,k,n)
           endif
-!+mlm          
-          if (mscuflg(i)) then
-            qcdo(i,k,n) = 0.0
-          endif
-!-mlm          
         enddo
       enddo
       enddo
