@@ -1745,6 +1745,8 @@ endif
 
    integer :: udtend, vdtend, Tdtend
 
+   real(kind_phys) :: combined_drag, max_safe_drag, local_scale
+
    ! Calculate inverse of gravitational acceleration
    g_inv = 1./G
 
@@ -2523,6 +2525,7 @@ IF ( (do_gsl_drag_ls_bl) .and.                                       &
 !
 !  calculate - (g)*d(tau)/d(pressure) and deceleration terms dtaux, dtauy
 !
+         taup(i,km+1) = taup(i,km)
          do k = kts,km
             taud_ls(i,k) = 1. * (taup(i,k+1) - taup(i,k)) * csg / del(i,k)
             taud_bl(i,k) = 1. * (taufb(i,k+1) - taufb(i,k)) * csg / del(i,k)
@@ -2566,6 +2569,26 @@ IF ( (do_gsl_drag_ls_bl) .and.                                       &
             taud_ls(i,k)  = taud_ls(i,k)*dtfac(i)*dtfac_meso*           &    
                                ls_taper(i) *(1.-rstoch(i))
             taud_bl(i,k)  = taud_bl(i,k)*dtfac(i)* ls_taper(i) *(1.-rstoch(i))
+
+!=====================================================================
+!  Dynamic stability limiter
+!=====================================================================
+!  Calculate combined drag magnitude in this specific vertical layer cell
+
+            if ((k >= kpblmax .or. prsi(i,k).lt.sgmalolev*prsi(i,1))       &
+                .and. prsl(i,k).gt.plolevmeso) then
+              combined_drag = sqrt((taud_ls(i,k))**2 + (taud_bl(i,k))**2)
+              if (combined_drag > 1.E-5_kind_phys) then
+               ! Limits the parameterization to taking a max of 95% of local wind speed
+               max_safe_drag = (0.95_kind_phys * abs(velco(i,min(k,km-1)))) / (deltim * rcs)
+
+               if (combined_drag > max_safe_drag) then
+                  local_scale = max_safe_drag / combined_drag
+                  taud_ls(i,k) = taud_ls(i,k) * local_scale
+                  taud_bl(i,k) = taud_bl(i,k) * local_scale
+               endif
+              endif
+            endif
 
             dtaux  = taud_ls(i,k) * xn(i)
             dtauy  = taud_ls(i,k) * yn(i)
