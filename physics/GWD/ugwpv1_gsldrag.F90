@@ -69,7 +69,7 @@ contains
 !!
     subroutine ugwpv1_gsldrag_init  (                                          &
                 me, master, nlunit, input_nml_file, logunit,                   &
-                fn_nml2, jdat, lonr, levs, ak, bk, dtp,                        &
+                fn_nml2, jdat, lonr, levs, ak, bk, p_ref, dtp,                 &
                 con_pi, con_rerth, con_p0,                                     &
                 con_g, con_omega,  con_cp, con_rd, con_rv,con_fvirt,           &
                 do_ugwp,do_ugwp_v0, do_ugwp_v0_orog_only, do_gsl_drag_ls_bl,   &
@@ -90,7 +90,11 @@ contains
     integer,              intent (in) :: jdat(:)
     integer,              intent (in) :: lonr
     integer,              intent (in) :: levs
-    real(kind=kind_phys), intent (in) :: ak(:), bk(:)
+    real(kind=kind_phys), intent (in), optional :: ak(:), bk(:)
+    ! Dycore-agnostic reference (background) pressure profile at layer interfaces, Pa,
+    ! computed once in GFS_typedefs.F90::control_initialize for either dycore
+    ! (see cires_ugwpv1_module.F90::cires_ugwpv1_init).
+    real(kind=kind_phys), intent (in) :: p_ref(:)
     real(kind=kind_phys), intent (in) :: dtp
 
     real(kind=kind_phys), intent (in) :: con_p0, con_pi, con_rerth
@@ -229,7 +233,7 @@ contains
     if ( do_ugwp_v1 ) then
        call cires_ugwpv1_init (me, master, nlunit, logunit, jdat, con_pi,      &
                                con_rerth, fn_nml2, input_nml_file, lonr,       &
-                               levs, ak, bk, con_p0, dtp, errmsg, errflg)
+                               levs, ak, bk, p_ref, con_p0, dtp, errmsg, errflg)
        if (errflg/=0) return
     end if
 
@@ -292,7 +296,7 @@ contains
 !> \section arg_table_ugwpv1_gsldrag_run Argument Table
 !! \htmlinclude ugwpv1_gsldrag_run.html
 !!
-     subroutine ugwpv1_gsldrag_run(me, master, im, levs, ak, bk, ntrac, lonr, dtp,      &
+     subroutine ugwpv1_gsldrag_run(me, master, im, levs, ntrac, lonr, dtp,              &
           kdt, ldiag3d, lssav, flag_for_gwd_generic_tend, do_gsl_drag_ls_bl,            &
           do_gsl_drag_ss, do_gsl_drag_tofd,                                             &
           do_gwd_opt_psl, psl_gwd_dx_factor,                                            &
@@ -353,7 +357,6 @@ contains
 
     integer,                 intent(in) :: me, master, im, levs, ntrac,lonr
     real(kind=kind_phys),    intent(in) :: dtp
-    real(kind=kind_phys),    intent(in) :: ak(:), bk(:)
     integer,                 intent(in) :: kdt, jdat(:)
 ! option  for psl gwd
     logical, intent(in)              :: do_gwd_opt_psl      ! option for psl gravity wave drag
