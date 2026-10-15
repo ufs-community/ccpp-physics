@@ -311,6 +311,20 @@
   kind = kind_phys
   intent = inout
   optional = True
+[dycore_active]
+  standard_name = control_for_dynamical_core
+  long_name = choice of dynamical core
+  units = flag
+  dimensions = ()
+  type = integer
+  intent = in
+[dycore_fv3]
+  standard_name = identifier_for_fv3_dynamical_core
+  long_name = identifier for FV3 dynamical core
+  units = flag
+  dimensions = ()
+  type = integer
+  intent = in
 [errmsg]
   standard_name = ccpp_error_message
   long_name = error message for error handling in CCPP

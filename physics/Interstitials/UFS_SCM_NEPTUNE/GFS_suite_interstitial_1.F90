@@ -12,7 +12,7 @@
     subroutine GFS_suite_interstitial_1_run (im, levs, ntrac, dtf, dtp, slmsk, area, dxmin, dxinv, pgr, &
          islmsk, work1, work2, psurf, dudt, dvdt, dtdt, dqdt, ten_u, ten_v, ten_t, ten_q, kpbl, dusfcg, &
          dvsfcg, oc, oa4, clx, theta, gamma, sigma, elvmax, dp, dzgrid, varss, ocss, oa4ss, clxss,      &
-         errmsg, errflg)
+         dycore_active, dycore_fv3, errmsg, errflg)
 
       use machine, only: kind_phys
 
@@ -22,6 +22,7 @@
       integer,              intent(in )                   :: im, levs, ntrac
       real(kind=kind_phys), intent(in )                   :: dtf, dtp, dxmin, dxinv
       real(kind=kind_phys), intent(in ), dimension(:)     :: slmsk, area, pgr
+      integer,              intent(in )                   :: dycore_active, dycore_fv3
 
       integer,              intent(out), dimension(:)     :: islmsk
       real(kind=kind_phys), intent(out), dimension(:)     :: work1, work2, psurf
@@ -95,22 +96,35 @@
      kpbl   = 0
      dusfcg = zero
      dvsfcg = zero
-
-     oc     = zero
-     oa4    = zero
-     clx    = zero
-     theta  = zero
-     gamma  = zero
-     sigma  = zero
-     elvmax = zero
- 
      dp     = zero
      dzgrid = zero
+
+     ! DJS2026:
+     ! For UFS-FV3, these fields below were defined as physics interstitials
+     ! and reset to the initialization value at the start of each physics timestep
+     ! in GFS_GWD_generic_pre.F90.
+     ! For UFS-MPAS, these fields were moved into a persistent data container and set
+     ! once during initialization, ufs_mpas_gwd_to_physics.
+     ! GFS_GWD_generic_pre.F90 is not called from MPAS based SDFs.
+     !
+     ! Both FV3 and MPAS use this interstitial, but we don't want to zero out these
+     ! for MPAS, since GFS_GWD_generic_pre.F90 is not called for MPAS.
+     !
+     if (dycore_active == dycore_fv3) then
+        oc     = zero
+        oa4    = zero
+        clx    = zero
+        theta  = zero
+        gamma  = zero
+        sigma  = zero
+        elvmax = zero
  
-     if (present(varss)) varss = zero
-     if (present(ocss))  ocss  = zero
-     if (present(oa4ss)) oa4ss = zero
-     if (present(clxss)) clxss = zero
+        if (present(varss)) varss = zero
+        if (present(ocss))  ocss  = zero
+        if (present(oa4ss)) oa4ss = zero
+        if (present(clxss)) clxss = zero
+     end if
+
     end subroutine GFS_suite_interstitial_1_run
 
   end module GFS_suite_interstitial_1
