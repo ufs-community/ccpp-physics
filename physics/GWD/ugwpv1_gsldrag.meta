@@ -73,6 +73,22 @@
   dimensions = ()
   type = integer
   intent = in
+[ak]
+  standard_name = sigma_pressure_hybrid_coordinate_a_coefficient
+  long_name = a parameter for sigma pressure level calculations
+  units = Pa
+  dimensions = (vertical_interface_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
+[bk]
+  standard_name = sigma_pressure_hybrid_coordinate_b_coefficient
+  long_name = b parameter for sigma pressure level calculations
+  units = none
+  dimensions = (vertical_interface_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
 [p_ref]
   standard_name = air_pressure_of_reference_atmosphere_at_interface
   long_name = pressure of a dycore-neutral reference atmosphere at layer interfaces, used to compute log-pressure height
