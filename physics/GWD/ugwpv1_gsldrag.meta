@@ -81,6 +81,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [bk]
   standard_name = sigma_pressure_hybrid_coordinate_b_coefficient
   long_name = b parameter for sigma pressure level calculations
@@ -89,6 +90,7 @@
   type = real
   kind = kind_phys
   intent = in
+  optional = True
 [p_ref]
   standard_name = air_pressure_of_reference_atmosphere_at_interface
   long_name = pressure of a dycore-neutral reference atmosphere at layer interfaces, used to compute log-pressure height
