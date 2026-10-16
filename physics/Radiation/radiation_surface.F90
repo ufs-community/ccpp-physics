@@ -41,7 +41,7 @@
 !                                                                      !
 !       'module machine'             in 'machine.f'                    !
 !       'module physcons'            in 'physcons.f'                   !
-!       'module module_iounitdef'    in 'iounitdef.f'                  !
+!       'module module_iounitdef'    in 'iounitdef.F90'                  !
 !                                                                      !
 !                                                                      !
 !    program history log:                                              !

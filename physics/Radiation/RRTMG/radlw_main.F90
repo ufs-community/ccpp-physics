@@ -212,7 +212,7 @@
 !       dec 2001,  yu-tai hou        -- rewritten code into fortran 90 std !
 !                    set ncep radiation structure standard that contains   !
 !                    three plug-in compatable fortran program files:       !
-!                    'radlw_param.f', 'radlw_datatb.f', 'radlw_main.f'     !
+!                    'radlw_param.F90', 'radlw_datatb.F90', 'radlw_main.f'     !
 !                    fixed bugs in subprograms taugb14, taugb2, etc. added !
 !                    out-of-bounds protections. (a detailed note of        !
 !                    up_to_date modifications/corrections by ncep was sent !
@@ -394,9 +394,9 @@
 !! code from AER.
 !> @{
 !! The RRTMG-LW package includes three files:
-!! - radlw_param.f, which contains:
+!! - radlw_param.F90, which contains:
 !!  - module_radlw_parameters: band parameters set up
-!! - radlw_datatb.f, which contains modules:
+!! - radlw_datatb.F90, which contains modules:
 !!  - module_radlw_avplank: plank flux data
 !!  - module_radlw_ref: reference temperature and pressure
 !!  - module_radlw_cldprlw: cloud property coefficients

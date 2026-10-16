@@ -454,11 +454,11 @@
 !!\tableofcontents
 !!
 !! The RRTMG-SW package includes three files:
-!! - radsw_param.f, which contains:
+!! - radsw_param.F90, which contains:
 !!  - module_radsw_parameters: specifies major parameters of the spectral
 !!    bands and defines the construct structures of derived-type variables
 !!    for holding the output results.
-!! - radsw_datatb.f, which contains:
+!! - radsw_datatb.F90, which contains:
 !!  - module_radsw_ref: reference temperature and pressure
 !!  - module_radsw_cldprtb: cloud property coefficients table
 !!  - module_radsw_sflux: indexes and coefficients for spectral

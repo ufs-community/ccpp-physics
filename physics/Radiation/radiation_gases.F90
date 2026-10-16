@@ -35,7 +35,7 @@
 !   external modules referenced:                                       !
 !       'module machine'                    in 'machine.f'             !
 !       'module funcphys'                   in 'funcphys.f'            !
-!       'module module_iounitdef'           in 'iounitdef.f'           !
+!       'module module_iounitdef'           in 'iounitdef.F90'           !
 !                                                                      !
 !   unit used for radiative active gases:                              !
 !      co2   : volume mixing ratio                   (p/p)             !
