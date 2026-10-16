@@ -1,0 +1,1652 @@
+diff --git a/CODEOWNERS b/CODEOWNERS
+index 30e2f3ae..2970c33a 100644
+--- a/CODEOWNERS
++++ b/CODEOWNERS
+@@ -11,7 +11,8 @@
+ #   https://docs.google.com/spreadsheets/d/14y0Th_sSpCqlssEMNfSZ_Ni9wrpPqfpPY0kRG7jCZB8/edit#gid=0
+ # (Internal NOAA document.)
+ 
+-physics/CONV/C3/cu_c3*                                                       @lisa-bengtsson @haiqinli                 @grantfirl @rhaesung @Qingfu-Liu @dustinswales
++physics/CONV/C3/CCPP/cu_c3*                                                  @lisa-bengtsson @haiqinli                 @grantfirl @rhaesung @Qingfu-Liu @dustinswales
++physics/CONV/C3/mod*                                                         @lisa-bengtsson @haiqinli                 @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+ physics/CONV/Chikira_Sugiyama/cs_conv_aw_adj.*                               @AnningCheng-NOAA                         @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+ physics/CONV/Chikira_Sugiyama/cs_conv.*                                      @AnningCheng-NOAA                         @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+ physics/CONV/Grell_Freitas/cu_gf*                                            @haiqinli                                 @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+@@ -23,6 +24,7 @@ physics/CONV/SAS/sascnvn.*                                                   @Jo
+ physics/CONV/SAS/shalcnv.*                                                   @JongilHan66                              @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+ physics/CONV/nTiedtke/cu_ntiedtke*                                           @JongilHan66 @Qingfu-Liu                  @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+ physics/CONV/progsigma_calc.f90                                              @lisa-bengtsson                           @grantfirl @rhaesung @Qingfu-Liu @dustinswales
++physics/CONV/progomega_calc.f90                                              @lisa-bengtsson                           @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+ physics/GWD/cires_orowam2017.f                                               @mdtoyNOAA                                @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+ physics/GWD/cires_tauamf_data.F90                                            @mdtoyNOAA                                @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+ physics/GWD/cires_ugwp*                                                      @mdtoyNOAA                                @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+@@ -68,6 +70,7 @@ physics/PBL/SATMEDMF/satmedmfvdif.*                                          @Jo
+ physics/PBL/SATMEDMF/satmedmfvdifq.*                                         @JongilHan66                              @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+ physics/PBL/SATMEDMF/mfscu.f                                                 @JongilHan66                              @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+ physics/PBL/SATMEDMF/mfscuq.f                                                @JongilHan66                              @grantfirl @rhaesung @Qingfu-Liu @dustinswales
++physics/PBL/SATMEDMF/mfscuq_mlm.f                                            @AmySolomon                               @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+ physics/PBL/SHOC/moninshoc.*                                                                                           @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+ physics/PBL/SHOC/shoc.*                                                                                                @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+ physics/PBL/YSU/ysuvdif.*                                                    @Qingfu-Liu @WeiguoWang-NOAA              @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+@@ -75,6 +78,7 @@ physics/PBL/saYSU/shinhongvdif.*                                             @Qi
+ physics/PBL/mfpbl.f                                                          @JongilHan66                              @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+ physics/PBL/mfpblt.f                                                         @JongilHan66                              @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+ physics/PBL/mfpbltq.f                                                        @JongilHan66                              @grantfirl @rhaesung @Qingfu-Liu @dustinswales
++physics/PBL/
+ physics/PBL/tridi.f                                                          @JongilHan66 @WeiguoWang-NOAA             @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+ physics/Radiation/RRTMG/iounitdef.f                                                                                    @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+ physics/Radiation/RRTMG/module_bfmicrophysics.f                                                                        @grantfirl @rhaesung @Qingfu-Liu @dustinswales
+diff --git a/physics/CONV/SAMF/samfdeepcnv.f b/physics/CONV/SAMF/samfdeepcnv.f
+index 8f862c9b..38b2e0e5 100644
+--- a/physics/CONV/SAMF/samfdeepcnv.f
++++ b/physics/CONV/SAMF/samfdeepcnv.f
+@@ -223,7 +223,7 @@ cj
+      &     omegac(im),zeta(im,km),dbyo1(im,km),sigmab(im),qadv(im,km)
+       real(kind=conv_wp) gravinv,invdelt,sigmind,sigminm,sigmins,
+      &     wc_min, wc_eff 
+-      logical flag_shallow, flag_mid
++      logical flag_shallow, flag_mid, shallow_veto(im)
+ c  physical parameters
+ !     parameter(grav=grav,asolfac=0.958)
+ !     parameter(elocp=hvap/cp,el2orc=hvap*hvap/(rv*cp))
+@@ -400,7 +400,8 @@ c
+       wet_dep = 0.0_conv_wp
+ !
+       do i=1,im
+-        cnvflg(i) = .true.
++         cnvflg(i) = .true.
++         shallow_veto(i) = .false.
+         if(do_mynnedmf) then
+             if(real(maxMF(i), kind=conv_wp) .gt. 0.0_conv_wp)
+      &         cnvflg(i) = .false.
+@@ -1547,7 +1548,10 @@ c
+              ktcon(i) = ktconn(i)
+           endif
+           tem = pfld(i,kbcon(i))-pfld(i,ktcon(i))
+-          if(tem < cthk) cnvflg(i) = .false.
++          if(tem < cthk) then
++             cnvflg(i) = .false.
++             shallow_veto(i) = .true.
++          endif
+         endif
+       enddo
+ 
+@@ -1885,19 +1889,35 @@ c
+          else
+             omegaout_loc(:,:) = 0.0_conv_wp
+          endif
++
+          if (present(omegain)) then
+             omegain_loc(:,:) = real(omegain(:,:), kind=conv_wp)
+          else
+             omegain_loc(:,:) = 0.0_conv_wp
+          endif
+-         call progomega_calc(first_time_step,restart,im,km,kbcon1,ktcon,
+-     &        omegain_loc,real(delt,kind=conv_wp),del,zi,cnvflg,
+-     &        omegaout_loc,real(grav,kind=conv_wp),buo,drag,wush,
+-     &        real(lbb1,kind=conv_wp),real(lbb2,kind=conv_wp),
+-     &        real(lbb3,kind=conv_wp),real(dt_decay,kind=conv_wp))
++
++         ! Allow convection if there is updraft memory
++         do i = 1, im
++            if (.not. cnvflg(i) .and. .not. shallow_veto(i)) then
++               if (minval(omegain_loc(i,:)) < -1.0_conv_wp) then
++                  cnvflg(i) = .true.
++               endif
++            endif
++
++            if (kbcon(i) == kmax(i)) cnvflg(i) = .false.
++         enddo
++
++         call progomega_calc(first_time_step,restart,im,km,
++     &        kbcon1,ktcon,omegain_loc,real(delt,kind=conv_wp),
++     &        del,zi,cnvflg,omegaout_loc,real(grav,kind=conv_wp),
++     &        buo,drag,wush,real(lbb1,kind=conv_wp),
++     &        real(lbb2,kind=conv_wp),real(lbb3,kind=conv_wp),
++     &        real(dt_decay,kind=conv_wp),1)
++
+          if (present(omegaout)) then
+             omegaout(:,:) = real(omegaout_loc(:,:), kind=kind_phys)
+          endif
++         
+          do k = 1, km
+             do i = 1, im
+                if (cnvflg(i)) then
+diff --git a/physics/CONV/SAMF/samfshalcnv.f b/physics/CONV/SAMF/samfshalcnv.f
+index dc2e8996..4db646a2 100644
+--- a/physics/CONV/SAMF/samfshalcnv.f
++++ b/physics/CONV/SAMF/samfshalcnv.f
+@@ -91,10 +91,10 @@
+       real(kind=kind_phys), intent(in) :: t1(:,:), u1(:,:), v1(:,:)
+ !
+       integer, intent(out) :: kbot(:), ktop(:)
+-      real(kind=kind_phys), intent(out) :: rn(:),                       &
+-     &   cnvw(:,:), cnvc(:,:), dt_mf(:,:)
+-!
+-      real(kind=kind_phys), intent(out) :: ud_mf(:,:)
++      real(kind=kind_phys), intent(out) :: rn(:)
++      
++      real(kind=kind_phys), intent(inout) :: ud_mf(:,:), dt_mf(:,:),    &
++     &   cnvw(:,:), cnvc(:,:)   
+       real(kind=kind_phys), intent(inout), optional :: sigmaout(:,:),   &
+      &   omegaout(:,:)
+ 
+@@ -175,11 +175,12 @@ cc
+      &                     omegac(im),zeta(im,km),dbyo1(im,km),
+      &                     sigmab(im),qadv(im,km)
+       real(kind=conv_wp) gravinv,dxcrtas,invdelt,sigmind,sigmins,
+-     &                     sigminm,wc_min,wc_eff
++     &                     sigminm,wc_min,wc_eff,decay_fac
+ !  local 32-bit arrays for external calls ---
+       real(kind=conv_wp) :: omegain_loc(im,km), omegaout_loc(im,km)
+       real(kind=conv_wp) :: sigmain_loc(im,km), sigmaout_loc(im,km)
+       real(kind=conv_wp) :: qmicro_loc(im,km)
++
+       logical flag_shallow,flag_mid
+ c  physical parameters
+ !     parameter(g=grav,asolfac=0.89)
+@@ -439,20 +440,18 @@ c
+         enddo
+       enddo
+ !
+-!>  - Initialize convective cloud water and cloud cover to zero.
+-      do k = 1, km
+-        do i = 1, im
+-          cnvw(i,k) = 0.0_kind_phys
+-          cnvc(i,k) = 0.0_kind_phys
+-        enddo
+-      enddo
+-! hchuang code change
+-!>  - Initialize updraft mass fluxes to zero.
++! >  - Initialize convective cloud water and cloud cover to zero.
++! >  - Note: These fields are shared between deep and shallow and
++! >  - should therefore only be set to zero in shallow cu point.      
+       do k = 1, km
+-        do i = 1, im
+-          ud_mf(i,k) = 0.0_kind_phys
+-          dt_mf(i,k) = 0.0_kind_phys
+-        enddo
++         do i = 1, im
++            if (cnvflg(i)) then
++               cnvw(i,k) = 0.0_kind_phys
++               cnvc(i,k) = 0.0_kind_phys
++               ud_mf(i,k) = 0.0_kind_phys
++               dt_mf(i,k) = 0.0_kind_phys
++            endif
++         enddo
+       enddo
+ c
+       dt2   = real(delt, kind=conv_wp)
+@@ -1603,41 +1602,54 @@ c
+       enddo
+       endif
+ !
+-      if (progomega) then
++      if(progomega)then
++         
+          if (present(omegaout)) then
+             omegaout_loc(:,:) = real(omegaout(:,:), kind=conv_wp)
+          else
+             omegaout_loc(:,:) = 0.0_conv_wp
+          endif
++         
+          if (present(omegain)) then
+             omegain_loc(:,:) = real(omegain(:,:), kind=conv_wp)
+          else
+             omegain_loc(:,:) = 0.0_conv_wp
+          endif
+-
+-         call progomega_calc(first_time_step,restart,im,km,kbcon1,ktcon,
+-     &                       omegain_loc,real(delt, kind=conv_wp),
+-     &                       del,zi,cnvflg,omegaout_loc,
+-     &                       real(grav, kind=conv_wp),buo,drag,wush,
+-     &        real(lbb1,kind=conv_wp),real(lbb2,kind=conv_wp),
+-     &        real(lbb3,kind=conv_wp),real(dt_decay,kind=conv_wp))
+-
+-!      Copy back output if needed
+-         if(present(omegaout)) then
++         
++!     Allow convection if there is updraft memory
++         do i = 1, im
++            if (kcnv(i) == 1) then
++               cnvflg(i) = .false.
++            else if (minval(omegain_loc(i,:)) < -1.0_conv_wp) then
++               cnvflg(i) = .true.
++            endif
++            
++            if (kbcon(i) == kmax(i)) cnvflg(i) = .false.
++         enddo
++         
++         call progomega_calc(first_time_step,restart,im,km,
++     &        kbcon1,ktcon,omegain_loc,real(delt,kind=conv_wp),
++     &        del,zi,cnvflg,omegaout_loc,real(grav,kind=conv_wp),
++     &        buo,drag,wush,real(lbb1,kind=conv_wp),
++     &        real(lbb2,kind=conv_wp),real(lbb3,kind=conv_wp),
++     &        real(dt_decay,kind=conv_wp),2)
++         
++!     Copy back output if needed
++         if (present(omegaout)) then
+             omegaout(:,:) = real(omegaout_loc(:,:), kind=kind_phys)
+          endif
+-
++      
+          do k = 1, km
+             do i = 1, im
+                if (cnvflg(i)) then
+                   if(k >= kbcon1(i) .and. k < ktcon(i)) then
+                      omega_u(i,k)=omegaout_loc(i,k)
+                      omega_u(i,k)=MAX(omega_u(i,k),-80.0_conv_wp)
+-!      Convert to m/s for use in convective time-scale:
++!     Convert to m/s for use in convective time-scale:
+                      rho = po(i,k)*100.0_conv_wp / (real(rd,
+-     &                     kind=conv_wp) * to(i,k))
++     &                    kind=conv_wp) * to(i,k))
+                      tem = (-omega_u(i,k)) / ((rho * real(grav,
+-     &                     kind=conv_wp)))
++     &                    kind=conv_wp)))
+                      wu2(i,k) = tem**2
+                      wu2(i,k) = max(wu2(i,k), 0.0_conv_wp)
+                   endif
+@@ -1646,7 +1658,7 @@ c
+          enddo
+          
+       else
+-!      diagnostic updraft velocity
++!     diagnostic updraft velocity
+          do k = 2, km1
+             do i = 1, im
+                if (cnvflg(i)) then
+@@ -2733,6 +2745,20 @@ c
+         endif
+       enddo
+ !
++!> Decay prognostic updraft velocity at points where both deep and
++!! shallow convection are inactive.
++
++      if(progomega)then
++         decay_fac = exp(-delt/dt_decay)
++         do k = 1, km
++            do i = 1, im
++               if (kcnv(i) == 0) then
++                  omegaout(i,k) = omegain(i,k) * decay_fac
++               endif
++            enddo
++         enddo
++      endif
++      
+ !   include TKE contribution from shallow convection
+ !
+       if (.not.hwrf_samfshal) then
+diff --git a/physics/CONV/SAMF/samfshalcnv.meta b/physics/CONV/SAMF/samfshalcnv.meta
+index 7d9415ff..f4aba0c4 100644
+--- a/physics/CONV/SAMF/samfshalcnv.meta
++++ b/physics/CONV/SAMF/samfshalcnv.meta
+@@ -444,7 +444,7 @@
+   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+   type = real
+   kind = kind_phys
+-  intent = out
++  intent = inout
+ [dt_mf]
+   standard_name = instantaneous_atmosphere_detrainment_convective_mass_flux
+   long_name = (detrainment mass flux) * delt
+@@ -452,7 +452,7 @@
+   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+   type = real
+   kind = kind_phys
+-  intent = out
++  intent = inout
+ [cnvw]
+   standard_name = convective_cloud_water_mixing_ratio
+   long_name = moist convective cloud water mixing ratio
+@@ -460,7 +460,7 @@
+   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+   type = real
+   kind = kind_phys
+-  intent = out
++  intent = inout
+ [cnvc]
+   standard_name = convective_cloud_cover
+   long_name = convective cloud cover
+@@ -468,7 +468,7 @@
+   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+   type = real
+   kind = kind_phys
+-  intent = out
++  intent = inout
+ [clam]
+   standard_name = entrainment_rate_coefficient_for_shallow_convection
+   long_name = entrainment rate coefficient for shal conv.
+diff --git a/physics/CONV/progomega_calc.f90 b/physics/CONV/progomega_calc.f90
+index cf9cd2db..b6c1d115 100644
+--- a/physics/CONV/progomega_calc.f90
++++ b/physics/CONV/progomega_calc.f90
+@@ -15,19 +15,20 @@ module progomega
+   public progomega_calc
+ 
+ contains
+-  
++
+ !> This subroutine computes a prognostic updraft velocity
+ !! This file contains the subroutine that calculates the prognostic
+ !! updraft vertical velocity that is used for closure computations in
+ !! saSAS and C3 deep and shallow convection.
+ !!\section gen_progomega progomega_calc General Algorithm
+-  subroutine progomega_calc(first_time_step,flag_restart,im,km,kbcon1,ktcon,omegain,delt,del, &
+-        zi,cnvflg,omegaout,grav,buo,drag,wush,lbb1,lbb2,lbb3,dt_decay)
++    subroutine progomega_calc(first_time_step,flag_restart,im,km,kbcon1,ktcon,omegain,delt,del, &
++       zi,cnvflg,omegaout,grav,buo,drag,wush,lbb1,lbb2,lbb3,dt_decay,conv_type)
+ 
+     implicit none
+ 
+     integer, intent(in) :: im,km
+     integer, intent(in) :: kbcon1(im),ktcon(im)
++    integer, intent(in) :: conv_type
+ 
+     real(kind=conv_wp), intent(in) :: delt,grav
+     real(kind=conv_wp), intent(in) :: lbb1,lbb2,lbb3,dt_decay
+@@ -52,13 +53,47 @@ contains
+ 
+     real(kind=conv_wp) :: omega(im,km)
+     real(kind=conv_wp) :: omega_new(im,km)
+-    real(kind=conv_wp) :: omega_start(im,km)
+ 
+     real(kind=conv_wp) :: termA(im,km)
+     real(kind=conv_wp) :: termB(im,km)
+     real(kind=conv_wp) :: termC(im,km)
+     real(kind=conv_wp) :: memory_term,buoy_term,adv_term
+     real(kind=conv_wp) :: decay_fac
++
++    ! Height-dependent effective perturbation-pressure coefficients:
++    ! bb2_prof = 1 - Cb for buoyancy forcing
++    ! bb4_prof = 1 - Cd for vertical momentum advection
++    real(kind=conv_wp) :: bb2_prof(im,km)
++    real(kind=conv_wp) :: bb4_prof(im,km)
++    real(kind=conv_wp) :: zkm,zbase,cb_loc,cd_loc
++
++    integer, parameter :: nprof_deep = 7
++    real(kind=conv_wp), parameter :: z_deep(nprof_deep) =       &
++         (/ 0.0_conv_wp, 0.3_conv_wp, 0.8_conv_wp,         &
++            1.6_conv_wp, 4.0_conv_wp, 12.8_conv_wp,        &
++            16.0_conv_wp /)
++    real(kind=conv_wp), parameter :: cb_deep(nprof_deep) =      &
++         (/ 0.00_conv_wp, 0.30_conv_wp, 0.60_conv_wp,      &
++            0.70_conv_wp, 0.55_conv_wp, 0.55_conv_wp,      &
++            0.25_conv_wp /)
++    real(kind=conv_wp), parameter :: cd_deep(nprof_deep) =      &
++         (/ 0.00_conv_wp, 0.40_conv_wp, 0.38_conv_wp,      &
++            0.35_conv_wp, 0.25_conv_wp, 0.20_conv_wp,      &
++            0.05_conv_wp /)
++
++    integer, parameter :: nprof_shal = 7
++    real(kind=conv_wp), parameter :: z_shal(nprof_shal) =       &
++         (/ 0.0_conv_wp, 0.2_conv_wp, 0.8_conv_wp,         &
++            1.6_conv_wp, 2.4_conv_wp, 3.2_conv_wp,         &
++            4.0_conv_wp /)
++    real(kind=conv_wp), parameter :: cb_shal(nprof_shal) =      &
++         (/ 0.00_conv_wp, 0.45_conv_wp, 0.70_conv_wp,      &
++            0.85_conv_wp, 0.75_conv_wp, 0.20_conv_wp,      &
++            0.00_conv_wp /)
++    real(kind=conv_wp), parameter :: cd_shal(nprof_shal) =      &
++         (/ 0.00_conv_wp, 0.15_conv_wp, 0.35_conv_wp,      &
++            0.40_conv_wp, 0.25_conv_wp, 0.05_conv_wp,      &
++            0.00_conv_wp /)
+     !--------------------------------------------------------------------
+     ! Scalars
+     !--------------------------------------------------------------------
+@@ -93,82 +128,90 @@ contains
+ 
+     ! Decay applied over one host physics timestep.
+     decay_fac = exp(-delt/dt_decay)
+-    
++
+     !--------------------------------------------------------------------
+-    ! Initialize from incoming prognostic tracer
++    ! Construct height-dependent perturbation-pressure coefficients.
++    ! Height is measured above cloud base, consistent with Bengtsson et al.
++    ! 2026
+     !--------------------------------------------------------------------
+ 
++    bb2_prof(:,:) = lbb2
++    bb4_prof(:,:) = 1.0_conv_wp
++
+     do k = 1,km
+        do i = 1,im
+ 
+-          termA(i,k) = 0.0_conv_wp
+-          termB(i,k) = 0.0_conv_wp
+-          termC(i,k) = 0.0_conv_wp
++          if (cnvflg(i)) then
++             if (k >= kbcon1(i) .and. k < ktcon(i)) then
++
++                ! Cloud-base layer midpoint height [m]
++                zbase = 0.5_conv_wp * &
++                     (zi(i,kbcon1(i)) + zi(i,kbcon1(i)+1))
++
++                ! Layer height above cloud base [km]
++                zkm = (0.5_conv_wp * (zi(i,k) + zi(i,k+1)) - zbase) &
++                     * 0.001_conv_wp
++                zkm = max(zkm,0.0_conv_wp)
++
++                select case (conv_type)
++                case (1)
++                   ! Deep convection
++                   cb_loc = interp_profile(zkm,z_deep,cb_deep,nprof_deep)
++                   cd_loc = interp_profile(zkm,z_deep,cd_deep,nprof_deep)
++                case (2)
++                   ! Shallow convection
++                   cb_loc = interp_profile(zkm,z_shal,cb_shal,nprof_shal)
++                   cd_loc = interp_profile(zkm,z_shal,cd_shal,nprof_shal)
++                case default
++                   ! Preserve the previous UFS formulation if conv_type
++                   ! is not recognized.
++                   cb_loc = 1.0_conv_wp - lbb2
++                   cd_loc = 0.0_conv_wp
++                end select
++
++                bb2_prof(i,k) = 1.0_conv_wp - cb_loc
++                bb4_prof(i,k) = 1.0_conv_wp - cd_loc
+ 
+-          omega(i,k)     = omegain(i,k)
+-          omega_new(i,k) = omegain(i,k)
+-          omegaout(i,k)  = omegain(i,k)
++             endif
++          endif
+ 
+        enddo
+     enddo
+ 
+     !--------------------------------------------------------------------
+-    ! Retain memory when convection is inactive.
++    ! Initialize from incoming prognostic tracer
+     !--------------------------------------------------------------------
+ 
+     do k = 1,km
+        do i = 1,im
+ 
+-          if (.not. cnvflg(i)) then
+-
+-             omega(i,k)     = omegain(i,k)
+-             omega_new(i,k) = omega(i,k)
+-             omegaout(i,k)  = omega(i,k)
+-
+-          endif
+-
+-          ! Remove numerically negligible values.
+-          if (abs(omega(i,k)) < omega_eps) then
+-
+-             omega(i,k)     = 0.0_conv_wp
+-             omega_new(i,k) = 0.0_conv_wp
+-             omegaout(i,k)  = 0.0_conv_wp
++          termA(i,k) = 0.0_conv_wp
++          termB(i,k) = 0.0_conv_wp
++          termC(i,k) = 0.0_conv_wp
+ 
+-          endif
++          omega(i,k)     = omegain(i,k)
++          omega_new(i,k) = omegain(i,k)
+ 
+        enddo
+     enddo
+ 
+     !--------------------------------------------------------------------
+-    ! Decay prognostic updraft memory when convection is inactive.
+-    !
+-    ! The decay is applied once over the full host physics timestep.
++    ! Remove numerically negligible values for active convection
+     !--------------------------------------------------------------------
+ 
+     do k = 1,km
+        do i = 1,im
+-
+-          if (.not. cnvflg(i)) then
+-
+-             omega(i,k)     = omegain(i,k) * decay_fac
+-             omega_new(i,k) = omega(i,k)
+-             omegaout(i,k)  = omega(i,k)
+-
+-          endif
+-
+-          ! Remove numerically negligible values.
+-          if (abs(omega(i,k)) < omega_eps) then
+-
+-             omega(i,k)     = 0.0_conv_wp
+-             omega_new(i,k) = 0.0_conv_wp
+-             omegaout(i,k)  = 0.0_conv_wp
+-
++          if (cnvflg(i)) then
++             if (abs(omega(i,k)) < omega_eps) then
++                omega(i,k)     = 0.0_conv_wp
++                omega_new(i,k) = 0.0_conv_wp
++             endif
+           endif
+-
+        enddo
+     enddo
+-    
++
+     !--------------------------------------------------------------------
++    !-------------------------------------------------------------------
+     ! Cold-start initialization
+     !--------------------------------------------------------------------
+ 
+@@ -202,7 +245,6 @@ contains
+ 
+     ! Save the state entering the prognostic integration so that the
+     ! host-timestep local tendency can be returned after all substeps.
+-    omega_start(:,:) = omega(:,:)
+ 
+     do while (time_done < delt)
+ 
+@@ -250,7 +292,7 @@ contains
+        !---------------------------------------------------------------
+        ! Start new substep from previous-substep profile.
+        !
+-       ! This ensures every vertical level uses the same 
++       ! This ensures every vertical level uses the same
+        ! profile for the explicit vertical-advection term.
+        !---------------------------------------------------------------
+ 
+@@ -348,10 +390,11 @@ contains
+                    ! Physical bounds for active updrafts
+                    !----------------------------------------------------
+ 
+-                   omega_new(i,k) = max(                            &
+-                        min(omega_new(i,k),-1.2_conv_wp),         &
++                   omega_new(i,k) = max(                           &
++                        min(omega_new(i,k),0.0_conv_wp),           &
+                         -80.0_conv_wp)
+ 
++
+                 endif
+ 
+              endif
+@@ -376,11 +419,66 @@ contains
+     enddo
+ 
+     !--------------------------------------------------------------------
+-    ! Return final prognostic state and host-timestep local tendency
++    ! Return final prognostic state
+     !--------------------------------------------------------------------
+ 
+-    omegaout(:,:) = omega(:,:)
++    do k = 1,km
++       do i = 1,im
++
++          if (cnvflg(i)) then
++
++             omegaout(i,k) = omega(i,k)
++
++             if (abs(omegaout(i,k)) < omega_eps) then
++                omegaout(i,k) = 0.0_conv_wp
++             endif
++
++          endif
++
++       enddo
++    enddo
+ 
+   end subroutine progomega_calc
+ 
++  !=====================================================================
++  ! Piecewise-linear interpolation of perturbation-pressure profiles.
++  ! Values outside the specified height range are held at the nearest
++  ! endpoint.
++  !=====================================================================
++
++  pure function interp_profile(z,zpts,cpts,npts) result(c)
++
++    implicit none
++
++    integer, intent(in) :: npts
++    real(kind=conv_wp), intent(in) :: z
++    real(kind=conv_wp), intent(in) :: zpts(npts)
++    real(kind=conv_wp), intent(in) :: cpts(npts)
++
++    real(kind=conv_wp) :: c
++    real(kind=conv_wp) :: weight
++    integer :: n
++
++    if (z <= zpts(1)) then
++       c = cpts(1)
++       return
++    endif
++
++    if (z >= zpts(npts)) then
++       c = cpts(npts)
++       return
++    endif
++
++    do n = 1,npts-1
++       if (z >= zpts(n) .and. z <= zpts(n+1)) then
++          weight = (z-zpts(n)) / (zpts(n+1)-zpts(n))
++          c = cpts(n) + weight * (cpts(n+1)-cpts(n))
++          return
++       endif
++    enddo
++
++    c = cpts(npts)
++
++  end function interp_profile
++
+ end module progomega
+diff --git a/physics/PBL/SATMEDMF/mfscuq_mlm.f b/physics/PBL/SATMEDMF/mfscuq_mlm.f
+new file mode 100644
+index 00000000..96fb60d6
+--- /dev/null
++++ b/physics/PBL/SATMEDMF/mfscuq_mlm.f
+@@ -0,0 +1,534 @@
++!>\file mfscuq_mlm.f
++!!
++!! This file contains downdraft parcel properties
++!! parameterization for stratocumulus-top-driven turbulence based
++!! on a Mixed-Layer-Model (MLM) following Solomon et al. 2026.
++
++      module mfscuq_mlm_mod
++      contains
++
++!>\ingroup satmedmfvdifq
++!! This subroutine computes downdraft parcel properties
++!! for stratocumulus-top-driven turbulence using a
++!! Mixed-Layer-Model (MLM) following Solomon et al. 2026
++!! \section mfscuq GFS mfscu General Algorithm
++!> @{
++      subroutine mfscuq_mlm(im,ix,km,ntcw,ntsw,ntiw,
++     &   nqni,ntrac1,cnvflg,zl,zm,q1,t1,u1,v1,r,
++     &   prec,rad,buop,pres,liwse,mse,thlvx,
++     &   radmin, cldtop, krad,              
++     &   uflux,vflux,tdt,du,dv,rtg,
++     &   eflux,rflux,wflux,pflux)
++!
++      use machine,  only : kind_phys
++      use physcons, grav => con_g, cp => con_cp,
++     &              hvap => con_hvap, hfus => con_hfus
++!
++      implicit none
++!
++!  Dummy arguments
++!
++!  Dimensions and tracer indices
++      integer, intent(in) :: im, ix, km
++      integer, intent(in) :: ntcw, ntsw, ntiw
++      integer, intent(in) :: nqni, ntrac1
++!
++!  Column flag; may be disabled by MLM
++      logical, intent(inout) :: cnvflg(im)
++!
++!  Scalar inputs
++!  R retain their original default REAL kind.
++      real, intent(in) :: r
++!
++!  Atmospheric state
++      real(kind=kind_phys), intent(in) :: q1(ix,km,ntrac1)
++      real(kind=kind_phys), intent(in) :: t1(ix,km)
++      real(kind=kind_phys), intent(in) :: u1(ix,km)
++      real(kind=kind_phys), intent(in) :: v1(ix,km)
++!
++!  Vertical coordinates and input diagnostics
++      real(kind=kind_phys), intent(in) :: zl(im,km)
++      real(kind=kind_phys), intent(in) :: zm(im,km)
++      real(kind=kind_phys), intent(in) :: prec(im,km)
++      real(kind=kind_phys), intent(in) :: rad(im,km)
++      real(kind=kind_phys), intent(in) :: pres(im,km)
++      real(kind=kind_phys), intent(in) :: liwse(im,km)
++      real(kind=kind_phys), intent(in) :: mse(im,km)
++      real(kind=kind_phys), intent(in) :: thlvx(im,km)
++      real(kind=kind_phys), intent(in) :: radmin(im)
++      integer, intent(in) :: cldtop(im)
++      integer, intent(in) :: krad(im)
++!
++!  Buoyancy flux is read on entry and updated by MLM
++      real(kind=kind_phys), intent(inout) :: buop(im,km)
++!
++!  Existing tendencies are incremented/modified by MLM
++      real(kind=kind_phys), intent(inout) :: tdt(im,km)
++      real(kind=kind_phys), intent(inout) :: du(im,km)
++      real(kind=kind_phys), intent(inout) :: dv(im,km)
++      real(kind=kind_phys), intent(inout) :: rtg(im,km,ntrac1)
++!
++!  Fluxes generated by MLM
++      real(kind=kind_phys), intent(out) :: uflux(im,km)
++      real(kind=kind_phys), intent(out) :: vflux(im,km)
++      real(kind=kind_phys), intent(out) :: eflux(im,km)
++      real(kind=kind_phys), intent(out) :: rflux(im,km)
++      real(kind=kind_phys), intent(out) :: wflux(im,km)
++      real(kind=kind_phys), intent(out) :: pflux(im,km)
++!
++!  Local variables and arrays
++!
++      integer :: i, k, klim, icycle
++      integer :: cldbase(im), mlmb(im), mlmt(im)
++!
++      logical :: totflg, flg(im)
++!
++      integer :: levs
++      real(kind=kind_phys) :: dz
++      real(kind=kind_phys) :: hflux(im,km)
++      real(kind=kind_phys) :: qflux(im,km)
++
++      real(kind=kind_phys) :: g, T0, elocp, slocp
++      real(kind=kind_phys) :: ts1, es1, qs1, ts2, es2, qs2
++      real(kind=kind_phys) :: alphaX, wezm, wezp
++!
++      real(kind=kind_phys) :: b(im,km), qtx(im,km)
++      real(kind=kind_phys) :: dmse(im,km), dliwse(im,km)
++      real(kind=kind_phys) :: qcflux(im,km), qvflux(im,km)
++      real(kind=kind_phys) :: tflux(im,km), qsflux(im,km)
++      real(kind=kind_phys) :: bflux(im,km), qiflux(im,km)
++      real(kind=kind_phys) :: qniflux(im,km), qsnow(im,km)
++      real(kind=kind_phys) :: qice(im,km), qcloud(im,km), qnice(im,km)
++      real(kind=kind_phys) :: buopa(im)
++!
++      real(kind=kind_phys) :: v_mean(im), u_mean(im)
++      real(kind=kind_phys) :: qi_mean(im), qs_mean(im), qni_mean(im)
++      real(kind=kind_phys) :: qtx_mean(im), mse_mean(im)
++      real(kind=kind_phys) :: dqsdT(im), dsvt(im), dsvb(im)
++      real(kind=kind_phys) :: em(im), ep(im), wm(im), wp(im)
++      real(kind=kind_phys) :: dlb(im), dlt(im)
++!
++      real(kind=kind_phys) :: C0,C1,C2,C3,C4,C5,C6,C7,C8,xtime
++!
++!  Physical parameters
++      parameter(g     =  grav)
++      parameter(elocp =  hvap/cp, slocp=hfus/cp)
++      parameter(T0    =  273.15)
++      parameter(C0    =  6.11239921)
++      parameter(C1    =  0.443987641)
++      parameter(C2    =  0.142986287e-1)
++      parameter(C3    =  0.264847430e-3)
++      parameter(C4    =  0.302950461e-5)
++      parameter(C5    =  0.206739458e-7)
++      parameter(C6    =  0.640689451e-10)
++      parameter(C7    = -0.952447341e-13)
++      parameter(C8    = -0.976195544e-15)
++      parameter(xtime = 1800.0)
++      parameter(klim  = 3)
++
++!************************************************************************
++!
++      totflg = .true.
++      do i=1,im
++         totflg = totflg .and. (.not. cnvflg(i))
++      enddo
++      if (totflg) return      
++      
++      do k=1,km
++         do i=1,im
++            qvflux(i,k) = 0.0
++            qcflux(i,k) = 0.0
++            qsflux(i,k) = 0.0
++            qiflux(i,k) = 0.0
++            qniflux(i,k) = 0.0
++            tflux(i,k)  = 0.0
++            uflux(i,k)  = 0.0
++            vflux(i,k)  = 0.0
++            bflux(i,k)  = 0.0
++            eflux(i,k)  = 0.0
++            wflux(i,k)  = 0.0
++            hflux(i,k)  = 0.0
++            qflux(i,k)  = 0.0
++            rflux(i,k)  = 0.0
++            pflux(i,k)  = 0.0
++            dmse(i,k)   = 0.0
++         enddo
++      enddo
++
++! Assume that cloud water and cloud ice are present
++      do k=1,km
++         do i=1,im
++           qcloud(i,k) = q1(i,k,ntcw)
++           qice(i,k) = q1(i,k,ntiw)
++           qsnow(i,k) = 0.
++           qnice(i,k) = 0.
++           qtx(i,k)  = q1(i,k,1)+qcloud(i,k)+qice(i,k)
++           if (k.gt.1.and.k.lt.km) bflux(i,k) = buop(i,k)*T0/g
++         enddo
++      enddo
++
++      ! Test for existence of snow and ice number conc.
++      if (ntsw.gt.0) then
++        do k=1,km
++           do i=1,im
++             qsnow(i,k) = q1(i,k,ntsw)
++             qtx(i,k)   = qtx(i,k)+qsnow(i,k)
++           enddo
++        enddo
++      end if
++      if (nqni.gt.0) then
++        do k=1,km
++           do i=1,im
++             qnice(i,k) = q1(i,k,nqni)
++           enddo
++        enddo
++      end if
++
++      do i=1,im
++         flg(i)     = .true.
++         cldbase(i) = 1
++         mlmb(i)    = 1
++         mlmt(i)    = km-1
++         dlb(i)     = 0.0
++         dlt(i)     = 0.0
++         buopa(i)     = 0.0
++      enddo
++
++      do k = klim-1, km-2
++         do i = 1, im
++         dmse(i,k) = ((mse(i,k+1)-mse(i,k))/(zm(i,k+1)-zm(i,k))/cp)
++         dliwse(i,k) =((liwse(i,k+1)-liwse(i,k))/(zm(i,k+1)-zm(i,k))/cp)
++         b(i,k)    = t1(i,k)*(1.0 + 0.61*q1(i,k,1) - qcloud(i,k) -
++     $        qsnow(i,k) - qice(i,k))
++         enddo
++      enddo
++
++      do i = 1, im
++         if (cldtop(i).eq.km-1) cnvflg(i) = .false.
++      enddo
++
++      do k = km-1, klim,-1
++         do i = 1, im
++            if (cnvflg(i).and.qcloud(i,k).lt.1.0e-8.and.k.lt.cldtop(i)
++     $           .and.flg(i)) then
++               cldbase(i) = k+1
++               flg(i) = .false.
++            endif
++         enddo
++      enddo
++
++      do i = 1, im
++         if (cldbase(i).eq.1)  cnvflg(i) = .false.
++         if (cldbase(i).ge.cldtop(i)) cnvflg(i) = .false.
++      enddo
++
++      do i = 1, im
++        flg(i)    = .true.
++      enddo
++
++      do i = 1, im
++        if (cnvflg(i)) then
++           mlmt(i)   = krad(i) - 2
++           dlt(i)    = dmse(i,krad(i))
++        endif
++      enddo
++
++      do i = 1, im
++         if (radmin(i).ge.0.0) cnvflg(i) = .false.
++         if (mlmt(i).eq.km-1)  cnvflg(i) = .false.
++      enddo
++
++      do i = 1, im
++         if (cnvflg(i)) then
++            mlmb(i) = mlmt(i) - 1
++            flg(i)    = .true.
++         endif
++      enddo
++
++!calculate mlm base; tunable parameter set to 0.005
++      do k = km-1,  klim-1, -1
++         do i = 1, im
++            if (cnvflg(i).and.flg(i).and.k.lt.mlmt(i)-1.and.
++     $           abs(dmse(i,k)).ge.0.005) then
++               mlmb(i) = k+1
++               dlb(i) = dmse(i,k)
++               flg(i) = .false.
++            elseif (cnvflg(i).and.flg(i).and.k.eq.klim-1.and.
++     $              abs(dmse(i,k)).lt.0.005) then
++               mlmb(i) = k+1
++               dlb(i) = dmse(i,k)
++               flg(i) = .false.
++            endif
++         enddo
++      enddo
++
++      do i = 1, im
++         if (mlmb(i).eq.1)  cnvflg(i) = .false.
++         if (mlmb(i).ge.mlmt(i)) cnvflg(i) = .false.
++      enddo
++
++      do i = 1, im
++         u_mean(i)   = 0.0
++         v_mean(i)   = 0.0
++         qi_mean(i)  = 0.0
++         qs_mean(i)  = 0.0
++         qni_mean(i) = 0.0
++         mse_mean(i) = 0.0
++         qtx_mean(i) = 0.0
++      enddo
++
++      do k = 1, km-1
++         do i = 1, im
++            if (k.ge.mlmb(i).and.k.le.mlmt(i)) then
++               u_mean(i)   = u_mean(i)   + u1(i,k)
++               v_mean(i)   = v_mean(i)   + v1(i,k)
++               qi_mean(i)  = qi_mean(i)  + qice(i,k)
++               qs_mean(i)  = qs_mean(i)  + qsnow(i,k)
++               qni_mean(i) = qni_mean(i) + qnice(i,k)
++               mse_mean(i) = mse_mean(i) + mse(i,k)
++               qtx_mean(i) = qtx_mean(i) + qtx(i,k)
++            endif
++         enddo
++      enddo
++
++!mixed-layer mean values
++      do i = 1, im
++         levs = mlmt(i)-mlmb(i)+1
++         u_mean(i)   = u_mean(i)/levs
++         v_mean(i)   = v_mean(i)/levs
++         qi_mean(i)  = qi_mean(i)/levs
++         qs_mean(i)  = qs_mean(i)/levs
++         qni_mean(i) = qni_mean(i)/levs
++         mse_mean(i) = mse_mean(i)/levs
++         qtx_mean(i) = qtx_mean(i)/levs
++      enddo
++
++      do k = 1, km
++         do i = 1, im
++            uflux(i,k)   = 0.0
++            vflux(i,k)   = 0.0
++            qiflux(i,k)  = 0.0
++            qsflux(i,k)  = 0.0
++            qniflux(i,k) = 0.0
++         enddo
++      enddo
++
++!fields without equations damped to mixed-layer mean for now (1 hour damping)
++      do k = 1, km
++         do i = 1, im
++            if (k.ge.mlmb(i).and.k.le.mlmt(i).and.cnvflg(i)) then
++               dz = zm(i,k+1)-zm(i,k)
++               uflux(i,k+1)  = uflux(i,k)   +
++     $              dz*(u1(i,k)-u_mean(i))/xtime
++               vflux(i,k+1)  = vflux(i,k)   +
++     $              dz*(v1(i,k)-v_mean(i))/xtime
++               qiflux(i,k+1) = qiflux(i,k)  +
++     $              dz*(qice(i,k)-qi_mean(i))/xtime
++               qsflux(i,k+1) = qsflux(i,k)  +
++     $              dz*(qsnow(i,k)-qs_mean(i))/xtime
++               qniflux(i,k+1)= qniflux(i,k) +
++     $              dz*(qnice(i,k)-qni_mean(i))/xtime
++            endif
++         enddo
++      enddo
++
++      do i = 1, im
++        if (cnvflg(i)) then
++!water vapor at saturation in liquid layer
++         ts1 = t1(i,cldbase(i))-T0
++         es1 = (C0+ts1*(C1+ts1*(C2+ts1*(C3+ts1*(C4+ts1*
++     $        (C5+ts1*(C6+ts1*(C7+ts1*C8))))))))
++         qs1 = 0.622*es1/(1.e-2*pres(i,cldbase(i))-es1)
++         ts2 = t1(i,cldtop(i))-T0
++         es2 = (C0+ts2*(C1+ts2*(C2+ts2*(C3+ts2*(C4+ts2*
++     $        (C5+ts2*(C6+ts2*(C7+ts2*C8))))))))
++         qs2 = 0.622*es2/(1.e-2*pres(i,cldtop(i))-es2)
++         dqsdT(i) = (qs2-qs1)/(ts2-ts1)
++!added because dqsdT can be negative(?)
++!        print*,'dqsdT ',dqsdT
++         if (dqsdT(i).lt.5.e-5) dqsdT(i) = 5.0e-5
++         if (dqsdT(i).gt.1.e-3) dqsdT(i) = 1.0e-3
++        endif
++      enddo
++
++!need to cycle through to update bflux and entrainment velocities; tunable entrainment parameters
++      do icycle = 1,3
++
++         do i = 1, im
++            buopa(i) = 0.0
++         enddo
++
++         do k = 1, km
++            do i = 1, im
++               if (k.ge.mlmb(i).and.k.le.mlmt(i).and.cnvflg(i)) then
++                buopa(i) = buopa(i) + 2.5*(zm(i,k+1)-zm(i,k))*bflux(i,k)
++               endif
++            enddo
++         enddo
++
++         do i = 1, im
++
++            if (cnvflg(i)) then
++
++               dsvb(i) = (b(i,mlmb(i))-b(i,mlmb(i)-1))*
++     $              (zm(i,mlmt(i)+1)-zm(i,mlmb(i)))
++               dsvt(i) = (b(i,mlmt(i)+1)-b(i,mlmt(i)))*
++     $              (zm(i,mlmt(i)+1)-zm(i,mlmb(i)))
++
++               wezm = -0.2*buopa(i)/dsvb(i)
++               wezp =  0.2*buopa(i)/dsvt(i)
++
++               wezm = max(min(wezm,  0.005), -0.02)
++               wezp = max(min(wezp,  0.005), -0.001)
++
++               em(i) = rad(i,mlmb(i)+1)    - wezm*(mse_mean(i)
++     $              - mse(i,mlmb(i)-1))/cp
++               ep(i) = rad(i,mlmt(i)+2)  - wezp*(mse(i,mlmt(i)+1)
++     $              - mse_mean(i))/cp
++               wm(i) = prec(i,mlmb(i)+1)   - wezm*(qtx_mean(i)
++     $              - qtx(i,mlmb(i)-1))
++               wp(i) = prec(i,mlmt(i)+2) - wezp*(qtx(i,mlmt(i)+1)
++     $              - qtx_mean(i))
++
++           endif
++         enddo
++
++         do k = 1, km
++            do i = 1, im
++               if (k.ge.mlmb(i).and.k.le.mlmt(i)+1.and.cnvflg(i)) then
++
++!total energy and water fluxes are linear from mlmb to mlmt
++                  rflux(i,k) = rad(i,k+1)
++                  pflux(i,k) = prec(i,k+1)
++
++               eflux(i,k) =
++     &                 em(i)*(1.0-(zm(i,k)-zm(i,mlmb(i)))/
++     $                 (zm(i,mlmt(i)+1)-zm(i,mlmb(i)))) +
++     &                 ep(i)*(zm(i,k)-zm(i,mlmb(i)))/
++     $                 (zm(i,mlmt(i)+1)-zm(i,mlmb(i)))
++               wflux(i,k) =
++     &              wm(i)*(1.0-(zm(i,k)-zm(i,mlmb(i)))/
++     $              (zm(i,mlmt(i)+1)-zm(i,mlmb(i)))) +
++     &              wp(i)*(zm(i,k)-zm(i,mlmb(i)))/
++     $              (zm(i,mlmt(i)+1)-zm(i,mlmb(i)))
++
++!estimate fmse and qt fluxes from total water, total energy, precip, and radiation fluxes
++               hflux(i,k) = eflux(i,k) - rflux(i,k)
++               qflux(i,k) = wflux(i,k) - pflux(i,k)
++
++!calculate fluxes below liquid layer (1.e-10 correct threshold?)
++               if (qcloud(i,k).lt.1.e-10) then
++
++!frozen moist static energy and total water equations
++              qvflux(i,k) = qflux(i,k)-qsflux(i,k)-qiflux(i,k)
++              tflux(i,k)  = hflux(i,k)-elocp*qvflux(i,k)
++     $             + slocp*qsflux(i,k) + slocp*qiflux(i,k)
++              qcflux(i,k) = 0.0
++
++!calculate fluxes in liquid layer
++               else
++                  alphaX      = dqsdT(i)*elocp
++!frozen moist static energy and total water equations
++                  tflux(i,k)  = (hflux(i,k)+slocp*qsflux(i,k)
++     $                 + slocp*qiflux(i,k))/(1.0 + alphaX)
++                  qvflux(i,k) = dqsdT(i)*tflux(i,k)
++                  qcflux(i,k) = qflux(i,k) - qvflux(i,k)
++     $                 - qsflux(i,k) - qiflux(i,k)
++               endif
++
++!update buoyancy flux and pass out of routine
++               bflux(i,k) = tflux(i,k) + T0*(0.61*qvflux(i,k) -
++     $              qcflux(i,k) - qsflux(i,k) - qiflux(i,k))
++               buop(i,k)  = bflux(i,k)*g/T0
++
++             endif !limit k
++           enddo   !im
++         enddo     !km
++      enddo        !icycle
++
++!     update tendencies
++      do k = 1, km
++         do i = 1, im
++            if (k.ge.mlmb(i).and.k.le.mlmt(i).and.cnvflg(i)) then
++            dz = zm(i,k+1)-zm(i,k)
++            du(i,k)     = du(i,k)    - (uflux(i,k+1) -uflux(i,k))/dz
++            dv(i,k)     = dv(i,k)    - (vflux(i,k+1) -vflux(i,k))/dz
++            tdt(i,k)    = tdt(i,k)   - (tflux(i,k+1) -tflux(i,k))/dz
++            rtg(i,k,1)  = rtg(i,k,1) - (qvflux(i,k+1)-qvflux(i,k))/dz
++            rtg(i,k,ntcw) = rtg(i,k,ntcw)-(qcflux(i,k+1)-qcflux(i,k))/dz
++            rtg(i,k,ntiw) = rtg(i,k,ntiw)-(qiflux(i,k+1)-qiflux(i,k))/dz
++            endif
++         enddo
++      enddo
++      if (ntsw > 0) then
++         do k = 1, km
++            do i = 1, im
++               if (k.ge.mlmb(i).and.k.le.mlmt(i).and.cnvflg(i)) then
++                  dz = zm(i,k+1)-zm(i,k)
++                  rtg(i,k,ntsw) = rtg(i,k,ntsw) - 
++     &                       (qsflux(i,k+1) -qsflux(i,k))/dz
++               endif
++            enddo
++         enddo
++      endif              
++      if (nqni > 0) then
++         do k = 1, km
++            do i = 1, im
++               if (k.ge.mlmb(i).and.k.le.mlmt(i).and.cnvflg(i)) then
++                  dz = zm(i,k+1)-zm(i,k)
++                  rtg(i,k,nqni) = rtg(i,k,nqni) - 
++     &                       (qniflux(i,k+1) -qniflux(i,k))/dz
++               endif
++            enddo
++         enddo
++      endif              
++
++      do i=1,im
++         if (cnvflg(i)) then
++            k = mlmb(i)-1
++            dz = zm(i,k+1)-zm(i,k)
++            du(i,k)       = du(i,k)      - uflux(i,k+1)/dz
++            dv(i,k)       = dv(i,k)      - vflux(i,k+1)/dz
++            tdt(i,k)      = tdt(i,k)     - tflux(i,k+1)/dz
++            rtg(i,k,1)    = rtg(i,k,1)   - qvflux(i,k+1)/dz
++            rtg(i,k,ntcw) = rtg(i,k,ntcw)- qcflux(i,k+1)/dz
++            rtg(i,k,ntiw) = rtg(i,k,ntiw)- qiflux(i,k+1)/dz
++
++            if (ntsw > 0) then
++              rtg(i,k,ntsw) = rtg(i,k,ntsw) - qsflux(i,k+1)/dz
++            endif
++            if (nqni > 0) then
++              rtg(i,k,nqni) = rtg(i,k,nqni) - qniflux(i,k+1)/dz
++            endif
++
++            k = mlmt(i)+1
++            dz = zm(i,k+1)-zm(i,k)
++            du(i,k)       = du(i,k)       + uflux(i,k)/dz
++            dv(i,k)       = dv(i,k)       + vflux(i,k)/dz
++            tdt(i,k)      = tdt(i,k)      + tflux(i,k)/dz
++            rtg(i,k,1)    = rtg(i,k,1)    + qvflux(i,k)/dz
++            rtg(i,k,ntcw) = rtg(i,k,ntcw) + qcflux(i,k)/dz
++            rtg(i,k,ntiw) = rtg(i,k,ntiw) + qiflux(i,k)/dz
++                 
++            if (ntsw > 0) then
++              rtg(i,k,ntsw) = rtg(i,k,ntsw) + qsflux(i,k)/dz
++            endif
++            if (nqni > 0) then
++              rtg(i,k,nqni) = rtg(i,k,nqni) + qniflux(i,k)/dz
++            endif
++
++!smooth discontinuity at cloud liquid base
++            if (cldbase(i).gt.2) then
++               k = cldbase(i)
++               tdt(i,k-1)      =  0.5*(tdt(i,k) + tdt(i,k-2))
++               rtg(i,k-1,1)    =  0.5*(rtg(i,k,1) + rtg(i,k-2,1))
++               rtg(i,k-1,ntcw) =  0.5*(rtg(i,k,ntcw) + rtg(i,k-2,ntcw))
++            endif
++         endif
++      enddo
++
++      return
++      end
++!> @}
++      end module mfscuq_mlm_mod
++    
+diff --git a/physics/PBL/SATMEDMF/satmedmfvdifq.F b/physics/PBL/SATMEDMF/satmedmfvdifq.F
+index 0eff6545..2eb6096d 100644
+--- a/physics/PBL/SATMEDMF/satmedmfvdifq.F
++++ b/physics/PBL/SATMEDMF/satmedmfvdifq.F
+@@ -11,6 +11,7 @@
+       use mfpbltq_mod
+       use tridi_mod
+       use mfscuq_mod
++      use mfscuq_mlm_mod, only : mfscuq_mlm
+       !PCC_CANOPY_utilities
+       use canopy_utils_mod
+ 
+@@ -87,7 +88,9 @@
+ !! (mfscuq.f).
+ !! \section detail_satmedmfvidfq GFS satmedmfvdifq Detailed Algorithm
+       subroutine satmedmfvdifq_run(im,km,ntrac,ntcw,ntrw,               &
+-     &     ntiw,ntke,grav,pi,rd,cp,rv,hvap,hfus,fv,eps,epsm1,              &
++     &     ntiw,ntke,grav,pi,rd,cp,rv,hvap,hfus,fv,eps,epsm1,           &
++     &     mlm,ntsw,ntinc,pfl_lsan,pfi_lsan,                            &
++     &     eflux,rflux,wflux,pflux,                                     &
+ !The following three variables are for SA-3D-TKE
+      &     def_1,def_2,def_3,sa3dtke,dku3d_h,dku3d_e,                   &
+      &     rtg,u1,v1,t1,q1,usfco,vsfco,use_oceanuv,                     &
+@@ -113,6 +116,10 @@
+ !----------------------------------------------------------------------
+       integer, intent(in)  :: im, km, ntrac, ntcw, ntrw, ntiw,          &
+      &                        ntke, ntqv
++!+mlm              
++      logical, intent(in)  :: mlm
++      integer, intent(in)  :: ntsw, ntinc
++!-mlm              
+       integer, intent(in)  :: sfc_rlm
+       integer, intent(in)  :: tc_pbl
+       integer, intent(in)  :: use_lpt
+@@ -125,6 +132,13 @@
+       real(kind=kind_phys), intent(in) :: delt, xkzm_m, xkzm_h, xkzm_s
+       real(kind=kind_phys), intent(in) :: dspfac, bl_upfr, bl_dnfr
+       real(kind=kind_phys), intent(in) :: rlmx, elmx
++!+mlm    For mixed-layer option 
++      real(kind=kind_phys), optional, intent(in) ::                     &
++     &     pfl_lsan(:,:),    pfi_lsan(:,:)
++      real(kind=kind_phys), optional, intent(inout)::                     &
++     &                     eflux(:,:),   pflux(:,:),                    &
++     &                     wflux(:,:),   rflux(:,:)
++!-mlm              
+ !PCC CANOPY------------------------------------
+       logical, intent(in)  :: do_canopy, cplaqm
+       real(kind=kind_phys), optional, intent(in)  :: claie(:), cfch(:), &
+@@ -188,6 +202,13 @@
+       integer kps,kbx,kmx
+       integer lcld(im),kcld(im),krad(im),mrad(im)
+       integer kx1(im), kb1(im), kpblx(im)
++!+mlm      
++      real(kind=kind_phys) shear(im,km),buoy(im,km)
++      real(kind=kind_phys) uflux(im,km),vflux(im,km)
++      real(kind=kind_phys) hx(im,km),rad(im,km),prec(im,km)
++      real(kind=kind_phys) r
++      real(kind=kind_phys) tdt(im,km), du(im,km), dv(im,km)
++!-mlm      
+ !
+       real(kind=kind_phys) te(im,km),   tei(im,km-1), tke(im,km),
+      &                     tteh(im,km), tesq(im,km-1),e2(im,0:km)
+@@ -253,6 +274,9 @@
+ !
+       logical  pblflg(im), sfcflg(im), flg(im)
+       logical  scuflg(im), pcnvflg(im)
++!+mlm amy
++      logical  mscuflg(im)
++!-mlm
+       logical  mlenflg
+ !
+ !  pcnvflg: true for unstable pbl
+@@ -357,7 +381,7 @@
+       parameter(aphi5=5.,aphi16=16.)
+       parameter(elmfac=1.0,elefac=1.0,cql=100.)
+       parameter(dw2min=1.e-4,dkmax=1000.,xkgdx=1000.)
+-      parameter(qlcr=3.5e-5,zstblmax=2500.)
++      parameter(qlcr=3.5e-5)
+       parameter(xkinv1=0.15,xkinv2=0.3)
+       parameter(h1=0.33333333,hcrinv=250.)
+       parameter(vegflo=0.1,vegfup=1.0,z0lo=0.1,z0up=1.0)
+@@ -404,6 +428,14 @@
+         ck1   = 0.15
+         ch1   = 0.15
+       endif
++!+mlm   
++      zstblmax = 2500.
++      if (mlm) then
++        ck1   = 0.15
++        ch1   = 0.15
++        zstblmax = 5000.
++      endif              
++!-mlm      
+ 
+       gravi = 1.0 / grav
+       g = grav
+@@ -427,22 +459,44 @@
+       km1 = km - 1
+       kmpbl = km / 2
+       kmscu = km / 2
++!+mlm      
++      !if MLM check mod set height to model top
++      if (mlm) then
++         kmpbl = km - 1
++         kmscu = km - 1
++      endif
++!-mlm      
+ !>  - Compute physical height of the layer centers and interfaces from
+ !! the geopotential height (\p zi and \p zl)
+       do k=1,km
+-        do i=1,im
+-          zi(i,k) = phii(i,k) * gravi
+-          zl(i,k) = phil(i,k) * gravi
+-          xmf(i,k) = 0.
+-          xmfd(i,k) = 0.
+-          buou(i,k) = 0.
+-          buod(i,k) = 0.
+-          wush(i,k) = 0.
+-          ckz(i,k) = ck1
+-          chz(i,k) = ch1
+-          rlmnz(i,k) = rlmn0
+-        enddo
++         do i=1,im
++            zi(i,k) = phii(i,k) * gravi
++            zl(i,k) = phil(i,k) * gravi
++            xmf(i,k) = 0.
++            xmfd(i,k) = 0.
++            buou(i,k) = 0.
++            buod(i,k) = 0.
++            wush(i,k) = 0.
++            ckz(i,k) = ck1
++            chz(i,k) = ch1
++            rlmnz(i,k) = rlmn0
++!+mlm
++            if (mlm) then
++               if (k.lt.km) xlamde(i,k) = 0.
++               rad(i,k) = 0.
++               tdt(i,k) = 0.
++               du(i,k) = 0.
++               dv(i,k) = 0.              
++               if (present(pfi_lsan) .and. present(pfl_lsan)) then
++                  prec(i,k) = -(pfi_lsan(i,k) + pfl_lsan(i,k))
++               else
++                  prec(i,k) = 0.
++               endif
++            endif
++!-mlm
++         enddo
+       enddo
++     
+       do i=1,im
+         zi(i,km+1) = phii(i,km+1) * gravi
+       enddo
+@@ -603,6 +657,11 @@
+             else
+               tem1=max(q1(i,k,ntiw),qlmin)
+               qice(i,k) = tem1
++!+mlm              
++              if(mlm .and. ntsw > 0) then
++                tem1 = max(q1(i,k,ntsw)+q1(i,k,ntiw),qlmin)
++              endif
++!-mlm              
+             endif
+             qlx(i,k) = tem + tem1
+             ptem = hvap*tem + (hvap+hfus)*tem1
+@@ -612,6 +671,17 @@
+             slx(i,k) = cp * t1(i,k) + phil(i,k) - hvap*qlx(i,k)
+             qliq(i,k) = qlx(i,k)
+           endif
++!+mlm  !
++          if (mlm) then
++             hx(i,k)    = cp * t1(i,k) + phil(i,k) + hvap*q1(i,k,1)
++             if (ntiw > 0) then
++                hx(i,k) = hx(i,k) - hfus*q1(i,k,ntiw)
++             endif
++             if(ntsw > 0) then
++                hx(i,k) = hx(i,k) - hfus*q1(i,k,ntsw)
++             endif
++          endif
++!-mlm          
+           tem2       = 1.+fv*max(q1(i,k,1),qmin)-qlx(i,k)
+           thvx(i,k)  = theta(i,k) * tem2
+           tvx(i,k)   = t1(i,k) * tem2
+@@ -692,6 +762,15 @@
+           radx(i,k) = tem*(swh(i,k)*xmu(i)+hlw(i,k))
+         enddo
+       enddo
++!+mlm
++      if (mlm) then
++         do k=2,km1
++            do i=1,im
++               rad(i,k) = rad(i,k-1) - radx(i,k)
++            enddo
++         enddo
++      endif
++!-mlm      
+ !>  - Compute stable/unstable PBL flag (pblflg) based on the total
+ !! surface energy flux (\e false if the total surface energy flux
+ !! is into the surface)
+@@ -985,7 +1064,7 @@
+       do i=1,im
+         if(pblflg(i)) then
+           if(zol(i) < zolcru) then
+-            pcnvflg(i) = .true.
++              pcnvflg(i) = .true.
+           endif
+           wst3(i) = gotvx(i,1)*sflux(i)*hpbl(i)
+           wstar(i)= wst3(i)**h1
+@@ -1186,6 +1265,12 @@
+       do i = 1, im
+         if(scuflg(i) .and. krad(i) <= 1) scuflg(i)=.false.
+         if(scuflg(i) .and. radmin(i)>=0.) scuflg(i)=.false.
++!+mlm amy
++        if (scuflg(i) .and. mlm) then
++            mscuflg(i) = scuflg(i)
++            scuflg(i) = .false.
++         endif
++!-mlm      
+       enddo
+ !
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@@ -1205,6 +1290,13 @@
+             ucdo(i,k) = u1(i,k)
+             vcdo(i,k) = v1(i,k)
+           endif
++!+mlm          
++          if (mscuflg(i)) then
++            tcdo(i,k) = 0.0
++            ucdo(i,k) = 0.0
++            vcdo(i,k) = 0.0
++          endif
++!-mlm          
+         enddo
+       enddo
+       do n = 1, ntrac1
+@@ -1216,6 +1308,11 @@
+           if(scuflg(i)) then
+             qcdo(i,k,n) = q1(i,k,n)
+           endif
++!+mlm          
++          if (mscuflg(i)) then
++            qcdo(i,k,n) = 0.0
++          endif
++!-mlm          
+         enddo
+       enddo
+       enddo
+@@ -1227,11 +1324,18 @@
+      &    tcko,qcko,ucko,vcko,xlamue,bl_upfr)
+ !>  - Call mfscuq(), which is a new mass-flux parameterization for
+ !!    stratocumulus-top-induced turbulence mixing. For details of the mfscuq subroutine, step into its documentation ::mfscuq
++
++!+mlm      
++      if (.not. mlm) then
++!-mlm      
+       call mfscuq(im,im,km,kmscu,ntcw,ntrac1,dt2,
+      &    scuflg,zl,zm,q1,t1,u1,v1,plyr,pix,
+      &    thlx,thvx,thlvx,gdx,thetae,
+      &    krad,mrad,radmin,buod,wush,tkemean,vez0fun,xmfd,
+      &    tcdo,qcdo,ucdo,vcdo,xlamde,bl_dnfr)
++!+mlm      
++      end if
++!-mlm      
+ 
+       if (tc_pbl == 1) then
+ !>  - unify mass fluxes with Cu
+@@ -2024,8 +2128,39 @@
+           else
+             prod(i,k) = buop + shrp
+           endif
+-        enddo
+-      enddo
++!+mlm
++          buoy(i,k)  = buop
++          shear(i,k) = shrp
++!-mlm
++          
++        enddo
++      enddo
++!+mlm !stratocumulus mixed-layer model for turbulent fluxes
++!tke updated with transport fluxes following Solomon et al. 2026
++      if (mlm) then
++         call mfscuq_mlm(im,im,km,ntcw,ntsw,ntiw,ntinc,
++     &        ntrac1,mscuflg,zl,zm,q1,t1,u1,v1,rd,
++     &        prec,rad,buoy,prsl,slx,hx,thlvx,
++     &        radmin, kcld, krad,         
++     &        uflux,vflux,tdt,du,dv,rtg,
++     &        eflux,rflux,wflux,pflux)
++
++         do k = 1, km1
++            do i = 1, im
++
++               if (k.gt.1) then
++                  tem1 = uflux(i,k)*(u1(i,k)-u1(i,k-1))*rdzt(i,k-1)
++                  tem2 = vflux(i,k)*(v1(i,k)-v1(i,k-1))*rdzt(i,k-1)
++
++                  shear(i,k) = shear(i,k) - tem1 - tem2
++                  prod(i,k)  = buoy(i,k) + shear(i,k)
++               endif
++
++            enddo
++         enddo
++      endif
++
++!-mlm      
+ !
+ !----------------------------------------------------------------------
+ !>  - First predict te due to te production & dissipation(diss)
+@@ -2052,7 +2187,6 @@
+            tem=def_3(i,k)
+ !          tem=min(tem,1.0)
+            te(i,k) = te(i,k) + dtn * (prod(i,k)-disste+tem)
+-!          te(i,k) = max(te(i,k), tkmin)
+            te(i,k) = max(te(i,k), tkmnz(i,k))
+         enddo
+        enddo
+@@ -2063,14 +2197,20 @@
+        do k = 1,km1
+         do i=1,im
+            tem = sqrt(te(i,k))
+-           ptem = ce0 / ele(i,k)
++!+mlm           
++           if (mscuflg(i)) then
++              ptem = min(ce0 / ele(i,k), 0.005)
++           else
++              ptem = ce0 / ele(i,k)
++           endif
++!-mlm           
+            disste = ptem * te(i,k) * tem
+            tem1 = prod(i,k) + te(i,k) / dtn
+            disste = max(min(disste, tem1), 0.)
+            if(.not. tte_edmf) diss(i,k) = disste
+            te(i,k) = te(i,k) + dtn * (prod(i,k)-disste)
+            te(i,k) = max(te(i,k), tkmnz(i,k))
+-!          te(i,k) = max(te(i,k), tkmin)
++
+         enddo
+        enddo
+        enddo
+@@ -2315,7 +2455,6 @@ c
+ !>  - Call tridit() to solve tridiagonal problem for TKE
+ c
+       call tridit(im,km,1,al,ad,au,f1,au,f1)
+-!
+ ! Negative TKE or TTE are set to zero after borrowing it from positive
+ !   values within the mass-flux transport layers
+ !
+@@ -2420,6 +2559,8 @@ c
+           endif
+         enddo
+       enddo
++
++
+ c
+ !>  - Recover the tendency of TKE or TTE
+ c
+@@ -2868,6 +3009,11 @@ c
+             ten_t(i,k)   = (f1(i,k)-t1(i,k))*rdt
+             qtend        = (f2(i,k)-q1(i,k,1))*rdt
+             rtg(i,k,1)   = rtg(i,k,1)+qtend
++!+mlm      
++            if (mlm) then
++               ten_t(i,k)   = ten_t(i,k) + tdt(i,k)
++            endif            
++!-mlm      
+ !           dtsfc(i)   = dtsfc(i)+cont*del(i,k)*ttend
+ !           dqsfc(i)   = dqsfc(i)+conq*del(i,k)*qtend
+          enddo
+@@ -3023,6 +3169,16 @@ c
+ !           dvsfc(i) = dvsfc(i)+conw*del(i,k)*vtend
+          enddo
+       enddo
++!+mlm            
++      if (mlm) then
++        do k = 1,km
++           do i = 1,im
++              ten_u(i,k) = ten_u(i,k) + du(i,k)
++              ten_v(i,k) = ten_v(i,k) + dv(i,k)
++           enddo
++        enddo
++      endif
++!-mlm            
+       if (use_oceanuv) then
+         do i = 1,im
+           spd1_m=sqrt( (u1(i,1)-usfco(i))**2+(v1(i,1)-vsfco(i))**2 )
+diff --git a/physics/PBL/SATMEDMF/satmedmfvdifq.meta b/physics/PBL/SATMEDMF/satmedmfvdifq.meta
+index b3dcd120..ffe36ddf 100644
+--- a/physics/PBL/SATMEDMF/satmedmfvdifq.meta
++++ b/physics/PBL/SATMEDMF/satmedmfvdifq.meta
+@@ -1,7 +1,7 @@
+ [ccpp-table-properties]
+   name = satmedmfvdifq
+   type = scheme
+-  dependencies = ../../tools/funcphys.f90,../../tools/canopy_utils_mod.f,../../hooks/machine.F,../mfpbltq.f,mfscuq.f,../tridi.f
++  dependencies = ../../tools/funcphys.f90,../../tools/canopy_utils_mod.f,../../hooks/machine.F,../mfpbltq.f,mfscuq.f,mfscuq_mlm.f,../tridi.f
+ 
+ ########################################################################
+ [ccpp-arg-table]
+@@ -177,6 +177,81 @@
+   type = real
+   kind = kind_phys
+   intent = in
++[mlm]
++  standard_name = flag_for_using_mixed_layer_model_in_TKE_EDMF_PBL
++  long_name = flag for mixed-layer model in TKE-EDMF PBL scheme
++  units = none
++  dimensions = ()
++  type = logical
++  intent = in
++[ntsw]
++  standard_name = index_of_snow_mixing_ratio_in_tracer_concentration_array
++  long_name = tracer index for snow water
++  units = index
++  dimensions = ()
++  type = integer
++  intent = in
++[ntinc]
++  standard_name = index_of_mass_number_concentration_of_cloud_ice_in_tracer_concentration_array
++  long_name = tracer index for ice number concentration
++  units = index
++  dimensions = ()
++  type = integer
++  intent = in
++[pfl_lsan]
++  standard_name = liquid_flux_due_to_large_scale_precipitation
++  long_name = instantaneous 3D flux of liquid water from nonconvective precipitation
++  units = kg m-2 s-1
++  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
++  type = real
++  kind = kind_phys
++  intent = in
++  optional = True
++[pfi_lsan]
++  standard_name = ice_flux_due_to_large_scale_precipitation
++  long_name = instantaneous 3D flux of ice from nonconvective precipitation
++  units = kg m-2 s-1
++  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
++  type = real
++  kind = kind_phys
++  intent = in
++  optional = True
++[eflux]
++  standard_name = total_energy_flux
++  long_name = total energy flux from mlm scheme
++  units = K m s-1
++  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
++  type = real
++  kind = kind_phys
++  intent = inout
++  optional = True
++[rflux]
++  standard_name = radiative_flux
++  long_name = radiative flux from mlm scheme
++  units = K m s-1
++  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
++  type = real
++  kind = kind_phys
++  intent = inout
++  optional = True
++[wflux]
++  standard_name = total_water_flux
++  long_name = total water flux from mlm scheme
++  units = kg kg-1 m s-1
++  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
++  type = real
++  kind = kind_phys
++  intent = inout
++  optional = True
++[pflux]
++  standard_name = precipitation_flux
++  long_name = precipitation flux from mlm scheme
++  units = kg kg-1 m s-1
++  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
++  type = real
++  kind = kind_phys
++  intent = inout
++  optional = True
+ [rtg]
+   standard_name = tendency_of_vertically_diffused_tracer_concentration
+   long_name = tendency of the tracers due to vertical diffusion in PBL scheme
