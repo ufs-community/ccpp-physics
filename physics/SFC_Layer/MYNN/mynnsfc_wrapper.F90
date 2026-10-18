@@ -9,7 +9,6 @@
           !Global variables:
           INTEGER, PARAMETER :: psi_opt = 0   !0: MYNN
                                               !1: GFS
-
       contains
 
 !>\defgroup mynn_sfc MYNN Surface Layer Module
@@ -20,7 +19,7 @@
 !!
       subroutine mynnsfc_wrapper_init(do_mynnsfclay,             &
            con_cp, con_grav, con_rd, con_rv, con_rcp, con_xlv,   &
-           con_xlf, con_ep2, errmsg, errflg)
+           con_xlf, con_ep2, con_karman, con_p608, errmsg, errflg)
 
          use machine,  only : kind_phys
          use module_sf_mynnsfc_common
@@ -34,6 +33,8 @@
          real(kind_phys),  intent(in)  :: con_xlv
          real(kind_phys),  intent(in)  :: con_xlf
          real(kind_phys),  intent(in)  :: con_ep2
+         real(kind_phys),  intent(in)  :: con_karman
+         real(kind_phys),  intent(in)  :: con_p608
          character(len=*), intent(out) :: errmsg
          integer, intent(out) :: errflg
 
@@ -44,16 +45,17 @@
          cp     = con_cp
          grav   = con_grav
          r_d    = con_rd
-         rv     = con_rv
+         r_v    = con_rv
          rcp    = con_rcp
          xlv    = con_xlv
          xlf    = con_xlf
          ep_2   = con_ep2
+         karman = con_karman
+         p608   = con_p608
 
-         ep_3   = 1. - ep2
+         ep_3   = 1. - ep_2
          g_inv  = 1./grav
-         rvovrd = Rv/Rd
-         ep_1   = rvovrd - 1.
+         rvovrd = r_v/r_d
 
         ! Consistency checks
         if (.not. do_mynnsfclay) then
@@ -64,14 +66,6 @@
 
          ! initialize tables for psih and psim (stable and unstable)
          CALL mynnsfc_init(.true.,errmsg,errflg)
-
-         IF (debug_code >= 1) THEN
-           print*,"CHECK INITIALIZATION OF PSI:"
-           print*,"psim_stab(0-1):",psim_stab(0),psim_stab(1)
-           print*,"psih_stab(0-1):",psih_stab(0),psih_stab(1)
-           print*,"psim_unstab(0-1):",psim_unstab(0),psim_unstab(1)
-           print*,"psih_unstab(0-1):",psih_unstab(0),psih_unstab(1)
-         ENDIF
 
       end subroutine mynnsfc_wrapper_init
 
@@ -119,7 +113,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
 ! should be moved to inside the mynn:
       use machine , only : kind_phys
       use module_sf_mynnsfc_common, only: cp, grav, r_d, r_v, rcp, xlv, &
-         xlf, ep_2, g_inv, ep_1
+         xlf, ep_2, ep_3, g_inv, p608, karman
       use module_sf_mynnsfc_driver, only: mynnsfc_driver
 
 !      USE module_sf_mynn, only : SFCLAY_mynn
@@ -235,6 +229,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
       hfx(:)  = 0
       qfx(:)  = 0
       rmol(:) = 0
+
       do k=1,2 !levs
         do i=1,im
            dz(i,k)=(phii(i,k+1) - phii(i,k))*g_inv
@@ -265,11 +260,16 @@ SUBROUTINE mynnsfc_wrapper_run(            &
       where (wet) znt_wat=znt_wat*0.01
       where (icy) znt_ice=znt_ice*0.01
 
+      if (itimestep == 1 .and. iter == 1) then
+         hflx(:) = 0.0
+         qflx(:) = 0.0
+      end if
       ! qsfc ruc
       if (lsm==lsm_ruc) then
-        where (dry) qsfc_lnd = qsfc_lnd_ruc/(1.+qsfc_lnd_ruc) ! spec. hum
-        where (icy) qsfc_ice = qsfc_ice_ruc/(1.+qsfc_ice_ruc) ! spec. hum.
+        where (dry) qsfc_lnd = qsfc_lnd_ruc ! mixing ratio
+        where (icy) qsfc_ice = qsfc_ice_ruc ! mixing ratio
       end if
+!$acc end kernels
 
 !      if (lprnt) then
 !          write(0,*)"CALLING SFCLAY_mynn; input:"
@@ -301,88 +301,95 @@ SUBROUTINE mynnsfc_wrapper_run(            &
 
 !$acc exit data delete(qsfc_lnd_ruc, qsfc_ice_ruc)
 !$acc exit data delete(phii, qvsh, slmsk)
+
       do i=1,im
-        rho3d(i,:) = prsl(i,:)/(r_d*t3d(i,:)*(1.+ep_1*max(qvsh(i,:),1e-8)))
+        rho3d(i,:) = prsl(i,:)/(r_d*t3d(i,:)*(1.+p608*max(qvsh(i,:),1e-8)))
         if (dry(i)) then
-            CALL mynnsfc_driver(                                                  &
-                 u3d=u,v3d=v,t3d=t3d,qv3d=qv,p3d=prsl,dz8w=dz,                    &
-                 th3d=th,rho3d=rho3d,                                             &
-                 PSFCPA=ps,PBLH=pblh,MAVAIL=mavail,XLAND=xland,DX=dx,             &
-                 ISFFLX=isfflx,sf_mynn_sfcflux_water=isftcflx,flag_lsm=lsm,       &
-                 sf_mynn_sfcflux_land=iz0tlnd,                                    &
-                 sigmaf=sigmaf,vegtype=vegtype,shdmax=shdmax,ivegsrc=ivegsrc,     &  !intent(in)
-                 z0pert=z0pert,ztpert=ztpert,                                     &  !intent(in)
-                 redrag=redrag,sfc_z0_type=sfc_z0_type,                           &  !intent(in)
-                 itimestep=itimestep,flag_iter=flag_iter(i),                      &
-                 restart=flag_restart,dry=dry,                                    &  !intent(in)
-                 tsk=tskin_lnd, tsurf=tsurf_lnd, qsfc=qsfc_lnd, snowh=snowh_lnd,  &
-                 znt=znt_lnd, ust=ust_lnd,cm=cm_lnd,ch=ch_lnd, br=rb_lnd,         &  !intent(inout)
-                 stress=stress_lnd,fm=fm_lnd, fh=fh_lnd,fm10=fm10_lnd,            &  !intent(inout)
-                 fh2=fh2_lnd, hflx=hflx_lnd, qflx=qflx_lnd, CHS=chs,CHS2=chs2,    &
-                 CQS2=cqs2,CPM=cpm,USTM=ustm,ZOL=zol,MOL=mol,RMOL=rmol,           &
-                 psim=psim,psih=psih,HFX=hfx,QFX=qfx,LH=lh,FLHC=flhc,FLQC=flqc,   &
-                 QGH=qgh,U10=u10,V10=v10,TH2=th2,T2=t2,Q2=q2,                     &
-                 GZ1OZ0=GZ1OZ0,WSPD=wspd,                                         &
-                 spp_pbl=spp_sfc,pattern_spp_pbl=spp_wts_sfc,                     &
-                 ids=1,ide=1, jds=1,jde=1, kds=1,kde=levs,                        &
-                 ims=1,ime=1, jms=1,jme=1, kms=1,kme=levs,                        &
-                 its=1,ite=1, jts=1,jte=1, kts=1,kte=levs,                        &
+            hfx(i) = hflx(i)*rho3d(i,1)*cp
+            qfx(i) = qflx(i)*rho3d(i,1)/(1.0_kind_phys - qvsh(i,1))
+            CALL mynnsfc_driver(                                                                        &
+                 u3d=u(i,:),v3d=v(i,:),t3d=t3d(i,:),qv3d=qv(i,:),p3d=prsl(i,:),dz8w=dz(i,:),            &
+                 th3d=th(i,:),rho3d=rho3d(i,:),                                                         &
+                 PSFCPA=ps(i:i),PBLH=pblh(i:i),MAVAIL=mavail(i:i),XLAND=xland(i:i),DX=dx(i:i),          &
+                 ISFFLX=isfflx,sf_mynn_sfcflux_water=isftcflx,flag_lsm=lsm,                             &
+                 sf_mynn_sfcflux_land=iz0tlnd,                                                          &
+                 sigmaf=sigmaf(i:i),vegtype=vegtype(i:i),shdmax=shdmax(i:i),ivegsrc=ivegsrc,            &  !intent(in)
+                 z0pert=z0pert(i:i),ztpert=ztpert(i:i),                                                 &  !intent(in)
+                 redrag=redrag,sfc_z0_type=sfc_z0_type,                                                 &  !intent(in)
+                 itimestep=itimestep,flag_iter=flag_iter(i),iter=iter,                                  &
+                 restart=flag_restart,dry=dry(i:i),                                                     &  !intent(in)
+                 tsk=tskin_lnd(i:i),tsurf=tsurf_lnd(i:i),qsfc=qsfc_lnd(i:i),snowh=snowh_lnd(i:i),       &
+                 znt=znt_lnd(i:i),ust=ust_lnd(i:i),cm=cm_lnd(i:i),ch=ch_lnd(i:i),br=rb_lnd(i:i),        &  !intent(inout)
+                 stress=stress_lnd(i:i),fm=fm_lnd(i:i),fh=fh_lnd(i:i),fm10=fm10_lnd(i:i),               &  !intent(inout)
+                 fh2=fh2_lnd(i:i),hflx=hflx_lnd(i:i),qflx=qflx_lnd(i:i),CHS=chs(i:i),CHS2=chs2(i:i),    &
+                 CQS2=cqs2(i:i),CPM=cpm(i:i),USTM=ustm(i:i),ZOL=zol(i:i),MOL=mol(i:i),RMOL=rmol(i:i),   &
+                 psim=psim(i:i),psih=psih(i:i),HFX=hfx(i:i),QFX=qfx(i:i),LH=lh(i:i),FLHC=flhc(i:i),     &
+                 FLQC=flqc(i:i),QGH=qgh(i:i),U10=u10(i:i),V10=v10(i:i),TH2=th2(i:i),T2=t2(i:i),         &
+                 Q2=q2(i:i),GZ1OZ0=GZ1OZ0(i:i),WSPD=wspd(i:i),                                          &
+                 spp_pbl=spp_sfc,pattern_spp_pbl=spp_wts_sfc(i,:),                                      &
+                 ids=1,ide=1, jds=1,jde=1, kds=1,kde=levs,                                              &
+                 ims=1,ime=1, jms=1,jme=1, kms=1,kme=levs,                                              &
+                 its=1,ite=1, jts=1,jte=1, kts=1,kte=levs,                                              &
                  errmsg=errmsg, errflg=errflg                                     )
             if (errflg/=0) return
         endif
 
         if (wet(i)) then
-            CALL mynnsfc_driver(                                                  &
-                 u3d=u,v3d=v,t3d=t3d,qv3d=qv,p3d=prsl,dz8w=dz,                    &
-                 th3d=th,rho3d=rho3d,                                             &
-                 PSFCPA=ps,PBLH=pblh,MAVAIL=mavail,XLAND=xland,DX=dx,             &
-                 ISFFLX=isfflx,sf_mynn_sfcflux_water=isftcflx,flag_lsm=lsm,       &
-                 sf_mynn_sfcflux_land=iz0tlnd,                                    &
-                 sigmaf=sigmaf,vegtype=vegtype,shdmax=shdmax,ivegsrc=ivegsrc,     &  !intent(in)
-                 z0pert=z0pert,ztpert=ztpert,                                     &  !intent(in)
-                 redrag=redrag,sfc_z0_type=sfc_z0_type,                           &  !intent(in)
-                 itimestep=itimestep,flag_iter=flag_iter(i),                      &
-                 restart=flag_restart, wet=wet,                                   &  !intent(in)
-                 tsk=tskin_wat, tsurf=tsurf_wat, qsfc=qsfc_wat, snowh=snowh_wat,  &
-                 znt=znt_wat, ust=ust_wat,cm=cm_wat,ch=ch_wat, br=rb_wat,         &  !intent(inout)
-                 stress=stress_wat,fm=fm_wat, fh=fh_wat,fm10=fm10_wat,            &  !intent(inout)
-                 fh2=fh2_wat,  hflx=hflx_wat, qflx=qflx_wat, CHS=chs,CHS2=chs2,   &
-                 CQS2=cqs2,CPM=cpm,USTM=ustm,ZOL=zol,MOL=mol,RMOL=rmol,           &
-                 psim=psim,psih=psih,HFX=hfx,QFX=qfx,LH=lh,FLHC=flhc,FLQC=flqc,   &
-                 QGH=qgh,U10=u10,V10=v10,TH2=th2,T2=t2,Q2=q2,                     &
-                 GZ1OZ0=GZ1OZ0,WSPD=wspd,                                         &
-                 spp_pbl=spp_sfc,pattern_spp_pbl=spp_wts_sfc,                     &
-                 ids=1,ide=1, jds=1,jde=1, kds=1,kde=levs,                        &
-                 ims=1,ime=1, jms=1,jme=1, kms=1,kme=levs,                        &
-                 its=1,ite=1, jts=1,jte=1, kts=1,kte=levs,                        &
+            hfx(i) = hflx(i)*rho3d(i,1)*cp
+            qfx(i) = qflx(i)*rho3d(i,1)/(1.0_kind_phys - qvsh(i,1))
+            CALL mynnsfc_driver(                                                                        &
+                 u3d=u(i,:),v3d=v(i,:),t3d=t3d(i,:),qv3d=qv(i,:),p3d=prsl(i,:),dz8w=dz(i,:),            &
+                 th3d=th(i,:),rho3d=rho3d(i,:),                                                         &
+                 PSFCPA=ps(i:i),PBLH=pblh(i:i),MAVAIL=mavail(i:i),XLAND=xland(i:i),DX=dx(i:i),          &
+                 ISFFLX=isfflx,sf_mynn_sfcflux_water=isftcflx,flag_lsm=lsm,                             &
+                 sf_mynn_sfcflux_land=iz0tlnd,                                                          &
+                 sigmaf=sigmaf(i:i),vegtype=vegtype(i:i),shdmax=shdmax(i:i),ivegsrc=ivegsrc,            &  !intent(in)
+                 z0pert=z0pert(i:i),ztpert=ztpert(i:i),                                                 &  !intent(in)
+                 redrag=redrag,sfc_z0_type=sfc_z0_type,                                                 &  !intent(in)
+                 itimestep=itimestep,flag_iter=flag_iter(i),iter=iter,                                  &
+                 restart=flag_restart,wet=wet(i:i),                                                     &  !intent(in)
+                 tsk=tskin_wat(i:i),tsurf=tsurf_wat(i:i),qsfc=qsfc_wat(i:i),snowh=snowh_wat(i:i),       &
+                 znt=znt_wat(i:i),ust=ust_wat(i:i),cm=cm_wat(i:i),ch=ch_wat(i:i),br=rb_wat(i:i),        &  !intent(inout)
+                 stress=stress_wat(i:i),fm=fm_wat(i:i),fh=fh_wat(i:i),fm10=fm10_wat(i:i),               &  !intent(inout)
+                 fh2=fh2_wat(i:i),hflx=hflx_wat(i:i),qflx=qflx_wat(i:i),CHS=chs(i:i),CHS2=chs2(i:i),    &
+                 CQS2=cqs2(i:i),CPM=cpm(i:i),USTM=ustm(i:i),ZOL=zol(i:i),MOL=mol(i:i),RMOL=rmol(i:i),   &
+                 psim=psim(i:i),psih=psih(i:i),HFX=hfx(i:i),QFX=qfx(i:i),LH=lh(i:i),FLHC=flhc(i:i),     &
+                 FLQC=flqc(i:i),QGH=qgh(i:i),U10=u10(i:i),V10=v10(i:i),TH2=th2(i:i),T2=t2(i:i),         &
+                 Q2=q2(i:i),GZ1OZ0=GZ1OZ0(i:i),WSPD=wspd(i:i),                                          &
+                 spp_pbl=spp_sfc,pattern_spp_pbl=spp_wts_sfc(i,:),                                      &
+                 ids=1,ide=1, jds=1,jde=1, kds=1,kde=levs,                                              &
+                 ims=1,ime=1, jms=1,jme=1, kms=1,kme=levs,                                              &
+                 its=1,ite=1, jts=1,jte=1, kts=1,kte=levs,                                              &
                  errmsg=errmsg, errflg=errflg                                     )
             if (errflg/=0) return
         endif
 
         if (icy(i)) then
-            CALL mynnsfc_driver(                                                  &
-                 u3d=u,v3d=v,t3d=t3d,qv3d=qv,p3d=prsl,dz8w=dz,                    &
-                 th3d=th,rho3d=rho3d,                                             &
-                 PSFCPA=ps,PBLH=pblh,MAVAIL=mavail,XLAND=xland,DX=dx,             &
-                 ISFFLX=isfflx,sf_mynn_sfcflux_water=isftcflx,flag_lsm=lsm,       &
-                 sf_mynn_sfcflux_land=iz0tlnd,                                    &
-                 sigmaf=sigmaf,vegtype=vegtype,shdmax=shdmax,ivegsrc=ivegsrc,     &  !intent(in)
-                 z0pert=z0pert,ztpert=ztpert,                                     &  !intent(in)
-                 redrag=redrag,sfc_z0_type=sfc_z0_type,                           &  !intent(in)
-                 itimestep=itimestep,flag_iter=flag_iter(i),                      &  !intent(in)
-                 restart=flag_restart, icy=icy,                                   &  !intent(in)
-                 tsk=tskin_ice, tsurf=tsurf_ice, qsfc=qsfc_ice, snowh=snowh_ice,  &
-                 znt=znt_ice, ust=ust_ice,cm=cm_ice,ch=ch_ice, br=rb_ice,         &  !intent(inout)
-                 stress=stress_ice,fm=fm_ice, fh=fh_ice,fm10=fm10_ice,            &  !intent(inout)
-                 fh2=fh2_wat,  hflx=hflx_wat, qflx=qflx_wat, CHS=chs,CHS2=chs2,   &
-                 CQS2=cqs2,CPM=cpm,USTM=ustm,ZOL=zol,MOL=mol,RMOL=rmol,           &
-                 psim=psim,psih=psih,HFX=hfx,QFX=qfx,LH=lh,FLHC=flhc,FLQC=flqc,   &
-                 QGH=qgh,U10=u10,V10=v10,TH2=th2,T2=t2,Q2=q2,                     &
-                 GZ1OZ0=GZ1OZ0,WSPD=wspd,                                         &
-                 spp_pbl=spp_sfc,pattern_spp_pbl=spp_wts_sfc,                     &
-                 ids=1,ide=1, jds=1,jde=1, kds=1,kde=levs,                        &
-                 ims=1,ime=1, jms=1,jme=1, kms=1,kme=levs,                        &
-                 its=1,ite=1, jts=1,jte=1, kts=1,kte=levs,                        &
+            hfx(i) = hflx(i)*rho3d(i,1)*cp
+            qfx(i) = qflx(i)*rho3d(i,1)/(1.0_kind_phys - qvsh(i,1))
+            CALL mynnsfc_driver(                                                                        &
+                 u3d=u(i,:),v3d=v(i,:),t3d=t3d(i,:),qv3d=qv(i,:),p3d=prsl(i,:),dz8w=dz(i,:),            &
+                 th3d=th(i,:),rho3d=rho3d(i,:),                                                         &
+                 PSFCPA=ps(i:i),PBLH=pblh(i:i),MAVAIL=mavail(i:i),XLAND=xland(i:i),DX=dx(i:i),          &
+                 ISFFLX=isfflx,sf_mynn_sfcflux_water=isftcflx,flag_lsm=lsm,                             &
+                 sf_mynn_sfcflux_land=iz0tlnd,                                                          &
+                 sigmaf=sigmaf(i:i),vegtype=vegtype(i:i),shdmax=shdmax(i:i),ivegsrc=ivegsrc,            &  !intent(in)
+                 z0pert=z0pert(i:i),ztpert=ztpert(i:i),                                                 &  !intent(in)
+                 redrag=redrag,sfc_z0_type=sfc_z0_type,                                                 &  !intent(in)
+                 itimestep=itimestep,flag_iter=flag_iter(i),   iter=iter,                               &  !intent(in)
+                 restart=flag_restart,icy=icy(i:i),                                                     &  !intent(in)
+                 tsk=tskin_ice(i:i),tsurf=tsurf_ice(i:i),qsfc=qsfc_ice(i:i),snowh=snowh_ice(i:i),       &
+                 znt=znt_ice(i:i),ust=ust_ice(i:i),cm=cm_ice(i:i),ch=ch_ice(i:i),br=rb_ice(i:i),        &  !intent(inout)
+                 stress=stress_ice(i:i),fm=fm_ice(i:i),fh=fh_ice(i:i),fm10=fm10_ice(i:i),               &  !intent(inout)
+                 fh2=fh2_ice(i:i),hflx=hflx_ice(i:i),qflx=qflx_ice(i:i),CHS=chs(i:i),CHS2=chs2(i:i),    &
+                 CQS2=cqs2(i:i),CPM=cpm(i:i),USTM=ustm(i:i),ZOL=zol(i:i),MOL=mol(i:i),RMOL=rmol(i:i),   &
+                 psim=psim(i:i),psih=psih(i:i),HFX=hfx(i:i),QFX=qfx(i:i),LH=lh(i:i),FLHC=flhc(i:i),     &
+                 FLQC=flqc(i:i),QGH=qgh(i:i),U10=u10(i:i),V10=v10(i:i),TH2=th2(i:i),T2=t2(i:i),         &
+                 Q2=q2(i:i),GZ1OZ0=GZ1OZ0(i:i),WSPD=wspd(i:i),                                          &
+                 spp_pbl=spp_sfc,pattern_spp_pbl=spp_wts_sfc(i,:),                                      &
+                 ids=1,ide=1, jds=1,jde=1, kds=1,kde=levs,                                              &
+                 ims=1,ime=1, jms=1,jme=1, kms=1,kme=levs,                                              &
+                 its=1,ite=1, jts=1,jte=1, kts=1,kte=levs,                                              &
                  errmsg=errmsg, errflg=errflg                                     )
             if (errflg/=0) return
         endif
@@ -442,7 +449,6 @@ SUBROUTINE mynnsfc_wrapper_run(            &
 !         write(0,*)"FLHC=",FLHC(1)," CHS=",CHS(1)
 !         write(0,*)
 !      endif
-
 
   END SUBROUTINE mynnsfc_wrapper_run
 
