@@ -2936,7 +2936,7 @@ end if   ! opt_gla == 1
                 snice(j+1) = snice(j+1) + snice(j)
                 dzsnso(j+1) = dzsnso(j+1) + dzsnso(j)
              else
-               if (isnow_old < -1) then
+               if (isnow < -1) then
                 snliq(j-1) = snliq(j-1) + snliq(j)
                 snice(j-1) = snice(j-1) + snice(j)
                 dzsnso(j-1) = dzsnso(j-1) + dzsnso(j)
