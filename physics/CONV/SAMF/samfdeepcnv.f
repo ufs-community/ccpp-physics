@@ -301,6 +301,8 @@ c  cloud water
       real(kind=conv_wp) tsumn(im), tsump(im), rtnp(im)
 !
       logical do_aerosols, totflg, cnvflg(im), asqecflg(im), flg(im)
+!  columns the CA trigger can turn on again
+      logical caon(im)
 !
 !    asqecflg: flag for the quasi-equilibrium assumption of Arakawa-Schubert
 !
@@ -401,6 +403,9 @@ c
       wet_dep = 0.0_conv_wp
 !
       do i=1,im
+        caon(i) = .false.
+        if(do_ca .and. ca_trigger) caon(i) =
+     &    real(ca_deep(i), kind=conv_wp) > real(nthresh, kind=conv_wp)
          cnvflg(i) = .true.
          shallow_veto(i) = .false.
         if(do_mynnedmf) then
@@ -838,7 +843,9 @@ c
       if(.not.progomega)then
          totflg = .true.
          do i=1,im
+!  no early return while the CA trigger can turn a column on
             totflg = totflg .and. (.not. cnvflg(i))
+     &               .and. (.not. caon(i))
          enddo
          if(totflg) return
       endif
@@ -901,7 +908,9 @@ c
       if(.not.progomega)then
          totflg = .true.
          do i=1,im
+!  no early return while the CA trigger can turn a column on
             totflg = totflg .and. (.not. cnvflg(i))
+     &               .and. (.not. caon(i))
          enddo
          if(totflg) return
       endif
@@ -958,7 +967,9 @@ c
       if(.not.progomega)then
          totflg = .true.
          do i=1,im
+!  no early return while the CA trigger can turn a column on
             totflg = totflg .and. (.not. cnvflg(i))
+     &               .and. (.not. caon(i))
          enddo
          if(totflg) return
       endif
@@ -1008,7 +1019,9 @@ c
       if(.not.progomega)then
          totflg = .true.
          do i=1,im
+!  no early return while the CA trigger can turn a column on
             totflg = totflg .and. (.not. cnvflg(i))
+     &               .and. (.not. caon(i))
          enddo
          if(totflg) return
       endif
@@ -1433,7 +1446,9 @@ c
       if(.not.progomega)then
          totflg = .true.
          do i = 1, im
+!  no early return while the CA trigger can turn a column on
             totflg = totflg .and. (.not. cnvflg(i))
+     &               .and. (.not. caon(i))
          enddo
          if(totflg) return
       endif
@@ -1519,7 +1534,9 @@ c
       if(.not.progomega)then
          totflg = .true.
          do i=1,im
+!  no early return while the CA trigger can turn a column on
             totflg = totflg .and. (.not. cnvflg(i))
+     &               .and. (.not. caon(i))
          enddo
          if(totflg) return
       endif
