@@ -1360,7 +1360,7 @@ c
                    chem_c(i,k,n) = real(fscav(n), kind=conv_wp)
      &                           * ecko(i,k,kk)
                    tem = chem_c(i,k,n) / (1.0_conv_wp + c0t(i,k) * dz)
-                   chem_pw(i,k,n) = c0t(i,k) * dz * tem * eta(i,k-1)
+                   chem_pw(i,k,n) = c0t(i,k) * dz * tem * eta(i,k)
                    ecko(i,k,kk) = tem + ecko(i,k,kk) - chem_c(i,k,n)
                  endif
                endif
@@ -3548,9 +3548,9 @@ c
                       wet_dep(i,k,n) = wet_dep(i,k,n) - tem
                       new_qtr(i,k,kk) = 0.0_conv_wp
                     else
-                      wet_dep(i,k,n) = 0.0_conv_wp
                       new_qtr(i,k,kk) = new_qtr(i,k,kk)
      &                                + wet_dep(i,k,n) / dp
+                      wet_dep(i,k,n) = 0.0_conv_wp
                     endif
                   endif
                 endif
