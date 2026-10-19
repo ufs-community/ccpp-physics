@@ -933,9 +933,10 @@
         do i = 1, IMAX
           xlon1 = xlon(i)
           ! if xlon in -pi->pi, convert to 0->2pi
-          if ( xlon1 < 0.0 ) xlon1 = xlon1 + con_pi  
-          xlat1 = hfpi - xlat(i)       ! if xlat in pi/2 -> -pi/2 range
-!note     xlat1 = xlat(i)              ! if xlat in 0 -> pi range
+          if ( xlon1 < 0.0 ) xlon1 = xlon1 + con_pi
+          ! if xlat in pi/2 -> -pi/2 range
+          xlat1 = max(0._kind_phys, hfpi - xlat(i))
+!note     xlat1 = xlat(i)                ! if xlat in 0 -> pi range
 
           ilon = min( IMXCO2, int( xlon1*tmp + 1 ))
           ilat = min( JMXCO2, int( xlat1*tmp + 1 ))
