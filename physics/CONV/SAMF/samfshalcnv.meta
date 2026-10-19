@@ -171,6 +171,14 @@
   type = real
   kind = kind_phys
   intent = in
+[hfus]
+  standard_name = latent_heat_of_fusion_of_water_at_0C
+  long_name = latent heat of fusion
+  units = J kg-1
+  dimensions = ()
+  type = real
+  kind = kind_phys
+  intent = in
 [rd]
   standard_name = gas_constant_of_dry_air
   long_name = ideal gas constant for dry air

@@ -76,7 +76,7 @@
 !!  \section samfdeep_detailed GFS samfdeepcnv Detailed Algorithm
       subroutine samfdeepcnv_run (im,km,nn,first_time_step,restart,
      &    tmf,qmicro,itc,ntc,cliq,cp,cvap,                              
-     &    eps,epsm1,fv,grav,hvap,rd,rv,                                 
+     &    eps,epsm1,fv,grav,hvap,hfus,rd,rv,                            
      &    t0c,delt,ntk,ntr,delp, ten_t, ten_u, ten_v, ten_q,            
      &    prslp,psp,phil,tkeh,qtr,dqtr,prevsq,q,q1,t1,u1,v1,fscav,      
      &    hwrf_samfdeep,progsigma,progomega,cldwrk,rn,kbot,ktop,kcnv,   
@@ -94,6 +94,7 @@
       use funcphys , only : fpvs
 
       implicit none
+      real(kind=kind_phys), intent(in) :: hfus
 !
       integer, intent(in)  :: im, km, nn, itc, ntc, ntk, ntr, ncloud
       integer, intent(in)  :: islimsk(:)
@@ -3765,6 +3766,9 @@ c
                 new_qtr(i,k,1) = new_qtr(i,k,1) + tem * tem1  ! ice
                 new_qtr(i,k,2) = new_qtr(i,k,2) + tem * (1.0_conv_wp
      &                         - tem1) ! water
+!               heat of fusion of the frozen part
+                new_t1(i,k) = new_t1(i,k) + real(hfus, kind=conv_wp)
+     &                      / real(cp, kind=conv_wp) * tem * tem1
               else
                 new_qtr(i,k,1) = new_qtr(i,k,1) + tem
               endif
