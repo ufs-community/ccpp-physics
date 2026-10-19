@@ -94,7 +94,7 @@ contains
     ! Dycore-agnostic reference (background) pressure profile at layer interfaces, Pa,
     ! computed once in GFS_typedefs.F90::control_initialize for either dycore
     ! (see cires_ugwpv1_module.F90::cires_ugwpv1_init).
-    real(kind=kind_phys), intent (in) :: p_ref(:)
+    real(kind=kind_phys), intent (in), optional :: p_ref(:)
     real(kind=kind_phys), intent (in) :: dtp
 
     real(kind=kind_phys), intent (in) :: con_p0, con_pi, con_rerth

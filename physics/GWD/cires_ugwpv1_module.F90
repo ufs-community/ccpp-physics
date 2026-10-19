@@ -172,8 +172,8 @@ module  cires_ugwpv1_module
     ! interfaces, Pa, computed once in GFS_typedefs.F90::control_initialize for
     ! either dycore. pref: the same-purpose reference pressure scalar used below
     ! to convert p_ref into a height, con_p0 in practice.
-    real(kind=kind_phys),    intent (in) :: p_ref(levs+1), pref
-    real(kind=kind_phys),    intent (in) :: dtp
+    real(kind=kind_phys),    intent (in), optional :: p_ref(levs+1)
+    real(kind=kind_phys),    intent (in) :: dtp, pref
 !
 ! consider to retire them
 !
@@ -254,10 +254,10 @@ module  cires_ugwpv1_module
 !
 
     do k=1, levs
-       if (present(ak) .and. present(bk)) then
-          pmb(k) = ak(k) + pref*bk(k)     ! FV3
+       if (present(p_ref)) then
+          pmb(k) = p_ref(k)
        else
-          pmb(k) = p_ref(k)               ! MPAS
+          pmb(k) = ak(k) + pref*bk(k)
        endif
        zkm(k) = -hpskm*alog(pmb(k)/pref)
     enddo
