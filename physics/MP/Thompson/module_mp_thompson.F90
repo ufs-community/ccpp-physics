@@ -2025,7 +2025,7 @@ module module_mp_thompson
       real(wp) :: r_frac, g_frac
       real(wp) :: Ef_rw, Ef_sw, Ef_gw, Ef_rr
       real(wp) :: Ef_ra, Ef_sa, Ef_ga
-      real(wp) :: dtsave, odts, odt, odzq, hgt_agl, SR
+      real(wp) :: dtsave, odts, odt, odzq, hgt_agl, SR, rhon
       real(wp) :: xslw1, ygra1, zans1, eva_factor
       integer :: i, k, k2, n, nn, nstep, k_0, kbot, IT, iexfrq
       integer, dimension(5) :: ksed1
@@ -3388,8 +3388,9 @@ module module_mp_thompson
          otemp = 1./temp(k)
          tempc = temp(k) - 273.15
          qv(k) = max(1.E-10, qv1d(k) + DT*qvten(k))
-         rho(k) = RoverRv*pres(k) / (R*temp(k)*(qv(k)+RoverRv))
-         rhof(k) = SQRT(RHO_NOT/rho(k))
+         ! rho is not updated; rhon is used for rhof and vsc2 only
+         rhon = RoverRv*pres(k) / (R*temp(k)*(qv(k)+RoverRv))
+         rhof(k) = SQRT(RHO_NOT/rhon)
          rhof2(k) = SQRT(rhof(k))
          qvs(k) = rslf(pres(k), temp(k))
          ssatw(k) = qv(k)/qvs(k) - 1.
@@ -3400,7 +3401,7 @@ module module_mp_thompson
          else
             visco(k) = (1.718+0.0049*tempc-1.2E-5*tempc*tempc)*1.0E-5
          endif
-         vsc2(k) = SQRT(rho(k)/visco(k))
+         vsc2(k) = SQRT(rhon/visco(k))
          lvap(k) = lvap0 + (2106.0 - 4218.0)*tempc
          tcond(k) = (5.69 + 0.0168*tempc)*1.0E-5 * 418.936
          ocp(k) = 1./(Cp*(1.+0.887*qv(k)))
@@ -3662,7 +3663,6 @@ module module_mp_thompson
             endif
             qv(k) = max(1.E-10, qv1d(k) + DT*qvten(k))
             temp(k) = t1d(k) + DT*tten(k)
-            rho(k) = RoverRv*pres(k) / (R*temp(k)*(qv(k)+RoverRv))
             qvs(k) = rslf(pres(k), temp(k))
             ssatw(k) = qv(k)/qvs(k) - 1.
          endif
@@ -3745,7 +3745,6 @@ module module_mp_thompson
             qv(k) = max(1.E-10, qv1d(k) + DT*qvten(k))
             nr(k) = max(R2, (nr1d(k) + DT*nrten(k))*rho(k))
             temp(k) = t1d(k) + DT*tten(k)
-            rho(k) = RoverRv*pres(k) / (R*temp(k)*(qv(k)+RoverRv))
          endif
       enddo
 #if ( WRF_CHEM == 1 )
