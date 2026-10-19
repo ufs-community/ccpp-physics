@@ -443,7 +443,7 @@
 !     qlyr (npts,nlay) : layer specific humidity (gm/gm)   *see inside  !
 !     olyr (npts,nlay) : layer ozone concentration (gm/gm) *see inside  !
 !     gasvmr(npts,nlay,:): atmospheric gases amount:                    !
-!                       (check module_radiation_gases.F90or definition)   !
+!                       (check module_radiation_gases.F90 definition)   !
 !       gasvmr(:,:,1)  -   co2 volume mixing ratio                      !
 !       gasvmr(:,:,2)  -   n2o volume mixing ratio                      !
 !       gasvmr(:,:,3)  -   ch4 volume mixing ratio                      !
@@ -454,7 +454,7 @@
 !       gasvmr(:,:,8)  -   cfc22 volume mixing ratio                    !
 !       gasvmr(:,:,9)  -   ccl4  volume mixing ratio                    !
 !     clouds(npts,nlay,:): layer cloud profiles:                        !
-!                       (check module_radiation_clouds.F90or definition)  !
+!                       (check module_radiation_clouds.F90 definition)  !
 !       clouds(:,:,1)  -   layer total cloud fraction                   !
 !       clouds(:,:,2)  -   layer in-cloud liq water path   (g/m**2)     !
 !       clouds(:,:,3)  -   mean eff radius for liq cloud   (micron)     !
@@ -470,7 +470,7 @@
 !                      are used for generating random numbers.          !
 !                      when isubclw /=2, it will not be used.           !
 !     aerosols(npts,nlay,nbands,:) : aerosol optical properties         !
-!                       (check module_radiation_aerosols.F90or definition)!
+!                       (check module_radiation_aerosols.F90 definition)!
 !        (:,:,:,1)     - optical depth                                  !
 !        (:,:,:,2)     - single scattering albedo                       !
 !        (:,:,:,3)     - asymmetry parameter                            !
