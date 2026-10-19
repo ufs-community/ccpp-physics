@@ -1,4 +1,4 @@
-!>  \file radlw_datatb.F9090
+!>  \file radlw_datatb.F90
 !!  This file contains the following:
 !!    - module_radlw_avplank     (plank flux data)
 !!    - module_radlw_ref         (reference temperature and pressure)

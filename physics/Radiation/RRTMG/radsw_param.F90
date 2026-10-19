@@ -1,4 +1,4 @@
-!>  \file radsw_param.F9090
+!>  \file radsw_param.F90
 !!  This file contains SW band parameters setup.
 
 !!!!!  ==============================================================  !!!!!

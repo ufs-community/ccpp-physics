@@ -1,4 +1,4 @@
-!>  \file radlw_param.F9090
+!>  \file radlw_param.F90
 !!  This file contains LW band parameters setup.
 
 !!!!!  ==============================================================  !!!!!
