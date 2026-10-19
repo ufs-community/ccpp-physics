@@ -357,6 +357,13 @@
   dimensions = ()
   type = logical
   intent = in
+[sa3dtke]
+  standard_name = do_scale_aware_3d_tke
+  long_name = flag for scale-aware 3d tke scheme
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
 [qgrs]
   standard_name = tracer_concentration
   long_name = model layer mean tracer concentration
@@ -377,7 +384,7 @@
   standard_name = horizontal_turbulent_eddy_diffusion_for_tracers
   long_name = horizontal turbulent eddy diffusion for tracers calculated from dynamics
   units = kg kg-1 s-1
-  dimensions = (horizontal_dimension,vertical_layer_dimension,number_of_tracers)
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension,number_of_tracers)
   type = real
   kind = kind_phys
   intent = in
