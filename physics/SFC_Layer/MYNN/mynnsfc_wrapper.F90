@@ -113,7 +113,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
 ! should be moved to inside the mynn:
       use machine , only : kind_phys
       use module_sf_mynnsfc_common, only: cp, grav, r_d, r_v, rcp, xlv, &
-         xlf, ep_2, ep_3, g_inv, p608, karman
+         xlf, ep_2, ep_3, g_inv, p608, karman, zero
       use module_sf_mynnsfc_driver, only: mynnsfc_driver
 
 !      USE module_sf_mynn, only : SFCLAY_mynn
@@ -201,9 +201,9 @@ SUBROUTINE mynnsfc_wrapper_run(            &
      &        chs, ck, cd, mavail, xland, GZ1OZ0,           &
      &        cpm, qgh, qfx, snowh_wat
 
-     real(kind_phys), dimension(im,levs) ::                 &
+      real(kind_phys), dimension(im,levs) ::                &
     &        dz, th, qv, rho3d
-
+      real(kind_phys), dimension(levs) :: spp_col
 !MYNN-1D
       INTEGER :: k, i
       INTEGER :: IDS,IDE,JDS,JDE,KDS,KDE,                   &
@@ -223,13 +223,13 @@ SUBROUTINE mynnsfc_wrapper_run(            &
 !      endif
 
       ! prep MYNN-only variables
-      dz(:,:) = 0
-      th(:,:) = 0
-      qv(:,:) = 0
-      hfx(:)  = 0
-      qfx(:)  = 0
-      rmol(:) = 0
-
+      dz(:,:) = zero
+      th(:,:) = zero
+      qv(:,:) = zero
+      hfx(:)  = zero
+      qfx(:)  = zero
+      rmol(:) = zero
+      if (spp_sfc == 0) spp_col(:) = zero
       do k=1,2 !levs
         do i=1,im
            dz(i,k)=(phii(i,k+1) - phii(i,k))*g_inv
@@ -245,14 +245,14 @@ SUBROUTINE mynnsfc_wrapper_run(            &
           else
             xland(i)=2.0
           endif
-          qgh(i)       = 0.0
+          qgh(i)       = zero
           mavail(i)    = 1.0
           !snowh(i)    = snowd(i)*800. !mm -> m
           !znt_lnd(i)  = znt_lnd(i)*0.01  !cm -> m
           !znt_wat(i)  = znt_wat(i)*0.01  !cm -> m
           !znt_ice(i)  = znt_ice(i)*0.01  !cm -> m
           cpm(i)       = cp
-          snowh_wat(i) = 0.0
+          snowh_wat(i) = zero
       enddo
 
       ! cm -> m
@@ -261,8 +261,8 @@ SUBROUTINE mynnsfc_wrapper_run(            &
       where (icy) znt_ice=znt_ice*0.01
 
       if (itimestep == 1 .and. iter == 1) then
-         hflx(:) = 0.0
-         qflx(:) = 0.0
+         hflx(:) = zero
+         qflx(:) = zero
       end if
       ! qsfc ruc
       if (lsm==lsm_ruc) then
@@ -304,6 +304,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
 
       do i=1,im
         rho3d(i,:) = prsl(i,:)/(r_d*t3d(i,:)*(1.+p608*max(qvsh(i,:),1e-8)))
+        if (spp_sfc == 1) spp_col(:) = spp_wts_sfc(i,:)
         if (dry(i)) then
             hfx(i) = hflx(i)*rho3d(i,1)*cp
             qfx(i) = qflx(i)*rho3d(i,1)/(1.0_kind_phys - qvsh(i,1))
@@ -326,7 +327,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  psim=psim(i:i),psih=psih(i:i),HFX=hfx(i:i),QFX=qfx(i:i),LH=lh(i:i),FLHC=flhc(i:i),     &
                  FLQC=flqc(i:i),QGH=qgh(i:i),U10=u10(i:i),V10=v10(i:i),TH2=th2(i:i),T2=t2(i:i),         &
                  Q2=q2(i:i),GZ1OZ0=GZ1OZ0(i:i),WSPD=wspd(i:i),                                          &
-                 spp_pbl=spp_sfc,pattern_spp_pbl=spp_wts_sfc(i,:),                                      &
+                 spp_pbl=spp_sfc,pattern_spp_pbl=spp_col(i),                                            &
                  ids=1,ide=1, jds=1,jde=1, kds=1,kde=levs,                                              &
                  ims=1,ime=1, jms=1,jme=1, kms=1,kme=levs,                                              &
                  its=1,ite=1, jts=1,jte=1, kts=1,kte=levs,                                              &
@@ -356,7 +357,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  psim=psim(i:i),psih=psih(i:i),HFX=hfx(i:i),QFX=qfx(i:i),LH=lh(i:i),FLHC=flhc(i:i),     &
                  FLQC=flqc(i:i),QGH=qgh(i:i),U10=u10(i:i),V10=v10(i:i),TH2=th2(i:i),T2=t2(i:i),         &
                  Q2=q2(i:i),GZ1OZ0=GZ1OZ0(i:i),WSPD=wspd(i:i),                                          &
-                 spp_pbl=spp_sfc,pattern_spp_pbl=spp_wts_sfc(i,:),                                      &
+                 spp_pbl=spp_sfc,pattern_spp_pbl=spp_col(i),                                            &
                  ids=1,ide=1, jds=1,jde=1, kds=1,kde=levs,                                              &
                  ims=1,ime=1, jms=1,jme=1, kms=1,kme=levs,                                              &
                  its=1,ite=1, jts=1,jte=1, kts=1,kte=levs,                                              &
@@ -386,7 +387,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  psim=psim(i:i),psih=psih(i:i),HFX=hfx(i:i),QFX=qfx(i:i),LH=lh(i:i),FLHC=flhc(i:i),     &
                  FLQC=flqc(i:i),QGH=qgh(i:i),U10=u10(i:i),V10=v10(i:i),TH2=th2(i:i),T2=t2(i:i),         &
                  Q2=q2(i:i),GZ1OZ0=GZ1OZ0(i:i),WSPD=wspd(i:i),                                          &
-                 spp_pbl=spp_sfc,pattern_spp_pbl=spp_wts_sfc(i,:),                                      &
+                 spp_pbl=spp_sfc,pattern_spp_pbl=spp_col(i),                                            &
                  ids=1,ide=1, jds=1,jde=1, kds=1,kde=levs,                                              &
                  ims=1,ime=1, jms=1,jme=1, kms=1,kme=levs,                                              &
                  its=1,ite=1, jts=1,jte=1, kts=1,kte=levs,                                              &
