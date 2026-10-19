@@ -1044,7 +1044,7 @@ module module_mp_thompson
                               qrten3, qsten3, qgten3, qiten3, niten3, &
                               nrten3, ncten3, qcten3,                 &
                               pfils, pflls,                           &
-                              fs_fac_rain, fs_fac_snow)
+                              fs_fac_rain, fs_fac_snow, dm)
 
          implicit none
 
@@ -1076,6 +1076,8 @@ module module_mp_thompson
 #endif
          real(wp), dimension(ims:ime, kms:kme, jms:jme), intent(in):: &
                            p, w, dz
+         ! host dry-air layer mass (kg m-2): if present, sets dz1d at each inner step
+         real(wp), dimension(ims:ime, kms:kme, jms:jme), optional, intent(in):: dm
          real(wp), dimension(ims:ime, jms:jme), intent(inout):: &
                            RAINNC, RAINNCV, SR
          real(wp), dimension(ims:ime, jms:jme), optional, intent(inout)::      &
@@ -1387,7 +1389,6 @@ module module_mp_thompson
                   end if
                   p1d(k) = p(i,k,j)
                   w1d(k) = w(i,k,j)
-                  dz1d(k) = dz(i,k,j)
                   qv1d(k) = qv(i,k,j)
                   qc1d(k) = qc(i,k,j)
                   qi1d(k) = qi(i,k,j)
@@ -1397,6 +1398,12 @@ module module_mp_thompson
                   ni1d(k) = ni(i,k,j)
                   nr1d(k) = nr(i,k,j)
                   rho(k) = RoverRv*p1d(k) / (R*t1d(k)*(qv1d(k)+RoverRv))
+                  if (present(dm)) then
+                     ! width at this inner step's density, as the column routine computes it, so rho*dz stays the host's mass
+                     dz1d(k) = dm(i,k,j) / (RoverRv*p1d(k) / (R*t1d(k)*(max(1.E-10, qv1d(k))+RoverRv)))
+                  else
+                     dz1d(k) = dz(i,k,j)
+                  endif
 
             ! These arrays are always allocated and must be initialized
             !vtsk1(k) = 0.

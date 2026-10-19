@@ -369,7 +369,7 @@ module mp_thompson
                               is_aerosol_aware,                    &
                               merra2_aerosol_aware, nc, nwfa, nifa,&
                               nwfa2d, nifa2d, aero_ind_fdb,        &
-                              tgrs, prsl, phii, omega,             &
+                              tgrs, prsl, prsi, phii, omega,       &
                               sedi_semi, decfl, islmsk, dtp,       &
                               dt_inner,                            &
                               first_time_step, istep, nsteps,      &
@@ -421,6 +421,7 @@ module mp_thompson
          ! State variables and timestep information
          real(kind_phys),           intent(in   ) :: tgrs(:,:)
          real(kind_phys),           intent(in   ) :: prsl(:,:)
+         real(kind_phys),           intent(in   ) :: prsi(:,:)
          real(kind_phys),           intent(in   ) :: phii(:,:)
          real(kind_phys),           intent(in   ) :: omega(:,:)
          integer,                   intent(in   ) :: islmsk(:)
@@ -498,6 +499,7 @@ module mp_thompson
          ! Vertical velocity and level width
          real(kind_phys) :: w(1:ncol,1:nlev)                !< m s-1
          real(kind_phys) :: dz(1:ncol,1:nlev)               !< m
+         real(kind_phys) :: dm(1:ncol,1:nlev)               !< kg m-2
          ! Rain/snow/graupel fall amounts
          real(kind_phys) :: rain_mp(1:ncol)                 ! mm, dummy, not used
          real(kind_phys) :: graupel_mp(1:ncol)              ! mm, dummy, not used
@@ -713,8 +715,10 @@ module mp_thompson
          !> - Convert omega in Pa s-1 to vertical velocity w in m s-1
          w = -omega/(rho*con_g)
 
-         !> - Layer width in m from geopotential in m2 s-2
-         dz = (phii(:,2:nlev+1) - phii(:,1:nlev)) / con_g
+         !> - Host's dry-air layer mass; mp_gt_driver takes each layer's width as this over Thompson's own density at
+         !! every inner step, so that Thompson's rho*dz is exactly the host's dry air (geopotential predates convection)
+         dm = (prsi(:,1:nlev) - prsi(:,2:nlev+1)) * (1.0_kind_phys - spechum) / con_g
+         dz = dm / rho
 
          ! Accumulated values inside Thompson scheme, not used;
          ! only use delta and add to inout variables (different units)
@@ -810,7 +814,7 @@ module mp_thompson
          if (is_aerosol_aware) then
             call mp_gt_driver(qv=qv, qc=new_qc, qr=new_qr, qi=new_qi, qs=new_qs, qg=new_qg, ni=new_ni, nr=new_nr,        &
                               nc=new_nc, nwfa=new_nwfa, nifa=new_nifa, nwfa2d=nwfa2d, nifa2d=nifa2d,     &
-                              tt=new_tgrs, p=prsl, w=w, dz=dz, dt_in=dtstep, dt_inner=dt_inner,  &
+                              tt=new_tgrs, p=prsl, w=w, dz=dz, dm=dm, dt_in=dtstep, dt_inner=dt_inner,  &
                               sedi_semi=sedi_semi, decfl=decfl, lsm=islmsk,                  &
                               rainnc=rain_mp, rainncv=delta_rain_mp,                         &
                               snownc=snow_mp, snowncv=delta_snow_mp,                         &
@@ -853,7 +857,7 @@ module mp_thompson
          else if (merra2_aerosol_aware) then
              call mp_gt_driver(qv=qv, qc=new_qc, qr=new_qr, qi=new_qi, qs=new_qs, qg=new_qg, ni=new_ni, nr=new_nr,        &
                                nc=new_nc, nwfa=new_nwfa, nifa=new_nifa,                                   &
-                               tt=new_tgrs, p=prsl, w=w, dz=dz, dt_in=dtstep, dt_inner=dt_inner,  &
+                               tt=new_tgrs, p=prsl, w=w, dz=dz, dm=dm, dt_in=dtstep, dt_inner=dt_inner,  &
                                sedi_semi=sedi_semi, decfl=decfl, lsm=islmsk,                  &
                                rainnc=rain_mp, rainncv=delta_rain_mp,                         &
                                snownc=snow_mp, snowncv=delta_snow_mp,                         &
@@ -895,7 +899,7 @@ module mp_thompson
                                fs_fac_rain=fs_fac_rain, fs_fac_snow=fs_fac_snow)
          else
             call mp_gt_driver(qv=qv, qc=new_qc, qr=new_qr, qi=new_qi, qs=new_qs, qg=new_qg, ni=new_ni, nr=new_nr,        &
-                              tt=new_tgrs, p=prsl, w=w, dz=dz, dt_in=dtstep, dt_inner=dt_inner,  &
+                              tt=new_tgrs, p=prsl, w=w, dz=dz, dm=dm, dt_in=dtstep, dt_inner=dt_inner,  &
                               sedi_semi=sedi_semi, decfl=decfl, lsm=islmsk,                  &
                               rainnc=rain_mp, rainncv=delta_rain_mp,                         &
                               snownc=snow_mp, snowncv=delta_snow_mp,                         &
