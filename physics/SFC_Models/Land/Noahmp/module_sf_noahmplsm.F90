@@ -7999,17 +7999,12 @@ zolmax = xkrefsqr / sqrt(xkzo)   ! maximum z/L
     dzc = dz+dz2
     wicec = (wice+wice2)
     wliqc = (wliq+wliq2)
-    h = (cice*wice+cwat*wliq) * (t-tfrz)+hfus*wliq
-    h2= (cice*wice2+cwat*wliq2) * (t2-tfrz)+hfus*wliq2
+    ! enthalpy with per-kg heat capacities
+    h = (cice/denice*wice+cwat/denh2o*wliq) * (t-tfrz)+hfus*wliq
+    h2= (cice/denice*wice2+cwat/denh2o*wliq2) * (t2-tfrz)+hfus*wliq2
 
     hc = h + h2
-    if(hc < 0.)then
-       tc = tfrz + hc/(cice*wicec + cwat*wliqc)
-    else if (hc.le.hfus*wliqc) then
-       tc = tfrz
-    else
-       tc = tfrz + (hc - hfus*wliqc) / (cice*wicec + cwat*wliqc)
-    end if
+    tc = tfrz + (hc - hfus*wliqc) / (cice/denice*wicec + cwat/denh2o*wliqc)
 
     dz = dzc
     wice = wicec
