@@ -687,21 +687,22 @@ module mp_thompson
          ! DH* - do this only if istep == 1? Would be ok if it was
          ! guaranteed that nothing else in the same subcycle group
          ! was using these arrays, but it is somewhat dangerous.
-         qv = new_spechum/(1.0_kind_phys-new_spechum)
+         ! both conversions (here and back below) use the input spechum
+         qv = spechum/(1.0_kind_phys-spechum)
 
          if (convert_dry_rho) then
-           new_qc = new_qc/(1.0_kind_phys-new_spechum)
-           new_qr = new_qr/(1.0_kind_phys-new_spechum)
-           new_qi = new_qi/(1.0_kind_phys-new_spechum)
-           new_qs = new_qs/(1.0_kind_phys-new_spechum)
-           new_qg = new_qg/(1.0_kind_phys-new_spechum)
+           new_qc = new_qc/(1.0_kind_phys-spechum)
+           new_qr = new_qr/(1.0_kind_phys-spechum)
+           new_qi = new_qi/(1.0_kind_phys-spechum)
+           new_qs = new_qs/(1.0_kind_phys-spechum)
+           new_qg = new_qg/(1.0_kind_phys-spechum)
 
-           new_ni = new_ni/(1.0_kind_phys-new_spechum)
-           new_nr = new_nr/(1.0_kind_phys-new_spechum)
+           new_ni = new_ni/(1.0_kind_phys-spechum)
+           new_nr = new_nr/(1.0_kind_phys-spechum)
            if (is_aerosol_aware .or. merra2_aerosol_aware) then
-              new_nc = new_nc/(1.0_kind_phys-new_spechum)
-              new_nwfa = new_nwfa/(1.0_kind_phys-new_spechum)
-              new_nifa = new_nifa/(1.0_kind_phys-new_spechum)
+              new_nc = new_nc/(1.0_kind_phys-spechum)
+              new_nwfa = new_nwfa/(1.0_kind_phys-spechum)
+              new_nifa = new_nifa/(1.0_kind_phys-spechum)
            end if
          end if
          ! *DH
@@ -941,21 +942,21 @@ module mp_thompson
          ! was using these arrays, but it is somewhat dangerous.
 
          !> - Convert water vapor mixing ratio back to specific humidity
-         new_spechum = qv/(1.0_kind_phys+qv)
+         new_spechum = qv*(1.0_kind_phys-spechum)
 
          if (convert_dry_rho) then
-           new_qc = new_qc/(1.0_kind_phys+qv)
-           new_qr = new_qr/(1.0_kind_phys+qv)
-           new_qi = new_qi/(1.0_kind_phys+qv)
-           new_qs = new_qs/(1.0_kind_phys+qv)
-           new_qg = new_qg/(1.0_kind_phys+qv)
+           new_qc = new_qc*(1.0_kind_phys-spechum)
+           new_qr = new_qr*(1.0_kind_phys-spechum)
+           new_qi = new_qi*(1.0_kind_phys-spechum)
+           new_qs = new_qs*(1.0_kind_phys-spechum)
+           new_qg = new_qg*(1.0_kind_phys-spechum)
 
-           new_ni = new_ni/(1.0_kind_phys+qv)
-           new_nr = new_nr/(1.0_kind_phys+qv)
+           new_ni = new_ni*(1.0_kind_phys-spechum)
+           new_nr = new_nr*(1.0_kind_phys-spechum)
            if (is_aerosol_aware .or. merra2_aerosol_aware) then
-              new_nc = new_nc/(1.0_kind_phys+qv)
-              new_nwfa = new_nwfa/(1.0_kind_phys+qv)
-              new_nifa = new_nifa/(1.0_kind_phys+qv)
+              new_nc = new_nc*(1.0_kind_phys-spechum)
+              new_nwfa = new_nwfa*(1.0_kind_phys-spechum)
+              new_nifa = new_nifa*(1.0_kind_phys-spechum)
            end if
          end if
          ! *DH
