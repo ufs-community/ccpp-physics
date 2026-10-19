@@ -2641,7 +2641,8 @@ endif   ! croptype == 0
 
   do iz = isnow+1, 0
       bdsnoi(iz) = (snice(iz)+snliq(iz))/dzsnso(iz)
-      cvsno(iz) = cice*snicev(iz)+cwat*snliqv(iz)
+      ! heat capacity from the ice and liquid mass
+      cvsno(iz) = (cice/denice*snice(iz) + cwat/denh2o*snliq(iz))/dzsnso(iz)
 !      cvsno(iz) = 0.525e06                          ! constant
   enddo
 
