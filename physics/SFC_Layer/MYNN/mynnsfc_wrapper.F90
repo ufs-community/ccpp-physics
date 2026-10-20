@@ -62,7 +62,7 @@
           write(errmsg,fmt='(*(a))') 'Logic error: do_mynnsfclay = .false.'
           errflg = 1
           return
-        end if 
+        end if
 
          ! initialize tables for psih and psim (stable and unstable)
          CALL mynnsfc_init(.true.,errmsg,errflg)
@@ -302,12 +302,12 @@ SUBROUTINE mynnsfc_wrapper_run(            &
 !$acc exit data delete(qsfc_lnd_ruc, qsfc_ice_ruc)
 !$acc exit data delete(phii, qvsh, slmsk)
 
-      do i=1,im
-        rho3d(i,:) = prsl(i,:)/(r_d*t3d(i,:)*(1.+p608*max(qvsh(i,:),1e-8)))
+      do i=1,im      
+        if (.not. flag_iter(i)) cycle
         if (spp_sfc == 1) spp_col(:) = spp_wts_sfc(i,:)
+        rho3d(i,:) = prsl(i,:)/(r_d*t3d(i,:)*(1.+p608*max(qvsh(i,:),1e-8)))
+
         if (dry(i)) then
-            hfx(i) = hflx(i)*rho3d(i,1)*cp
-            qfx(i) = qflx(i)*rho3d(i,1)/(1.0_kind_phys - qvsh(i,1))
             CALL mynnsfc_driver(                                                                        &
                  u3d=u(i,:),v3d=v(i,:),t3d=t3d(i,:),qv3d=qv(i,:),p3d=prsl(i,:),dz8w=dz(i,:),            &
                  th3d=th(i,:),rho3d=rho3d(i,:),                                                         &
@@ -317,7 +317,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  sigmaf=sigmaf(i:i),vegtype=vegtype(i:i),shdmax=shdmax(i:i),ivegsrc=ivegsrc,            &  !intent(in)
                  z0pert=z0pert(i:i),ztpert=ztpert(i:i),                                                 &  !intent(in)
                  redrag=redrag,sfc_z0_type=sfc_z0_type,                                                 &  !intent(in)
-                 itimestep=itimestep,flag_iter=flag_iter(i),iter=iter,                                  &
+                 itimestep=itimestep,iter=iter,                                                         &  !intent(in)
                  restart=flag_restart,dry=dry(i:i),                                                     &  !intent(in)
                  tsk=tskin_lnd(i:i),tsurf=tsurf_lnd(i:i),qsfc=qsfc_lnd(i:i),snowh=snowh_lnd(i:i),       &
                  znt=znt_lnd(i:i),ust=ust_lnd(i:i),cm=cm_lnd(i:i),ch=ch_lnd(i:i),br=rb_lnd(i:i),        &  !intent(inout)
@@ -336,8 +336,6 @@ SUBROUTINE mynnsfc_wrapper_run(            &
         endif
 
         if (wet(i)) then
-            hfx(i) = hflx(i)*rho3d(i,1)*cp
-            qfx(i) = qflx(i)*rho3d(i,1)/(1.0_kind_phys - qvsh(i,1))
             CALL mynnsfc_driver(                                                                        &
                  u3d=u(i,:),v3d=v(i,:),t3d=t3d(i,:),qv3d=qv(i,:),p3d=prsl(i,:),dz8w=dz(i,:),            &
                  th3d=th(i,:),rho3d=rho3d(i,:),                                                         &
@@ -347,7 +345,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  sigmaf=sigmaf(i:i),vegtype=vegtype(i:i),shdmax=shdmax(i:i),ivegsrc=ivegsrc,            &  !intent(in)
                  z0pert=z0pert(i:i),ztpert=ztpert(i:i),                                                 &  !intent(in)
                  redrag=redrag,sfc_z0_type=sfc_z0_type,                                                 &  !intent(in)
-                 itimestep=itimestep,flag_iter=flag_iter(i),iter=iter,                                  &
+                 itimestep=itimestep,iter=iter,                                                         &  !intent(in)
                  restart=flag_restart,wet=wet(i:i),                                                     &  !intent(in)
                  tsk=tskin_wat(i:i),tsurf=tsurf_wat(i:i),qsfc=qsfc_wat(i:i),snowh=snowh_wat(i:i),       &
                  znt=znt_wat(i:i),ust=ust_wat(i:i),cm=cm_wat(i:i),ch=ch_wat(i:i),br=rb_wat(i:i),        &  !intent(inout)
@@ -366,8 +364,6 @@ SUBROUTINE mynnsfc_wrapper_run(            &
         endif
 
         if (icy(i)) then
-            hfx(i) = hflx(i)*rho3d(i,1)*cp
-            qfx(i) = qflx(i)*rho3d(i,1)/(1.0_kind_phys - qvsh(i,1))
             CALL mynnsfc_driver(                                                                        &
                  u3d=u(i,:),v3d=v(i,:),t3d=t3d(i,:),qv3d=qv(i,:),p3d=prsl(i,:),dz8w=dz(i,:),            &
                  th3d=th(i,:),rho3d=rho3d(i,:),                                                         &
@@ -377,7 +373,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  sigmaf=sigmaf(i:i),vegtype=vegtype(i:i),shdmax=shdmax(i:i),ivegsrc=ivegsrc,            &  !intent(in)
                  z0pert=z0pert(i:i),ztpert=ztpert(i:i),                                                 &  !intent(in)
                  redrag=redrag,sfc_z0_type=sfc_z0_type,                                                 &  !intent(in)
-                 itimestep=itimestep,flag_iter=flag_iter(i),   iter=iter,                               &  !intent(in)
+                 itimestep=itimestep,iter=iter,                                                         &  !intent(in)
                  restart=flag_restart,icy=icy(i:i),                                                     &  !intent(in)
                  tsk=tskin_ice(i:i),tsurf=tsurf_ice(i:i),qsfc=qsfc_ice(i:i),snowh=snowh_ice(i:i),       &
                  znt=znt_ice(i:i),ust=ust_ice(i:i),cm=cm_ice(i:i),ch=ch_ice(i:i),br=rb_ice(i:i),        &  !intent(inout)
