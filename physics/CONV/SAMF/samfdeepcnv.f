@@ -117,7 +117,7 @@
       real(kind=kind_phys), dimension (:), intent(in),
      &   optional :: maxMF
       real(kind=kind_phys), intent(out) :: rainevap(:)
-      real(kind=kind_phys), intent(inout), optional :: sigmaout(:,:),   &
+      real(kind=kind_phys), intent(inout), optional :: sigmaout(:,:),
      &     omegaout(:,:)
 !
 ! for cold pool
