@@ -209,7 +209,8 @@ SUBROUTINE mynnsfc_wrapper_run(            &
       INTEGER :: IDS,IDE,JDS,JDE,KDS,KDE,                   &
      &            IMS,IME,JMS,JME,KMS,KME,                  &
      &            ITS,ITE,JTS,JTE,KTS,KTE
-
+      real,parameter:: snow_thresh = 50 !50 mm, needs to be consistent with the mynnsfc_driver
+      logical :: ice_phys(1)
       ! Initialize CCPP error handling variables
       errmsg = ''
       errflg = 0
@@ -308,6 +309,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
         rho3d(i,:) = prsl(i,:)/(r_d*t3d(i,:)*(1.+p608*max(qvsh(i,:),1e-8)))
 
         if (dry(i)) then
+            ice_phys(1) = snowh_lnd(i) >= snow_thresh
             CALL mynnsfc_driver(                                                                        &
                  u3d=u(i,:),v3d=v(i,:),t3d=t3d(i,:),qv3d=qv(i,:),p3d=prsl(i,:),dz8w=dz(i,:),            &
                  th3d=th(i,:),rho3d=rho3d(i,:),                                                         &
@@ -318,8 +320,9 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  z0pert=z0pert(i:i),ztpert=ztpert(i:i),                                                 &  !intent(in)
                  redrag=redrag,sfc_z0_type=sfc_z0_type,                                                 &  !intent(in)
                  itimestep=itimestep,iter=iter,                                                         &  !intent(in)
-                 restart=flag_restart,dry=dry(i:i),                                                     &  !intent(in)
-                 tsk=tskin_lnd(i:i),tsurf=tsurf_lnd(i:i),qsfc=qsfc_lnd(i:i),snowh=snowh_lnd(i:i),       &
+                 restart=flag_restart,dry=dry(i:i),icy=ice_phys,                                        &  !intent(in)
+                 tsk=tskin_lnd(i:i),tsurf=tsurf_lnd(i:i),qsfc=qsfc_lnd(i:i),                            &
+                 snowh=snowh_lnd(i:i)*0.001_kind_phys,                                                  &
                  znt=znt_lnd(i:i),ust=ust_lnd(i:i),cm=cm_lnd(i:i),ch=ch_lnd(i:i),br=rb_lnd(i:i),        &  !intent(inout)
                  stress=stress_lnd(i:i),fm=fm_lnd(i:i),fh=fh_lnd(i:i),fm10=fm10_lnd(i:i),               &  !intent(inout)
                  fh2=fh2_lnd(i:i),hflx=hflx_lnd(i:i),qflx=qflx_lnd(i:i),CHS=chs(i:i),CHS2=chs2(i:i),    &
@@ -347,7 +350,8 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  redrag=redrag,sfc_z0_type=sfc_z0_type,                                                 &  !intent(in)
                  itimestep=itimestep,iter=iter,                                                         &  !intent(in)
                  restart=flag_restart,wet=wet(i:i),                                                     &  !intent(in)
-                 tsk=tskin_wat(i:i),tsurf=tsurf_wat(i:i),qsfc=qsfc_wat(i:i),snowh=snowh_wat(i:i),       &
+                 tsk=tskin_wat(i:i),tsurf=tsurf_wat(i:i),qsfc=qsfc_wat(i:i),                            & 
+                 snowh=snowh_wat(i:i)*0.001_kind_phys,                                                  &
                  znt=znt_wat(i:i),ust=ust_wat(i:i),cm=cm_wat(i:i),ch=ch_wat(i:i),br=rb_wat(i:i),        &  !intent(inout)
                  stress=stress_wat(i:i),fm=fm_wat(i:i),fh=fh_wat(i:i),fm10=fm10_wat(i:i),               &  !intent(inout)
                  fh2=fh2_wat(i:i),hflx=hflx_wat(i:i),qflx=qflx_wat(i:i),CHS=chs(i:i),CHS2=chs2(i:i),    &
@@ -375,7 +379,8 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  redrag=redrag,sfc_z0_type=sfc_z0_type,                                                 &  !intent(in)
                  itimestep=itimestep,iter=iter,                                                         &  !intent(in)
                  restart=flag_restart,icy=icy(i:i),                                                     &  !intent(in)
-                 tsk=tskin_ice(i:i),tsurf=tsurf_ice(i:i),qsfc=qsfc_ice(i:i),snowh=snowh_ice(i:i),       &
+                 tsk=tskin_ice(i:i),tsurf=tsurf_ice(i:i),qsfc=qsfc_ice(i:i),                            &
+                 snowh=snowh_ice(i:i)*0.001_kind_phys,                                                  &
                  znt=znt_ice(i:i),ust=ust_ice(i:i),cm=cm_ice(i:i),ch=ch_ice(i:i),br=rb_ice(i:i),        &  !intent(inout)
                  stress=stress_ice(i:i),fm=fm_ice(i:i),fh=fh_ice(i:i),fm10=fm10_ice(i:i),               &  !intent(inout)
                  fh2=fh2_ice(i:i),hflx=hflx_ice(i:i),qflx=qflx_ice(i:i),CHS=chs(i:i),CHS2=chs2(i:i),    &
