@@ -3161,6 +3161,8 @@ module module_mp_thompson
             prr_rcs(k) = prr_rcs(k) * ratio
             prr_rcg(k) = prr_rcg(k) * ratio
          endif
+         ! limit the snow gained from rain-snow collection to the rain lost
+         if (temp(k).lt.T_0 .and. prs_rcs(k).gt.-prr_rcs(k)) prs_rcs(k) = -prr_rcs(k)
 
 !>  - Snow conservation.
          sump = prs_sde(k) - prs_ihm(k) - prr_sml(k) &
@@ -3192,6 +3194,9 @@ module module_mp_thompson
          ratio = min( ABS(prr_rcg(k)), ABS(prg_rcg(k)) )
          prr_rcg(k) = ratio * SIGN(1.0, SNGL(prr_rcg(k)))
          prg_rcg(k) = -prr_rcg(k)
+         ! graupel gains from the limited rain, ice and snow losses
+         prg_rci(k) = pri_rci(k) + prr_rci(k)
+         if (temp(k).lt.T_0) prg_rcs(k) = -(prr_rcs(k) + prs_rcs(k))
          if (temp(k).gt.T_0) then
             ratio = min( ABS(prr_rcs(k)), ABS(prs_rcs(k)) )
             prr_rcs(k) = ratio * SIGN(1.0, SNGL(prr_rcs(k)))
