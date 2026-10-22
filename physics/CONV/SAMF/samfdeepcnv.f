@@ -1437,7 +1437,9 @@ c
           if(cnvflg(i)) then
             dz =zo(i,k+1) - zo(i,k)
             xlamue(i,k) = clamt(i) / (zi(i,k) + dz)
-            xlamue(i,k) = max(xlamue(i,k), crtlame)
+!           xlamue(i,k) = max(xlamue(i,k), crtlame)
+            tem = 0.001_conv_wp * clamt(i)
+            xlamue(i,k) = max(xlamue(i,k), tem)
           endif
         enddo
       enddo
@@ -1498,9 +1500,9 @@ c
         do i=1,im
           if(cnvflg(i).and.
      &      (k > kbcon(i) .and. k < kmax(i))) then
-              tem = qeso(i,k)/qeso(i,kbcon(i))
-              fent1(i,k) = min(tem**2, 3.0_conv_wp)
-              fent2(i,k) = min(tem**3, 5.2_conv_wp)
+              tem = min(qeso(i,k)/qeso(i,kbcon(i)), 1.0_conv_wp)
+              fent1(i,k) = tem**2
+              fent2(i,k) = tem**3
           endif
         enddo
       enddo

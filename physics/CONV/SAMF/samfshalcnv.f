@@ -1025,7 +1025,9 @@ c
           if(cnvflg(i)) then
             dz = zo(i,k+1) - zo(i,k)
             xlamue(i,k) = clamt(i) / (zi(i,k) + dz)
-            xlamue(i,k) = max(xlamue(i,k), crtlame)
+!           xlamue(i,k) = max(xlamue(i,k), crtlame)
+            tem = 0.001_conv_wp * clamt(i)
+            xlamue(i,k) = max(xlamue(i,k), tem)
           endif
         enddo
       enddo
