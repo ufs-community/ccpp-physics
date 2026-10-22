@@ -56,6 +56,8 @@
      &     t0c,delt,ntk,ntr,delp,first_time_step,restart,               & 
      &     tmf,qmicro,progsigma,progomega,                              &
      &     prslp,psp,phil,tkeh,qtr,dqtr,prevsq,q,q1,t1,u1,v1,fscav,     &
+!The following variables are for Leonard term
+     &     leo_u,leo_v,leo_t,leo_q,leonard,leofac,                      &
      &     rn,kbot,ktop,kcnv,islimsk,garea,cscale,ten_t, ten_u, ten_v,  &
      &     ten_q, dot,ncloud,hpbl,ud_mf,dt_mf,cnvw,cnvc,                &
      &     clam,c0s,c1,evef,pgcon,asolfac,hwrf_samfshal,                & 
@@ -82,19 +84,28 @@
      &     omegain(:,:)
 !
       real(kind=kind_phys), dimension(:), intent(in) :: fscav
-      integer, intent(inout)  :: kcnv(:)
       ! DH* TODO - check dimensions of qtr, ntr+2 correct?  *DH
       real(kind=kind_phys), intent(inout) :: tkeh(:,:)
-      real(kind=kind_phys), intent(in) ::   qtr(:,:,:),                 &
-     &   q1(:,:)
+      real(kind=kind_phys), intent(in) ::   qtr(:,:,:), q1(:,:)
 
       real(kind=kind_phys), intent(in) :: t1(:,:), u1(:,:), v1(:,:)
+
+      real(kind=kind_phys), intent(out) :: ten_t(:,:), ten_u(:,:),
+     & ten_v(:,:), ten_q(:,:,:), dqtr(:,:,:)
+
 !
-      integer, intent(out) :: kbot(:), ktop(:)
-      real(kind=kind_phys), intent(out) :: rn(:),                       &
-     &   cnvw(:,:), cnvc(:,:), dt_mf(:,:)
+! for Leonard term
+      logical, intent(in)  :: leonard !flag for leonard term
+      real(kind=kind_phys), intent(in) :: leofac  !parameter for Leonard term
+      real(kind=kind_phys), intent(in) ::
+     &                     leo_u(:,:),  leo_v(:,:),                     &
+     &                     leo_t(:,:),  leo_q(:,:,:)
 !
-      real(kind=kind_phys), intent(out) :: ud_mf(:,:)
+      integer, intent(inout) :: kbot(:), ktop(:), kcnv(:)
+      real(kind=kind_phys), intent(out) :: rn(:)
+      real(kind=kind_phys), intent(inout) :: cnvw(:,:), cnvc(:,:),      &
+     &               ud_mf(:,:), dt_mf(:,:)
+!
       real(kind=kind_phys), intent(inout), optional :: sigmaout(:,:),   &
      &   omegaout(:,:)
 
@@ -218,7 +229,7 @@ c  local variables and arrays
      &                     uo(im,km),      vo(im,km),     qeso(im,km),
      &                     ctr(im,km,ntr), ctro(im,km,ntr)
 !  for aerosol transport
-!     real(kind=kind_phys) qaero(im,km,ntc)
+!     real(kind=conv_wp) qaero(im,km,ntc)
 c  variables for tracer wet deposition,
       real(kind=conv_wp), dimension(im,km,ntc) :: chem_c, chem_pw,
      &  wet_dep
@@ -233,7 +244,7 @@ c  variables for tracer wet deposition,
       real(kind=conv_wp) scaldfunc(im), sigmagfm(im)
 !
 c  cloud water
-!     real(kind=kind_phys) qlko_ktcon(im), dellal(im,km), tvo(im,km),
+!     real(kind=conv_wp) qlko_ktcon(im), dellal(im,km), tvo(im,km),
       real(kind=conv_wp) qlko_ktcon(im), dellal(im,km),
      &                     dbyo(im,km),    zo(im,km),    xlamue(im,km),
      &                     rh(im,km),
@@ -248,6 +259,13 @@ c  cloud water
      &                     sumx(im),      tx1(im),        cnvwt(im,km),
      &                     rhbar(im)
 !
+!    parameters for leonard term
+      real(kind=conv_wp) leodx1,leodx2,leodx3,leodx4
+      real(kind=conv_wp) saleofac(im)
+      parameter(leodx1=15000._conv_wp,leodx2=1500._conv_wp)
+      parameter(leodx3=500._conv_wp,leodx4=50._conv_wp)
+
+!
 !  variables for Total Variation Diminishing (TVD) flux-limiter scheme
 !      on environmental subsidence and uplifting
 !
@@ -261,9 +279,6 @@ c  cloud water
       real(kind=conv_wp) tf, tcr, tcrf
       parameter (tf=233.16_conv_wp, tcr=263.16_conv_wp,
      &           tcrf=1.0_conv_wp/(tcr-tf))
-
-      real(kind=kind_phys), intent(out) :: ten_t(:,:), ten_u(:,:),
-     & ten_v(:,:), ten_q(:,:,:), dqtr(:,:,:)
 
       real(kind=conv_wp) :: new_t1(im,km),new_u1(im,km),new_v1(im,km),
      & new_q1(im,km), new_qtr(im,km,nn)
@@ -365,13 +380,14 @@ c
         kb(i)=km
         pdot(i) = 0.0_conv_wp
         qlko_ktcon(i) = 0.0_conv_wp
-!        edt(i)  = 0.
+!        edt(i)  = 0._conv_wp
         aa1(i)  = 0.0_conv_wp
         cina(i) = 0.0_conv_wp
-!        vshear(i) = 0.
+!        vshear(i) = 0._conv_wp
         advfac(i) = 0.0_conv_wp
         gdx(i) = sqrt(real(garea(i), kind=conv_wp))
         xmb(i) = 0.0_conv_wp
+        saleofac(i) = 0._conv_wp
           scaldfunc(i)=-1.0_conv_wp  ! wang initialized
           sigmagfm(i)=-1.0_conv_wp
        enddo
@@ -391,15 +407,38 @@ c
         kb(i)=km
         pdot(i) = 0.0_conv_wp
         qlko_ktcon(i) = 0.0_conv_wp
-!        edt(i)  = 0.0
+!        edt(i)  = 0.0_conv_wp
         aa1(i)  = 0.0_conv_wp
         cina(i) = 0.0_conv_wp
-!        vshear(i) = 0.
+!        vshear(i) = 0._conv_wp
         gdx(i) = sqrt(real(garea(i), kind=conv_wp))
         xmb(i) = 0.0_conv_wp
+        saleofac(i) = 0._conv_wp
        enddo
       endif
+!
+!>  - Compute scale dependent leonard factor (\p saleofac)
+!
+      if(leonard) then
+        do i=1,im
+          if(gdx(i) >= leodx1 .or. gdx(i) <= leodx4) then
+            saleofac(i) = 0._conv_wp
+          else if(gdx(i) < leodx1 .and. gdx(i) > leodx2) then
+            tem = leodx2 / gdx(i)
+!           tem = (leodx2 / gdx(i))**2
+            saleofac(i) = real(leofac, kind=conv_wp) * tem
+          else if(gdx(i) < leodx3 .and. gdx(i) > leodx4) then
+            tem = gdx(i) / leodx3
+!           tem = (gdx(i) / leodx3)**2
+            saleofac(i) = real(leofac, kind=conv_wp) * tem
+          else if(gdx(i) < leodx2 .and. gdx(i) > leodx3) then
+            saleofac(i) = real(leofac, kind=conv_wp)
+          endif
+        enddo
+      endif
+!      
 !>  - Return to the calling routine if deep convection is present or the surface buoyancy flux is negative.
+!!
       if (.not. progomega) then
          totflg = .true.
          do i=1,im
@@ -439,28 +478,12 @@ c
         enddo
       enddo
 !
-!>  - Initialize convective cloud water and cloud cover to zero.
-      do k = 1, km
-        do i = 1, im
-          cnvw(i,k) = 0.0_kind_phys
-          cnvc(i,k) = 0.0_kind_phys
-        enddo
-      enddo
-! hchuang code change
-!>  - Initialize updraft mass fluxes to zero.
-      do k = 1, km
-        do i = 1, im
-          ud_mf(i,k) = 0.0_kind_phys
-          dt_mf(i,k) = 0.0_kind_phys
-        enddo
-      enddo
-c
       dt2   = real(delt, kind=conv_wp)
 !
 c  model tunable parameters are all here
       aafac   = .1_conv_wp
-!      evfact  = 0.3
-!      evfactl = 0.3
+!      evfact  = 0.3_conv_wp
+!      evfactl = 0.3_conv_wp
 !
       crtlame = 1.0e-4_conv_wp
       crtlamd = 3.0e-4_conv_wp
@@ -1002,7 +1025,9 @@ c
           if(cnvflg(i)) then
             dz = zo(i,k+1) - zo(i,k)
             xlamue(i,k) = clamt(i) / (zi(i,k) + dz)
-            xlamue(i,k) = max(xlamue(i,k), crtlame)
+!           xlamue(i,k) = max(xlamue(i,k), crtlame)
+            tem = 0.001_conv_wp * clamt(i)
+            xlamue(i,k) = max(xlamue(i,k), tem)
           endif
         enddo
       enddo
@@ -1108,7 +1133,7 @@ c
      &                   *0.5_conv_wp*(heo(i,k)+heo(i,k-1)))/factor
               dbyo(i,k) = hcko(i,k) - heso(i,k)
 !
-              tem  = 0.5_conv_wp * real(cm,kind=conv_wp) * tem
+              tem  = 0.5_conv_wp * cm * tem
               factor = 1.0_conv_wp + tem
               ptem = tem + real(pgcon, kind=conv_wp)
               ptem1= tem - real(pgcon, kind=conv_wp)
@@ -2308,6 +2333,56 @@ c
         enddo
       enddo
 !
+!  compute change due to leonard term
+!
+      if(leonard) then
+!
+        do i = 1, im
+          if(cnvflg(i)) then
+            if(gdx(i) < dxcrt) then
+              tem = 1._conv_wp - scaldfunc(i) * advfac(i)
+              tem1 = min(max(tem, 0._conv_wp), 1._conv_wp)
+              saleofac(i) = saleofac(i) * tem1
+            else
+              saleofac(i) = 0._conv_wp
+            endif
+          endif
+        enddo
+!
+        do k = 2, km
+          do i = 1, im
+            if(cnvflg(i) .and. gdx(i) < dxcrt) then
+              if(zo(i,k) >= real(hpbl(i), kind=conv_wp) .and.
+     &         (k > kbcon(i) .and. k <= ktcon(i))) then
+!    &           (k > kb(i) .and. k <= ktcon(i))) then
+!             if(zo(i,k) > real(hpbl(i), kind=conv_wp) .and.
+!    &           (k > kb(i) .and. k < ktcon(i))) then
+!             if(k > kb(i) .and. k < ktcon(i)) then
+!             if(k >= kbcon(i) .and. k < ktcon(i)) then
+                dz = zo(i,k+1) - zi(i,k-1)
+                tem = real(leo_t(i,k+1), kind=conv_wp)-
+     &                real(leo_t(i,k-1), kind=conv_wp)
+                tem1 = saleofac(i) * tem / dz
+                new_t1(i,k) = new_t1(i,k) + tem1 * dt2
+                tem = real(leo_q(i,k+1,1), kind=conv_wp)-
+     &                real(leo_q(i,k-1,1), kind=conv_wp)
+                tem1 = saleofac(i) * tem / dz
+                new_q1(i,k) = new_q1(i,k) + tem1 * dt2
+!               tem = real(leo_u(i,k+1), kind=conv_wp)-
+!                     real(leo_u(i,k-1), kind=conv_wp)
+!               tem1 = saleofac(i) * tem / dz
+!               new_u1(i,k) = new_u1(i,k) + tem1 * dt2
+!               tem = real(leo_v(i,k+1), kind=conv_wp)-
+!                     real(leo_v(i,k-1), kind=conv_wp)
+!               tem1 = saleofac(i) * tem / dz
+!               new_v1(i,k) = new_v1(i,k) + tem1 * dt2
+              endif
+            endif
+          enddo
+        enddo
+!
+      endif
+!
 ! Negative moisture is set to zero after borrowing it from
 !    positive values within the mass-flux transport layers
 !
@@ -2606,7 +2681,8 @@ cj
 !        print *, ' shallow delhbar, delqbar, deltbar = ',
 !     &             delhbar(i),hvap*delqbar(i),cp*deltbar(i)
 !        print *, ' shallow delubar, delvbar = ',delubar(i),delvbar(i)
-!        print *, ' precip =', hvap*rn(i)*1000./dt2
+!       print *, ' precip =', real(hvap, kind=conv_wp)*
+!                     real(rn(i), kind=conv_wp)*1000._conv_wp/dt2
 !        print*,'pdif= ',pfld(i,kbcon(i))-pfld(i,ktcon(i))
 !      endif
 !      enddo
@@ -2636,13 +2712,8 @@ c      convective cloud water
                if (k >= kbcon(i) .and. k < ktcon(i)) then
                   cnvw(i,k) = real(cnvwt(i,k) * xmb(i) * dt2,
      &                        kind=kind_phys)
-                  if (progsigma) then
-                     cnvw(i,k) = real(real(cnvw(i,k), kind=conv_wp) *
+                  cnvw(i,k) = real(real(cnvw(i,k), kind=conv_wp) *
      &                    real(cscale, kind=conv_wp), kind=kind_phys)
-                  else
-                     cnvw(i,k) = real(real(cnvw(i,k), kind=conv_wp) *
-     &                    real(cscale, kind=conv_wp), kind=kind_phys)
-                  endif
                endif
             endif
          enddo
@@ -2729,7 +2800,7 @@ c
       do i = 1, im
         if(cnvflg(i)) then
            k = ktop(i)-1
-           dt_mf(i,k) = real(ud_mf(i,k),kind=kind_phys)
+           dt_mf(i,k) = ud_mf(i,k)
         endif
       enddo
 !

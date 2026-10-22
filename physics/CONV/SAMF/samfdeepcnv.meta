@@ -370,6 +370,53 @@
   type = real
   kind = kind_phys
   intent = in
+[leo_u]
+  standard_name = leonard_term_for_u_velocity
+  long_name = leonard term for u velocity calculated from dynamics
+  units = m2 s-2
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
+[leo_v]
+  standard_name = leonard_term_for_v_velocity
+  long_name = leonard term for v velocity calculated from dynamics
+  units = m2 s-2
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
+[leo_t]
+  standard_name = leonard_term_for_temperature
+  long_name = leonard term for temperature calculated from dynamics
+  units = K m s-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
+[leo_q]
+  standard_name = leonard_term_for_tracers
+  long_name = leonard term for tracers calculated from dynamics
+  units = kg kg-1 m s-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension,number_of_tracers)
+  type = real
+  kind = kind_phys
+  intent = in
+[leonard]
+  standard_name = flag_for_leonard_term
+  long_name = flag for adding leonard term
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
+[leofac]
+  standard_name = parameter_for_leonard_term
+  long_name = constant parameter for leonard term
+  units = none
+  dimensions = ()
+  type = real
+  kind = kind_phys
+  intent = in
 [hwrf_samfdeep]
   standard_name = flag_for_hurricane_specific_code_in_scale_aware_mass_flux_deep_convection
   long_name = flag for hwrf samfdeepcnv scheme 
@@ -598,6 +645,47 @@
   type = real
   kind = kind_phys
   intent = in
+[coldpool]
+  standard_name = do_cold_pool_parameterization
+  long_name = flag for cold pool parameterization in deep cumulus scheme
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
+[buoyexcsgrs]
+  standard_name = downdraft_buoyancy_excess_in_convection
+  long_name = downdraft buoyancy excess in convection
+  units = m2 s-2
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
+  optional = True
+[buoyexcs]
+  standard_name = downdraft_buoyancy_excess_in_convection_updated_by_physics
+  long_name = downdraft buoyancy excess in convection updated by physics
+  units = m2 s-2
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = inout
+  optional = True
+[ucp]
+  standard_name = cold_pool_propagation_speed_in_east_west_direction
+  long_name = cold pool propagation speed in east west direction
+  units = m s-1
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = out
+[vcp]
+  standard_name = cold_pool_propagation_speed_in_north_south_direction
+  long_name = cold pool propagation speed in north south direction
+  units = m s-1
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = out
 [maxMF]
   standard_name = maximum_mass_flux
   long_name = maximum mass flux within a column

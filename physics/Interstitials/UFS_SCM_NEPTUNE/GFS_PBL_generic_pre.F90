@@ -16,7 +16,7 @@
         imp_physics, imp_physics_gfdl, imp_physics_thompson, imp_physics_wsm6,           &
         imp_physics_tempo, lthailaware, imp_physics_mg, imp_physics_fer_hires,           &
         imp_physics_nssl, ltaerosol, mraerosol, nssl_ccn_on, nssl_hail_on, nssl_3moment, &
-        hybedmf, do_shoc, satmedmf, qgrs, vdftra,                                        &
+        hybedmf, do_shoc, satmedmf, sa3dtke, qgrs, vdftra, def_4, def4q,                 &
         ugrs, vgrs, tgrs, errmsg, errflg)
         
       use machine,                only : kind_phys
@@ -34,12 +34,13 @@
       integer, intent(in) :: imp_physics, imp_physics_gfdl, imp_physics_thompson, imp_physics_wsm6, imp_physics_tempo
       integer, intent(in) :: imp_physics_mg, imp_physics_fer_hires
       logical, intent(in) :: ltaerosol, hybedmf, do_shoc, satmedmf, mraerosol, lthailaware
+      logical, intent(in) :: sa3dtke !flag for SA-3D-TKE scheme
       integer, intent(in) :: imp_physics_nssl
       logical, intent(in) :: nssl_hail_on, nssl_ccn_on, nssl_3moment
 
-      real(kind=kind_phys), dimension(:,:,:), intent(in) :: qgrs
+      real(kind=kind_phys), dimension(:,:,:), intent(in) :: qgrs, def_4
       real(kind=kind_phys), dimension(:,:), intent(in) :: ugrs, vgrs, tgrs
-      real(kind=kind_phys), dimension(:,:, :), intent(inout) :: vdftra
+      real(kind=kind_phys), dimension(:,:,:), intent(inout) :: vdftra, def4q
 
       ! CCPP error handling variables
       character(len=*), intent(out) :: errmsg
@@ -58,6 +59,9 @@
 !DH: dvdftra is only used if nvdiff != ntrac or (nvdiff == ntrac .and. )
       if (nvdiff == ntrac .and. (hybedmf .or. do_shoc .or. satmedmf)) then
         vdftra = qgrs
+        if(sa3dtke) then
+          def4q = def_4
+        endif
         rtg_ozone_index = ntoz
       else
         if (imp_physics == imp_physics_wsm6) then
@@ -68,6 +72,12 @@
               vdftra(i,k,2) = qgrs(i,k,ntcw)
               vdftra(i,k,3) = qgrs(i,k,ntiw)
               vdftra(i,k,4) = qgrs(i,k,ntoz)
+              if(sa3dtke) then
+                def4q(i,k,1) = def_4(i,k,ntqv)
+                def4q(i,k,2) = def_4(i,k,ntcw)
+                def4q(i,k,3) = def_4(i,k,ntiw)
+                def4q(i,k,4) = def_4(i,k,ntoz)
+              endif
             enddo
           enddo
           rtg_ozone_index = 4
@@ -82,6 +92,14 @@
               vdftra(i,k,4) = qgrs(i,k,ntrw)
               vdftra(i,k,5) = qgrs(i,k,nqrimef)
               vdftra(i,k,6) = qgrs(i,k,ntoz)
+              if(sa3dtke) then
+                def4q(i,k,1) = def_4(i,k,ntqv)
+                def4q(i,k,2) = def_4(i,k,ntcw)
+                def4q(i,k,3) = def_4(i,k,ntiw)
+                def4q(i,k,4) = def_4(i,k,ntrw)
+                def4q(i,k,5) = def_4(i,k,nqrimef)
+                def4q(i,k,6) = def_4(i,k,ntoz)
+              endif
             enddo
           enddo
           rtg_ozone_index = 6
@@ -103,6 +121,20 @@
                 vdftra(i,k,10) = qgrs(i,k,ntoz)
                 vdftra(i,k,11) = qgrs(i,k,ntwa)
                 vdftra(i,k,12) = qgrs(i,k,ntia)
+                if(sa3dtke) then
+                  def4q(i,k,1)  = def_4(i,k,ntqv)
+                  def4q(i,k,2)  = def_4(i,k,ntcw)
+                  def4q(i,k,3)  = def_4(i,k,ntiw)
+                  def4q(i,k,4)  = def_4(i,k,ntrw)
+                  def4q(i,k,5)  = def_4(i,k,ntsw)
+                  def4q(i,k,6)  = def_4(i,k,ntgl)
+                  def4q(i,k,7)  = def_4(i,k,ntlnc)
+                  def4q(i,k,8)  = def_4(i,k,ntinc)
+                  def4q(i,k,9)  = def_4(i,k,ntrnc)
+                  def4q(i,k,10) = def_4(i,k,ntoz)
+                  def4q(i,k,11) = def_4(i,k,ntwa)
+                  def4q(i,k,12) = def_4(i,k,ntia)
+                endif
               enddo
             enddo
             rtg_ozone_index = 10
@@ -119,6 +151,19 @@
                 vdftra(i,k,8)  = qgrs(i,k,ntinc)
                 vdftra(i,k,9)  = qgrs(i,k,ntrnc)
                 vdftra(i,k,10) = qgrs(i,k,ntoz)
+                if(sa3dtke) then
+                  def4q(i,k,1)  = def_4(i,k,ntqv)
+                  def4q(i,k,1)  = def_4(i,k,ntqv)
+                  def4q(i,k,2)  = def_4(i,k,ntcw)
+                  def4q(i,k,3)  = def_4(i,k,ntiw)
+                  def4q(i,k,4)  = def_4(i,k,ntrw)
+                  def4q(i,k,5)  = def_4(i,k,ntsw)
+                  def4q(i,k,6)  = def_4(i,k,ntgl)
+                  def4q(i,k,7)  = def_4(i,k,ntlnc)
+                  def4q(i,k,8)  = def_4(i,k,ntinc)
+                  def4q(i,k,9)  = def_4(i,k,ntrnc)
+                  def4q(i,k,10) = def_4(i,k,ntoz)
+                endif
               enddo
             enddo
             rtg_ozone_index = 10
@@ -134,6 +179,17 @@
                 vdftra(i,k,7) = qgrs(i,k,ntinc)
                 vdftra(i,k,8) = qgrs(i,k,ntrnc)
                 vdftra(i,k,9) = qgrs(i,k,ntoz)
+                if(sa3dtke) then
+                  def4q(i,k,1) = def_4(i,k,ntqv)
+                  def4q(i,k,2) = def_4(i,k,ntcw)
+                  def4q(i,k,3) = def_4(i,k,ntiw)
+                  def4q(i,k,4) = def_4(i,k,ntrw)
+                  def4q(i,k,5) = def_4(i,k,ntsw)
+                  def4q(i,k,6) = def_4(i,k,ntgl)
+                  def4q(i,k,7) = def_4(i,k,ntinc)
+                  def4q(i,k,8) = def_4(i,k,ntrnc)
+                  def4q(i,k,9) = def_4(i,k,ntoz)
+                endif
               enddo
             enddo
             rtg_ozone_index = 9
@@ -151,6 +207,17 @@
                  vdftra(i,k,7)  = qgrs(i,k,ntinc)
                  vdftra(i,k,8)  = qgrs(i,k,ntrnc)
                  vdftra(i,k,9)  = qgrs(i,k,ntoz)
+                 if(sa3dtke) then
+                   def4q(i,k,1)  = def_4(i,k,ntqv)
+                   def4q(i,k,2)  = def_4(i,k,ntcw)
+                   def4q(i,k,3)  = def_4(i,k,ntiw)
+                   def4q(i,k,4)  = def_4(i,k,ntrw)
+                   def4q(i,k,5)  = def_4(i,k,ntsw)
+                   def4q(i,k,6)  = def_4(i,k,ntgl)
+                   def4q(i,k,7)  = def_4(i,k,ntinc)
+                   def4q(i,k,8)  = def_4(i,k,ntrnc)
+                   def4q(i,k,9)  = def_4(i,k,ntoz)
+                 endif
               enddo
            enddo
            rtg_ozone_index = 9
@@ -162,6 +229,11 @@
                     vdftra(i,k,n) = qgrs(i,k,ntlnc)
                     vdftra(i,k,n+1) = qgrs(i,k,ntwa)
                     vdftra(i,k,n+2) = qgrs(i,k,ntia)
+                    if(sa3dtke) then
+                      def4q(i,k,n) = def_4(i,k,ntlnc)
+                      def4q(i,k,n+1) = def_4(i,k,ntwa)
+                      def4q(i,k,n+2) = def_4(i,k,ntia)
+                    endif
                  enddo
               enddo
               n = 13
@@ -172,6 +244,10 @@
                  do i=1,im              
                     vdftra(i,k,n) = qgrs(i,k,ntgnc)
                     vdftra(i,k,n+1) = qgrs(i,k,ntgv)
+                    if(sa3dtke) then
+                      def4q(i,k,n) = def_4(i,k,ntgnc)
+                      def4q(i,k,n+1) = def_4(i,k,ntgv)
+                    endif
                  enddo
               enddo
            endif
@@ -192,6 +268,20 @@
                 vdftra(i,k,10) = qgrs(i,k,ntsnc)
                 vdftra(i,k,11) = qgrs(i,k,ntgnc)
                 vdftra(i,k,12) = qgrs(i,k,ntoz)
+                if(sa3dtke) then
+                  def4q(i,k,1)  = def_4(i,k,ntqv)
+                  def4q(i,k,2)  = def_4(i,k,ntcw)
+                  def4q(i,k,3)  = def_4(i,k,ntiw)
+                  def4q(i,k,4)  = def_4(i,k,ntrw)
+                  def4q(i,k,5)  = def_4(i,k,ntsw)
+                  def4q(i,k,6)  = def_4(i,k,ntgl)
+                  def4q(i,k,7)  = def_4(i,k,ntlnc)
+                  def4q(i,k,8)  = def_4(i,k,ntinc)
+                  def4q(i,k,9)  = def_4(i,k,ntrnc)
+                  def4q(i,k,10) = def_4(i,k,ntsnc)
+                  def4q(i,k,11) = def_4(i,k,ntgnc)
+                  def4q(i,k,12) = def_4(i,k,ntoz)
+                endif
               enddo
             enddo
             rtg_ozone_index = 12
@@ -208,6 +298,18 @@
                 vdftra(i,k,8)  = qgrs(i,k,ntrnc)
                 vdftra(i,k,9)  = qgrs(i,k,ntsnc)
                 vdftra(i,k,10) = qgrs(i,k,ntoz)
+                if(sa3dtke) then
+                  def4q(i,k,1)  = def_4(i,k,ntqv)
+                  def4q(i,k,2)  = def_4(i,k,ntcw)
+                  def4q(i,k,3)  = def_4(i,k,ntiw)
+                  def4q(i,k,4)  = def_4(i,k,ntrw)
+                  def4q(i,k,5)  = def_4(i,k,ntsw)
+                  def4q(i,k,6)  = def_4(i,k,ntlnc)
+                  def4q(i,k,7)  = def_4(i,k,ntinc)
+                  def4q(i,k,8)  = def_4(i,k,ntrnc)
+                  def4q(i,k,9)  = def_4(i,k,ntsnc)
+                  def4q(i,k,10) = def_4(i,k,ntoz)
+                endif
               enddo
             enddo
             rtg_ozone_index = 10
@@ -223,6 +325,15 @@
               vdftra(i,k,5) = qgrs(i,k,ntsw)
               vdftra(i,k,6) = qgrs(i,k,ntgl)
               vdftra(i,k,7) = qgrs(i,k,ntoz)
+              if(sa3dtke) then
+                def4q(i,k,1) = def_4(i,k,ntqv)
+                def4q(i,k,2) = def_4(i,k,ntcw)
+                def4q(i,k,3) = def_4(i,k,ntiw)
+                def4q(i,k,4) = def_4(i,k,ntrw)
+                def4q(i,k,5) = def_4(i,k,ntsw)
+                def4q(i,k,6) = def_4(i,k,ntgl)
+                def4q(i,k,7) = def_4(i,k,ntoz)
+              endif
             enddo
           enddo
           rtg_ozone_index = 7
@@ -247,15 +358,41 @@
                 vdftra(i,k,14) = qgrs(i,k,ntgv)
                 vdftra(i,k,15) = qgrs(i,k,nthv)
                 vdftra(i,k,16) = qgrs(i,k,ntoz)
+                if(sa3dtke) then
+                  def4q(i,k,1)  = def_4(i,k,ntqv)
+                  def4q(i,k,2)  = def_4(i,k,ntcw)
+                  def4q(i,k,3)  = def_4(i,k,ntiw)
+                  def4q(i,k,4)  = def_4(i,k,ntrw)
+                  def4q(i,k,5)  = def_4(i,k,ntsw)
+                  def4q(i,k,6)  = def_4(i,k,ntgl)
+                  def4q(i,k,7)  = def_4(i,k,nthl)
+                  def4q(i,k,8)  = def_4(i,k,ntlnc)
+                  def4q(i,k,9)  = def_4(i,k,ntinc)
+                  def4q(i,k,10) = def_4(i,k,ntrnc)
+                  def4q(i,k,11) = def_4(i,k,ntsnc)
+                  def4q(i,k,12) = def_4(i,k,ntgnc)
+                  def4q(i,k,13) = def_4(i,k,nthnc)
+                  def4q(i,k,14) = def_4(i,k,ntgv)
+                  def4q(i,k,15) = def_4(i,k,nthv)
+                  def4q(i,k,16) = def_4(i,k,ntoz)
+                endif
                 n = 16
                 IF ( nssl_ccn_on ) THEN
                  vdftra(i,k,n+1)  = qgrs(i,k,ntccn)
+                 if(sa3dtke) then
+                   def4q(i,k,n+1)  = def_4(i,k,ntccn)
+                 endif
                  n = n+1
                 ENDIF
                 IF ( nssl_3moment ) THEN
                  vdftra(i,k,n+1)  = qgrs(i,k,ntrz)
                  vdftra(i,k,n+2)  = qgrs(i,k,ntgz)
                  vdftra(i,k,n+3)  = qgrs(i,k,nthz)
+                 if(sa3dtke) then
+                   def4q(i,k,n+1)  = def_4(i,k,ntrz)
+                   def4q(i,k,n+2)  = def_4(i,k,ntgz)
+                   def4q(i,k,n+3)  = def_4(i,k,nthz)
+                 endif
                  n = n+3
                 ENDIF
               enddo
@@ -278,14 +415,36 @@
                 vdftra(i,k,11) = qgrs(i,k,ntgnc)
                 vdftra(i,k,12) = qgrs(i,k,ntgv)
                 vdftra(i,k,13) = qgrs(i,k,ntoz)
+                if(sa3dtke) then
+                  def4q(i,k,1)  = def_4(i,k,ntqv)
+                  def4q(i,k,2)  = def_4(i,k,ntcw)
+                  def4q(i,k,3)  = def_4(i,k,ntiw)
+                  def4q(i,k,4)  = def_4(i,k,ntrw)
+                  def4q(i,k,5)  = def_4(i,k,ntsw)
+                  def4q(i,k,6)  = def_4(i,k,ntgl)
+                  def4q(i,k,7)  = def_4(i,k,ntlnc)
+                  def4q(i,k,8)  = def_4(i,k,ntinc)
+                  def4q(i,k,9)  = def_4(i,k,ntrnc)
+                  def4q(i,k,10) = def_4(i,k,ntsnc)
+                  def4q(i,k,11) = def_4(i,k,ntgnc)
+                  def4q(i,k,12) = def_4(i,k,ntgv)
+                  def4q(i,k,13) = def_4(i,k,ntoz)
+                endif
                  n = 13
                 IF ( nssl_ccn_on ) THEN
                  vdftra(i,k,n+1) = qgrs(i,k,ntccn)
+                 if(sa3dtke) then
+                   def4q(i,k,n+1) = def_4(i,k,ntccn)
+                 endif
                  n = n+1
                 ENDIF
                 IF ( nssl_3moment ) THEN
                  vdftra(i,k,n+1) = qgrs(i,k,ntrz)
                  vdftra(i,k,n+2) = qgrs(i,k,ntgz)
+                 if(sa3dtke) then
+                   def4q(i,k,n+1) = def_4(i,k,ntrz)
+                   def4q(i,k,n+2) = def_4(i,k,ntgz)
+                 endif
                  n = n+2
                 ENDIF
               enddo
@@ -312,6 +471,9 @@
             do k=1,levs
               do i=1,im
                 vdftra(i,k,k1) = qgrs(i,k,n)
+                if(sa3dtke) then
+                  def4q(i,k,k1) = def_4(i,k,n)
+                endif
               enddo
             enddo
           enddo
@@ -321,6 +483,9 @@
           do k=1,levs
             do i=1,im
               vdftra(i,k,ntkev) = qgrs(i,k,ntke)
+              if(sa3dtke) then
+                def4q(i,k,ntkev) = def_4(i,k,ntke)
+              endif
             enddo
           enddo
         endif
