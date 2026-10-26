@@ -17,4 +17,4 @@
 [submodule "physics/PBL/MYNN_EDMF/MYNN-EDMF"]
   path = physics/PBL/MYNN_EDMF/MYNN-EDMF
   url = https://github.com/NCAR/MYNN-EDMF
-  branch = main
+  branch = release-v6.1
