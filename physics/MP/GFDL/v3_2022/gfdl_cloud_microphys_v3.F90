@@ -182,7 +182,7 @@ contains
       !real(kind=kind_phys), dimension(:,:), allocatable :: den
       real(kind=kind_phys), dimension(1:im) :: water0
       real(kind=kind_phys) :: onebg
-      real(kind=kind_phys) :: tem
+      real(kind=kind_phys) :: tem, fac
       logical last_step, do_inline_mp
       real(kind=kind_phys), dimension(:,:), allocatable :: new_qv, new_ql, new_qi, new_qr, new_qs, new_qg, new_qa, new_t
 
@@ -264,6 +264,22 @@ contains
                 ice0, snow0, graupel0, hydrostatic, iis, iie, kks, kke, q_con, cappa,     &
                 fast_mp_consv, adj_vmr, te, dte, prefluxw, prefluxr, prefluxi, prefluxs,  &
                 prefluxg, last_step, do_inline_mp )
+
+      ! species and delp on the host layer mass
+      do k = 1, levs
+         kk = levs-k+1
+         do i = 1, im
+            fac       = delp(i,k)/del(i,kk)
+            qv1(i,k)  = qv1(i,k)*fac
+            ql1(i,k)  = ql1(i,k)*fac
+            qr1(i,k)  = qr1(i,k)*fac
+            qi1(i,k)  = qi1(i,k)*fac
+            qs1(i,k)  = qs1(i,k)*fac
+            qg1(i,k)  = qg1(i,k)*fac
+            delp(i,k) = del(i,kk)
+         enddo
+      enddo
+
       tem   = dtp*con_p001/con_secinday
 
       ! fix negative values
