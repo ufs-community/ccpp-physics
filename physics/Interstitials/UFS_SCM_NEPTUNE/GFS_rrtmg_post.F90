@@ -102,6 +102,7 @@
           do i=1,im
 !  ---  lw total-sky fluxes
             fluxr(i,1 ) = fluxr(i,1 ) + fhlwr * topflw(i)%upfxc   ! total sky top lw up
+            fluxr(i,46 ) = topflw(i)%upfxc
             fluxr(i,19) = fluxr(i,19) + fhlwr * sfcflw(i)%dnfxc   ! total sky sfc lw dn
             fluxr(i,20) = fluxr(i,20) + fhlwr * sfcflw(i)%upfxc   ! total sky sfc lw up
 !  ---  lw clear-sky fluxes
@@ -120,6 +121,7 @@
 !                                       -------------------
               tem0d = fhswr * coszdg(i) / coszen(i)
               fluxr(i,2 ) = fluxr(i,2)  +  topfsw(i)%upfxc * tem0d  ! total sky top sw up
+              fluxr(i,47) = topfsw(i)%upfxc * coszdg(i) / coszen(i)
               fluxr(i,3 ) = fluxr(i,3)  +  sfcfsw(i)%upfxc * tem0d  ! total sky sfc sw up
               fluxr(i,4 ) = fluxr(i,4)  +  sfcfsw(i)%dnfxc * tem0d  ! total sky sfc sw dn
 !  ---                                  sw uv-b fluxes
@@ -129,6 +131,7 @@
 !  ---                                  sw toa incoming fluxes
 !                                       ----------------------
               fluxr(i,23) = fluxr(i,23) + topfsw(i)%dnfxc * tem0d     ! top sw dn
+              fluxr(i,48) = topfsw(i)%dnfxc * coszdg(i) / coszen(i)
 !  ---                                  sw sfc flux components
 !                                       ----------------------
               fluxr(i,24) = fluxr(i,24) + scmpsw(i)%visbm * tem0d          ! uv/vis beam sw dn
