@@ -267,8 +267,8 @@ SUBROUTINE mynnsfc_wrapper_run(            &
       end if
       ! qsfc ruc
       if (lsm==lsm_ruc) then
-        where (dry) qsfc_lnd = qsfc_lnd_ruc ! mixing ratio
-        where (icy) qsfc_ice = qsfc_ice_ruc ! mixing ratio
+        where (dry) qsfc_lnd = qsfc_lnd_ruc/(1.+qsfc_lnd_ruc) ! spec. hum
+        where (icy) qsfc_ice = qsfc_ice_ruc/(1.+qsfc_ice_ruc) ! spec. hum.
       end if
 !$acc end kernels
 
