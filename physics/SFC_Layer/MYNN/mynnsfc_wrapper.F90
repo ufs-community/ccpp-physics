@@ -330,7 +330,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  psim=psim(i:i),psih=psih(i:i),HFX=hfx(i:i),QFX=qfx(i:i),LH=lh(i:i),FLHC=flhc(i:i),     &
                  FLQC=flqc(i:i),QGH=qgh(i:i),U10=u10(i:i),V10=v10(i:i),TH2=th2(i:i),T2=t2(i:i),         &
                  Q2=q2(i:i),GZ1OZ0=GZ1OZ0(i:i),WSPD=wspd(i:i),                                          &
-                 spp_pbl=spp_sfc,pattern_spp_pbl=spp_col(i),                                            &
+                 spp_pbl=spp_sfc,pattern_spp_pbl=spp_col,                                               &
                  ids=1,ide=1, jds=1,jde=1, kds=1,kde=levs,                                              &
                  ims=1,ime=1, jms=1,jme=1, kms=1,kme=levs,                                              &
                  its=1,ite=1, jts=1,jte=1, kts=1,kte=levs,                                              &
@@ -359,7 +359,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  psim=psim(i:i),psih=psih(i:i),HFX=hfx(i:i),QFX=qfx(i:i),LH=lh(i:i),FLHC=flhc(i:i),     &
                  FLQC=flqc(i:i),QGH=qgh(i:i),U10=u10(i:i),V10=v10(i:i),TH2=th2(i:i),T2=t2(i:i),         &
                  Q2=q2(i:i),GZ1OZ0=GZ1OZ0(i:i),WSPD=wspd(i:i),                                          &
-                 spp_pbl=spp_sfc,pattern_spp_pbl=spp_col(i),                                            &
+                 spp_pbl=spp_sfc,pattern_spp_pbl=spp_col,                                               &
                  ids=1,ide=1, jds=1,jde=1, kds=1,kde=levs,                                              &
                  ims=1,ime=1, jms=1,jme=1, kms=1,kme=levs,                                              &
                  its=1,ite=1, jts=1,jte=1, kts=1,kte=levs,                                              &
@@ -388,7 +388,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  psim=psim(i:i),psih=psih(i:i),HFX=hfx(i:i),QFX=qfx(i:i),LH=lh(i:i),FLHC=flhc(i:i),     &
                  FLQC=flqc(i:i),QGH=qgh(i:i),U10=u10(i:i),V10=v10(i:i),TH2=th2(i:i),T2=t2(i:i),         &
                  Q2=q2(i:i),GZ1OZ0=GZ1OZ0(i:i),WSPD=wspd(i:i),                                          &
-                 spp_pbl=spp_sfc,pattern_spp_pbl=spp_col(i),                                            &
+                 spp_pbl=spp_sfc,pattern_spp_pbl=spp_col,                                               &
                  ids=1,ide=1, jds=1,jde=1, kds=1,kde=levs,                                              &
                  ims=1,ime=1, jms=1,jme=1, kms=1,kme=levs,                                              &
                  its=1,ite=1, jts=1,jte=1, kts=1,kte=levs,                                              &
