@@ -1044,7 +1044,7 @@ module module_mp_thompson
                               qrten3, qsten3, qgten3, qiten3, niten3, &
                               nrten3, ncten3, qcten3,                 &
                               pfils, pflls,                           &
-                              fs_fac_rain, fs_fac_snow)
+                              fs_fac_rain, fs_fac_snow, dm)
 
          implicit none
 
@@ -1076,6 +1076,8 @@ module module_mp_thompson
 #endif
          real(wp), dimension(ims:ime, kms:kme, jms:jme), intent(in):: &
                            p, w, dz
+         ! dry-air layer mass (kg m-2); if present, used for dz1d
+         real(wp), dimension(ims:ime, kms:kme, jms:jme), optional, intent(in):: dm
          real(wp), dimension(ims:ime, jms:jme), intent(inout):: &
                            RAINNC, RAINNCV, SR
          real(wp), dimension(ims:ime, jms:jme), optional, intent(inout)::      &
@@ -1387,7 +1389,6 @@ module module_mp_thompson
                   end if
                   p1d(k) = p(i,k,j)
                   w1d(k) = w(i,k,j)
-                  dz1d(k) = dz(i,k,j)
                   qv1d(k) = qv(i,k,j)
                   qc1d(k) = qc(i,k,j)
                   qi1d(k) = qi(i,k,j)
@@ -1397,6 +1398,12 @@ module module_mp_thompson
                   ni1d(k) = ni(i,k,j)
                   nr1d(k) = nr(i,k,j)
                   rho(k) = RoverRv*p1d(k) / (R*t1d(k)*(qv1d(k)+RoverRv))
+                  if (present(dm)) then
+                     ! layer mass over this inner step's density
+                     dz1d(k) = dm(i,k,j) / (RoverRv*p1d(k) / (R*t1d(k)*(max(1.E-10, qv1d(k))+RoverRv)))
+                  else
+                     dz1d(k) = dz(i,k,j)
+                  endif
 
             ! These arrays are always allocated and must be initialized
             !vtsk1(k) = 0.
@@ -2025,7 +2032,7 @@ module module_mp_thompson
       real(wp) :: r_frac, g_frac
       real(wp) :: Ef_rw, Ef_sw, Ef_gw, Ef_rr
       real(wp) :: Ef_ra, Ef_sa, Ef_ga
-      real(wp) :: dtsave, odts, odt, odzq, hgt_agl, SR
+      real(wp) :: dtsave, odts, odt, odzq, hgt_agl, SR, rhon
       real(wp) :: xslw1, ygra1, zans1, eva_factor
       integer :: i, k, k2, n, nn, nstep, k_0, kbot, IT, iexfrq
       integer, dimension(5) :: ksed1
@@ -3161,6 +3168,8 @@ module module_mp_thompson
             prr_rcs(k) = prr_rcs(k) * ratio
             prr_rcg(k) = prr_rcg(k) * ratio
          endif
+         ! limit the snow gained from rain-snow collection to the rain lost
+         if (temp(k).lt.T_0 .and. prs_rcs(k).gt.-prr_rcs(k)) prs_rcs(k) = -prr_rcs(k)
 
 !>  - Snow conservation.
          sump = prs_sde(k) - prs_ihm(k) - prr_sml(k) &
@@ -3192,6 +3201,9 @@ module module_mp_thompson
          ratio = min( ABS(prr_rcg(k)), ABS(prg_rcg(k)) )
          prr_rcg(k) = ratio * SIGN(1.0, SNGL(prr_rcg(k)))
          prg_rcg(k) = -prr_rcg(k)
+         ! graupel gains from the limited rain, ice and snow losses
+         prg_rci(k) = pri_rci(k) + prr_rci(k)
+         if (temp(k).lt.T_0) prg_rcs(k) = -(prr_rcs(k) + prs_rcs(k))
          if (temp(k).gt.T_0) then
             ratio = min( ABS(prr_rcs(k)), ABS(prs_rcs(k)) )
             prr_rcs(k) = ratio * SIGN(1.0, SNGL(prr_rcs(k)))
@@ -3383,8 +3395,9 @@ module module_mp_thompson
          otemp = 1./temp(k)
          tempc = temp(k) - 273.15
          qv(k) = max(1.E-10, qv1d(k) + DT*qvten(k))
-         rho(k) = RoverRv*pres(k) / (R*temp(k)*(qv(k)+RoverRv))
-         rhof(k) = SQRT(RHO_NOT/rho(k))
+         ! rho is not updated; rhon is used for rhof and vsc2 only
+         rhon = RoverRv*pres(k) / (R*temp(k)*(qv(k)+RoverRv))
+         rhof(k) = SQRT(RHO_NOT/rhon)
          rhof2(k) = SQRT(rhof(k))
          qvs(k) = rslf(pres(k), temp(k))
          ssatw(k) = qv(k)/qvs(k) - 1.
@@ -3395,7 +3408,7 @@ module module_mp_thompson
          else
             visco(k) = (1.718+0.0049*tempc-1.2E-5*tempc*tempc)*1.0E-5
          endif
-         vsc2(k) = SQRT(rho(k)/visco(k))
+         vsc2(k) = SQRT(rhon/visco(k))
          lvap(k) = lvap0 + (2106.0 - 4218.0)*tempc
          tcond(k) = (5.69 + 0.0168*tempc)*1.0E-5 * 418.936
          ocp(k) = 1./(Cp*(1.+0.887*qv(k)))
@@ -3657,7 +3670,6 @@ module module_mp_thompson
             endif
             qv(k) = max(1.E-10, qv1d(k) + DT*qvten(k))
             temp(k) = t1d(k) + DT*tten(k)
-            rho(k) = RoverRv*pres(k) / (R*temp(k)*(qv(k)+RoverRv))
             qvs(k) = rslf(pres(k), temp(k))
             ssatw(k) = qv(k)/qvs(k) - 1.
          endif
@@ -3740,7 +3752,6 @@ module module_mp_thompson
             qv(k) = max(1.E-10, qv1d(k) + DT*qvten(k))
             nr(k) = max(R2, (nr1d(k) + DT*nrten(k))*rho(k))
             temp(k) = t1d(k) + DT*tten(k)
-            rho(k) = RoverRv*pres(k) / (R*temp(k)*(qv(k)+RoverRv))
          endif
       enddo
 #if ( WRF_CHEM == 1 )
