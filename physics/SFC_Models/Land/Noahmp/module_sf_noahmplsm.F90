@@ -7658,7 +7658,7 @@ zolmax = xkrefsqr / sqrt(xkzo)   ! maximum z/L
                 snice(j+1) = snice(j+1) + snice(j)
                 dzsnso(j+1) = dzsnso(j+1) + dzsnso(j)
              else
-               if (isnow_old < -1) then    ! mb/km: change to isnow
+               if (isnow < -1) then
                 snliq(j-1) = snliq(j-1) + snliq(j)
                 snice(j-1) = snice(j-1) + snice(j)
                 dzsnso(j-1) = dzsnso(j-1) + dzsnso(j)

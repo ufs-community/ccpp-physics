@@ -271,7 +271,8 @@ contains
         endif
         if (dry(i)) then                   ! Land
           uustar_lnd(i) = uustar(i)
-           if(lsm /= lsm_ruc) weasd_lnd(i) = weasd(i)
+           ! with frac_grid, weasd_lnd keeps its own land value
+           if(lsm /= lsm_ruc .and. .not. frac_grid) weasd_lnd(i) = weasd(i)
            tsurf_lnd(i) = tsfcl(i)
         ! DH*
         else
