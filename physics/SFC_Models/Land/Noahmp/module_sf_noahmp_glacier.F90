@@ -776,7 +776,8 @@ contains
 
   do iz = isnow+1, 0
       bdsnoi(iz) = (snice(iz)+snliq(iz))/dzsnso(iz)
-      cvsno(iz) = cice*snicev(iz)+cwat*snliqv(iz)
+      ! heat capacity from the ice and liquid mass
+      cvsno(iz) = (cice/denice*snice(iz) + cwat/denh2o*snliq(iz))/dzsnso(iz)
 !      cvsno(iz) = 0.525e06                          ! constant
   enddo
 
@@ -2887,6 +2888,13 @@ end if   ! opt_gla == 1
 
   end subroutine compact_glacier
 ! ==================================================================================================
+  real (kind=kind_phys) function snow_hcap_glacier(wice, wliq, dz)
+    ! heat capacity of a snow layer (j/m2/k)
+    real (kind=kind_phys), intent(in) :: wice, wliq, dz
+    snow_hcap_glacier = 0.
+    if (dz > 0.) snow_hcap_glacier = cice/denice*max(0.,wice) + cwat/denh2o*max(0.,wliq)
+  end function snow_hcap_glacier
+
 !>\ingroup NoahMP_LSM
   subroutine combine_glacier (nsnow    ,nsoil  ,                         & !in
                               isnow    ,sh2o   ,stc    ,snice  ,snliq  , & !inout
@@ -2922,6 +2930,7 @@ end if   ! opt_gla == 1
     integer :: neibor                !< adjacent node selected for combination
     real (kind=kind_phys)    :: zwice                 !< total ice mass in snow
     real (kind=kind_phys)    :: zwliq                 !< total liquid water in snow
+    real (kind=kind_phys)    :: hsn, hgnd, hc1        ! snow heat merged, and passed to the soil
     real (kind=kind_phys)    :: dzmin(3)              !< minimum of top snow layer
 !    data dzmin /0.045, 0.05, 0.2/
     data dzmin /0.025, 0.025, 0.1/  ! mb: change limit
@@ -2929,17 +2938,26 @@ end if   ! opt_gla == 1
 
        isnow_old = isnow
 
+       hgnd = 0.
        do j = isnow_old+1,0
           if (snice(j) <= .1) then
              if(j /= 0) then
+                hsn = snow_hcap_glacier(snice(j),snliq(j),dzsnso(j))*(stc(j)-tfrz) &
+                    + snow_hcap_glacier(snice(j+1),snliq(j+1),dzsnso(j+1))*(stc(j+1)-tfrz)
                 snliq(j+1) = snliq(j+1) + snliq(j)
                 snice(j+1) = snice(j+1) + snice(j)
                 dzsnso(j+1) = dzsnso(j+1) + dzsnso(j)
+                hc1 = snow_hcap_glacier(snice(j+1),snliq(j+1),dzsnso(j+1))
+                if (hc1 > 0.) stc(j+1) = tfrz + hsn/hc1
              else
-               if (isnow_old < -1) then
+               if (isnow < -1) then
+                hsn = snow_hcap_glacier(snice(j),snliq(j),dzsnso(j))*(stc(j)-tfrz) &
+                    + snow_hcap_glacier(snice(j-1),snliq(j-1),dzsnso(j-1))*(stc(j-1)-tfrz)
                 snliq(j-1) = snliq(j-1) + snliq(j)
                 snice(j-1) = snice(j-1) + snice(j)
                 dzsnso(j-1) = dzsnso(j-1) + dzsnso(j)
+                hc1 = snow_hcap_glacier(snice(j-1),snliq(j-1),dzsnso(j-1))
+                if (hc1 > 0.) stc(j-1) = tfrz + hsn/hc1
                else
                  if(snice(j) >= 0.) then
                   ponding1 = snliq(j)    ! isnow will get set to zero below; ponding1 will get
@@ -2954,6 +2972,7 @@ end if   ! opt_gla == 1
                   sneqv = 0.0
                   snowh = 0.0
                  end if
+                 hgnd = hgnd + snow_hcap_glacier(snice(j),snliq(j),dzsnso(j))*(stc(j)-tfrz)
                  snliq(j) = 0.0
                  snice(j) = 0.0
                  dzsnso(j) = 0.0
@@ -2982,6 +3001,10 @@ end if   ! opt_gla == 1
           sice(1) = 0.
        end if
 
+       if (hgnd /= 0.) then   ! heat of removed snow layers to the top soil layer
+          stc(1) = stc(1) + hgnd/(1.e6*(0.8194 + 0.1309*0.5*dzsnso(1))*dzsnso(1))
+          hgnd = 0.
+       endif
        if(isnow ==0) return   ! mb: get out if no longer multi-layer
 
        sneqv  = 0.
@@ -3001,6 +3024,9 @@ end if   ! opt_gla == 1
 
        if (snowh < 0.025 .and. isnow < 0 ) then ! mb: change limit
 !       if (snowh < 0.05 .and. isnow < 0 ) then
+          do i = isnow+1, 0
+             hgnd = hgnd + snow_hcap_glacier(snice(i),snliq(i),dzsnso(i))*(stc(i)-tfrz)
+          enddo
           isnow  = 0
           sneqv = zwice
           ponding2 = ponding2 + zwliq           ! limit of isnow < 0 means input ponding
@@ -3068,6 +3094,10 @@ end if   ! opt_gla == 1
 
        end if
 
+       if (hgnd /= 0.) then   ! heat of removed snow layers to the top soil layer
+          stc(1) = stc(1) + hgnd/(1.e6*(0.8194 + 0.1309*0.5*dzsnso(1))*dzsnso(1))
+          hgnd = 0.
+       endif
   end subroutine combine_glacier
 ! ==================================================================================================
 
@@ -3105,17 +3135,12 @@ end if   ! opt_gla == 1
     dzc = dz+dz2
     wicec = (wice+wice2)
     wliqc = (wliq+wliq2)
-    h = (cice*wice+cwat*wliq) * (t-tfrz)+hfus*wliq
-    h2= (cice*wice2+cwat*wliq2) * (t2-tfrz)+hfus*wliq2
+    ! enthalpy with per-kg heat capacities
+    h = (cice/denice*wice+cwat/denh2o*wliq) * (t-tfrz)+hfus*wliq
+    h2= (cice/denice*wice2+cwat/denh2o*wliq2) * (t2-tfrz)+hfus*wliq2
 
     hc = h + h2
-    if(hc < 0.)then
-       tc = tfrz + hc/(cice*wicec + cwat*wliqc)
-    else if (hc.le.hfus*wliqc) then
-       tc = tfrz
-    else
-       tc = tfrz + (hc - hfus*wliqc) / (cice*wicec + cwat*wliqc)
-    end if
+    tc = tfrz + (hc - hfus*wliqc) / (cice/denice*wicec + cwat/denh2o*wliqc)
 
     dz = dzc
     wice = wicec
