@@ -434,24 +434,25 @@ module mp_tempo
          !> - Convert specific humidity to water vapor mixing ratio.
          !> - Also, hydrometeor variables are mass or number mixing ratio
          !> - either kg of species per kg of dry air, or per kg of (dry + vapor).
-         qv = new_spechum/(1.0_kind_phys-new_spechum)
+         ! both conversions (here and back below) use the input spechum
+         qv = spechum/(1.0_kind_phys-spechum)
 
          if (convert_dry_rho) then
-           new_qc = new_qc/(1.0_kind_phys-new_spechum)
-           new_qr = new_qr/(1.0_kind_phys-new_spechum)
-           new_qi = new_qi/(1.0_kind_phys-new_spechum)
-           new_qs = new_qs/(1.0_kind_phys-new_spechum)
-           new_qg = new_qg/(1.0_kind_phys-new_spechum)
-           new_ni = new_ni/(1.0_kind_phys-new_spechum)
-           new_nr = new_nr/(1.0_kind_phys-new_spechum)
+           new_qc = new_qc/(1.0_kind_phys-spechum)
+           new_qr = new_qr/(1.0_kind_phys-spechum)
+           new_qi = new_qi/(1.0_kind_phys-spechum)
+           new_qs = new_qs/(1.0_kind_phys-spechum)
+           new_qg = new_qg/(1.0_kind_phys-spechum)
+           new_ni = new_ni/(1.0_kind_phys-spechum)
+           new_nr = new_nr/(1.0_kind_phys-spechum)
            if (is_hail_aware) then
-              new_ng = new_ng/(1.0_kind_phys-new_spechum)
-              new_volg = new_volg/(1.0_kind_phys-new_spechum)
+              new_ng = new_ng/(1.0_kind_phys-spechum)
+              new_volg = new_volg/(1.0_kind_phys-spechum)
            endif
            if (is_aerosol_aware) then
-              new_nc = new_nc/(1.0_kind_phys-new_spechum)
-              new_nwfa = new_nwfa/(1.0_kind_phys-new_spechum)
-              new_nifa = new_nifa/(1.0_kind_phys-new_spechum)
+              new_nc = new_nc/(1.0_kind_phys-spechum)
+              new_nwfa = new_nwfa/(1.0_kind_phys-spechum)
+              new_nifa = new_nifa/(1.0_kind_phys-spechum)
            end if
          end if
 
@@ -529,24 +530,24 @@ module mp_tempo
          if (errflg/=0) return
 
          !> - Convert water vapor mixing ratio back to specific humidity
-         new_spechum = qv/(1.0_kind_phys+qv)
+         new_spechum = qv*(1.0_kind_phys-spechum)
 
          if (convert_dry_rho) then
-           new_qc = new_qc/(1.0_kind_phys+qv)
-           new_qr = new_qr/(1.0_kind_phys+qv)
-           new_qi = new_qi/(1.0_kind_phys+qv)
-           new_qs = new_qs/(1.0_kind_phys+qv)
-           new_qg = new_qg/(1.0_kind_phys+qv)
-           new_ni = new_ni/(1.0_kind_phys+qv)
-           new_nr = new_nr/(1.0_kind_phys+qv)
+           new_qc = new_qc*(1.0_kind_phys-spechum)
+           new_qr = new_qr*(1.0_kind_phys-spechum)
+           new_qi = new_qi*(1.0_kind_phys-spechum)
+           new_qs = new_qs*(1.0_kind_phys-spechum)
+           new_qg = new_qg*(1.0_kind_phys-spechum)
+           new_ni = new_ni*(1.0_kind_phys-spechum)
+           new_nr = new_nr*(1.0_kind_phys-spechum)
            if (is_hail_aware) then
-              new_ng = new_ng/(1.0_kind_phys+qv)
-              new_volg = new_volg/(1.0_kind_phys+qv)
+              new_ng = new_ng*(1.0_kind_phys-spechum)
+              new_volg = new_volg*(1.0_kind_phys-spechum)
            endif
            if (is_aerosol_aware) then
-              new_nc = new_nc/(1.0_kind_phys+qv)
-              new_nwfa = new_nwfa/(1.0_kind_phys+qv)
-              new_nifa = new_nifa/(1.0_kind_phys+qv)
+              new_nc = new_nc*(1.0_kind_phys-spechum)
+              new_nwfa = new_nwfa*(1.0_kind_phys-spechum)
+              new_nifa = new_nifa*(1.0_kind_phys-spechum)
            end if
          end if
 
