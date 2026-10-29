@@ -320,7 +320,7 @@ module mp_tempo
         do_radar_ref, &
         is_initialized, tempo_cfgs, ten_q, ten_t, ten_u, ten_v, &
         dspechum, dqc, dqr, dqi, dqs, dqg, dni, dnr, dnc, dnwfa, &
-        dnifa, dng, dvolg, errmsg, errflg)
+        dnifa, dng, dvolg, re_cloud, re_snow, re_ice, errmsg, errflg)
 
 
          ! Interface variables
@@ -385,6 +385,9 @@ module mp_tempo
          real(kind_phys), optional, intent(  out) :: dnifa(:,:)
          real(kind_phys), optional, intent(  out) :: dng(:,:)
          real(kind_phys), optional, intent(  out) :: dvolg(:,:)
+         real(kind_phys), optional, intent(  out) :: re_cloud(:,:)
+         real(kind_phys), optional, intent(  out) :: re_ice(:,:)
+         real(kind_phys), optional, intent(  out) :: re_snow(:,:)
          
          ! CCPP error handling
          character(len=*),          intent(  out) :: errmsg
@@ -584,6 +587,12 @@ module mp_tempo
                  max(0.0, tempo_driver_diags%graupel_liquid_equiv_precip(:,1)) + &
                  max(0.0, tempo_driver_diags%rain_precip(:,1)))/1000._kind_phys
          enddo
+
+         ! We need the effective radii in the radiation. Copy from TEMPO diagnostic type
+         ! to CCPP variable for coupling to radiation.
+         if (tempo_cfgs%re_cloud_flag) re_cloud = tempo_driver_diags%re_cloud(:,:,1)
+         if (tempo_cfgs%re_snow_flag)  re_snow  = tempo_driver_diags%re_snow(:,:,1)
+         if (tempo_cfgs%re_ice_flag)   re_ice   = tempo_driver_diags%re_ice(:,:,1)
 
          ! diagnostics that are not precipitation don't need to be in the inner time loop
          sr = tempo_driver_diags%frozen_fraction(:,1)
