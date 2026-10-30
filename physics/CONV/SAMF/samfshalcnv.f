@@ -52,7 +52,7 @@
 !!  -# For the "feedback control", calculate updated values of the state variables by multiplying the cloud base mass flux and the tendencies calculated per unit cloud base mass flux from the static control.
 !!  \section det_samfshalcnv GFS samfshalcnv Detailed Algorithm
       subroutine samfshalcnv_run(im,km,nn,itc,ntc,cliq,cp,cvap,            &
-     &     eps,epsm1,fv,grav,hvap,rd,rv,                                &
+     &     eps,epsm1,fv,grav,hvap,hfus,rd,rv,                           &
      &     t0c,delt,ntk,ntr,delp,first_time_step,restart,               & 
      &     tmf,qmicro,progsigma,progomega,                              &
      &     prslp,psp,phil,tkeh,qtr,dqtr,prevsq,q,q1,t1,u1,v1,fscav,     &
@@ -66,6 +66,7 @@
       use funcphys , only : fpvs
 
       implicit none
+      real(kind=kind_phys), intent(in) :: hfus
 !
       integer, intent(in)  :: im, km, nn, itc, ntc, ntk, ntr, ncloud
       integer, intent(in)  :: islimsk(:)
@@ -257,7 +258,7 @@ c  cloud water
       real(kind=conv_wp) rrkp, phkp
       real(kind=conv_wp) tsumn(im), tsump(im), rtnp(im)
 !
-      logical do_aerosols, totflg, cnvflg(im), flg(im)
+      logical do_aerosols, cnvflg(im), flg(im)
 !
       real(kind=conv_wp) tf, tcr, tcrf
       parameter (tf=233.16_conv_wp, tcr=263.16_conv_wp,
@@ -401,13 +402,6 @@ c
        enddo
       endif
 !>  - Return to the calling routine if deep convection is present or the surface buoyancy flux is negative.
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !!
 !>  - determine aerosol-aware rain conversion parameter over land
       do i=1,im
@@ -768,13 +762,6 @@ c
       enddo
 !!
 !> - If no LFC, return to the calling routine without modifying state variables.
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !!
 !> - Determine the vertical pressure velocity at the LFC. After Han and Pan (2011) \cite han_and_pan_2011 , determine the maximum pressure thickness between a parcel's starting level and the LFC. If a parcel doesn't reach the LFC within the critical thickness, then the convective inhibition is deemed too great for convection to be triggered, and the subroutine returns to the calling routine without modifying the state variables.
       do i=1,im
@@ -823,13 +810,6 @@ c
         endif
       enddo
 !!
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !
 ! re-define kb & kbcon
 !
@@ -871,13 +851,6 @@ c
         endif
       enddo
 !!
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !!
       do i=1,im
         if(cnvflg(i)) then
@@ -913,13 +886,6 @@ c
       enddo
 !!
 
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !!
 !
 ! turbulent entrainment rate assumed to be proportional
@@ -1160,7 +1126,7 @@ c
                    chem_c(i,k,n) = escav * real(fscav(n), kind=conv_wp)
      &                            * ecko(i,k,kk)
                    tem = chem_c(i,k,n) / (1.0_conv_wp + c0t(i,k) * dz)
-                   chem_pw(i,k,n) = c0t(i,k) * dz * tem * eta(i,k-1)
+                   chem_pw(i,k,n) = c0t(i,k) * dz * tem * eta(i,k)
                    ecko(i,k,kk) = tem + ecko(i,k,kk) - chem_c(i,k,n)
                  endif
                endif
@@ -1220,13 +1186,6 @@ c
         endif
       enddo
 !!
-      if (.not. progomega) then
-         totflg = .true.
-         do i = 1, im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !!
 c
 c  calculate convective inhibition
@@ -1298,13 +1257,6 @@ c
        enddo
       endif
 !!
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !!
 c
 c  determine first guess cloud top as the level of zero buoyancy
@@ -1484,13 +1436,6 @@ c
 !!
 !     > - If the updraft cloud work function is negative, convection does not occur, and the scheme returns to the calling routine.
 
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !!
 c
 c  estimate the onvective overshooting as the level
@@ -2496,9 +2441,9 @@ c
                       wet_dep(i,k,n) = wet_dep(i,k,n) - tem
                       new_qtr(i,k,kk) = 0.0_conv_wp
                     else
-                      wet_dep(i,k,n) = 0.0_conv_wp
                       new_qtr(i,k,kk) = new_qtr(i,k,kk) + wet_dep(i,k,n)
      &                                / dp
+                      wet_dep(i,k,n) = 0.0_conv_wp
                     endif
                   endif
                 endif
@@ -2694,6 +2639,9 @@ c
               if (new_qtr(i,k,2) > -999.0_conv_wp) then
                 ! Ice
                 new_qtr(i,k,1) = new_qtr(i,k,1) + tem * tem1
+!               heat of fusion of the frozen part
+                new_t1(i,k) = new_t1(i,k) + real(hfus, kind=conv_wp)
+     &                      / real(cp, kind=conv_wp) * tem * tem1
                 ! Water
                 new_qtr(i,k,2) = new_qtr(i,k,2) + tem * (1.0_conv_wp
      &                         - tem1)
