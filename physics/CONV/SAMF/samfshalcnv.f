@@ -258,7 +258,7 @@ c  cloud water
       real(kind=conv_wp) rrkp, phkp
       real(kind=conv_wp) tsumn(im), tsump(im), rtnp(im)
 !
-      logical do_aerosols, totflg, cnvflg(im), flg(im)
+      logical do_aerosols, cnvflg(im), flg(im)
 !
       real(kind=conv_wp) tf, tcr, tcrf
       parameter (tf=233.16_conv_wp, tcr=263.16_conv_wp,
@@ -402,13 +402,6 @@ c
        enddo
       endif
 !>  - Return to the calling routine if deep convection is present or the surface buoyancy flux is negative.
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !!
 !>  - determine aerosol-aware rain conversion parameter over land
       do i=1,im
@@ -769,13 +762,6 @@ c
       enddo
 !!
 !> - If no LFC, return to the calling routine without modifying state variables.
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !!
 !> - Determine the vertical pressure velocity at the LFC. After Han and Pan (2011) \cite han_and_pan_2011 , determine the maximum pressure thickness between a parcel's starting level and the LFC. If a parcel doesn't reach the LFC within the critical thickness, then the convective inhibition is deemed too great for convection to be triggered, and the subroutine returns to the calling routine without modifying the state variables.
       do i=1,im
@@ -824,13 +810,6 @@ c
         endif
       enddo
 !!
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !
 ! re-define kb & kbcon
 !
@@ -872,13 +851,6 @@ c
         endif
       enddo
 !!
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !!
       do i=1,im
         if(cnvflg(i)) then
@@ -914,13 +886,6 @@ c
       enddo
 !!
 
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !!
 !
 ! turbulent entrainment rate assumed to be proportional
@@ -1221,13 +1186,6 @@ c
         endif
       enddo
 !!
-      if (.not. progomega) then
-         totflg = .true.
-         do i = 1, im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !!
 c
 c  calculate convective inhibition
@@ -1299,13 +1257,6 @@ c
        enddo
       endif
 !!
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !!
 c
 c  determine first guess cloud top as the level of zero buoyancy
@@ -1485,13 +1436,6 @@ c
 !!
 !     > - If the updraft cloud work function is negative, convection does not occur, and the scheme returns to the calling routine.
 
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !!
 c
 c  estimate the onvective overshooting as the level
