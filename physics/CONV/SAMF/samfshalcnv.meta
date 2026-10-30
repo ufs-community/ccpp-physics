@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = samfshalcnv
   type = scheme
-  dependencies = ../../tools/funcphys.f90,../../hooks/machine.F,samfaerosols.F,../progsigma_calc.f90,../progomega_calc.f90,mo_conv_kind.F90
+  dependencies = ../../tools/funcphys.f90,../../hooks/machine.F,samfaerosols.F,../progsigma_calc.f90,../progomega_calc.f90
 
 ########################################################################
 [ccpp-arg-table]
@@ -166,6 +166,14 @@
 [hvap]
   standard_name = latent_heat_of_vaporization_of_water_at_0C
   long_name = latent heat of evaporation/sublimation
+  units = J kg-1
+  dimensions = ()
+  type = real
+  kind = kind_phys
+  intent = in
+[hfus]
+  standard_name = latent_heat_of_fusion_of_water_at_0C
+  long_name = latent heat of fusion
   units = J kg-1
   dimensions = ()
   type = real

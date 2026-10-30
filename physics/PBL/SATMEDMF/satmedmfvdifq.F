@@ -89,7 +89,7 @@
       subroutine satmedmfvdifq_run(im,km,ntrac,ntcw,ntrw,               &
      &     ntiw,ntke,grav,pi,rd,cp,rv,hvap,hfus,fv,eps,epsm1,           &
 !The following variables are for SA-3D-TKE
-     &     def_1,def_2,def_3,def4q,sa3dtke,dku3d_h,dku3d_e,             &
+     &     def_1,def_2,def_3,def4q,sa3dtke,hdiffq,dku3d_h,dku3d_e,      &
      &     rtg,u1,v1,t1,q1,usfco,vsfco,use_oceanuv,                     &
      &     swh,hlw,xmu,garea,zvfun,sigmaf,                              &
      &     psk,rbsoil,zorl,u10m,v10m,fm,fh,                             &
@@ -170,6 +170,7 @@
 
 !
       logical, intent(in)  :: sa3dtke !flag for SA-3D-TKE scheme
+      logical, intent(in)  :: hdiffq  !flag for horizontal turbulent eddy diffusion on scalar fields
 !
       logical, intent(in)  :: coldpool !flag for cold pool
 !
@@ -772,7 +773,8 @@
       enddo
 !>  - Compute \f$\frac{\Delta t}{\Delta z}\f$ , \f$u_*\f$
       do i=1,im
-         dtdz1(i)  = dt2 / (zi(i,2)-zi(i,1))
+!  surface fluxes applied to the host layer mass del/g
+         dtdz1(i)  = dt2 * rho_a(i) * g / del(i,1)
       enddo
 !
       do i=1,im
@@ -2813,7 +2815,7 @@ c
 c
       do i=1,im
         ad(i,1) = 1.
-        if(sa3dtke) then
+        if(sa3dtke .and. hdiffq) then
           f1(i,1)=t1(i,1)  +dtdz1(i)*heat(i)+def_3(i,1)*dt2
           f2(i,1)=q1(i,1,1)+dtdz1(i)*evap(i)+def4q(i,1,1)*dt2
         else
@@ -2825,7 +2827,7 @@ c
         do n = 2, ntrac1
           is = (n-1) * km
           do i = 1, im
-            if(sa3dtke) then
+            if(sa3dtke .and. hdiffq) then
               f2(i,1+is) = q1(i,1,n) + def4q(i,1,n)*dt2
             else
               f2(i,1+is) = q1(i,1,n)
@@ -2861,18 +2863,18 @@ c
              ptem      = tcko(i,k) + tcko(i,k+1)
              f1(i,k)   = f1(i,k)+dtodsd*dsdzt-(ptem-tem)*ptem1
              f1(i,k+1) = t1(i,k+1)-dtodsu*dsdzt+(ptem-tem)*ptem2
-             if(sa3dtke) then
+             if(sa3dtke .and. hdiffq) then
                f1(i,k+1) = f1(i,k+1) + def_3(i,k+1)*dt2
              endif
              ptem      = qcko(i,k,1) + qcko(i,k+1,1)
              f2(i,k)   = f2(i,k) - ptem * ptem1
              f2(i,k+1) = q1(i,k+1,1) + ptem * ptem2
-             if(sa3dtke) then
+             if(sa3dtke .and. hdiffq)) then
                f2(i,k+1) = f2(i,k+1) + def4q(i,k+1,1)*dt2
              endif
           else
              f1(i,k)   = f1(i,k)+dtodsd*dsdzt
-             if(sa3dtke) then
+             if(sa3dtke .and. hdiffq) then
                f1(i,k+1)=t1(i,k+1)+def_3(i,k+1)*dt2-dtodsu*dsdzt
                f2(i,k+1)=q1(i,k+1,1)+def4q(i,k+1,1)*dt2
              else
@@ -2925,11 +2927,11 @@ c
                 ptem  = qcko(i,k,n) + qcko(i,k+1,n)
                 f2(i,k+is) = f2(i,k+is) - ptem * ptem1
                 f2(i,k+1+is)= q1(i,k+1,n) + ptem * ptem2
-                if(sa3dtke) then
+                if(sa3dtke .and. hdiffq)) then
                   f2(i,k+1+is)=f2(i,k+1+is)+def4q(i,k+1,n)*dt2
                 endif
               else
-                if(sa3dtke) then
+                if(sa3dtke .and. hdiffq)) then
                   f2(i,k+1+is)=q1(i,k+1,n)+def4q(i,k+1,n)*dt2
                 else
                   f2(i,k+1+is)=q1(i,k+1,n)

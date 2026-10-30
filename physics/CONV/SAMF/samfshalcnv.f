@@ -51,8 +51,8 @@
 !!  -# Calculate the tendencies of the state variables (per unit cloud base mass flux) and the cloud base mass flux.
 !!  -# For the "feedback control", calculate updated values of the state variables by multiplying the cloud base mass flux and the tendencies calculated per unit cloud base mass flux from the static control.
 !!  \section det_samfshalcnv GFS samfshalcnv Detailed Algorithm
-      subroutine samfshalcnv_run(im,km,nn,itc,ntc,cliq,cp,cvap,            &
-     &     eps,epsm1,fv,grav,hvap,rd,rv,                                &
+      subroutine samfshalcnv_run(im,km,nn,itc,ntc,cliq,cp,cvap,         &
+     &     eps,epsm1,fv,grav,hvap,hfus,rd,rv,                           &
      &     t0c,delt,ntk,ntr,delp,first_time_step,restart,               & 
      &     tmf,qmicro,progsigma,progomega,                              &
      &     prslp,psp,phil,tkeh,qtr,dqtr,prevsq,q,q1,t1,u1,v1,fscav,     &
@@ -71,8 +71,8 @@
 !
       integer, intent(in)  :: im, km, nn, itc, ntc, ntk, ntr, ncloud
       integer, intent(in)  :: islimsk(:)
-      real(kind=kind_phys), intent(in) :: cliq, cp, cvap,               &
-     &   eps, epsm1, fv, grav, hvap, rd, rv, t0c, betascu, betadcu,     &
+      real(kind=kind_phys), intent(in) :: cliq, cp, cvap, eps,          &
+     &   epsm1, fv, grav, hvap, hfus, rd, rv, t0c, betascu, betadcu,    &
      &   betamcu, lbb1, lbb2, lbb3, dt_decay
       real(kind=kind_phys), intent(in) ::  delt, cscale
       real(kind=kind_phys), intent(in) :: psp(:), delp(:,:),            &
@@ -165,7 +165,7 @@
 !    &                     rntot(im),   vshear(im),
      &                     rntot(im),
      &                     xlamud(im),  xmb(im),    xmbmax(im),
-     &                     delebar(im,ntr),
+     &                     xlamx(im),   delebar(im,ntr),
      &                     delubar(im), delvbar(im)
 !
       real(kind=conv_wp) c0(im), sfcpbl(im)
@@ -274,7 +274,7 @@ c  cloud water
       real(kind=conv_wp) rrkp, phkp
       real(kind=conv_wp) tsumn(im), tsump(im), rtnp(im)
 !
-      logical do_aerosols, totflg, cnvflg(im), flg(im)
+      logical do_aerosols, cnvflg(im), flg(im)
 !
       real(kind=conv_wp) tf, tcr, tcrf
       parameter (tf=233.16_conv_wp, tcr=263.16_conv_wp,
@@ -438,15 +438,6 @@ c
       endif
 !      
 !>  - Return to the calling routine if deep convection is present or the surface buoyancy flux is negative.
-!!
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
 !>  - determine aerosol-aware rain conversion parameter over land
       do i=1,im
         if(islimsk(i) == 1) then
@@ -790,16 +781,7 @@ c
           if(kbcon(i) == kmax(i)) cnvflg(i) = .false.
         endif
       enddo
-!!
-!> - If no LFC, return to the calling routine without modifying state variables.
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
+!
 !> - Determine the vertical pressure velocity at the LFC. After Han and Pan (2011) \cite han_and_pan_2011 , determine the maximum pressure thickness between a parcel's starting level and the LFC. If a parcel doesn't reach the LFC within the critical thickness, then the convective inhibition is deemed too great for convection to be triggered, and the subroutine returns to the calling routine without modifying the state variables.
       do i=1,im
         if(cnvflg(i)) then
@@ -846,14 +828,6 @@ c
           endif
         endif
       enddo
-!!
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !
 ! re-define kb & kbcon
 !
@@ -894,15 +868,7 @@ c
           if(kbcon(i) == kmax(i)) cnvflg(i) = .false.
         endif
       enddo
-!!
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
+!
       do i=1,im
         if(cnvflg(i)) then
 !          pdot(i)  = 10.* dot(i,kbcon(i))
@@ -935,16 +901,6 @@ c
           endif
         endif
       enddo
-!!
-
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
 !
 ! turbulent entrainment rate assumed to be proportional
 !    to subcloud mean TKE
@@ -1020,14 +976,18 @@ c
 !  assume updraft entrainment rate
 !      is an inverse function of height
 !
+      do i=1,im
+       if(cnvflg(i)) then
+         xlamx(i) = 0.001_conv_wp * clamt(i)
+       endif
+      enddo
       do k = 1, km1
         do i=1,im
           if(cnvflg(i)) then
             dz = zo(i,k+1) - zo(i,k)
             xlamue(i,k) = clamt(i) / (zi(i,k) + dz)
 !           xlamue(i,k) = max(xlamue(i,k), crtlame)
-            tem = 0.001_conv_wp * clamt(i)
-            xlamue(i,k) = max(xlamue(i,k), tem)
+            xlamue(i,k) = max(xlamue(i,k), xlamx(i))
           endif
         enddo
       enddo
@@ -1046,7 +1006,7 @@ c
         if(cnvflg(i)) then
 !          xlamud(i) = xlamue(i,kbcon(i))
 !          xlamud(i) = crtlamd
-          xlamud(i) = 0.001_conv_wp * clamt(i)
+          xlamud(i) = xlamx(i)
         endif
       enddo
       endif    ! hwrf_samfshal
@@ -1186,7 +1146,7 @@ c
                    chem_c(i,k,n) = escav * real(fscav(n), kind=conv_wp)
      &                            * ecko(i,k,kk)
                    tem = chem_c(i,k,n) / (1.0_conv_wp + c0t(i,k) * dz)
-                   chem_pw(i,k,n) = c0t(i,k) * dz * tem * eta(i,k-1)
+                   chem_pw(i,k,n) = c0t(i,k) * dz * tem * eta(i,k)
                    ecko(i,k,kk) = tem + ecko(i,k,kk) - chem_c(i,k,n)
                  endif
                endif
@@ -1245,15 +1205,6 @@ c
           endif
         endif
       enddo
-!!
-      if (.not. progomega) then
-         totflg = .true.
-         do i = 1, im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
 c
 c  calculate convective inhibition
 c
@@ -1323,15 +1274,6 @@ c
          endif
        enddo
       endif
-!!
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
 c
 c  determine first guess cloud top as the level of zero buoyancy
 c    limited to the level of P/Ps=0.7
@@ -1507,17 +1449,6 @@ c
       do i = 1, im
         if(cnvflg(i) .and. aa1(i) <= 0.0_conv_wp) cnvflg(i) = .false.
       enddo
-!!
-!     > - If the updraft cloud work function is negative, convection does not occur, and the scheme returns to the calling routine.
-
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
 c
 c  estimate the onvective overshooting as the level
 c    where the [aafac * cloud work function] becomes zero,
@@ -2014,6 +1945,7 @@ c
               tem1 = real(q1(i,k+1), kind=conv_wp) + phkp
      &             * (qo(i,k) - real(q1(i,k+1), kind=conv_wp))
               flxtvd(i,k) = eta(i,k) * tem1
+              if(k == kb(i)) flxtvd(i,k) = eta(i,k) * qo(i,k)
             endif
           endif
         enddo
@@ -2070,6 +2002,7 @@ c
                 tem1 = ctr(i,k+1,n) +
      &                     phkp*(ctro(i,k,n)-ctr(i,k+1,n))
                 flxtvd(i,k) = eta(i,k) * tem1
+                if(k == kb(i)) flxtvd(i,k) = eta(i,k) * ctro(i,k,n)
               endif
             endif
           enddo
@@ -2560,9 +2493,9 @@ c
                       wet_dep(i,k,n) = wet_dep(i,k,n) - tem
                       new_qtr(i,k,kk) = 0.0_conv_wp
                     else
-                      wet_dep(i,k,n) = 0.0_conv_wp
                       new_qtr(i,k,kk) = new_qtr(i,k,kk) + wet_dep(i,k,n)
      &                                / dp
+                      wet_dep(i,k,n) = 0.0_conv_wp
                     endif
                   endif
                 endif
@@ -2754,6 +2687,9 @@ c
               if (new_qtr(i,k,2) > -999.0_conv_wp) then
                 ! Ice
                 new_qtr(i,k,1) = new_qtr(i,k,1) + tem * tem1
+!               heat of fusion of the frozen part
+                new_t1(i,k) = new_t1(i,k) + (real(hfus, kind=conv_wp)
+     &                      / real(cp, kind=conv_wp)) * tem * tem1
                 ! Water
                 new_qtr(i,k,2) = new_qtr(i,k,2) + tem * (1.0_conv_wp
      &                         - tem1)

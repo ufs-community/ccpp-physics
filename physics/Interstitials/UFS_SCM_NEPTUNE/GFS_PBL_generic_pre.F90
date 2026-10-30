@@ -16,7 +16,7 @@
         imp_physics, imp_physics_gfdl, imp_physics_thompson, imp_physics_wsm6,           &
         imp_physics_tempo, lthailaware, imp_physics_mg, imp_physics_fer_hires,           &
         imp_physics_nssl, ltaerosol, mraerosol, nssl_ccn_on, nssl_hail_on, nssl_3moment, &
-        hybedmf, do_shoc, satmedmf, sa3dtke, qgrs, vdftra, def_4, def4q,                 &
+        hybedmf, do_shoc, satmedmf, sa3dtke, hdiffq, qgrs, vdftra, def_4, def4q,         &
         ugrs, vgrs, tgrs, errmsg, errflg)
         
       use machine,                only : kind_phys
@@ -35,6 +35,7 @@
       integer, intent(in) :: imp_physics_mg, imp_physics_fer_hires
       logical, intent(in) :: ltaerosol, hybedmf, do_shoc, satmedmf, mraerosol, lthailaware
       logical, intent(in) :: sa3dtke !flag for SA-3D-TKE scheme
+      logical, intent(in) :: hdiffq !flag for horizontal turbulent eddy diffusion on scalar fields
       integer, intent(in) :: imp_physics_nssl
       logical, intent(in) :: nssl_hail_on, nssl_ccn_on, nssl_3moment
 
@@ -60,7 +61,15 @@
       if (nvdiff == ntrac .and. (hybedmf .or. do_shoc .or. satmedmf)) then
         vdftra = qgrs
         if(sa3dtke) then
-          def4q = def_4
+          if(hdiffq) then
+            def4q = def_4
+          else
+            do k=1,levs
+              do i=1,im
+                def4q(i,k,ntkev) = def_4(i,k,ntke)
+              enddo
+            enddo
+          endif
         endif
         rtg_ozone_index = ntoz
       else
@@ -72,7 +81,7 @@
               vdftra(i,k,2) = qgrs(i,k,ntcw)
               vdftra(i,k,3) = qgrs(i,k,ntiw)
               vdftra(i,k,4) = qgrs(i,k,ntoz)
-              if(sa3dtke) then
+              if(sa3dtke .and. hdiffq) then
                 def4q(i,k,1) = def_4(i,k,ntqv)
                 def4q(i,k,2) = def_4(i,k,ntcw)
                 def4q(i,k,3) = def_4(i,k,ntiw)
@@ -92,7 +101,7 @@
               vdftra(i,k,4) = qgrs(i,k,ntrw)
               vdftra(i,k,5) = qgrs(i,k,nqrimef)
               vdftra(i,k,6) = qgrs(i,k,ntoz)
-              if(sa3dtke) then
+              if(sa3dtke .and. hdiffq) then
                 def4q(i,k,1) = def_4(i,k,ntqv)
                 def4q(i,k,2) = def_4(i,k,ntcw)
                 def4q(i,k,3) = def_4(i,k,ntiw)
@@ -121,7 +130,7 @@
                 vdftra(i,k,10) = qgrs(i,k,ntoz)
                 vdftra(i,k,11) = qgrs(i,k,ntwa)
                 vdftra(i,k,12) = qgrs(i,k,ntia)
-                if(sa3dtke) then
+                if(sa3dtke .and. hdiffq) then
                   def4q(i,k,1)  = def_4(i,k,ntqv)
                   def4q(i,k,2)  = def_4(i,k,ntcw)
                   def4q(i,k,3)  = def_4(i,k,ntiw)
@@ -151,7 +160,7 @@
                 vdftra(i,k,8)  = qgrs(i,k,ntinc)
                 vdftra(i,k,9)  = qgrs(i,k,ntrnc)
                 vdftra(i,k,10) = qgrs(i,k,ntoz)
-                if(sa3dtke) then
+                if(sa3dtke .and. hdiffq) then
                   def4q(i,k,1)  = def_4(i,k,ntqv)
                   def4q(i,k,1)  = def_4(i,k,ntqv)
                   def4q(i,k,2)  = def_4(i,k,ntcw)
@@ -179,7 +188,7 @@
                 vdftra(i,k,7) = qgrs(i,k,ntinc)
                 vdftra(i,k,8) = qgrs(i,k,ntrnc)
                 vdftra(i,k,9) = qgrs(i,k,ntoz)
-                if(sa3dtke) then
+                if(sa3dtke .and. hdiffq) then
                   def4q(i,k,1) = def_4(i,k,ntqv)
                   def4q(i,k,2) = def_4(i,k,ntcw)
                   def4q(i,k,3) = def_4(i,k,ntiw)
@@ -207,7 +216,7 @@
                  vdftra(i,k,7)  = qgrs(i,k,ntinc)
                  vdftra(i,k,8)  = qgrs(i,k,ntrnc)
                  vdftra(i,k,9)  = qgrs(i,k,ntoz)
-                 if(sa3dtke) then
+                 if(sa3dtke .and. hdiffq) then
                    def4q(i,k,1)  = def_4(i,k,ntqv)
                    def4q(i,k,2)  = def_4(i,k,ntcw)
                    def4q(i,k,3)  = def_4(i,k,ntiw)
@@ -229,7 +238,7 @@
                     vdftra(i,k,n) = qgrs(i,k,ntlnc)
                     vdftra(i,k,n+1) = qgrs(i,k,ntwa)
                     vdftra(i,k,n+2) = qgrs(i,k,ntia)
-                    if(sa3dtke) then
+                    if(sa3dtke .and. hdiffq) then
                       def4q(i,k,n) = def_4(i,k,ntlnc)
                       def4q(i,k,n+1) = def_4(i,k,ntwa)
                       def4q(i,k,n+2) = def_4(i,k,ntia)
@@ -244,7 +253,7 @@
                  do i=1,im              
                     vdftra(i,k,n) = qgrs(i,k,ntgnc)
                     vdftra(i,k,n+1) = qgrs(i,k,ntgv)
-                    if(sa3dtke) then
+                    if(sa3dtke .and. hdiffq) then
                       def4q(i,k,n) = def_4(i,k,ntgnc)
                       def4q(i,k,n+1) = def_4(i,k,ntgv)
                     endif
@@ -268,7 +277,7 @@
                 vdftra(i,k,10) = qgrs(i,k,ntsnc)
                 vdftra(i,k,11) = qgrs(i,k,ntgnc)
                 vdftra(i,k,12) = qgrs(i,k,ntoz)
-                if(sa3dtke) then
+                if(sa3dtke .and. hdiffq) then
                   def4q(i,k,1)  = def_4(i,k,ntqv)
                   def4q(i,k,2)  = def_4(i,k,ntcw)
                   def4q(i,k,3)  = def_4(i,k,ntiw)
@@ -298,7 +307,7 @@
                 vdftra(i,k,8)  = qgrs(i,k,ntrnc)
                 vdftra(i,k,9)  = qgrs(i,k,ntsnc)
                 vdftra(i,k,10) = qgrs(i,k,ntoz)
-                if(sa3dtke) then
+                if(sa3dtke .and. hdiffq) then
                   def4q(i,k,1)  = def_4(i,k,ntqv)
                   def4q(i,k,2)  = def_4(i,k,ntcw)
                   def4q(i,k,3)  = def_4(i,k,ntiw)
@@ -325,7 +334,7 @@
               vdftra(i,k,5) = qgrs(i,k,ntsw)
               vdftra(i,k,6) = qgrs(i,k,ntgl)
               vdftra(i,k,7) = qgrs(i,k,ntoz)
-              if(sa3dtke) then
+              if(sa3dtke .and. hdiffq) then
                 def4q(i,k,1) = def_4(i,k,ntqv)
                 def4q(i,k,2) = def_4(i,k,ntcw)
                 def4q(i,k,3) = def_4(i,k,ntiw)
@@ -358,7 +367,7 @@
                 vdftra(i,k,14) = qgrs(i,k,ntgv)
                 vdftra(i,k,15) = qgrs(i,k,nthv)
                 vdftra(i,k,16) = qgrs(i,k,ntoz)
-                if(sa3dtke) then
+                if(sa3dtke .and. hdiffq) then
                   def4q(i,k,1)  = def_4(i,k,ntqv)
                   def4q(i,k,2)  = def_4(i,k,ntcw)
                   def4q(i,k,3)  = def_4(i,k,ntiw)
@@ -379,7 +388,7 @@
                 n = 16
                 IF ( nssl_ccn_on ) THEN
                  vdftra(i,k,n+1)  = qgrs(i,k,ntccn)
-                 if(sa3dtke) then
+                 if(sa3dtke .and. hdiffq) then
                    def4q(i,k,n+1)  = def_4(i,k,ntccn)
                  endif
                  n = n+1
@@ -388,7 +397,7 @@
                  vdftra(i,k,n+1)  = qgrs(i,k,ntrz)
                  vdftra(i,k,n+2)  = qgrs(i,k,ntgz)
                  vdftra(i,k,n+3)  = qgrs(i,k,nthz)
-                 if(sa3dtke) then
+                 if(sa3dtke .and. hdiffq) then
                    def4q(i,k,n+1)  = def_4(i,k,ntrz)
                    def4q(i,k,n+2)  = def_4(i,k,ntgz)
                    def4q(i,k,n+3)  = def_4(i,k,nthz)
@@ -415,7 +424,7 @@
                 vdftra(i,k,11) = qgrs(i,k,ntgnc)
                 vdftra(i,k,12) = qgrs(i,k,ntgv)
                 vdftra(i,k,13) = qgrs(i,k,ntoz)
-                if(sa3dtke) then
+                if(sa3dtke .and. hdiffq) then
                   def4q(i,k,1)  = def_4(i,k,ntqv)
                   def4q(i,k,2)  = def_4(i,k,ntcw)
                   def4q(i,k,3)  = def_4(i,k,ntiw)
@@ -433,7 +442,7 @@
                  n = 13
                 IF ( nssl_ccn_on ) THEN
                  vdftra(i,k,n+1) = qgrs(i,k,ntccn)
-                 if(sa3dtke) then
+                 if(sa3dtke .and. hdiffq) then
                    def4q(i,k,n+1) = def_4(i,k,ntccn)
                  endif
                  n = n+1
@@ -441,7 +450,7 @@
                 IF ( nssl_3moment ) THEN
                  vdftra(i,k,n+1) = qgrs(i,k,ntrz)
                  vdftra(i,k,n+2) = qgrs(i,k,ntgz)
-                 if(sa3dtke) then
+                 if(sa3dtke .and. hdiffq) then
                    def4q(i,k,n+1) = def_4(i,k,ntrz)
                    def4q(i,k,n+2) = def_4(i,k,ntgz)
                  endif
@@ -471,7 +480,7 @@
             do k=1,levs
               do i=1,im
                 vdftra(i,k,k1) = qgrs(i,k,n)
-                if(sa3dtke) then
+                if(sa3dtke .and. hdiffq) then
                   def4q(i,k,k1) = def_4(i,k,n)
                 endif
               enddo

@@ -524,6 +524,13 @@
   dimensions = ()
   type = logical
   intent = in
+[hdiffq]
+  standard_name = do_horizontal_turbulent_eddy_diffusion_on_scalar_fields
+  long_name = flag for horizontal turbulent eddy diffusion on scalar fields
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
 [dusfc]
   standard_name = instantaneous_surface_x_momentum_flux
   long_name = x momentum flux

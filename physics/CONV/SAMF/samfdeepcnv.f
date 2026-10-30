@@ -76,7 +76,7 @@
 !!  \section samfdeep_detailed GFS samfdeepcnv Detailed Algorithm
       subroutine samfdeepcnv_run (im,km,nn,first_time_step,restart,     &
      &    tmf,qmicro,itc,ntc,cliq,cp,cvap,                              &
-     &    eps,epsm1,fv,grav,hvap,rd,rv,                                 &
+     &    eps,epsm1,fv,grav,hvap,hfus,rd,rv,                            &
      &    t0c,delt,ntk,ntr,delp, ten_t, ten_u, ten_v, ten_q,            &
      &    prslp,psp,phil,tkeh,qtr,dqtr,prevsq,q,q1,t1,u1,v1,fscav,      &
 !The following variables are for Leonard term
@@ -101,7 +101,7 @@
       integer, intent(in)  :: im, km, nn, itc, ntc, ntk, ntr, ncloud
       integer, intent(in)  :: islimsk(:)
       real(kind=kind_phys), intent(in) :: cliq, cp, cvap, eps,          
-     &   epsm1, fv, grav, hvap, rd, rv, t0c
+     &   epsm1, fv, grav, hvap, hfus, rd, rv, t0c
       real(kind=kind_phys), intent(in) ::  delt, cscale
       real(kind=kind_phys), intent(in) :: psp(:), delp(:,:),            
      &   prslp(:,:),  garea(:), hpbl(:), dot(:,:), phil(:,:) 
@@ -338,7 +338,7 @@ c  cloud water
       real(kind=conv_wp) rrkp, phkp
       real(kind=conv_wp) tsumn(im), tsump(im), rtnp(im)
 !
-      logical do_aerosols, totflg, cnvflg(im), asqecflg(im), flg(im)
+      logical do_aerosols, cnvflg(im), asqecflg(im), flg(im)
 !
 !    asqecflg: flag for the quasi-equilibrium assumption of Arakawa-Schubert
 !
@@ -378,6 +378,13 @@ c    &            .743,.813,.886,.947,1.138,1.377,1.896/
       ! Initialize CCPP error handling variables
       errmsg = ''
       errflg = 0
+!
+      if(coldpool .and. do_ca) then
+        write(errmsg,'(*(a))') 'Currently both are not allowed to be enabled;', 
+     &    ' select one or the other'
+           errflg = 1
+        return
+      endif
 
       gravinv = 1.0_conv_wp/real(grav, kind=conv_wp)
       invdelt = 1.0_conv_wp/real(delt, kind=conv_wp)
@@ -1096,15 +1103,6 @@ c
       do i=1,im
         if(kbcon(i) == kmax(i)) cnvflg(i) = .false.
       enddo
-!!
-      if(.not.progomega .or. .not.coldpool)then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
 !
 !  if wgke is less than subcloud convective inhibition (cina), no cold pool trigger
 !
@@ -1201,14 +1199,6 @@ c
             if(kbcon(i) == kmax(i)) cnvflg(i) = .false.
          enddo
       endif
-
-      if(.not.progomega .or. .not.coldpool)then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !!
 !
 ! re-define kb & kbcon
@@ -1267,14 +1257,6 @@ c
             if(kbcon(i) == kmax(i)) cnvflg(i) = .false.
          enddo
       endif
-
-      if(.not.progomega .or. .not.coldpool)then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !!
       do i=1,im
         if(cnvflg(i)) then
@@ -1317,16 +1299,7 @@ c
             if(kbcon(i) == kmax(i)) cnvflg(i) = .false.
          enddo
       endif
-!!
-      if(.not.progomega .or. .not.coldpool)then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
-
+!
 ! turbulent entrainment rate assumed to be proportional
 !   to subcloud mean TKE
 !
@@ -1428,21 +1401,6 @@ c
         enddo
 !
       endif !(.not. hwrf_samfdeep .and. ntk > 0)
-!
-!  also initially assume updraft entrainment rate
-!     is an inverse function of height
-!
-      do k = 1, km1
-        do i=1,im
-          if(cnvflg(i)) then
-            dz =zo(i,k+1) - zo(i,k)
-            xlamue(i,k) = clamt(i) / (zi(i,k) + dz)
-!           xlamue(i,k) = max(xlamue(i,k), crtlame)
-            tem = 0.001_conv_wp * clamt(i)
-            xlamue(i,k) = max(xlamue(i,k), tem)
-          endif
-        enddo
-      enddo
 c
 c  assume that updraft entrainment rate above cloud base is
 c    same as that at cloud base
@@ -1466,6 +1424,27 @@ c
          endif
        enddo
       enddo
+!
+      else
+!
+!  initially assume updraft entrainment rate
+!     is an inverse function of height
+!
+      do i=1,im
+       if(cnvflg(i)) then
+         xlamx(i) = 0.001_conv_wp * clamt(i)
+       endif
+      enddo
+      do k = 1, km1
+        do i=1,im
+          if(cnvflg(i)) then
+            dz =zo(i,k+1) - zo(i,k)
+            xlamue(i,k) = clamt(i) / (zi(i,k) + dz)
+!           xlamue(i,k) = max(xlamue(i,k), crtlame)
+            xlamue(i,k) = max(xlamue(i,k), xlamx(i))
+          endif
+        enddo
+      enddo
       endif
 c
 c  specify detrainment rate for the updrafts
@@ -1486,7 +1465,7 @@ c
         do i=1,im
           if(cnvflg(i) .and. k < kmax(i)) then
 !               xlamud(i,k) = crtlamd
-                xlamud(i,k) = 0.001_conv_wp * clamt(i)
+                xlamud(i,k) = xlamx(i)
           endif
         enddo
        enddo
@@ -1682,7 +1661,7 @@ c
                    chem_c(i,k,n) = real(fscav(n), kind=conv_wp)
      &                           * ecko(i,k,kk)
                    tem = chem_c(i,k,n) / (1.0_conv_wp + c0t(i,k) * dz)
-                   chem_pw(i,k,n) = c0t(i,k) * dz * tem * eta(i,k-1)
+                   chem_pw(i,k,n) = c0t(i,k) * dz * tem * eta(i,k)
                    ecko(i,k,kk) = tem + ecko(i,k,kk) - chem_c(i,k,n)
                  endif
                endif
@@ -1750,15 +1729,6 @@ c
             if(kbcon(i) == kmax(i)) cnvflg(i) = .false.
          enddo
       endif
-!!
-      if(.not.progomega .or. .not.coldpool)then
-         totflg = .true.
-         do i = 1, im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
 c
 c  calculate convective inhibition
 c
@@ -1841,15 +1811,6 @@ c
             if(kbcon(i) == kmax(i)) cnvflg(i) = .false.
          enddo
       endif
-!!
-      if(.not.progomega .or. .not.coldpool)then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
 c
 c  determine first guess cloud top as the level of zero buoyancy
 c
@@ -1886,16 +1847,6 @@ c
             if(kbcon(i) == kmax(i)) cnvflg(i) = .false.
          enddo
       endif
-!!
-      if(.not.progomega .or. .not.coldpool)then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
-
 c
 c  search for downdraft originating level above theta-e minimum
 c
@@ -2094,15 +2045,6 @@ c
       do i = 1, im
         if(cnvflg(i) .and. aa1(i) <= 0.0_conv_wp) cnvflg(i) = .false.
       enddo
-!!
-      if(.not.progomega .or. .not.coldpool)then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
 c
 c  Estimate the convective overshooting as the level
 c    where the [aafac * cloud work function] becomes zero,
@@ -2735,15 +2677,6 @@ c
            cnvflg(i) = .false.
         endif
       enddo
-!!
-      if(.not.coldpool)then
-        totflg = .true.
-        do i=1,im
-          totflg = totflg .and. (.not. cnvflg(i))
-        enddo
-        if(totflg) return
-      endif
-!!
 c
 c--- what would the change be, that a cloud with unit mass
 c--- will do to the environment?
@@ -2965,17 +2898,24 @@ c
               flxtvd(i,k) = 0.0_conv_wp
             endif
 !
-! subtract the double counting change rates at jmin+1 & kb beforehand
+! the flux at kb and jmin carries qo, as the updraft and downdraft do
+!
+            if(k == kb(i)) flxtvd(i,k) = flxtvd(i,k)
+     &         + eta(i,k) * (qo(i,k) - tem1)
+            if(k == jmin(i)) flxtvd(i,k) = flxtvd(i,k)
+     &         - edto(i) * etad(i,k) * (qo(i,k) - tem1)
+!
+! to make the change rates at jmin+1 & kb be zero
 !
             if(k == jmin(i)) then
               dp = 1000.0_conv_wp * del(i,k+1)
               dellaq(i,k+1) = dellaq(i,k+1) - edto(i)
-     &                 * etad(i,k) * tem1 * real(grav, kind=conv_wp)/dp
+     &                 * etad(i,k) * qo(i,k) * real(grav, kind=conv_wp)/dp
             endif
             if(k == kb(i)) then
               dp = 1000.0_conv_wp * del(i,k)
               dellaq(i,k) = dellaq(i,k) -
-     &            eta(i,k) * tem1 * real(grav, kind=conv_wp)/dp
+     &            eta(i,k) * qo(i,k) * real(grav, kind=conv_wp)/dp
             endif
 !
           endif
@@ -3049,17 +2989,24 @@ c
                 flxtvd(i,k) = 0.0_conv_wp
               endif
 !
-! subtract the double counting change rates at jmin+1 & kb beforehand
+! the flux at kb and jmin carries ctro, as the updraft and downdraft do
+!
+             if(k == kb(i)) flxtvd(i,k) = flxtvd(i,k)
+     &           + eta(i,k) * (ctro(i,k,n) - tem1)
+             if(k == jmin(i)) flxtvd(i,k) = flxtvd(i,k)
+     &           - edto(i) * etad(i,k) * (ctro(i,k,n) - tem1)
+!
+! to make the change rates at jmin+1 & kb be zero
 !
               if(k == jmin(i)) then
                 dp = 1000.0_conv_wp * del(i,k+1)
                 dellae(i,k+1,n) = dellae(i,k+1,n) - edto(i)
-     &               *etad(i,k) * tem1 * real(grav, kind=conv_wp)/dp
+     &               *etad(i,k) * ctro(i,k,n) * real(grav, kind=conv_wp)/dp
               endif
               if(k == kb(i)) then
                 dp = 1000.0_conv_wp * del(i,k)
                 dellae(i,k,n) = dellae(i,k,n) -
-     &              eta(i,k) * tem1 * real(grav, kind=conv_wp)/dp
+     &              eta(i,k) * ctro(i,k,n) * real(grav, kind=conv_wp)/dp
               endif
 !
             endif
@@ -3645,15 +3592,6 @@ c
           xmb(i) = -advfac(i) * fld(i) / xk(i)
         endif
       enddo
-!!
-      if(.not.coldpool)then
-        totflg = .true.
-        do i=1,im
-          totflg = totflg .and. (.not. cnvflg(i))
-        enddo
-        if(totflg) return
-      endif
-!!
 !
 !> - For scale-aware parameterization, the updraft fraction (sigmagfm) is first computed as a function of the lateral entrainment rate at cloud base (see Han et al.'s (2017) \cite han_et_al_2017 equation 4 and 5), following the study by Grell and Freitas (2014) \cite grell_and_freitas_2014.
       do i = 1, im
@@ -3951,9 +3889,9 @@ c
                       wet_dep(i,k,n) = wet_dep(i,k,n) - tem
                       new_qtr(i,k,kk) = 0.0_conv_wp
                     else
-                      wet_dep(i,k,n) = 0.0_conv_wp
                       new_qtr(i,k,kk) = new_qtr(i,k,kk)
      &                                + wet_dep(i,k,n) / dp
+                      wet_dep(i,k,n) = 0.0_conv_wp
                     endif
                   endif
                 endif
@@ -4251,6 +4189,9 @@ c
      &               (tcr - new_t1(i,k)) * tcrf))
               if (new_qtr(i,k,2) > -999.0_conv_wp) then
                 new_qtr(i,k,1) = new_qtr(i,k,1) + tem * tem1  ! ice
+!               heat of fusion of the frozen part
+                new_t1(i,k) = new_t1(i,k) + (real(hfus, kind=conv_wp)
+     &                      / real(cp, kind=conv_wp)) * tem * tem1
                 new_qtr(i,k,2) = new_qtr(i,k,2) + tem * (1.0_conv_wp
      &                         - tem1) ! water
               else
