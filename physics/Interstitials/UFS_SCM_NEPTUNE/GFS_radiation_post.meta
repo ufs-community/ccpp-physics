@@ -2,8 +2,8 @@
   name = GFS_radiation_post
   type = scheme
   dependencies_path	= ../../
-  dependencies = hooks/machine.F,Radiation/RRTMG/iounitdef.f,Radiation/radiation_aerosols.f
-  dependencies = Radiation/RRTMG/radlw_param.f,Radiation/radiation_tools.F90
+  dependencies = hooks/machine.F,Radiation/RRTMG/iounitdef.F90,Radiation/radiation_aerosols.F90
+  dependencies = Radiation/RRTMG/radlw_param.F90,Radiation/radiation_tools.F90
   dependencies = Radiation/RRTMGP/rte-rrtmgp/rrtmgp/kernels/mo_cloud_optics_rrtmgp_kernels.F90
   dependencies = Radiation/RRTMGP/rte-rrtmgp/rrtmgp/kernels/mo_gas_optics_rrtmgp_kernels.F90
   dependencies = Radiation/RRTMGP/rte-rrtmgp/rte/frontend/gas-optics-template/mo_gas_optics.F90
