@@ -2869,7 +2869,7 @@ c
              ptem      = qcko(i,k,1) + qcko(i,k+1,1)
              f2(i,k)   = f2(i,k) - ptem * ptem1
              f2(i,k+1) = q1(i,k+1,1) + ptem * ptem2
-             if(sa3dtke .and. hdiffq)) then
+             if(sa3dtke .and. hdiffq) then
                f2(i,k+1) = f2(i,k+1) + def4q(i,k+1,1)*dt2
              endif
           else
@@ -2927,11 +2927,11 @@ c
                 ptem  = qcko(i,k,n) + qcko(i,k+1,n)
                 f2(i,k+is) = f2(i,k+is) - ptem * ptem1
                 f2(i,k+1+is)= q1(i,k+1,n) + ptem * ptem2
-                if(sa3dtke .and. hdiffq)) then
+                if(sa3dtke .and. hdiffq) then
                   f2(i,k+1+is)=f2(i,k+1+is)+def4q(i,k+1,n)*dt2
                 endif
               else
-                if(sa3dtke .and. hdiffq)) then
+                if(sa3dtke .and. hdiffq) then
                   f2(i,k+1+is)=q1(i,k+1,n)+def4q(i,k+1,n)*dt2
                 else
                   f2(i,k+1+is)=q1(i,k+1,n)
