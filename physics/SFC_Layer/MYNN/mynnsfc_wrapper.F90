@@ -116,7 +116,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
 ! should be moved to inside the mynn:
       use machine , only : kind_phys
       use module_sf_mynnsfc_common, only: cp, grav, r_d, r_v, rcp, xlv, &
-         xlf, ep_2, ep_3, g_inv, p608, karman, zero
+         xlf, ep_2, ep_3, g_inv, p608, karman, zero, one
       use module_sf_mynnsfc_driver, only: mynnsfc_driver
 
 !      USE module_sf_mynn, only : SFCLAY_mynn
@@ -381,7 +381,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  FLQC=flqc(i:i),QGH=qgh(i:i),U10=u10(i:i),V10=v10(i:i),TH2=th2(i:i),T2=t2(i:i),         &
                  Q2=q2(i:i),GZ1OZ0=GZ1OZ0(i:i),WSPD=wspd(i:i),                                          &
                  uoce=uoce(1),voce=voce(1),                                                             &
-                 lakemask=lakemask(1),xice=fice(i:i)                                                    &
+                 lakemask=lakemask(1),xice=fice(i:i),                                                   &
                  spp_pbl=spp_sfc,pattern_spp_pbl=spp_col,                                               &
                  ids=1,ide=1, jds=1,jde=1, kds=1,kde=levs,                                              &
                  ims=1,ime=1, jms=1,jme=1, kms=1,kme=levs,                                              &
