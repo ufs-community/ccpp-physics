@@ -221,6 +221,17 @@ SUBROUTINE mynnsfc_wrapper_run(            &
       real,parameter:: snow_thresh = 50 !50 mm, needs to be consistent with the mynnsfc_driver
       logical :: ice_phys(1)
       real(kind_phys) :: uoce(1), voce(1), znt_wav(1), lakemask(1)
+
+!$acc enter data create(hfx, znt, psim, psih, chs,          &
+!$acc                   mavail, xland, GZ1OZ0, cpm, qgh,    &
+!$acc                   qfx, snowh_wat)
+
+!$acc enter data create(dz, th, qv)
+
+!$acc enter data copyin(rmol, phii, t3d, exner, qvsh, slmsk, xland)
+
+!$acc enter data copyin(dry, wet, icy, znt_lnd, znt_wat, znt_ice, qsfc_lnd, qsfc_ice, qsfc_lnd_ruc, qsfc_ice_ruc)
+
       ! Initialize CCPP error handling variables
       errmsg = ''
       errflg = 0
@@ -233,6 +244,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
 !         write(0,*)"iter=",iter
 !      endif
 
+!$acc kernels
       ! prep MYNN-only variables
       dz(:,:) = zero
       th(:,:) = zero
@@ -241,6 +253,9 @@ SUBROUTINE mynnsfc_wrapper_run(            &
       qfx(:)  = zero
       rmol(:) = zero
       if (spp_sfc == 0) spp_col(:) = zero
+!$acc end kernels
+
+!$acc parallel loop collapse(2) present(dz, phii, th, t3d, exner, qv, qvsh)
       do k=1,2 !levs
         do i=1,im
            dz(i,k)=(phii(i,k+1) - phii(i,k))*g_inv
@@ -250,6 +265,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
         enddo
       enddo
 
+!$acc parallel loop present(slmsk, xland, qgh, mavail, cpm, snowh_wat)
       do i=1,im
           if (slmsk(i)==1. .or. slmsk(i)==2.)then !sea/land/ice mask (=0/1/2) in FV3
             xland(i)=1.0                          !but land/water = (1/2) in SFCLAY_mynn
@@ -266,6 +282,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
           snowh_wat(i) = zero
       enddo
 
+!$acc kernels
       ! cm -> m
       where (dry) znt_lnd=znt_lnd*0.01
       where (wet) znt_wat=znt_wat*0.01
@@ -446,11 +463,15 @@ SUBROUTINE mynnsfc_wrapper_run(            &
         !   znt_ice(i)=znt_ice(i)*100.
         !enddo
 
+!$acc kernels
         ! m -> cm
         where (dry) znt_lnd=znt_lnd*100.
         where (wet) znt_wat=znt_wat*100.
         where (icy) znt_ice=znt_ice*100.
+!$acc end kernels
 
+!$acc exit data delete(dry, wet, icy)
+!$acc exit data copyout(znt_lnd, znt_wat, znt_ice)
 !      if (lprnt) then
 !         write(0,*)
 !         write(0,*)"finished with mynn_surface layer; output:"
