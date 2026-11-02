@@ -108,6 +108,8 @@ SUBROUTINE mynnsfc_wrapper_run(            &
      &  wstar, CHS2, CQS2,                 &
      &  spp_wts_sfc, spp_sfc,              &
      &  use_oceanuv, usfco, vsfco,         &
+     &  cplwav2atm, zorlwav,               &
+     &  lakefrac, fice,                    &
      &  lprnt, errmsg, errflg              )
 
 
@@ -147,6 +149,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
       logical, intent(in) :: redrag ! reduced drag coeff. flag for high wind over sea (j.han)
       integer, intent(in) :: spp_sfc ! flag for using SPP perturbations
       logical, intent(in) :: use_oceanuv ! flag for including ocean current in the computation of air_sea fluxes
+      logical, intent(in) :: cplwav2atm ! flag controlling ocean wave coupling to the atmosphere
       real(kind_phys), intent(in) :: delt
 
 !Input data
@@ -183,6 +186,8 @@ SUBROUTINE mynnsfc_wrapper_run(            &
      &                     hflx_wat,  hflx_lnd,  hflx_ice,  &
      &                     qflx_wat,  qflx_lnd,  qflx_ice,  &
      &                     qsfc_wat,  qsfc_lnd,  qsfc_ice
+      real(kind_phys), dimension(:), intent(in)    ::       &
+              usfco, vsfco, zorlwav, lakefrac, fice
 
 !MYNN-2D
       real(kind_phys), dimension(:), intent(in)    ::       &
@@ -196,8 +201,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
      &        rmol, ch,   pblh
       real(kind_phys), dimension(:), intent(inout), optional :: &
      &        ustm, zol, mol, lh, wstar, CHS2, CQS2
-      real(kind_phys), dimension(:), intent(in)    ::       &
-              usfco, vsfco
+
       !LOCAL
       real(kind_phys), dimension(im) ::                     &
      &        hfx, znt, psim, psih,                         &
@@ -214,7 +218,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
      &            ITS,ITE,JTS,JTE,KTS,KTE
       real,parameter:: snow_thresh = 50 !50 mm, needs to be consistent with the mynnsfc_driver
       logical :: ice_phys(1)
-      real(kind_phys) :: uoce(1), voce(1)
+      real(kind_phys) :: uoce(1), voce(1), znt_wav(1), lakemask(1)
       ! Initialize CCPP error handling variables
       errmsg = ''
       errflg = 0
@@ -350,6 +354,12 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                 uoce(1) = zero
                 voce(1) = zero
             endif
+            if (cplwav2atm) then
+                znt_wav(1)=zorlwav(i)*0.01
+            else
+                znt_wav(1)=zero
+            endif
+            lakemask(1)=merge(one, zero, lakefrac(i) > zero)
             CALL mynnsfc_driver(                                                                        &
                  u3d=u(i,:),v3d=v(i,:),t3d=t3d(i,:),qv3d=qv(i,:),p3d=prsl(i,:),dz8w=dz(i,:),            &
                  th3d=th(i,:),rho3d=rho3d(i,:),                                                         &
@@ -370,7 +380,8 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  psim=psim(i:i),psih=psih(i:i),HFX=hfx(i:i),QFX=qfx(i:i),LH=lh(i:i),FLHC=flhc(i:i),     &
                  FLQC=flqc(i:i),QGH=qgh(i:i),U10=u10(i:i),V10=v10(i:i),TH2=th2(i:i),T2=t2(i:i),         &
                  Q2=q2(i:i),GZ1OZ0=GZ1OZ0(i:i),WSPD=wspd(i:i),                                          &
-                 uoce=uoce,voce=voce,                                                                   &
+                 uoce=uoce(1),voce=voce(1),                                                             &
+                 lakemask=lakemask(1),xice=fice(i:i)                                                    &
                  spp_pbl=spp_sfc,pattern_spp_pbl=spp_col,                                               &
                  ids=1,ide=1, jds=1,jde=1, kds=1,kde=levs,                                              &
                  ims=1,ime=1, jms=1,jme=1, kms=1,kme=levs,                                              &

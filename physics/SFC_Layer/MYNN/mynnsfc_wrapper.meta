@@ -168,6 +168,12 @@
   dimensions = ()
   type = logical
   intent = in
+[cplwav2atm]
+  standard_name = flag_for_one_way_ocean_wave_coupling_to_atmosphere
+  long_name = flag controlling ocean wave coupling to the atmosphere (default off)
+  units = flag
+  dimensions = ()
+  type = logical
 [lsm]
   standard_name = control_for_land_surface_scheme
   long_name = flag for land surface model
@@ -185,6 +191,22 @@
 [sigmaf]
   standard_name = bounded_vegetation_area_fraction
   long_name = areal fractional cover of green vegetation bounded on the bottom
+  units = frac
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
+[lakefrac]
+  standard_name = lake_area_fraction
+  long_name = fraction of horizontal grid area occupied by lake
+  units = frac
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
+[fice]
+  standard_name = sea_ice_area_fraction_of_sea_area_fraction
+  long_name = ice fraction over open water
   units = frac
   dimensions = (horizontal_dimension)
   type = real
@@ -246,7 +268,7 @@
   standard_name = x_ocean_current
   long_name = zonal current at ocean surface
   units = m s-1
-  dimensions = (horizontal_loop_extent)
+  dimensions = (horizontal_dimension)
   type = real
   kind = kind_phys
   intent = in
@@ -254,7 +276,7 @@
   standard_name = y_ocean_current
   long_name = meridional current at ocean surface
   units = m s-1
-  dimensions = (horizontal_loop_extent)
+  dimensions = (horizontal_dimension)
   type = real
   kind = kind_phys
   intent = in
@@ -516,6 +538,14 @@
   type = real
   kind = kind_phys
   intent = inout
+[zorlwav]
+  standard_name = surface_roughness_length_from_wave_model
+  long_name = surface roughness length from wave model
+  units = cm
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
 [ust_wat]
   standard_name = surface_friction_velocity_over_water
   long_name = surface friction velocity over water
