@@ -22,7 +22,7 @@
            con_xlf, con_ep2, con_karman, con_p608, errmsg, errflg)
 
          use machine,  only : kind_phys
-         use module_sf_mynnsfc_common only: cp, grav, r_d, r_v,  &
+         use module_sf_mynnsfc_common, only: cp, grav, r_d, r_v, &
             rcp, xlv, xlf, ep_2, ep_3, karman, p608, g_inv,      &
             rvovrd
 
@@ -112,6 +112,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
      &  use_oceanuv, usfco, vsfco,         &
      &  cplwav2atm, zorlwav,               &
      &  lakefrac, fice,                    &
+     &  ztmax_wat, ztmax_lnd, ztmax_ice,   &  !intent(inout)
      &  lprnt, errmsg, errflg              )
 
 
@@ -187,7 +188,8 @@ SUBROUTINE mynnsfc_wrapper_run(            &
      &                      fh2_wat,   fh2_lnd,   fh2_ice,  &
      &                     hflx_wat,  hflx_lnd,  hflx_ice,  &
      &                     qflx_wat,  qflx_lnd,  qflx_ice,  &
-     &                     qsfc_wat,  qsfc_lnd,  qsfc_ice
+     &                     qsfc_wat,  qsfc_lnd,  qsfc_ice,  &
+     &                    ztmax_wat, ztmax_lnd, ztmax_ice
       real(kind_phys), dimension(:), intent(in)    ::       &
               usfco, vsfco, zorlwav, lakefrac, fice
 
@@ -218,9 +220,10 @@ SUBROUTINE mynnsfc_wrapper_run(            &
       INTEGER :: IDS,IDE,JDS,JDE,KDS,KDE,                   &
      &            IMS,IME,JMS,JME,KMS,KME,                  &
      &            ITS,ITE,JTS,JTE,KTS,KTE
-      real,parameter:: snow_thresh = 50 !50 mm, needs to be consistent with the mynnsfc_driver
-      logical :: ice_phys(1)
-      real(kind_phys) :: uoce(1), voce(1), znt_wav(1), lakemask(1)
+      real(kind_phys),parameter:: snow_thresh = 50.0_kind_phys !50 mm, needs to be consistent with the mynnsfc_driver
+      logical :: ice_phys(1),land_phys(1)
+      real(kind_phys) :: uoce(1), voce(1), znt_wav(1), lakemask(1), zt(1)
+      real(kind_phys),parameter:: ztmin = 1.0e-6_kind_phys ! from sfcf_diff.f90
 
 !$acc enter data create(hfx, znt, psim, psih, chs,          &
 !$acc                   mavail, xland, GZ1OZ0, cpm, qgh,    &
@@ -332,11 +335,18 @@ SUBROUTINE mynnsfc_wrapper_run(            &
 
       do i=1,im      
         if (.not. flag_iter(i)) cycle
+
+        ! Need to initialize ztmax arrays
+        ztmax_lnd(i) = one ! log(1) = 0
+        ztmax_ice(i) = one ! log(1) = 0
+        ztmax_wat(i) = one ! log(1) = 0
+
         if (spp_sfc == 1) spp_col(:) = spp_wts_sfc(i,:)
         rho3d(i,:) = prsl(i,:)/(r_d*t3d(i,:)*(1.+p608*max(qvsh(i,:),1e-8)))
 
         if (dry(i)) then
-            ice_phys(1) = snowh_lnd(i) >= snow_thresh
+            ice_phys (1) = snowh_lnd(i) >= snow_thresh
+            land_phys(1) = .not. ice_phys(1)
             CALL mynnsfc_driver(                                                                        &
                  u3d=u(i,:),v3d=v(i,:),t3d=t3d(i,:),qv3d=qv(i,:),p3d=prsl(i,:),dz8w=dz(i,:),            &
                  th3d=th(i,:),rho3d=rho3d(i,:),                                                         &
@@ -347,7 +357,7 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  z0pert=z0pert(i:i),ztpert=ztpert(i:i),                                                 &  !intent(in)
                  redrag=redrag,sfc_z0_type=sfc_z0_type,                                                 &  !intent(in)
                  itimestep=itimestep,iter=iter,                                                         &  !intent(in)
-                 restart=flag_restart,dry=dry(i:i),icy=ice_phys,                                        &  !intent(in)
+                 restart=flag_restart,dry=land_phys,icy=ice_phys,                                        &  !intent(in)
                  tsk=tskin_lnd(i:i),tsurf=tsurf_lnd(i:i),qsfc=qsfc_lnd(i:i),                            &
                  snowh=snowh_lnd(i:i)*0.001_kind_phys,                                                  &
                  znt=znt_lnd(i:i),ust=ust_lnd(i:i),cm=cm_lnd(i:i),ch=ch_lnd(i:i),br=rb_lnd(i:i),        &  !intent(inout)
@@ -356,13 +366,14 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  CQS2=cqs2(i:i),CPM=cpm(i:i),USTM=ustm(i:i),ZOL=zol(i:i),MOL=mol(i:i),RMOL=rmol(i:i),   &
                  psim=psim(i:i),psih=psih(i:i),HFX=hfx(i:i),QFX=qfx(i:i),LH=lh(i:i),FLHC=flhc(i:i),     &
                  FLQC=flqc(i:i),QGH=qgh(i:i),U10=u10(i:i),V10=v10(i:i),TH2=th2(i:i),T2=t2(i:i),         &
-                 Q2=q2(i:i),GZ1OZ0=GZ1OZ0(i:i),WSPD=wspd(i:i),                                          &
+                 Q2=q2(i:i),GZ1OZ0=GZ1OZ0(i:i),WSPD=wspd(i:i), zt=zt,                                   &
                  spp_pbl=spp_sfc,pattern_spp_pbl=spp_col,                                               &
                  ids=1,ide=1, jds=1,jde=1, kds=1,kde=levs,                                              &
                  ims=1,ime=1, jms=1,jme=1, kms=1,kme=levs,                                              &
                  its=1,ite=1, jts=1,jte=1, kts=1,kte=levs,                                              &
                  errmsg=errmsg, errflg=errflg                                     )
             if (errflg/=0) return
+            ztmax_lnd(i)=max(zt(1),ztmin)
         endif
 
         if (wet(i)) then
@@ -399,14 +410,15 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  psim=psim(i:i),psih=psih(i:i),HFX=hfx(i:i),QFX=qfx(i:i),LH=lh(i:i),FLHC=flhc(i:i),     &
                  FLQC=flqc(i:i),QGH=qgh(i:i),U10=u10(i:i),V10=v10(i:i),TH2=th2(i:i),T2=t2(i:i),         &
                  Q2=q2(i:i),GZ1OZ0=GZ1OZ0(i:i),WSPD=wspd(i:i),                                          &
-                 uoce=uoce(1),voce=voce(1),                                                             &
-                 lakemask=lakemask(1),xice=fice(i:i),                                                   &
+                 uoce=uoce,voce=voce,                                                                   &
+                 lakemask=lakemask,xice=fice(i:i),znt_wav=zorlwav,zt=zt,                                &
                  spp_pbl=spp_sfc,pattern_spp_pbl=spp_col,                                               &
                  ids=1,ide=1, jds=1,jde=1, kds=1,kde=levs,                                              &
                  ims=1,ime=1, jms=1,jme=1, kms=1,kme=levs,                                              &
                  its=1,ite=1, jts=1,jte=1, kts=1,kte=levs,                                              &
                  errmsg=errmsg, errflg=errflg                                     )
             if (errflg/=0) return
+            ztmax_wat(i)=max(zt(1),ztmin)
         endif
 
         if (icy(i)) then
@@ -429,13 +441,14 @@ SUBROUTINE mynnsfc_wrapper_run(            &
                  CQS2=cqs2(i:i),CPM=cpm(i:i),USTM=ustm(i:i),ZOL=zol(i:i),MOL=mol(i:i),RMOL=rmol(i:i),   &
                  psim=psim(i:i),psih=psih(i:i),HFX=hfx(i:i),QFX=qfx(i:i),LH=lh(i:i),FLHC=flhc(i:i),     &
                  FLQC=flqc(i:i),QGH=qgh(i:i),U10=u10(i:i),V10=v10(i:i),TH2=th2(i:i),T2=t2(i:i),         &
-                 Q2=q2(i:i),GZ1OZ0=GZ1OZ0(i:i),WSPD=wspd(i:i),                                          &
+                 Q2=q2(i:i),GZ1OZ0=GZ1OZ0(i:i),WSPD=wspd(i:i), zt=zt,                                   &
                  spp_pbl=spp_sfc,pattern_spp_pbl=spp_col,                                               &
                  ids=1,ide=1, jds=1,jde=1, kds=1,kde=levs,                                              &
                  ims=1,ime=1, jms=1,jme=1, kms=1,kme=levs,                                              &
                  its=1,ite=1, jts=1,jte=1, kts=1,kte=levs,                                              &
                  errmsg=errmsg, errflg=errflg                                     )
             if (errflg/=0) return
+            ztmax_ice(i)=max(zt(1),ztmin)
         endif
     enddo
 !$acc exit data delete(hfx, znt, psim, psih, chs,          &
