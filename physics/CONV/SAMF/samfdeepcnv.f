@@ -380,9 +380,9 @@ c    &            .743,.813,.886,.947,1.138,1.377,1.896/
       errflg = 0
 !
       if(coldpool .and. do_ca) then
-        write(errmsg,'(*(a))') 'Currently both are not allowed to be enabled;', 
+        print*,'Currently both are not allowed to be enabled;', 
      &    ' select one or the other'
-           errflg = 1
+        errflg = 1
         return
       endif
 
@@ -2909,8 +2909,8 @@ c
 !
             if(k == jmin(i)) then
               dp = 1000.0_conv_wp * del(i,k+1)
-              dellaq(i,k+1) = dellaq(i,k+1) - edto(i)
-     &                 * etad(i,k) * qo(i,k) * real(grav, kind=conv_wp)/dp
+              dellaq(i,k+1) = dellaq(i,k+1) - edto(i) *
+     &            etad(i,k) * qo(i,k) * real(grav, kind=conv_wp)/dp
             endif
             if(k == kb(i)) then
               dp = 1000.0_conv_wp * del(i,k)

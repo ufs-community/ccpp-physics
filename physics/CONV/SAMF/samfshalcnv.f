@@ -986,8 +986,11 @@ c
           if(cnvflg(i)) then
             dz = zo(i,k+1) - zo(i,k)
             xlamue(i,k) = clamt(i) / (zi(i,k) + dz)
-!           xlamue(i,k) = max(xlamue(i,k), crtlame)
-            xlamue(i,k) = max(xlamue(i,k), xlamx(i))
+            if(k <= kbcon(i)) then
+              xlamue(i,k) = max(xlamue(i,k), xlamx(i))
+            else
+              xlamue(i,k) = min(xlamue(i,k), xlamx(i))
+            endif
           endif
         enddo
       enddo
