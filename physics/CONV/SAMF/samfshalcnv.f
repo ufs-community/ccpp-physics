@@ -2295,7 +2295,7 @@ c
 !    &           (k > kb(i) .and. k < ktcon(i))) then
 !             if(k > kb(i) .and. k < ktcon(i)) then
 !             if(k >= kbcon(i) .and. k < ktcon(i)) then
-                dz = zo(i,k+1) - zi(i,k-1)
+                dz = zo(i,k+1) - zo(i,k-1)
                 tem = real(leo_t(i,k+1), kind=conv_wp)-
      &                real(leo_t(i,k-1), kind=conv_wp)
                 tem1 = saleofac(i) * tem / dz

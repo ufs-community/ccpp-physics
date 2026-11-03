@@ -162,7 +162,6 @@
                 vdftra(i,k,10) = qgrs(i,k,ntoz)
                 if(sa3dtke .and. hdiffq) then
                   def4q(i,k,1)  = def_4(i,k,ntqv)
-                  def4q(i,k,1)  = def_4(i,k,ntqv)
                   def4q(i,k,2)  = def_4(i,k,ntcw)
                   def4q(i,k,3)  = def_4(i,k,ntiw)
                   def4q(i,k,4)  = def_4(i,k,ntrw)

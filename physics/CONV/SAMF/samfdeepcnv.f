@@ -380,7 +380,8 @@ c    &            .743,.813,.886,.947,1.138,1.377,1.896/
       errflg = 0
 !
       if(coldpool .and. do_ca) then
-        print*,'Currently both are not allowed to be enabled;', 
+        write(errmsg, '(*(a))')
+     &    'Currently both are not allowed to be enabled;',
      &    ' select one or the other'
         errflg = 1
         return
@@ -552,8 +553,8 @@ c
       do i = 1, im
         vgf(i) = 0._conv_wp
         wgke(i) = 0._conv_wp
-        ucp(i) = 0._conv_wp
-        vcp(i) = 0._conv_wp
+        ucp(i) = 0._kind_phys
+        vcp(i) = 0._kind_phys
         cptrig(i) = .false.
         kdcp(i) = 0
       enddo
@@ -882,21 +883,21 @@ c
             if (tem > 0._conv_wp) then
                ptem1 = ptem - ukdcp(i)
                ptem1 = max(ptem1, 0._conv_wp)
-               ucp(i) = min(tem, ptem1)
+               ucp(i)= real(min(tem, ptem1), kind=kind_phys)
             else
                ptem1 = -ptem - ukdcp(i)
                ptem1 = min(ptem1, 0._conv_wp)
-               ucp(i) = max(tem, ptem1)
+               ucp(i)= real(min(tem, ptem1), kind=kind_phys)
             endif
             tem1 = vgf(i) * vkdcp(i) / wskdcp(i)
             if (tem1 > 0._conv_wp) then
                ptem1 = ptem - vkdcp(i)
                ptem1 = max(ptem1, 0._conv_wp)
-               vcp(i) = min(tem1, ptem1)
+               vcp(i)= real(min(tem1, ptem1), kind=kind_phys)
             else
                ptem1 = -ptem - vkdcp(i)
                ptem1 = min(ptem1, 0._conv_wp)
-               vcp(i) = max(tem1, ptem1)
+               vcp(i)= real(max(tem1, ptem1), kind=kind_phys)
             endif
 !           vgf(i) = sqrt(ucp(i)*ucp(i)+vcp(i)*vcp(i))
 !
@@ -1009,7 +1010,7 @@ c
 !         if(cptrig(i)) then
 !           if(kdcp(i) < kb(i)) then
 !             cptrig(i) = .false.
-!             wgke(i) = 0.
+!             wgke(i) = 0._conv_wp
 !           endif
 !         endif
 !       enddo
@@ -1120,7 +1121,7 @@ c
               cina(i) = cina(i) +
      &                 dz1 * (real(grav, kind=conv_wp) 
      &                 / (real(cp, kind=conv_wp) * to(i,k)))
-     &                 * dbyo(i,k) / (1. + gamma)
+     &                 * dbyo(i,k) / (1._conv_wp + gamma)
      &                 * rfact
               val = 0._conv_wp
               cina(i) = cina(i) +
@@ -1138,7 +1139,7 @@ c
           ptem = -tem
           if(wgke(i) < ptem) then
             cptrig(i) = .false.
-            wgke(i) = 0.
+            wgke(i) = 0._conv_wp
           endif
         endif
       enddo
@@ -1735,7 +1736,7 @@ c
 !> - Calculate additional trigger condition of the convective inhibition (CIN) according to Han et al.'s (2017) \cite han_et_al_2017 equation 13.
       do i = 1, im
         if(cnvflg(i)) then
-           cina(i) = 0.
+           cina(i) = 0._conv_wp
         endif
       enddo
       do k = 2, km1
@@ -3000,13 +3001,13 @@ c
 !
               if(k == jmin(i)) then
                 dp = 1000.0_conv_wp * del(i,k+1)
-                dellae(i,k+1,n) = dellae(i,k+1,n) - edto(i)
-     &               *etad(i,k) * ctro(i,k,n) * real(grav, kind=conv_wp)/dp
+                dellae(i,k+1,n) = dellae(i,k+1,n) - edto(i)*
+     &            etad(i,k) * ctro(i,k,n) * real(grav, kind=conv_wp)/dp
               endif
               if(k == kb(i)) then
                 dp = 1000.0_conv_wp * del(i,k)
                 dellae(i,k,n) = dellae(i,k,n) -
-     &              eta(i,k) * ctro(i,k,n) * real(grav, kind=conv_wp)/dp
+     &            eta(i,k) * ctro(i,k,n) * real(grav, kind=conv_wp)/dp
               endif
 !
             endif
@@ -4029,7 +4030,7 @@ c
           do i = 1, im
             tem = real(buoyexcs(i,k), kind=conv_wp) 
      &            + dellabu(i,k) * dt2
-            ptem = 1. + dt2 / taucp
+            ptem = 1._conv_wp + dt2 / taucp
             buoyexcs(i,k) = real(tem / ptem, kind=kind_phys)
           enddo
         enddo
