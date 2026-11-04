@@ -2,7 +2,7 @@
   name = GFS_time_vary_pre
   type = scheme
   dependencies_path = ../../
-  dependencies = hooks/physcons.F90,tools/funcphys.f90,hooks/machine.F
+  dependencies = hooks/physcons.F90,tools/funcphys.f90
 
 ########################################################################
 [ccpp-arg-table]

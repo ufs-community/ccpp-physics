@@ -17,7 +17,7 @@
                  t2mmp,q2mp, t2m, q2m, u10m, v10m, tmpmin, tmpmax, spfhmin, spfhmax,                  &
                          wind10mmax, u10mmax, v10mmax, dpt2m, errmsg, errflg)
 
-        use machine,               only: kind_phys, kind_dbl_prec
+        use ccpp_kinds,               only: kind_phys, kind_dbl_prec
 
         implicit none
 

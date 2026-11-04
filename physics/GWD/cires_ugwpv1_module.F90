@@ -10,7 +10,7 @@ module  cires_ugwpv1_module
 !  order = dry-adj=>conv=mp-aero=>radiation -sfc/land- chem -> vertdiff-> [rf-gws]=> ion-re
 !...................................................................................
 !
-    use machine,            only : kind_phys
+    use ccpp_kinds,            only : kind_phys
     use  ugwp_common,       only : arad, pi, pi2, hpscale, rhp, rhp2, rh4, rhp4, khp, hpskm
     use  ugwp_wmsdis_init,  only : ilaunch, nslope, lhmet, lzmax, lzmin, lzstar
     use  ugwp_wmsdis_init,  only : tau_min, tamp_mpa
@@ -433,7 +433,7 @@ module  cires_ugwpv1_module
     subroutine ngwflux_update(me, master, im, levs, kdt, ddd, curdate, &
            tau_ddd, xlatd, sinlat,coslat, rain, tau_ngw)
 
-       use machine, only: kind_phys
+       use ccpp_kinds, only: kind_phys
        implicit none
 
        integer, intent(in) :: me,  master

@@ -281,7 +281,7 @@
      &                             con_amw, con_amo3
       use mersenne_twister, only : random_setseed, random_number,       &
      &                             random_stat
-      use machine,          only : kind_phys,                           &
+      use ccpp_kinds,          only : kind_phys,                           &
      &                             im => kind_io4, rb => kind_phys,     &
      &                             kind_dbl_prec
 

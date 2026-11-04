@@ -3,7 +3,7 @@
 
       MODULE myjsfc_wrapper
 
-      USE machine, only: kfpt => kind_phys, &
+      USE ccpp_kinds, only: kfpt => kind_phys, &
                          kind_phys
 
       contains

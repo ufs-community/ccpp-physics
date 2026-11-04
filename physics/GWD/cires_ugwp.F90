@@ -14,7 +14,7 @@
 !! https://www.weather.gov/media/sti/nggps/Presentations%202017/02%20NGGPS_VYUDIN_2017_.pdf
 module cires_ugwp
 
-    use machine, only: kind_phys
+    use ccpp_kinds, only: kind_phys
 
     use cires_ugwpv0_module, only: knob_ugwp_version, cires_ugwpv0_mod_init, cires_ugwpv0_mod_final
     use ugwp_driver_v0

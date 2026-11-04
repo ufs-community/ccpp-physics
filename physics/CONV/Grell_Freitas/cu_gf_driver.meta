@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = cu_gf_driver
   type = scheme
-  dependencies = ../../hooks/machine.F
+  dependencies =
   dependencies = cu_gf_deep.F90,cu_gf_sh.F90
 
 ########################################################################

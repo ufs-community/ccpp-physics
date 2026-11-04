@@ -54,7 +54,7 @@ module scm_sfc_flux_spec
     lakedepth, use_lake_model, sh_flux, lh_flux, sh_flux_chs, u_star, sfc_stress, cm, ch, &
     fm, fh, rb, u10m, v10m, wind1, qss, t2m, q2m, errmsg, errflg)
 
-    use machine,             only: kind_phys
+    use ccpp_kinds,             only: kind_phys
     
     integer, intent(in)    :: im, lkm
     integer, intent(inout) :: islmsk(:), use_lake_model(:)

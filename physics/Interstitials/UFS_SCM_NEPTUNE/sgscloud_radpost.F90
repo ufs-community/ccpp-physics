@@ -18,7 +18,7 @@
            errmsg,errflg               )
 
 ! should be moved to inside the mynn:
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
 
 !------------------------------------------------------------------- 
       implicit none

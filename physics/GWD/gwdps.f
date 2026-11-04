@@ -293,7 +293,7 @@
 !
 !
 !   ********************************************************************
-      USE MACHINE , ONLY : kind_phys
+      USE CCPP_KINDS, ONLY : kind_phys
       implicit none
 !
       ! Interface variables

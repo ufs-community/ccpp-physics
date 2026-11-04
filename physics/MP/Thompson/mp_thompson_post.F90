@@ -5,7 +5,7 @@
 module mp_thompson_post
 
    use mpi_f08
-   use machine, only : kind_phys
+   use ccpp_kinds, only : kind_phys
 
    implicit none
 

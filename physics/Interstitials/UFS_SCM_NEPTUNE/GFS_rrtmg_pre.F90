@@ -49,7 +49,7 @@
         aero_dir_fdb, fdb_coef, spp_wts_rad, spp_rad, ico2, ozphys,            &
         errmsg, errflg)
 
-      use machine,                   only: kind_phys, kind_dbl_prec
+      use ccpp_kinds,                   only: kind_phys, kind_dbl_prec
 
       use radcons,                   only: itsfc, qmin, qme5, qme6, epsq, prsmin
       use funcphys,                  only: fpvs

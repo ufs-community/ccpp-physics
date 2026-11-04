@@ -11,7 +11,7 @@
         del, sigma, hprime, gamma, theta,                                  &
         sinlat, xlatd, taup, taud, pkdis)
 ! 
-      use machine ,      only : kind_phys
+      use ccpp_kinds,      only : kind_phys
       use ugwp_common,   only : grav, omega2, rd
 !      
       implicit none
@@ -289,7 +289,7 @@
 !> Define mean flow  and dissipation for OGW-kx spectrum
       subroutine oro_meanflow(nz, nzi, u1, v1, t1, pint, pmid,       &
      &      delp, rho, bn2, uzi, rhoi, ktur, kalp, dzi, xn, yn)
-      use machine ,      only : kind_phys
+      use ccpp_kinds,      only : kind_phys
       use ugwp_common ,  only : velmin, dw2min, rdi, grav, rgrav, hpscale, rhp, rh4 
       implicit none
       

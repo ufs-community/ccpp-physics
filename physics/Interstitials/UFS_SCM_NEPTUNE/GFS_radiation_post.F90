@@ -12,7 +12,7 @@
 !!
 ! ############################################################################################# 
 module GFS_radiation_post
-  use machine,                   only: kind_phys
+  use ccpp_kinds,                   only: kind_phys
   use module_radlw_parameters,   only: topflw_type, sfcflw_type
   use module_radsw_parameters,   only: topfsw_type, sfcfsw_type, cmpfsw_type
   use mo_heating_rates,          only: compute_heating_rate

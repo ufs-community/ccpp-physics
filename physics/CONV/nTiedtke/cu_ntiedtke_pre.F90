@@ -17,7 +17,7 @@ module cu_ntiedtke_pre
    subroutine cu_ntiedtke_pre_run (flag_init, flag_restart, kdt, fhour, dtp, t, q, prevst, prevsq, &
                                    forcet, forceq, errmsg, errflg)
 
-      use machine, only: kind_phys
+      use ccpp_kinds, only: kind_phys
 
       implicit none
 

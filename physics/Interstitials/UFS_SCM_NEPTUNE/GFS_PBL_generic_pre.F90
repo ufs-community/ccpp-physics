@@ -19,7 +19,7 @@
         hybedmf, do_shoc, satmedmf, qgrs, vdftra,                                        &
         ugrs, vgrs, tgrs, errmsg, errflg)
         
-      use machine,                only : kind_phys
+      use ccpp_kinds,                only : kind_phys
       use GFS_PBL_generic_common, only : set_aerosol_tracer_index
 
       implicit none

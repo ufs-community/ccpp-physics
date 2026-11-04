@@ -18,7 +18,7 @@ contains
 
 !>
       SUBROUTINE read_cidata (mpicomm, mpirank, mpiroot)
-      use machine,  only: kind_phys
+      use ccpp_kinds,  only: kind_phys
       use mpiutil,  only: ccpp_bcast
       use iccn_def
       use netcdf
@@ -80,7 +80,7 @@ contains
       SUBROUTINE setindxci(npts,dlat,jindx1,jindx2,ddy,dlon,                &
                  iindx1,iindx2,ddx)
 !
-      USE MACHINE,  ONLY: kind_phys
+      USE CCPP_KINDS,  ONLY: kind_phys
       USE iccn_def, ONLY: jci => latscip, ci_lat,ici=>lonscip, ci_lon
 !
       implicit none
@@ -142,7 +142,7 @@ contains
       SUBROUTINE ciinterpol(me,npts,IDATE,FHOUR,jindx1,jindx2,ddy, &
                  iindx1,iindx2,ddx,lev, prsl, ciplout,ccnout)
 !
-      USE MACHINE,  ONLY : kind_phys, kind_dbl_prec
+      USE CCPP_KINDS,  ONLY : kind_phys, kind_dbl_prec
       use iccn_def
       implicit none
       integer   i1,i2, iday,j,j1,j2,l,npts,nc,n1,n2,lev,k,i

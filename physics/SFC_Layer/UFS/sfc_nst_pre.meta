@@ -2,7 +2,7 @@
 [ccpp-table-properties]
   name = sfc_nst_pre
   type = scheme
-  dependencies = ../../hooks/machine.F,module_nst_parameters.f90,module_nst_water_prop.f90
+  dependencies = module_nst_parameters.f90,module_nst_water_prop.f90
 
 ########################################################################
 [ccpp-arg-table]

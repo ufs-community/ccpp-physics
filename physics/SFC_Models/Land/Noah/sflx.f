@@ -270,7 +270,7 @@
 !                                                                       !
 !  ====================    end of description    =====================  !
 !
-      use machine ,   only : kind_phys
+      use ccpp_kinds,   only : kind_phys
 !
       use physcons,   only : con_cp, con_rd, con_t0c, con_g, con_pi,    &
      &                       con_cliq, con_csol, con_hvap, con_hfus,    &

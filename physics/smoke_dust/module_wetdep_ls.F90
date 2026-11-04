@@ -2,7 +2,7 @@
 !! This file contains aerosol wet deposition module.
 
 module module_wetdep_ls
-  use machine ,          only : kind_phys
+  use ccpp_kinds,          only : kind_phys
   use rrfs_smoke_config, only : p_smoke, p_dust_1, p_coarse_pm, p_qc, alpha => wetdep_ls_alpha
 
 contains

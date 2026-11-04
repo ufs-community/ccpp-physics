@@ -3,7 +3,7 @@
 
 !>This module contains the cloud optics property module for RRTMG-LW
 module mo_rrtmg_lw_cloud_optics
-  use machine,          only: kind_phys
+  use ccpp_kinds,          only: kind_phys
   use mersenne_twister, only: random_setseed, random_number, random_stat
 
   implicit none

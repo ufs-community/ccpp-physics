@@ -3,7 +3,7 @@
 
 !> This module contains the Grell-Freitas shallow convection scheme
 module cu_gf_sh
-    use machine , only : kind_phys
+    use ccpp_kinds, only : kind_phys
     !real(kind=kind_phys), parameter:: c1_shal=0.0015! .0005
     real(kind=kind_phys), parameter:: c1_shal=0. !0.005! .0005
     real(kind=kind_phys), parameter:: g  =9.81

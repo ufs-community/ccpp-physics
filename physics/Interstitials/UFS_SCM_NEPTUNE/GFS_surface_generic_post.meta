@@ -2,7 +2,7 @@
 [ccpp-table-properties]
   name = GFS_surface_generic_post
   type = scheme
-  dependencies = ../../hooks/machine.F
+  dependencies =
 
 ########################################################################
 [ccpp-arg-table]

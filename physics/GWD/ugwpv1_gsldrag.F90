@@ -37,7 +37,7 @@
 !!
 module ugwpv1_gsldrag
 
-    use machine, only: kind_phys
+    use ccpp_kinds, only: kind_phys
 
     use cires_ugwpv1_triggers, only:  slat_geos5_2020, slat_geos5_tamp_v1
     use cires_ugwpv1_module,   only:  cires_ugwpv1_init, ngwflux_update, calendar_ugwp

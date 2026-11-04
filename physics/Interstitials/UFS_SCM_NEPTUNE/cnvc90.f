@@ -17,7 +17,7 @@
       SUBROUTINE cnvc90_run(CLSTP,IM,RN,KBOT,KTOP,KM,PRSI,              &
      &                      ACV,ACVB,ACVT,CV,CVB,CVT,errmsg,errflg)
 
-      USE MACHINE, ONLY :kind_phys
+      USE CCPP_KINDS, ONLY :kind_phys
       implicit none
 
       ! Interface variables

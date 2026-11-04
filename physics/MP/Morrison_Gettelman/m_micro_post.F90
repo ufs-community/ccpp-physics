@@ -16,7 +16,7 @@
         gq0_ice, gq0_rain, gq0_snow, gq0_graupel, ten_qi, ten_qr, ten_qs, ten_qg, &
         ice, snow, graupel, dtp, errmsg, errflg)
 
-      use machine, only : kind_phys
+      use ccpp_kinds, only : kind_phys
       implicit none
 
       integer, intent(in) :: im, levs, fprcp

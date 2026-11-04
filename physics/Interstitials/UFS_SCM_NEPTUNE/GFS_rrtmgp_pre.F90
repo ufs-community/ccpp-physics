@@ -3,7 +3,7 @@
 !! radiation scheme.  
 
 module GFS_rrtmgp_pre
-  use machine,                    only: kind_phys
+  use ccpp_kinds,                    only: kind_phys
   use funcphys,                   only: fpvs
   use module_radiation_astronomy, only: coszmn 
   use module_radiation_gases,     only: NF_VGAS, getgases

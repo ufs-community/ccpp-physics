@@ -260,14 +260,14 @@ module funcphys
 !   Language: Fortran 90
 !
 !$$$
-  use machine,only:kind_phys,r8=>kind_dbl_prec,r4=>kind_sngl_prec
+  use ccpp_kinds, only: krealfp=>kind_phys, r8=>kind_dbl_prec, r4=>kind_sngl_prec
   use physcons
   implicit none
   private
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ! Public Variables
 ! integer,public,parameter:: krealfp=selected_real_kind(15,45)
-  integer,public,parameter:: krealfp=kind_phys          !< Integer parameter kind or length of reals
+! integer,public,parameter:: krealfp=kind_phys          !< Integer parameter kind or length of reals
 ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ! Private Variables
   real(krealfp),parameter:: psatb=con_psat*1.e-5

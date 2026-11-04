@@ -2,7 +2,7 @@
   name = sfc_sice
   type = scheme
   dependencies_path	= ../../../
-  dependencies = tools/funcphys.f90,hooks/machine.F
+  dependencies = tools/funcphys.f90
 
 ########################################################################
 [ccpp-arg-table]

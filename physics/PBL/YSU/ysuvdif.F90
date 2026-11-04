@@ -49,7 +49,7 @@
                     index_of_temperature,index_of_x_wind,index_of_y_wind,      &
                     index_of_process_pbl,ten_t,ten_u,ten_v,ten_q,errmsg,errflg)
 
-   use machine , only : kind_phys
+   use ccpp_kinds, only : kind_phys
 !
 !-------------------------------------------------------------------------------
    implicit none
@@ -1102,7 +1102,7 @@
 !
 !-------------------------------------------------------------------------------
    subroutine tridi1n(cl,cm,cu,r1,r2,au,f1,f2,im,km,nt)
-   use machine , only : kind_phys
+   use ccpp_kinds, only : kind_phys
 !-------------------------------------------------------------------------------
    implicit none
 !-------------------------------------------------------------------------------
@@ -1194,7 +1194,7 @@
 !
 !-------------------------------------------------------------------------------
    subroutine tridin_ysu(cl,cm,cu,r2,au,f2,im,km,nt)
-   use machine , only : kind_phys
+   use ccpp_kinds, only : kind_phys
 !-------------------------------------------------------------------------------
    implicit none
 !-------------------------------------------------------------------------------

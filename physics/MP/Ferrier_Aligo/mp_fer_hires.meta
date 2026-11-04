@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = mp_fer_hires
   type = scheme
-  dependencies = ../../hooks/machine.F,module_MP_FER_HIRES.F90
+  dependencies = module_MP_FER_HIRES.F90
 
 ########################################################################
 [ccpp-arg-table]

@@ -40,7 +40,7 @@
 !      use flake_derivedtypes
 !      use flake_paramoptic_ref
 !      use flake_parameters
-       use machine , only : kind_phys
+       use ccpp_kinds, only : kind_phys
 !      use funcphys, only : fpvs
 !      use physcons, only : grav   => con_g,    cp   => con_cp,          &
 !     &                     hvap   => con_hvap, rd   => con_rd,          &
@@ -415,7 +415,7 @@
 end module flake_driver
 
 module flake_driver_post
-   use machine, only: kind_phys
+   use ccpp_kinds, only: kind_phys
    implicit none
    private
    public flake_driver_post_run 

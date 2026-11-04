@@ -15,7 +15,7 @@
      &  edto, xlamd, xmb, c0t, eta, etad, zi, xlamue, xlamud, delp,
      &  qtr, qaero)
 
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       use physcons, only : g => con_g, qamin
 
       implicit none
@@ -414,7 +414,7 @@ c               add negative mass to wet deposition
      &  xmb, c0t, eta, zi, xlamue, xlamud, delp,
      &  qtr, qaero)
 
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       use physcons, only : g => con_g, qamin
 
       implicit none

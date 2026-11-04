@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = canopy_driver
   type = scheme
-  dependencies = ../../tools/funcphys.f90,../../tools/canopy_utils_mod.f,../../hooks/machine.F,../mfpbltq.f,mfscuq.f,../tridi.f,canopy_mask.F90,canopy_levs.F90,canopy_transfer.F90,satmedmfvdifq_can.F
+  dependencies = ../../tools/funcphys.f90,../../tools/canopy_utils_mod.f,../mfpbltq.f,mfscuq.f,../tridi.f,canopy_mask.F90,canopy_levs.F90,canopy_transfer.F90,satmedmfvdifq_can.F
 
 ########################################################################
 [ccpp-arg-table]

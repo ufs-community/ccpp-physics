@@ -8,7 +8,7 @@
 !! and all terms of the surface energy balance and surface water balance.
 MODULE module_sf_ruclsm
 
-   use machine ,   only : kind_phys, kind_dbl_prec
+   use ccpp_kinds,   only : kind_phys, kind_dbl_prec
    use namelist_soilveg_ruc
    use physcons,   only : rhowater, con_t0c, con_hfus, con_hvap, &
                           con_pi, con_rv, con_g, con_csol, con_tice
