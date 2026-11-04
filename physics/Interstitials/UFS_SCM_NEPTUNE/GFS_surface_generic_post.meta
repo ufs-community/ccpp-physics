@@ -133,6 +133,13 @@
   dimensions = ()
   type = logical
   intent = in
+[cpllm4]
+  standard_name = flag_for_lm4_coupling
+  long_name = flag controlling cpllm4 collection (default off)
+  units = flag
+  dimensions = ()
+  type = logical  
+  intent = in
 [cpl_fire]
   standard_name = do_fire_coupling
   long_name = flag controlling fire_behavior collection (default off)
