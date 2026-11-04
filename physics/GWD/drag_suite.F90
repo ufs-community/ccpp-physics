@@ -699,6 +699,16 @@ enddo
        dtauy2d(i,k) = 0.0
      enddo
    enddo
+   if ( ldiag_ugwp ) then
+      dusfc_ms(:) = 0.0
+      dvsfc_ms(:) = 0.0
+      dusfc_bl(:) = 0.0
+      dvsfc_bl(:) = 0.0
+      dusfc_ss(:) = 0.0
+      dvsfc_ss(:) = 0.0
+      dusfc_fd(:) = 0.0
+      dvsfc_fd(:) = 0.0
+   end if
 !
    do i = its,im
      xlinv(i)     = 1.0/xl

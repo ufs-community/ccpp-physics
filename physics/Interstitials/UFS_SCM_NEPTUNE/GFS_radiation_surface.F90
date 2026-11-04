@@ -3,195 +3,233 @@
 !! surface emissivity for LW radiation and to module_radiation_surface::setalb()
 !! to set up surface albedo for SW radiation.
 
-      module GFS_radiation_surface
+module GFS_radiation_surface
+  use machine,  only: kind_phys
+  use mpi_f08
+  implicit none
 
-      use machine,                   only: kind_phys
-      use mpi_f08
-
-      contains
-
-!> This module contains calls to module_radiation_surface::setemis() to set up
-!! surface emissivity for LW radiation and to module_radiation_surface::setalb()
-!! to set up surface albedo for SW radiation.
+contains
+  !> #######################################################################################
+  !> This module contains calls to module_radiation_surface::setemis() to set up
+  !! surface emissivity for LW radiation and to module_radiation_surface::setalb()
+  !! to set up surface albedo for SW radiation.
+  !> #######################################################################################
 
 !> \section arg_table_GFS_radiation_surface_init Argument Table
 !! \htmlinclude GFS_radiation_surface_init.html
 !!
-      subroutine GFS_radiation_surface_init (mpicomm, mpirank, mpiroot, &
-          ialb, iems, semis_file, con_pi, errmsg, errflg)
+  subroutine GFS_radiation_surface_init (mpicomm, mpirank, mpiroot, ialb, iems, semis_file,&
+       con_pi, errmsg, errflg)
+    use module_radiation_surface, only: sfc_init
+    implicit none
 
-      use module_radiation_surface, only: sfc_init
+    type(MPI_Comm),                       intent(in)  :: mpicomm
+    integer,                              intent(in)  :: mpirank, mpiroot
+    integer,                              intent(in)  :: ialb, iems
+    character(len=26),                    intent(in)  :: semis_file
+    real(kind_phys),                      intent(in)  :: con_pi
+    character(len=*),                     intent(out) :: errmsg
+    integer,                              intent(out) :: errflg
 
-      implicit none
+    ! Initialize CCPP error handling variables
+    errmsg = ''
+    errflg = 0
 
-      type(MPI_Comm),                       intent(in)  :: mpicomm
-      integer,                              intent(in)  :: mpirank, mpiroot
-      integer,                              intent(in)  :: ialb, iems
-      character(len=26),                    intent(in)  :: semis_file
-      real(kind_phys),                      intent(in)  :: con_pi
-      character(len=*),                     intent(out) :: errmsg
-      integer,                              intent(out) :: errflg
+    if ( mpirank==mpiroot ) then
+       print *,'In GFS_radiation_surface_init, before calling sfc_init'
+       print *,'ialb=',ialb,' iems=',iems
+    end if
 
-      ! Initialize CCPP error handling variables
-      errmsg = ''
-      errflg = 0
+    ! Call surface initialization routine
+    call sfc_init ( mpicomm, mpirank, mpiroot, ialb, iems, semis_file, con_pi, errmsg, errflg )
 
-      if ( mpirank==mpiroot ) then
-        print *,'In GFS_radiation_surface_init, before calling sfc_init'
-        print *,'ialb=',ialb,' iems=',iems
-      end if
-
-      ! Call surface initialization routine
-      call sfc_init ( mpicomm, mpirank, mpiroot, &
-        ialb, iems, semis_file, con_pi, errmsg, errflg )
-
-      end subroutine GFS_radiation_surface_init
-
+  end subroutine GFS_radiation_surface_init
 
 !> \section arg_table_GFS_radiation_surface_run Argument Table
 !! \htmlinclude GFS_radiation_surface_run.html
 !!
-      subroutine GFS_radiation_surface_run (                            &
-        ialb, im, frac_grid, lslwr, lsswr, lsm, lsm_noahmp,             &
-        lsm_ruc, xlat, xlon, slmsk, lndp_type, n_var_lndp, sfc_alb_pert,&
-        lndp_var_list, lndp_prt_list, landfrac, snodl, snodi, sncovr,   &
-        sncovr_ice, fice, zorl, hprime, tsfg, tsfa, tisfc, coszen,      &
-        cplice, min_seaice, min_lakeice, lakefrac, use_lake_model,      &
-        alvsf, alnsf, alvwf, alnwf, facsf, facwf,                       &
-        semis_lnd, semis_ice, semis_wat, snoalb, use_cice_alb, con_ttp, &
-        albdvis_lnd, albdnir_lnd, albivis_lnd, albinir_lnd,             &
-        albdvis_ice, albdnir_ice, albivis_ice, albinir_ice,             &
-        semisbase, semis, sfcalb, sfc_alb_dif, errmsg, errflg)
+  subroutine GFS_radiation_surface_run (ialb, im, frac_grid, lslwr, lsswr, lsm, lsm_noahmp,&
+       lsm_ruc, xlat, xlon, slmsk, lndp_type, n_var_lndp, sfc_alb_pert, lndp_var_list,     &
+       lndp_prt_list, landfrac, snodl, snodi, sncovr, sncovr_ice, fice, zorl, hprime, tsfg,&
+       tsfa, tisfc, coszen, cplice, min_seaice, min_lakeice, lakefrac, use_lake_model,     &
+       alvsf, alnsf, alvwf, alnwf, facsf, facwf, semis_lnd, semis_ice, semis_wat, snoalb,  &
+       use_cice_alb, con_ttp, albdvis_lnd, albdnir_lnd, albivis_lnd, albinir_lnd,          &
+       albdvis_ice, albdnir_ice, albivis_ice, albinir_ice, semisbase, semis, salb, sfcalb, &
+       sfc_alb_dif, dycore_active, dycore_fv3, dycore_mpas, errmsg, errflg)
+    use module_radiation_surface,  only: f_zero, f_one, setemis, setalb
+    implicit none
 
-      use module_radiation_surface,  only: f_zero, f_one,  &
-                                           setemis, setalb
+    integer,               intent(in) :: im, ialb
+    logical,               intent(in) :: frac_grid, lslwr, lsswr, use_cice_alb, cplice
+    integer,               intent(in) :: lsm, lsm_noahmp, lsm_ruc, lndp_type, n_var_lndp
+    real(kind=kind_phys),  intent(in) :: min_seaice, min_lakeice, con_ttp
+    integer, dimension(:), intent(in) :: use_lake_model
 
-      implicit none
+    real(kind=kind_phys), dimension(:),   intent(in)  :: xlat, xlon, slmsk,           &
+                                                         sfc_alb_pert, &
+                                                         landfrac, lakefrac,          &
+                                                         snodl, snodi, sncovr,        &
+                                                         sncovr_ice, fice, zorl,      &
+                                                         hprime, tsfg, tsfa, tisfc,   &
+                                                         coszen, alvsf, alnsf, alvwf, &
+                                                         alnwf, facsf, facwf, snoalb
+    real(kind=kind_phys), dimension(:),   intent(in), optional :: lndp_prt_list
+    character(len=3)    , dimension(:),   intent(in), optional :: lndp_var_list
+    real(kind=kind_phys), dimension(:),   intent(in), optional :: albdvis_ice, albdnir_ice,    &
+                                                                  albivis_ice, albinir_ice
 
-      integer,               intent(in) :: im, ialb
-      logical,               intent(in) :: frac_grid, lslwr, lsswr, use_cice_alb, cplice
-      integer,               intent(in) :: lsm, lsm_noahmp, lsm_ruc, lndp_type, n_var_lndp
-      real(kind=kind_phys),  intent(in) :: min_seaice, min_lakeice, con_ttp
-      integer, dimension(:), intent(in) :: use_lake_model
+    real(kind=kind_phys), dimension(:),   intent(inout) :: albdvis_lnd, albdnir_lnd,  &
+                                                           albivis_lnd, albinir_lnd,  &
+                                                           semis_lnd,   semis_ice, semis_wat
+    real(kind=kind_phys), dimension(:),   intent(inout) :: semisbase, semis
+    real(kind=kind_phys), dimension(:),   intent(in)    :: salb
+    real(kind=kind_phys), dimension(:,:), intent(inout) :: sfcalb
+    real(kind=kind_phys), dimension(:),   intent(inout) :: sfc_alb_dif
+    integer,                              intent(in)    :: dycore_active, dycore_fv3, dycore_mpas
 
-      real(kind=kind_phys), dimension(:),   intent(in)  :: xlat, xlon, slmsk,           &
-                                                           sfc_alb_pert, &
-                                                           landfrac, lakefrac,          &
-                                                           snodl, snodi, sncovr,        &
-                                                           sncovr_ice, fice, zorl,      &
-                                                           hprime, tsfg, tsfa, tisfc,   &
-                                                           coszen, alvsf, alnsf, alvwf, &
-                                                           alnwf, facsf, facwf, snoalb
-      real(kind=kind_phys), dimension(:),   intent(in), optional :: lndp_prt_list
-      character(len=3)    , dimension(:),   intent(in), optional :: lndp_var_list
-      real(kind=kind_phys), dimension(:),   intent(in), optional :: albdvis_ice, albdnir_ice,    &
-                                                                    albivis_ice, albinir_ice
+    character(len=*),                     intent(out) :: errmsg
+    integer,                              intent(out) :: errflg
 
-      real(kind=kind_phys), dimension(:),   intent(inout) :: albdvis_lnd, albdnir_lnd,  &
-                                                             albivis_lnd, albinir_lnd,  &
-                                                             semis_lnd,   semis_ice, semis_wat
-      real(kind=kind_phys), dimension(:),   intent(inout) :: semisbase, semis
-      real(kind=kind_phys), dimension(:,:), intent(inout) :: sfcalb
-      real(kind=kind_phys), dimension(:),   intent(inout) :: sfc_alb_dif
+    ! Local variables
+    integer                             :: i
+    real(kind=kind_phys)                :: lndp_alb
+    real(kind=kind_phys), dimension(im) :: cimin, fracl, fraci, fraco
+    logical,              dimension(im) :: icy
 
-      character(len=*),                     intent(out) :: errmsg
-      integer,                              intent(out) :: errflg
+    ! Initialize CCPP error handling variables
+    errmsg = ''
+    errflg = 0
 
-      ! Local variables
-      integer                             :: i
-      real(kind=kind_phys)                :: lndp_alb
-      real(kind=kind_phys), dimension(im) :: cimin, fracl, fraci, fraco
-      logical,              dimension(im) :: icy
+    ! Return immediately if neither shortwave nor longwave radiation are called
+    if (.not. lsswr .and. .not. lslwr) return
 
-      ! Initialize CCPP error handling variables
-      errmsg = ''
-      errflg = 0
-
-      ! Return immediately if neither shortwave nor longwave radiation are called
-      if (.not. lsswr .and. .not. lslwr) return
-
-      do i=1,im
-        if (lakefrac(i) > f_zero) then
-          cimin(i) = min_lakeice
-        else
-          cimin(i) = min_seaice
-        endif
-      enddo
-
-      ! Set up land/ice/ocean fractions for emissivity and albedo calculations
-      if (.not. frac_grid) then
-        do i=1,im
-          if (slmsk(i) == 1) then
-            fracl(i) = f_one
-            fraci(i) = f_zero
-            fraco(i) = f_zero
-            icy(i)   = .false.
-          else
-            fracl(i) = f_zero
-            fraco(i) = f_one
-            if(fice(i) < cimin(i)) then
-              fraci(i) = f_zero
-              icy(i)   = .false.
-            else
-              fraci(i) = fraco(i) * fice(i)
-              icy(i)   = .true.
-            endif
-            fraco(i) = max(f_zero, fraco(i)-fraci(i))
-          endif
-        enddo
-      else
-        do i=1,im
-          fracl(i) = landfrac(i)
-          fraco(i) = max(f_zero, f_one - fracl(i))
-          if(fice(i) < cimin(i)) then
-            fraci(i) = f_zero
-            icy(i)   = .false.
-          else
-            fraci(i) = fraco(i) * fice(i)
-            icy(i)   = .true.
-          endif
-          fraco(i) = max(f_zero, fraco(i)-fraci(i))
-        enddo
-      endif
-
-      if (lslwr) then
-!>  - Call module_radiation_surface::setemis(),to set up surface
-!! emissivity for LW radiation.
-        call setemis (lsm, lsm_noahmp, lsm_ruc, frac_grid, cplice,  &
-                      use_lake_model, lakefrac, xlon, xlat, slmsk,  &
-!                     frac_grid, min_seaice, xlon, xlat, slmsk,     &
-                      snodl, snodi, sncovr, sncovr_ice, zorl, tsfg, &
-                      tsfa, hprime, semis_lnd, semis_ice, semis_wat,&
-                      im, fracl, fraco, fraci, icy,                 & !  ---  inputs
-                      semisbase, semis)                               !  ---  outputs
-      endif
-
-      if (lsswr) then
-!>  - Set surface albedo perturbation, if requested
-        lndp_alb = -999.
-        if (lndp_type==1) then
+    !> #######################################################################################
+    !> Dycore agnostic Radiation-to-surface coupling.
+    !> #######################################################################################
+    ! Set shortwave surface albedo perturbation, if requested
+    if (lsswr) then
+       lndp_alb = -999.
+       if (lndp_type==1) then
           do i =1,n_var_lndp
-            if (lndp_var_list(i) == 'alb') then
+             if (lndp_var_list(i) == 'alb') then
                 lndp_alb = lndp_prt_list(i)
-            endif
+             endif
           enddo
-        endif
+       endif
+    endif
 
-!>  - Call module_radiation_surface::setalb(),to set up surface
-!! albedor for SW radiation.
+    !> ####################################################################################### 
+    !> UFS-MPAS specific Radiation-to-Surface coupling
+    !> #######################################################################################
+    if (dycore_active == dycore_mpas) then
+       ! Open water: salb/semis from the host (MPAS land-use values, 0.08 / table emissivity).
+       ! Land and sea ice: albedo/emissivity from the LSM (RUC), as in stock MPAS.
+       if (lsswr) then
+          do i = 1, im
+             if (lsm == lsm_ruc .and. nint(slmsk(i)) == 1) then            ! land
+                sfcalb(i,1) = albdnir_lnd(i)
+                sfcalb(i,2) = albinir_lnd(i)
+                sfcalb(i,3) = albdvis_lnd(i)
+                sfcalb(i,4) = albivis_lnd(i)
+             elseif (lsm == lsm_ruc .and. nint(slmsk(i)) == 2 .and. present(albdvis_ice)) then ! sea ice
+                sfcalb(i,1) = fice(i)*albdnir_ice(i) + (f_one-fice(i))*0.08_kind_phys
+                sfcalb(i,2) = fice(i)*albinir_ice(i) + (f_one-fice(i))*0.08_kind_phys
+                sfcalb(i,3) = fice(i)*albdvis_ice(i) + (f_one-fice(i))*0.08_kind_phys
+                sfcalb(i,4) = fice(i)*albivis_ice(i) + (f_one-fice(i))*0.08_kind_phys
+             else                                                           ! open water / other LSM
+                sfcalb(i,:) = salb(i)
+             endif
+          enddo
+       endif
+       if (lslwr) then
+          do i = 1, im
+             if (lsm == lsm_ruc .and. nint(slmsk(i)) == 1) then
+                semis(i) = semis_lnd(i)
+             elseif (lsm == lsm_ruc .and. nint(slmsk(i)) == 2) then
+                semis(i) = fice(i)*semis_ice(i) + (f_one-fice(i))*0.98_kind_phys
+             endif
+             ! open water: semis keeps the value set by the host
+          enddo
+       endif
+    endif
 
-        call setalb (slmsk, lsm, lsm_noahmp, lsm_ruc, use_cice_alb, snodi, sncovr, sncovr_ice, &
-                     snoalb, zorl, coszen, tsfg, tsfa, hprime, frac_grid, lakefrac,            &
-                     alvsf, alnsf, alvwf, alnwf, facsf, facwf, fice, tisfc,                    &
-                     albdvis_lnd, albdnir_lnd, albivis_lnd, albinir_lnd,                       &
-                     albdvis_ice, albdnir_ice, albivis_ice, albinir_ice,                       &
-                     im, sfc_alb_pert, lndp_alb, fracl, fraco, fraci, icy, ialb, con_ttp,      & !  ---  inputs
-                     sfcalb )                                                                    !  ---  outputs
+    !> #######################################################################################
+    !> UFS-FV3 specific Radiation-to-Surface coupling
+    !> #######################################################################################
+    if (dycore_active == dycore_fv3) then
+       do i=1,im
+          if (lakefrac(i) > f_zero) then
+             cimin(i) = min_lakeice
+          else
+             cimin(i) = min_seaice
+          endif
+       enddo
 
-!> -# Approximate mean surface albedo from vis- and nir- diffuse values.
-        sfc_alb_dif(:) = max(0.01, 0.5 * (sfcalb(:,2) + sfcalb(:,4)))
-      endif
+       ! Set up land/ice/ocean fractions for emissivity and albedo calculations
+       if (.not. frac_grid) then
+          do i=1,im
+             if (slmsk(i) == 1) then
+                fracl(i) = f_one
+                fraci(i) = f_zero
+                fraco(i) = f_zero
+                icy(i)   = .false.
+             else
+                fracl(i) = f_zero
+                fraco(i) = f_one
+                if(fice(i) < cimin(i)) then
+                   fraci(i) = f_zero
+                   icy(i)   = .false.
+                else
+                   fraci(i) = fraco(i) * fice(i)
+                   icy(i)   = .true.
+                endif
+                fraco(i) = max(f_zero, fraco(i)-fraci(i))
+             endif
+          enddo
+       else
+          do i=1,im
+             fracl(i) = landfrac(i)
+             fraco(i) = max(f_zero, f_one - fracl(i))
+             if(fice(i) < cimin(i)) then
+                fraci(i) = f_zero
+                icy(i)   = .false.
+             else
+                fraci(i) = fraco(i) * fice(i)
+                icy(i)   = .true.
+             endif
+             fraco(i) = max(f_zero, fraco(i)-fraci(i))
+          enddo
+       endif
+       
+       if (lslwr) then
+          !>  - Call module_radiation_surface::setemis(),to set up surface emissivity for LW radiation.
+          call setemis (lsm, lsm_noahmp, lsm_ruc, frac_grid, cplice,  &
+                        use_lake_model, lakefrac, xlon, xlat, slmsk,  &
+                        !frac_grid, min_seaice, xlon, xlat, slmsk,     &
+                        snodl, snodi, sncovr, sncovr_ice, zorl, tsfg, &
+                        tsfa, hprime, semis_lnd, semis_ice, semis_wat,&
+                        im, fracl, fraco, fraci, icy,                 & !  ---  inputs
+                        semisbase, semis)                               !  ---  outputs
+       endif
 
-      end subroutine GFS_radiation_surface_run
+       if (lsswr) then
+          !>  - Call module_radiation_surface::setalb(),to set up surface albedo for SW radiation.
+          call setalb (slmsk, lsm, lsm_noahmp, lsm_ruc, use_cice_alb, snodi, sncovr, sncovr_ice, &
+                       snoalb, zorl, coszen, tsfg, tsfa, hprime, frac_grid, lakefrac,            &
+                       alvsf, alnsf, alvwf, alnwf, facsf, facwf, fice, tisfc,                    &
+                       albdvis_lnd, albdnir_lnd, albivis_lnd, albinir_lnd,                       &
+                       albdvis_ice, albdnir_ice, albivis_ice, albinir_ice,                       &
+                       im, sfc_alb_pert, lndp_alb, fracl, fraco, fraci, icy, ialb, con_ttp,      & !  ---  inputs
+                       sfcalb )                                                                    !  ---  outputs
+       endif
+    end if ! UFS-FV3
 
-       end module GFS_radiation_surface
+    ! For both UFS-FV3 and UFS-MPAS. This is used later by the surface physics group.
+    if (lsswr) then
+       !> -# Approximate mean surface albedo from vis- and nir- diffuse values.
+       sfc_alb_dif(:) = max(0.01, 0.5 * (sfcalb(:,2) + sfcalb(:,4)))
+    end if
+    
+  end subroutine GFS_radiation_surface_run
+
+end module GFS_radiation_surface

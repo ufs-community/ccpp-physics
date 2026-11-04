@@ -514,6 +514,14 @@
   type = real
   kind = kind_phys
   intent = inout
+[salb]
+  standard_name = surface_shortwave_albedo
+  long_name = surface sw albedo in fraction
+  units = frac
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
 [sfcalb]
   standard_name = surface_albedo_components
   long_name = surface albedo IR/UV/VIS components
@@ -530,6 +538,27 @@
   type = real
   kind = kind_phys
   intent = inout
+[dycore_active]
+  standard_name = control_for_dynamical_core
+  long_name = choice of dynamical core
+  units = flag
+  dimensions = ()
+  type = integer
+  intent = in
+[dycore_fv3]
+  standard_name = identifier_for_fv3_dynamical_core
+  long_name = identifier for FV3 dynamical core
+  units = flag
+  dimensions = ()
+  type = integer
+  intent = in
+[dycore_mpas]
+  standard_name = identifier_for_mpas_dynamical_core
+  long_name = identifier for MPAS dynamical core
+  units = flag
+  dimensions = ()
+  type = integer
+  intent = in
 [errmsg]
   standard_name = ccpp_error_message
   long_name = error message for error handling in CCPP

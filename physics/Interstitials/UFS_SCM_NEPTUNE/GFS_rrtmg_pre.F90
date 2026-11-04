@@ -47,7 +47,7 @@
         clouds9, cldsa, cldfra, cldfra2d, lwp_ex,iwp_ex, lwp_fc,iwp_fc,        &
         faersw1, faersw2, faersw3, faerlw1, faerlw2, faerlw3, alpha, rrfs_sd,  &
         aero_dir_fdb, fdb_coef, spp_wts_rad, spp_rad, ico2, ozphys,            &
-        errmsg, errflg)
+        dycore_active, dycore_fv3, dycore_mpas, first_time_step, errmsg, errflg)
 
       use machine,                   only: kind_phys, kind_dbl_prec
 
@@ -112,7 +112,8 @@
                                            imp_physics_mg, imp_physics_wsm6,   &
                                            imp_physics_nssl,                   &
                                            imp_physics_fer_hires,              &
-                                           yearlen, icloud, iaermdl, iaerflg
+                                           yearlen, icloud, iaermdl, iaerflg,  &
+                                           dycore_active, dycore_fv3, dycore_mpas
 
       integer,              intent(in)  ::                                     &
          iovr,                             & ! choice of cloud-overlap method
@@ -139,7 +140,7 @@
                                           lcnorm, top_at_1, lextop, mraerosol
       logical,              intent(in) :: rrfs_sd, aero_dir_fdb, xr_cnvcld
 
-      logical,              intent(in) :: nssl_ccn_on, nssl_invertccn
+      logical,              intent(in) :: nssl_ccn_on, nssl_invertccn, first_time_step
       integer,              intent(in) :: spp_rad
       real(kind_phys),      intent(in), optional :: spp_wts_rad(:,:)
 
@@ -756,73 +757,75 @@
             enddo
           enddo
           ! for Thompson MP - prepare variables for calc_effr
-          if_thompson: if (imp_physics == imp_physics_thompson .and. (ltaerosol .or. mraerosol)) then
-            do k=1,LMK
-              do i=1,IM
-                qvs = qlyr(i,k)
-                qv_mp (i,k) = qvs/(1.-qvs)
-                rho   (i,k) = con_eps*plyr(i,k)*100./(con_rd*tlyr(i,k)*(qv_mp(i,k)+con_eps))
-                orho  (i,k) = 1.0/rho(i,k)
-                qc_mp (i,k) = tracer1(i,k,ntcw)/(1.-qvs)
-                qi_mp (i,k) = tracer1(i,k,ntiw)/(1.-qvs)
-                qs_mp (i,k) = tracer1(i,k,ntsw)/(1.-qvs)
-                nc_mp (i,k) = tracer1(i,k,ntlnc)/(1.-qvs)
-                ni_mp (i,k) = tracer1(i,k,ntinc)/(1.-qvs)
-                nwfa  (i,k) = tracer1(i,k,ntwa)
-              enddo
-            enddo
-          elseif (imp_physics == imp_physics_thompson) then
-            do k=1,LMK
-              do i=1,IM
-                qvs = qlyr(i,k)
-                qv_mp (i,k) = qvs/(1.-qvs)
-                rho   (i,k) = con_eps*plyr(i,k)*100./(con_rd*tlyr(i,k)*(qv_mp(i,k)+con_eps))
-                orho  (i,k) = 1.0/rho(i,k)
-                qc_mp (i,k) = tracer1(i,k,ntcw)/(1.-qvs)
-                qi_mp (i,k) = tracer1(i,k,ntiw)/(1.-qvs)
-                qs_mp (i,k) = tracer1(i,k,ntsw)/(1.-qvs)
-                if(nint(slmsk(i)) == 1) then
-                   nc_mp (i,k) = Nt_c_l_thompson*orho(i,k)
-                else
-                   nc_mp (i,k) = Nt_c_o_thompson*orho(i,k)
-                endif
-                ni_mp (i,k) = tracer1(i,k,ntinc)/(1.-qvs)
-              enddo
-            enddo
-          endif if_thompson
-          if (imp_physics == imp_physics_tempo) then
-            do k=1,LMK
-              do i=1,IM
-                qvs = qlyr(i,k)
-                qv_mp (i,k) = qvs/(1.-qvs)
-                rho   (i,k) = con_eps*plyr(i,k)*100./(con_rd*tlyr(i,k)*(qv_mp(i,k)+con_eps))
-                orho  (i,k) = 1.0/rho(i,k)
-                qc_mp (i,k) = tracer1(i,k,ntcw)/(1.-qvs)
-                qi_mp (i,k) = tracer1(i,k,ntiw)/(1.-qvs)
-                qs_mp (i,k) = tracer1(i,k,ntsw)/(1.-qvs)
-                ni_mp (i,k) = tracer1(i,k,ntinc)/(1.-qvs)
-                if (ltaerosol) nc_mp (i,k) = tracer1(i,k,ntlnc)/(1.-qvs)
-                
-                qcten (i,k) = 0.
-                ncten (i,k) = 0.
-                qiten (i,k) = 0.
-                niten (i,k) = 0.
-                qsten (i,k) = 0.
-              enddo
-            enddo
-            do i=1,IM
+          if ((dycore_active == dycore_fv3) .or. first_time_step) then
+             if_thompson: if (imp_physics == imp_physics_thompson .and. (ltaerosol .or. mraerosol)) then
+                do k=1,LMK
+                   do i=1,IM
+                      qvs = qlyr(i,k)
+                      qv_mp (i,k) = qvs/(1.-qvs)
+                      rho   (i,k) = con_eps*plyr(i,k)*100./(con_rd*tlyr(i,k)*(qv_mp(i,k)+con_eps))
+                      orho  (i,k) = 1.0/rho(i,k)
+                      qc_mp (i,k) = tracer1(i,k,ntcw)/(1.-qvs)
+                      qi_mp (i,k) = tracer1(i,k,ntiw)/(1.-qvs)
+                      qs_mp (i,k) = tracer1(i,k,ntsw)/(1.-qvs)
+                      nc_mp (i,k) = tracer1(i,k,ntlnc)/(1.-qvs)
+                      ni_mp (i,k) = tracer1(i,k,ntinc)/(1.-qvs)
+                      nwfa  (i,k) = tracer1(i,k,ntwa)
+                   enddo
+                enddo
+             elseif (imp_physics == imp_physics_thompson) then
+                do k=1,LMK
+                   do i=1,IM
+                      qvs = qlyr(i,k)
+                      qv_mp (i,k) = qvs/(1.-qvs)
+                      rho   (i,k) = con_eps*plyr(i,k)*100./(con_rd*tlyr(i,k)*(qv_mp(i,k)+con_eps))
+                      orho  (i,k) = 1.0/rho(i,k)
+                      qc_mp (i,k) = tracer1(i,k,ntcw)/(1.-qvs)
+                      qi_mp (i,k) = tracer1(i,k,ntiw)/(1.-qvs)
+                      qs_mp (i,k) = tracer1(i,k,ntsw)/(1.-qvs)
+                      if(nint(slmsk(i)) == 1) then
+                         nc_mp (i,k) = Nt_c_l_thompson*orho(i,k)
+                      else
+                         nc_mp (i,k) = Nt_c_o_thompson*orho(i,k)
+                      endif
+                      ni_mp (i,k) = tracer1(i,k,ntinc)/(1.-qvs)
+                   enddo
+                enddo
+             endif if_thompson
+             if (imp_physics == imp_physics_tempo) then
+                do k=1,LMK
+                   do i=1,IM
+                      qvs = qlyr(i,k)
+                      qv_mp (i,k) = qvs/(1.-qvs)
+                      rho   (i,k) = con_eps*plyr(i,k)*100./(con_rd*tlyr(i,k)*(qv_mp(i,k)+con_eps))
+                      orho  (i,k) = 1.0/rho(i,k)
+                      qc_mp (i,k) = tracer1(i,k,ntcw)/(1.-qvs)
+                      qi_mp (i,k) = tracer1(i,k,ntiw)/(1.-qvs)
+                      qs_mp (i,k) = tracer1(i,k,ntsw)/(1.-qvs)
+                      ni_mp (i,k) = tracer1(i,k,ntinc)/(1.-qvs)
+                      if (ltaerosol) nc_mp (i,k) = tracer1(i,k,ntlnc)/(1.-qvs)
 
-               if (.not. ltaerosol) call get_constant_cloud_number(land=nint(slmsk(i)), nc=nc_mp(i,:))
+                      qcten (i,k) = 0.
+                      ncten (i,k) = 0.
+                      qiten (i,k) = 0.
+                      niten (i,k) = 0.
+                      qsten (i,k) = 0.
+                   enddo
+                enddo
+                do i=1,IM
 
-               call cloud_check_and_update(rho=rho(i,:), l_qc=l_qc(i,:), qc1d=qc_mp(i,:), &
-                    nc1d=nc_mp(i,:), rc=rc(i,:), nc=nc(i,:), qcten=qcten(i,:), ncten=ncten(i,:), &
-                    ilamc=ilamc(i,:), mvd_c=mvd_c(i,:), dt=1., odt=1.)
-               call ice_check_and_update(rho=rho(i,:), l_qi=l_qi(i,:), qi1d=qi_mp(i,:), &
-                    ni1d=ni_mp(i,:), ri=ri(i,:), ni=ni(i,:), qiten=qiten(i,:), niten=niten(i,:), &
-                    ilami=ilami(i,:), dt=1., odt=1.)
-               call snow_check_and_update(rho=rho(i,:), l_qs=l_qs(i,:), qs1d=qs_mp(i,:), &
-                    rs=rs(i,:), qsten=qsten(i,:), dt=1., odt=1.)
-            enddo
+                   if (.not. ltaerosol) call get_constant_cloud_number(land=nint(slmsk(i)), nc=nc_mp(i,:))
+
+                   call cloud_check_and_update(rho=rho(i,:), l_qc=l_qc(i,:), qc1d=qc_mp(i,:), &
+                        nc1d=nc_mp(i,:), rc=rc(i,:), nc=nc(i,:), qcten=qcten(i,:), ncten=ncten(i,:), &
+                        ilamc=ilamc(i,:), mvd_c=mvd_c(i,:), dt=1., odt=1.)
+                   call ice_check_and_update(rho=rho(i,:), l_qi=l_qi(i,:), qi1d=qi_mp(i,:), &
+                        ni1d=ni_mp(i,:), ri=ri(i,:), ni=ni(i,:), qiten=qiten(i,:), niten=niten(i,:), &
+                        ilami=ilami(i,:), dt=1., odt=1.)
+                   call snow_check_and_update(rho=rho(i,:), l_qs=l_qs(i,:), qs1d=qs_mp(i,:), &
+                        rs=rs(i,:), qsten=qsten(i,:), dt=1., odt=1.)
+                enddo
+             endif
           endif
         endif
         do n=1,ncndl
@@ -931,84 +934,113 @@
            ! not used yet -- effr_in should always be true for now
           endif
 
-        elseif (imp_physics == imp_physics_thompson) then       !  Thompson MP
-          !
-          ! Compute effective radii for QC, QI, QS with (GF, MYNN) or without (all others) sub-grid clouds
-          !
-          ! Update number concentration, consistent with sub-grid clouds (GF, MYNN) or without (all others)
-          do k=1,lm
-            do i=1,im
-!               if (imp_physics == imp_physics_thompson) then
-               if ((ltaerosol .or. mraerosol) .and. qc_mp(i,k)>1.e-12 .and. nc_mp(i,k)<100.) then
-                  nc_mp(i,k) = make_DropletNumber_thompson(qc_mp(i,k)*rho(i,k), nwfa(i,k)*rho(i,k)) * orho(i,k)
-              endif
-              if (qi_mp(i,k)>1.e-12 .and. ni_mp(i,k)<100.) then
-                 ni_mp(i,k) = make_IceNumber_thompson(qi_mp(i,k)*rho(i,k), tlyr(i,k)) * orho(i,k)
-              endif
-!              endif
-            end do
-          end do
-          !> - Call Thompson's subroutine calc_effectRad() to compute effective radii
-          do i=1,im
-            islmsk = nint(slmsk(i))
-            ! Effective radii [m] are now intent(out), bounds applied in calc_effectRad
-            !tgs: progclduni has different limits for ice radii (10.0-150.0) than
-            !     calc_effectRad (4.99-125.0 for WRFv3.8.1; 2.49-125.0 for WRFv4+)
-            !     it will raise the low limit from 5 to 10, but the high limit will remain 125.
+       elseif (imp_physics == imp_physics_thompson) then       !  Thompson MP
+          if ((dycore_active == dycore_fv3) .or. first_time_step) then
+             !
+             ! Compute effective radii for QC, QI, QS with (GF, MYNN) or without (all others) sub-grid clouds
+             !
+             ! Update number concentration, consistent with sub-grid clouds (GF, MYNN) or without (all others)
+             do k=1,lm
+                do i=1,im
+                   if ((ltaerosol .or. mraerosol) .and. qc_mp(i,k)>1.e-12 .and. nc_mp(i,k)<100.) then
+                      nc_mp(i,k) = make_DropletNumber_thompson(qc_mp(i,k)*rho(i,k), nwfa(i,k)*rho(i,k)) * orho(i,k)
+                   endif
+                   if (qi_mp(i,k)>1.e-12 .and. ni_mp(i,k)<100.) then
+                      ni_mp(i,k) = make_IceNumber_thompson(qi_mp(i,k)*rho(i,k), tlyr(i,k)) * orho(i,k)
+                   endif
+                end do
+             end do
+             !> - Call Thompson's subroutine calc_effectRad() to compute effective radii
+             do i=1,im
+                islmsk = nint(slmsk(i))
+                ! Effective radii [m] are now intent(out), bounds applied in calc_effectRad
+                !tgs: progclduni has different limits for ice radii (10.0-150.0) than
+                !     calc_effectRad (4.99-125.0 for WRFv3.8.1; 2.49-125.0 for WRFv4+)
+                !     it will raise the low limit from 5 to 10, but the high limit will remain 125.
 
- !           if (imp_physics == imp_physics_thompson) then
-               call calc_effectRad_thompson(tlyr(i,:), plyr(i,:)*100., qv_mp(i,:), qc_mp(i,:),   &
-                    nc_mp(i,:), qi_mp(i,:), ni_mp(i,:), qs_mp(i,:), &
-                    effrl(i,:), effri(i,:), effrs(i,:), islmsk, 1, lm )
-               ! Scale Thompson's effective radii from meter to micron
-               do k=1,lm
-                  effrl(i,k) = MAX(re_qc_min_thompson, MIN(effrl(i,k), re_qc_max_thompson))*1.e6
-                  effri(i,k) = MAX(re_qi_min_thompson, MIN(effri(i,k), re_qi_max_thompson))*1.e6
-                  effrs(i,k) = MAX(re_qs_min_thompson, MIN(effrs(i,k), re_qs_max_thompson))*1.e6
-               end do
-               effrl(i,lmk) = re_qc_min_thompson*1.e6
-               effri(i,lmk) = re_qi_min_thompson*1.e6
-               effrs(i,lmk) = re_qs_min_thompson*1.e6
-          end do
-          effrr(:,:) = 1000. ! rrain_def=1000.
-          ! Update global arrays
-          do k=1,lm
-            k1 = k + kd
-            do i=1,im
-              effrl_inout(i,k) = effrl(i,k1)
-              effri_inout(i,k) = effri(i,k1)
-              effrs_inout(i,k) = effrs(i,k1)
-            enddo
-          enddo
-
-        elseif (imp_physics == imp_physics_tempo) then       ! Tempo
-          do i=1,im
-            islmsk = nint(slmsk(i))
-               call effective_radius(temp=tlyr(i,:), l_qc=l_qc(i,:), nc=nc_mp(i,:), &
-                    ilamc=ilamc(i,:), l_qi=l_qi(i,:), ilami=ilami(i,:), l_qs=l_qs(i,:), rs=rs(i,:), &
-                    re_qc=effrl(i,:), re_qi=effri(i,:), re_qs=effrs(i,:))
-               ! use min/max values from Thompson for now
-               do k=1,lm
-                  effrl(i,k) = MAX(re_qc_min_thompson, MIN(effrl(i,k), re_qc_max_thompson))*1.e6
-                  effri(i,k) = MAX(re_qi_min_thompson, MIN(effri(i,k), re_qi_max_thompson))*1.e6
-                  effrs(i,k) = MAX(re_qs_min_thompson, MIN(effrs(i,k), re_qs_max_thompson))*1.e6
-               end do
-               effrl(i,lmk) = re_qc_min_thompson*1.e6
-               effri(i,lmk) = re_qi_min_thompson*1.e6
-               effrs(i,lmk) = re_qs_min_thompson*1.e6
-          end do
-          effrr(:,:) = 1000. ! rrain_def=1000.
-          ! Update global arrays
-          do k=1,lm
-            k1 = k + kd
-            do i=1,im
-              effrl_inout(i,k) = effrl(i,k1)
-              effri_inout(i,k) = effri(i,k1)
-              effrs_inout(i,k) = effrs(i,k1)
-            enddo
-         enddo
-          
-         
+                call calc_effectRad_thompson(tlyr(i,:), plyr(i,:)*100., qv_mp(i,:), qc_mp(i,:),   &
+                     nc_mp(i,:), qi_mp(i,:), ni_mp(i,:), qs_mp(i,:), &
+                     effrl(i,:), effri(i,:), effrs(i,:), islmsk, 1, lm )
+                ! Scale Thompson's effective radii from meter to micron
+                do k=1,lm
+                   effrl(i,k) = MAX(re_qc_min_thompson, MIN(effrl(i,k), re_qc_max_thompson))*1.e6
+                   effri(i,k) = MAX(re_qi_min_thompson, MIN(effri(i,k), re_qi_max_thompson))*1.e6
+                   effrs(i,k) = MAX(re_qs_min_thompson, MIN(effrs(i,k), re_qs_max_thompson))*1.e6
+                end do
+                effrl(i,lmk) = re_qc_min_thompson*1.e6
+                effri(i,lmk) = re_qi_min_thompson*1.e6
+                effrs(i,lmk) = re_qs_min_thompson*1.e6
+             end do
+             effrr(:,:) = 1000. ! rrain_def=1000.
+             ! Update global arrays
+             do k=1,lm
+                k1 = k + kd
+                do i=1,im
+                   effrl_inout(i,k) = effrl(i,k1)
+                   effri_inout(i,k) = effri(i,k1)
+                   effrs_inout(i,k) = effrs(i,k1)
+                enddo
+             enddo
+          end if
+          if (dycore_active == dycore_mpas) then
+             ! Global arrays (*_inout) are updated by MP. Local arrays (no suffix) are used in radiation_cloud_props
+             ! to update global arrays.
+             do k=1,lm
+                k1 = k + kd
+                do i=1,im
+                   effrl(i,k1) = effrl_inout(i,k)
+                   effri(i,k1) = effri_inout(i,k)
+                   effrs(i,k1) = effrs_inout(i,k)
+                enddo
+             enddo
+          end if
+       elseif (imp_physics == imp_physics_tempo) then       ! Tempo
+          if (dycore_active == dycore_fv3 .or. first_time_step) then
+             do i=1,im
+                islmsk = nint(slmsk(i))
+                call effective_radius(temp=tlyr(i,:), l_qc=l_qc(i,:), nc=nc_mp(i,:), &
+                     ilamc=ilamc(i,:), l_qi=l_qi(i,:), ilami=ilami(i,:), l_qs=l_qs(i,:), rs=rs(i,:), &
+                     re_qc=effrl(i,:), re_qi=effri(i,:), re_qs=effrs(i,:))
+                ! use min/max values from Thompson for now
+                do k=1,lm
+                   effrl(i,k) = MAX(re_qc_min_thompson, MIN(effrl(i,k), re_qc_max_thompson))*1.e6
+                   effri(i,k) = MAX(re_qi_min_thompson, MIN(effri(i,k), re_qi_max_thompson))*1.e6
+                   effrs(i,k) = MAX(re_qs_min_thompson, MIN(effrs(i,k), re_qs_max_thompson))*1.e6
+                end do
+                effrl(i,lmk) = re_qc_min_thompson*1.e6
+                effri(i,lmk) = re_qi_min_thompson*1.e6
+                effrs(i,lmk) = re_qs_min_thompson*1.e6
+             end do
+             effrr(:,:) = 1000. ! rrain_def=1000.
+             ! Update global arrays
+             do k=1,lm
+                k1 = k + kd
+                do i=1,im
+                   effrl_inout(i,k) = effrl(i,k1)
+                   effri_inout(i,k) = effri(i,k1)
+                   effrs_inout(i,k) = effrs(i,k1)
+                enddo
+             enddo
+          end if
+          if (dycore_active == dycore_mpas) then
+             ! Global arrays (*_inout) are updated by MP. Local arrays (no suffix) are used in radiation_cloud_props
+             ! to update global arrays.
+             do k=1,lm
+                k1 = k + kd
+                do i=1,im
+                   ! DJS2026: This is is a temporary fix until the framework can do this transform for us.
+                   effrl(i,k1) = effrl_inout(i,k)*1.e6
+                   effri(i,k1) = effri_inout(i,k)*1.e6
+                   effrs(i,k1) = effrs_inout(i,k)*1.e6
+                   if (.not. (effrl(i,k1) == effrl(i,k1))) effrl(i,k1) = re_qc_min_thompson*1.e6
+                   if (.not. (effri(i,k1) == effri(i,k1))) effri(i,k1) = re_qi_min_thompson*1.e6
+                   if (.not. (effrs(i,k1) == effrs(i,k1))) effrs(i,k1) = re_qs_min_thompson*1.e6
+                   effrl(i,k1) = max(re_qc_min_thompson*1.e6, min(effrl(i,k1), re_qc_max_thompson*1.e6))
+                   effri(i,k1) = max(re_qi_min_thompson*1.e6, min(effri(i,k1), re_qi_max_thompson*1.e6))
+                   effrs(i,k1) = max(re_qs_min_thompson*1.e6, min(effrs(i,k1), re_qs_max_thompson*1.e6))
+                enddo
+             enddo
+          end if
         else                                                           ! all other cases
           cldcov = 0.0
         endif
