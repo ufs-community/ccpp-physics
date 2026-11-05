@@ -645,14 +645,6 @@
   type = real
   kind = kind_phys
   intent = in
-[dt_decay]
-  standard_name = tuning_parameter_for_updraft_decay_time
-  long_name = tuning parameter for updraft decay time
-  units = 1
-  dimensions = ()
-  type = real
-  kind = kind_phys
-  intent = in
 [coldpool]
   standard_name = do_cold_pool_parameterization
   long_name = flag for cold pool parameterization in deep cumulus scheme
