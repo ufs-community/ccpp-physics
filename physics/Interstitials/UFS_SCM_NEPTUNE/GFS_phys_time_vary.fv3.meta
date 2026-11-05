@@ -456,6 +456,22 @@
   type = real
   kind = kind_phys
   intent = inout
+[weasdl]
+  standard_name = water_equivalent_accumulated_snow_depth_over_land
+  long_name = water equiv of acc snow depth over land
+  units = mm
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+  intent = inout
+[snodl]
+  standard_name = surface_snow_thickness_water_equivalent_over_land
+  long_name = water equivalent snow depth over land
+  units = mm
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+  intent = inout
 [lsoil]
   standard_name = vertical_dimension_of_soil
   long_name = number of soil layers

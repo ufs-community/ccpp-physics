@@ -2641,7 +2641,8 @@ endif   ! croptype == 0
 
   do iz = isnow+1, 0
       bdsnoi(iz) = (snice(iz)+snliq(iz))/dzsnso(iz)
-      cvsno(iz) = cice*snicev(iz)+cwat*snliqv(iz)
+      ! heat capacity from the ice and liquid mass
+      cvsno(iz) = (cice/denice*snice(iz) + cwat/denh2o*snliq(iz))/dzsnso(iz)
 !      cvsno(iz) = 0.525e06                          ! constant
   enddo
 
@@ -7604,6 +7605,21 @@ zolmax = xkrefsqr / sqrt(xkzo)   ! maximum z/L
 
 !== begin combine ==================================================================================
 
+  real (kind=kind_phys) function snow_hcap(wice, wliq, dz)
+    ! heat capacity of a snow layer (j/m2/k)
+    real (kind=kind_phys), intent(in) :: wice, wliq, dz
+    snow_hcap = 0.
+    if (dz > 0.) snow_hcap = cice/denice*max(0.,wice) + cwat/denh2o*max(0.,wliq)
+  end function snow_hcap
+
+  real (kind=kind_phys) function soil_hcap1(parameters, sh2o1, sice1, dz)
+    ! heat capacity of the top soil layer (j/m2/k)
+    type (noahmp_parameters), intent(in) :: parameters
+    real (kind=kind_phys), intent(in) :: sh2o1, sice1, dz
+    soil_hcap1 = dz*(sh2o1*cwat + (1.0-parameters%smcmax(1))*parameters%csoil &
+               + (parameters%smcmax(1)-sh2o1-sice1)*cpair + sice1*cice)
+  end function soil_hcap1
+
 !>\ingroup NoahMP_LSM
 !!
   subroutine combine (parameters,nsnow  ,nsoil  ,iloc   ,jloc   ,         & !in
@@ -7643,6 +7659,7 @@ zolmax = xkrefsqr / sqrt(xkzo)   ! maximum z/L
     integer :: neibor                ! adjacent node selected for combination
     real (kind=kind_phys)    :: zwice                 ! total ice mass in snow
     real (kind=kind_phys)    :: zwliq                 ! total liquid water in snow
+    real (kind=kind_phys)    :: hsn, hgnd, hc1        ! snow heat merged, and passed to the soil
 
     real (kind=kind_phys)    :: dzmin(3)              ! minimum of top snow layer
 !    data dzmin /0.045, 0.05, 0.2/
@@ -7651,17 +7668,26 @@ zolmax = xkrefsqr / sqrt(xkzo)   ! maximum z/L
 
        isnow_old = isnow
 
+       hgnd = 0.
        do j = isnow_old+1,0
           if (snice(j) <= .1) then
              if(j /= 0) then
+                hsn = snow_hcap(snice(j),snliq(j),dzsnso(j))*(stc(j)-tfrz) &
+                    + snow_hcap(snice(j+1),snliq(j+1),dzsnso(j+1))*(stc(j+1)-tfrz)
                 snliq(j+1) = snliq(j+1) + snliq(j)
                 snice(j+1) = snice(j+1) + snice(j)
                 dzsnso(j+1) = dzsnso(j+1) + dzsnso(j)
+                hc1 = snow_hcap(snice(j+1),snliq(j+1),dzsnso(j+1))
+                if (hc1 > 0.) stc(j+1) = tfrz + hsn/hc1
              else
-               if (isnow_old < -1) then    ! mb/km: change to isnow
+               if (isnow < -1) then
+                hsn = snow_hcap(snice(j),snliq(j),dzsnso(j))*(stc(j)-tfrz) &
+                    + snow_hcap(snice(j-1),snliq(j-1),dzsnso(j-1))*(stc(j-1)-tfrz)
                 snliq(j-1) = snliq(j-1) + snliq(j)
                 snice(j-1) = snice(j-1) + snice(j)
                 dzsnso(j-1) = dzsnso(j-1) + dzsnso(j)
+                hc1 = snow_hcap(snice(j-1),snliq(j-1),dzsnso(j-1))
+                if (hc1 > 0.) stc(j-1) = tfrz + hsn/hc1
                else
                  if(snice(j) >= 0.) then
                   ponding1 = snliq(j)    ! isnow will get set to zero below; ponding1 will get 
@@ -7670,12 +7696,15 @@ zolmax = xkrefsqr / sqrt(xkzo)   ! maximum z/L
                  else   ! snice over-sublimated earlier
                   ponding1 = snliq(j) + snice(j)
                   if(ponding1 < 0.) then  ! if snice and snliq sublimates remove from soil
+                   hc1 = soil_hcap1(parameters, sh2o(1), sice(1), dzsnso(1))
                    sice(1) = max(0.0,sice(1)+ponding1/(dzsnso(1)*1000.))
+                   stc(1) = tfrz + hc1*(stc(1)-tfrz)/soil_hcap1(parameters, sh2o(1), sice(1), dzsnso(1))
                    ponding1 = 0.0
                   end if
                   sneqv = 0.0
                   snowh = 0.0
                  end if
+                 hgnd = hgnd + snow_hcap(snice(j),snliq(j),dzsnso(j))*(stc(j)-tfrz)
                  snliq(j) = 0.0
                  snice(j) = 0.0
                  dzsnso(j) = 0.0
@@ -7704,6 +7733,10 @@ zolmax = xkrefsqr / sqrt(xkzo)   ! maximum z/L
           sice(1) = 0.
        end if
 
+       if (hgnd /= 0.) then   ! heat of removed snow layers to the top soil layer
+          stc(1) = stc(1) + hgnd/(soil_hcap1(parameters, sh2o(1), sice(1), dzsnso(1)))
+          hgnd = 0.
+       endif
        if(isnow ==0) return   ! mb: get out if no longer multi-layer
 
        sneqv  = 0.
@@ -7723,6 +7756,9 @@ zolmax = xkrefsqr / sqrt(xkzo)   ! maximum z/L
 
        if (snowh < 0.025 .and. isnow < 0 ) then ! mb: change limit
 !       if (snowh < 0.05 .and. isnow < 0 ) then
+          do i = isnow+1, 0
+             hgnd = hgnd + snow_hcap(snice(i),snliq(i),dzsnso(i))*(stc(i)-tfrz)
+          enddo
           isnow  = 0
           sneqv = zwice
           ponding2 = zwliq           ! limit of isnow < 0 means input ponding
@@ -7790,6 +7826,10 @@ zolmax = xkrefsqr / sqrt(xkzo)   ! maximum z/L
 
        end if
 
+       if (hgnd /= 0.) then   ! heat of removed snow layers to the top soil layer
+          stc(1) = stc(1) + hgnd/(soil_hcap1(parameters, sh2o(1), sice(1), dzsnso(1)))
+          hgnd = 0.
+       endif
   end subroutine combine
 
 !== begin divide ===================================================================================
@@ -7959,17 +7999,12 @@ zolmax = xkrefsqr / sqrt(xkzo)   ! maximum z/L
     dzc = dz+dz2
     wicec = (wice+wice2)
     wliqc = (wliq+wliq2)
-    h = (cice*wice+cwat*wliq) * (t-tfrz)+hfus*wliq
-    h2= (cice*wice2+cwat*wliq2) * (t2-tfrz)+hfus*wliq2
+    ! enthalpy with per-kg heat capacities
+    h = (cice/denice*wice+cwat/denh2o*wliq) * (t-tfrz)+hfus*wliq
+    h2= (cice/denice*wice2+cwat/denh2o*wliq2) * (t2-tfrz)+hfus*wliq2
 
     hc = h + h2
-    if(hc < 0.)then
-       tc = tfrz + hc/(cice*wicec + cwat*wliqc)
-    else if (hc.le.hfus*wliqc) then
-       tc = tfrz
-    else
-       tc = tfrz + (hc - hfus*wliqc) / (cice*wicec + cwat*wliqc)
-    end if
+    tc = tfrz + (hc - hfus*wliqc) / (cice/denice*wicec + cwat/denh2o*wliqc)
 
     dz = dzc
     wice = wicec

@@ -1523,7 +1523,8 @@ end subroutine noahmpdrv_timestep_init
 !  --- change units for output
 !
       hflx(i) = hflx(i) / density / con_cp
-      evap(i) = evap(i) / density / con_hvap
+      ! the water Noah-MP removed from the land
+      evap(i) = (ecan(i) + etran(i) + edir(i)) / density
 
 !
 !  --- calculate potential evaporation using noah code
