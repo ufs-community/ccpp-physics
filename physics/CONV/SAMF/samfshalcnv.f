@@ -2000,6 +2000,7 @@ c
               tem1 = real(q1(i,k+1), kind=conv_wp) + phkp
      &             * (qo(i,k) - real(q1(i,k+1), kind=conv_wp))
               flxtvd(i,k) = eta(i,k) * tem1
+              if(k == kb(i)) flxtvd(i,k) = eta(i,k) * qo(i,k)
             endif
           endif
         enddo
@@ -2056,6 +2057,7 @@ c
                 tem1 = ctr(i,k+1,n) +
      &                     phkp*(ctro(i,k,n)-ctr(i,k+1,n))
                 flxtvd(i,k) = eta(i,k) * tem1
+                if(k == kb(i)) flxtvd(i,k) = eta(i,k) * ctro(i,k,n)
               endif
             endif
           enddo
