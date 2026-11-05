@@ -8,7 +8,6 @@
 !! and setrmsk().
 module sfccyc_module
   use ccpp_kinds, only : kind_io8, kind_io4
-  use sp_mod
   implicit none
   save
 
