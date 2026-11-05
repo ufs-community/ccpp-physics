@@ -88,7 +88,7 @@
      &    clam,c0s,c1,betal,betas,evef,pgcon,asolfac,cscale,            &
      &    do_ca, ca_closure, ca_entr, ca_trigger, nthresh,ca_deep,      &
      &    rainevap,sigmain,sigmaout,omegain,omegaout,betadcu,betamcu,   &
-     &    betascu,lbb1,lbb2,lbb3,maxMF,do_mynnedmf,            &
+     &    betascu,lbb1,lbb2,lbb3,maxMF,do_mynnedmf,                     &
      &    sigmab_coldstart,cat_adj_deep,                                &
      &    coldpool,buoyexcsgrs,buoyexcs,ucp,vcp,                        &
      &    errmsg,errflg)
