@@ -331,9 +331,9 @@
   kind = kind_phys
   intent = in
 [def_3]
-  standard_name = horizontal_transfer_rate_of_tke_due_to_dynamics
-  long_name = rate of horizontal TKE transfer and pressure correlation calculated from dynamics
-  units =  m2 s-3
+  standard_name = horizontal_turbulent_eddy_diffusion_for_temperature
+  long_name = horizontal turbulent eddy diffusion for temperature calculated from dynamics
+  units = K s-1
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
   type = real
   kind = kind_phys
