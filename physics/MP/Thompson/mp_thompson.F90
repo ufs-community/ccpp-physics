@@ -369,7 +369,7 @@ module mp_thompson
                               is_aerosol_aware,                    &
                               merra2_aerosol_aware, nc, nwfa, nifa,&
                               nwfa2d, nifa2d, aero_ind_fdb,        &
-                              tgrs, prsl, phii, omega,             &
+                              tgrs, prsl, prsi, phii, omega,       &
                               sedi_semi, decfl, islmsk, dtp,       &
                               dt_inner,                            &
                               first_time_step, istep, nsteps,      &
@@ -421,6 +421,7 @@ module mp_thompson
          ! State variables and timestep information
          real(kind_phys),           intent(in   ) :: tgrs(:,:)
          real(kind_phys),           intent(in   ) :: prsl(:,:)
+         real(kind_phys),           intent(in   ) :: prsi(:,:)
          real(kind_phys),           intent(in   ) :: phii(:,:)
          real(kind_phys),           intent(in   ) :: omega(:,:)
          integer,                   intent(in   ) :: islmsk(:)
@@ -498,6 +499,7 @@ module mp_thompson
          ! Vertical velocity and level width
          real(kind_phys) :: w(1:ncol,1:nlev)                !< m s-1
          real(kind_phys) :: dz(1:ncol,1:nlev)               !< m
+         real(kind_phys) :: dm(1:ncol,1:nlev)               !< kg m-2
          ! Rain/snow/graupel fall amounts
          real(kind_phys) :: rain_mp(1:ncol)                 ! mm, dummy, not used
          real(kind_phys) :: graupel_mp(1:ncol)              ! mm, dummy, not used
@@ -687,21 +689,22 @@ module mp_thompson
          ! DH* - do this only if istep == 1? Would be ok if it was
          ! guaranteed that nothing else in the same subcycle group
          ! was using these arrays, but it is somewhat dangerous.
-         qv = new_spechum/(1.0_kind_phys-new_spechum)
+         ! both conversions (here and back below) use the input spechum
+         qv = spechum/(1.0_kind_phys-spechum)
 
          if (convert_dry_rho) then
-           new_qc = new_qc/(1.0_kind_phys-new_spechum)
-           new_qr = new_qr/(1.0_kind_phys-new_spechum)
-           new_qi = new_qi/(1.0_kind_phys-new_spechum)
-           new_qs = new_qs/(1.0_kind_phys-new_spechum)
-           new_qg = new_qg/(1.0_kind_phys-new_spechum)
+           new_qc = new_qc/(1.0_kind_phys-spechum)
+           new_qr = new_qr/(1.0_kind_phys-spechum)
+           new_qi = new_qi/(1.0_kind_phys-spechum)
+           new_qs = new_qs/(1.0_kind_phys-spechum)
+           new_qg = new_qg/(1.0_kind_phys-spechum)
 
-           new_ni = new_ni/(1.0_kind_phys-new_spechum)
-           new_nr = new_nr/(1.0_kind_phys-new_spechum)
+           new_ni = new_ni/(1.0_kind_phys-spechum)
+           new_nr = new_nr/(1.0_kind_phys-spechum)
            if (is_aerosol_aware .or. merra2_aerosol_aware) then
-              new_nc = new_nc/(1.0_kind_phys-new_spechum)
-              new_nwfa = new_nwfa/(1.0_kind_phys-new_spechum)
-              new_nifa = new_nifa/(1.0_kind_phys-new_spechum)
+              new_nc = new_nc/(1.0_kind_phys-spechum)
+              new_nwfa = new_nwfa/(1.0_kind_phys-spechum)
+              new_nifa = new_nifa/(1.0_kind_phys-spechum)
            end if
          end if
          ! *DH
@@ -712,8 +715,9 @@ module mp_thompson
          !> - Convert omega in Pa s-1 to vertical velocity w in m s-1
          w = -omega/(rho*con_g)
 
-         !> - Layer width in m from geopotential in m2 s-2
-         dz = (phii(:,2:nlev+1) - phii(:,1:nlev)) / con_g
+         !> - Dry-air layer mass in kg m-2, and layer width dz = dm/rho in m
+         dm = (prsi(:,1:nlev) - prsi(:,2:nlev+1)) * (1.0_kind_phys - spechum) / con_g
+         dz = dm / rho
 
          ! Accumulated values inside Thompson scheme, not used;
          ! only use delta and add to inout variables (different units)
@@ -809,7 +813,7 @@ module mp_thompson
          if (is_aerosol_aware) then
             call mp_gt_driver(qv=qv, qc=new_qc, qr=new_qr, qi=new_qi, qs=new_qs, qg=new_qg, ni=new_ni, nr=new_nr,        &
                               nc=new_nc, nwfa=new_nwfa, nifa=new_nifa, nwfa2d=nwfa2d, nifa2d=nifa2d,     &
-                              tt=new_tgrs, p=prsl, w=w, dz=dz, dt_in=dtstep, dt_inner=dt_inner,  &
+                              tt=new_tgrs, p=prsl, w=w, dz=dz, dm=dm, dt_in=dtstep, dt_inner=dt_inner,  &
                               sedi_semi=sedi_semi, decfl=decfl, lsm=islmsk,                  &
                               rainnc=rain_mp, rainncv=delta_rain_mp,                         &
                               snownc=snow_mp, snowncv=delta_snow_mp,                         &
@@ -852,7 +856,7 @@ module mp_thompson
          else if (merra2_aerosol_aware) then
              call mp_gt_driver(qv=qv, qc=new_qc, qr=new_qr, qi=new_qi, qs=new_qs, qg=new_qg, ni=new_ni, nr=new_nr,        &
                                nc=new_nc, nwfa=new_nwfa, nifa=new_nifa,                                   &
-                               tt=new_tgrs, p=prsl, w=w, dz=dz, dt_in=dtstep, dt_inner=dt_inner,  &
+                               tt=new_tgrs, p=prsl, w=w, dz=dz, dm=dm, dt_in=dtstep, dt_inner=dt_inner,  &
                                sedi_semi=sedi_semi, decfl=decfl, lsm=islmsk,                  &
                                rainnc=rain_mp, rainncv=delta_rain_mp,                         &
                                snownc=snow_mp, snowncv=delta_snow_mp,                         &
@@ -894,7 +898,7 @@ module mp_thompson
                                fs_fac_rain=fs_fac_rain, fs_fac_snow=fs_fac_snow)
          else
             call mp_gt_driver(qv=qv, qc=new_qc, qr=new_qr, qi=new_qi, qs=new_qs, qg=new_qg, ni=new_ni, nr=new_nr,        &
-                              tt=new_tgrs, p=prsl, w=w, dz=dz, dt_in=dtstep, dt_inner=dt_inner,  &
+                              tt=new_tgrs, p=prsl, w=w, dz=dz, dm=dm, dt_in=dtstep, dt_inner=dt_inner,  &
                               sedi_semi=sedi_semi, decfl=decfl, lsm=islmsk,                  &
                               rainnc=rain_mp, rainncv=delta_rain_mp,                         &
                               snownc=snow_mp, snowncv=delta_snow_mp,                         &
@@ -941,21 +945,21 @@ module mp_thompson
          ! was using these arrays, but it is somewhat dangerous.
 
          !> - Convert water vapor mixing ratio back to specific humidity
-         new_spechum = qv/(1.0_kind_phys+qv)
+         new_spechum = qv*(1.0_kind_phys-spechum)
 
          if (convert_dry_rho) then
-           new_qc = new_qc/(1.0_kind_phys+qv)
-           new_qr = new_qr/(1.0_kind_phys+qv)
-           new_qi = new_qi/(1.0_kind_phys+qv)
-           new_qs = new_qs/(1.0_kind_phys+qv)
-           new_qg = new_qg/(1.0_kind_phys+qv)
+           new_qc = new_qc*(1.0_kind_phys-spechum)
+           new_qr = new_qr*(1.0_kind_phys-spechum)
+           new_qi = new_qi*(1.0_kind_phys-spechum)
+           new_qs = new_qs*(1.0_kind_phys-spechum)
+           new_qg = new_qg*(1.0_kind_phys-spechum)
 
-           new_ni = new_ni/(1.0_kind_phys+qv)
-           new_nr = new_nr/(1.0_kind_phys+qv)
+           new_ni = new_ni*(1.0_kind_phys-spechum)
+           new_nr = new_nr*(1.0_kind_phys-spechum)
            if (is_aerosol_aware .or. merra2_aerosol_aware) then
-              new_nc = new_nc/(1.0_kind_phys+qv)
-              new_nwfa = new_nwfa/(1.0_kind_phys+qv)
-              new_nifa = new_nifa/(1.0_kind_phys+qv)
+              new_nc = new_nc*(1.0_kind_phys-spechum)
+              new_nwfa = new_nwfa*(1.0_kind_phys-spechum)
+              new_nifa = new_nifa*(1.0_kind_phys-spechum)
            end if
          end if
          ! *DH
