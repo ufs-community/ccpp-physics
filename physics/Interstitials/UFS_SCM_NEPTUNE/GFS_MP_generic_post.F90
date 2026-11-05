@@ -30,7 +30,7 @@
         fh_dfi_radar,index_of_process_dfi_radar, ix_dfi_radar, dfi_radar_tten, radar_tten_limits, fhour, prevsq,      &
         iopt_lake, iopt_lake_clm, lkm, use_lake_model, t2m, dpt2m, u10m, v10m, lsmask, errmsg, errflg)
 !
-      use machine, only: kind_phys
+      use ccpp_kinds, only: kind_phys
       use calpreciptype_mod, only: calpreciptype
       implicit none
 
@@ -652,7 +652,7 @@
 
 ! this routine is for FRAM alogrithm 
       elemental function calculate_tw_vectorized(t, td, p_sfc) result(tw)
-      use machine, only: kind_phys 
+      use ccpp_kinds, only: kind_phys 
       real(kind=kind_phys), intent(in) :: t, td, p_sfc  ! t and td in deg C, p_sfc in Pa or hPa
       real(kind=kind_phys) :: tw, e_actual, es_tw, f, f_prime, p_hpa, delta
       real(kind=kind_phys), parameter :: gamma_const = 0.00066_kind_phys

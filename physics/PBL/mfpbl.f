@@ -49,7 +49,7 @@
      &   zl,zm,thvx,q1,t1,u1,v1,hpbl,kpbl,                              &
      &   sflx,ustar,wstar,xmf,tcko,qcko,ucko,vcko)
 !
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       use physcons, grav => con_g, cp => con_cp
 !
       implicit none

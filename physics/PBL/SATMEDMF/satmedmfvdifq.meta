@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = satmedmfvdifq
   type = scheme
-  dependencies = ../../tools/funcphys.f90,../../tools/canopy_utils_mod.f,../../hooks/machine.F,../mfpbltq.f,mfscuq.f,mfscuq_mlm.f,../tridi.f
+  dependencies = ../../tools/funcphys.f90,../../tools/canopy_utils_mod.f,../mfpbltq.f,mfscuq.f,mfscuq_mlm.f,../tridi.f
 
 ########################################################################
 [ccpp-arg-table]

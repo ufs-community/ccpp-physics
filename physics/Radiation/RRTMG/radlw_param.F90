@@ -65,7 +65,7 @@ module module_radlw_parameters   !
 !! \htmlinclude module_radlw_parameters.html
 !!
 
-use machine,               only : kind_phys
+use ccpp_kinds,               only : kind_phys
 
 implicit none
 !

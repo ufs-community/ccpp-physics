@@ -59,7 +59,7 @@
            iovr,                         &
            errmsg, errflg                )
 
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       use module_radiation_clouds, only : gethml
       use radcons,  only: qmin          ! Minimum values for various calculations
       use funcphys, only: fpvs          ! Function to compute sat. vapor pressure over liq.

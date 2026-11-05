@@ -26,7 +26,7 @@ contains
       xlat_d, xlon_d, slmsk, imap, jmap, errmsg, errflg)
 !
 !
-    use machine,      only: kind_phys, kind_io8
+    use ccpp_kinds,      only: kind_phys, kind_io8
     use sfccyc_module, only: sfccycle
     implicit none
 

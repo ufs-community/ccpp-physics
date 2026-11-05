@@ -3,7 +3,7 @@
 !! the RRTMGP radiation scheme. Specific details below in subroutines.
 !!
 module GFS_rrtmgp_cloud_mp
-  use machine,      only: kind_phys
+  use ccpp_kinds,      only: kind_phys
   use radiation_tools,   only: check_error_msg
   use module_radiation_clouds, only: progcld_thompson, cld_frac_XuRandall
   use rrtmgp_lw_cloud_optics, only: &

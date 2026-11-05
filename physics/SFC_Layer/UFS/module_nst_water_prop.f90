@@ -6,7 +6,7 @@
 
 !> This module contains GFS NSST water property subroutines.
 module module_nst_water_prop
-  use machine ,               only : kind_phys
+  use ccpp_kinds,               only : kind_phys
   use module_nst_parameters , only : t0k, zero, one, half
 
   implicit none

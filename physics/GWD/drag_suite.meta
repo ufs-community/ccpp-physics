@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = drag_suite
   type = scheme
-  dependencies = ../hooks/machine.F
+  dependencies =
 
 ########################################################################
 [ccpp-arg-table]

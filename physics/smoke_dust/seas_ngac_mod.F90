@@ -17,7 +17,7 @@
 ! !USES:
 
 !  use chem_comm_mod,  only : chem_comm_isroot
-   use machine ,       only : kind_phys
+   use ccpp_kinds,       only : kind_phys
 
    implicit none
 

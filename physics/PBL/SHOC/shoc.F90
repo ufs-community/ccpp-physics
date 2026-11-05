@@ -3,7 +3,7 @@
 
 !> This module contains the CCPP-compliant SHOC scheme.
 module shoc
-  use machine, only: kind_phys
+  use ccpp_kinds, only: kind_phys
 
   implicit none
 

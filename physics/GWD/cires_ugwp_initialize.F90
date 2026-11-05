@@ -9,7 +9,7 @@
 !> This module contains UGWP v0 initialization schemes 
     module ugwp_common_v0
 !
-     use machine,  only: kind_phys
+     use ccpp_kinds,  only: kind_phys
      use physcons, only : pi => con_pi, grav => con_g, rd => con_rd,   &
                           rv => con_rv, cpd => con_cp, fv => con_fvirt,&
                           arad => con_rerth

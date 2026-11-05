@@ -4,7 +4,7 @@
 !> This module contains the CCPP-compliant GFS near-surface sea temperature scheme.
 module sfc_nst
 
-  use machine ,               only : kind_phys, kp => kind_phys
+  use ccpp_kinds,               only : kind_phys, kp => kind_phys
   use funcphys ,              only : fpvs
   use module_nst_parameters , only : one, zero, half
   use module_nst_parameters , only : t0k, cp_w, omg_m, omg_sh, sigma_r, solar_time_6am, sst_max

@@ -128,7 +128,7 @@ module module_radiation_aerosols
 !
 use mpi_f08
 use mpiutil,  only: ccpp_bcast
-use machine,  only : kind_phys, kind_io4, kind_io8
+use ccpp_kinds,  only : kind_phys, kind_io4, kind_io8
 use module_iounitdef,        only : NIAERCM
 use module_radsw_parameters, only : NBDSW,  wvnsw1=>wvnum1, &
                                     NSWSTR, wvnsw2=>wvnum2

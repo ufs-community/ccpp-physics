@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = sgscloud_radpost
   type = scheme
-  dependencies = ../../hooks/machine.F
+  dependencies =
 
 ########################################################################
 [ccpp-arg-table]

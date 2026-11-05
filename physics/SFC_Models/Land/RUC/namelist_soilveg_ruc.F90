@@ -3,7 +3,7 @@
 !> This module contains the namelist options of soil/vegetation in RUC
       module namelist_soilveg_ruc
 
-      use machine ,   only : kind_phys
+      use ccpp_kinds,   only : kind_phys
 
       implicit none
       save

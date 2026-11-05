@@ -9,7 +9,7 @@
 module cu_ntiedtke
 
 !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-     use machine , only : kind_phys
+     use ccpp_kinds, only : kind_phys
      ! DH* TODO - replace with arguments to subroutine calls,
      ! this also requires redefining derived constants in the
      ! parameter section below

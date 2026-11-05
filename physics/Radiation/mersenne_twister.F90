@@ -161,7 +161,7 @@
 !
 !$$$
 module mersenne_twister
-  use machine, only: kind_dbl_prec
+  use ccpp_kinds, only: kind_dbl_prec
   implicit none
   private
 

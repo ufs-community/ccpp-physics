@@ -33,7 +33,7 @@
 
 module unified_ugwp
 
-    use machine, only: kind_phys
+    use ccpp_kinds, only: kind_phys
 
 !    use cires_ugwp_module,   only: knob_ugwp_version, cires_ugwp_mod_init,   cires_ugwp_mod_final
     use cires_ugwpv0_module, only: knob_ugwp_version, cires_ugwpv0_mod_init, cires_ugwpv0_mod_final

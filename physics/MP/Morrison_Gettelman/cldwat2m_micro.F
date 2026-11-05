@@ -23,7 +23,7 @@
 !---------------------------------------------------------------------------------
 
 #ifdef NEMS_GSM
-       use machine,       only : r8 => kind_phys
+       use ccpp_kinds,       only : r8 => kind_phys
        use physcons, gravit => con_g,    rair    => con_rd,             &
      &               rh2o   => con_rv,   epsilon => con_eps,            &
      &               tmelt  => con_tice, cpair   => con_cp,             &

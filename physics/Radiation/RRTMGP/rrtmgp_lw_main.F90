@@ -4,7 +4,7 @@
 !> This module contains the RRTMGP-LW radiation scheme
 module rrtmgp_lw_main
   use mpi_f08
-  use machine,                only: kind_phys, kind_dbl_prec
+  use ccpp_kinds,                only: kind_phys, kind_dbl_prec
   use mo_optical_props,       only: ty_optical_props_1scl, ty_optical_props_2str
   use mo_rte_lw,              only: rte_lw
   use mo_gas_optics_rrtmgp,   only: ty_gas_optics_rrtmgp

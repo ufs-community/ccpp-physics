@@ -36,7 +36,7 @@
 ! =======================================================================
 
 module gfdl_cloud_microphys_v3_mod
-  use machine, only: kind_phys, r8 => kind_dbl_prec
+  use ccpp_kinds, only: kind_phys, r8 => kind_dbl_prec
   use module_gfdlmp_param, only: read_gfdlmp_nml, &
        t_min, t_sub, tau_r2g, tau_smlt, tau_gmlt, dw_land, dw_ocean, vw_fac, vi_fac,      &
        vr_fac, vs_fac, vg_fac, ql_mlt, do_qa, fix_negative, vw_max, vi_max, vs_max,       &

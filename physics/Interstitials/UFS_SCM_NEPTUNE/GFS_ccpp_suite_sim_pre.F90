@@ -13,7 +13,7 @@
 !
 ! ########################################################################################
 module GFS_ccpp_suite_sim_pre
-  use machine, only: kind_phys
+  use ccpp_kinds, only: kind_phys
   use module_ccpp_suite_simulator, only: base_physics_process
   use netcdf
   implicit none

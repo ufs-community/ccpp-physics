@@ -126,7 +126,7 @@ contains
       ten_v, ten_qv, ten_ql, ten_qr, ten_qi, ten_qs, ten_qg, ten_cldfrc, ten_q,    &
       errmsg, errflg)
 
-      use machine, only: kind_phys, kind_dyn, kind_dbl_prec
+      use ccpp_kinds, only: kind_phys, kind_dyn, kind_dbl_prec
 
       implicit none
 

@@ -7,7 +7,7 @@
 !! This module contains grib code for each parameter-used in subroutines sfccycle()
 !! and setrmsk().
 module sfccyc_module
-  use machine, only : kind_io8, kind_io4
+  use ccpp_kinds, only : kind_io8, kind_io4
   implicit none
   save
 
@@ -77,7 +77,7 @@ contains
       , sz_nml, input_nml_file &
       , min_ice &
       , ialb, isot, ivegsrc, tile_num_ch, i_index, j_index)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     character(len=*), intent(in) :: tile_num_ch
     integer, intent(in) :: i_index(len), j_index(len), &
@@ -2034,7 +2034,7 @@ contains
 
   !>\ingroup mod_sfcsub
   subroutine monitr(lfld, fld, slimsk, sno, ijmax)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: ij, n, ijmax
     real(kind=kind_io8) :: fld(ijmax), slimsk(ijmax), sno(ijmax)
@@ -2089,7 +2089,7 @@ contains
   !! reads a high resolution mask field for use in grib interpolation
   subroutine hmskrd(lugb, imsk, jmsk, fnmskh, &
       kpds5, slmskh, gausm, blnmsk, bltmsk, me)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: kpds5, me, i, imsk, jmsk, lugb
     character*500 :: fnmskh
@@ -2116,7 +2116,7 @@ contains
   !>\ingroup mod_sfcsub
   subroutine fixrdg(lugb, idim, jdim, fngrib, &
       kpds5, gdata, gaus, blno, blto, me)
-    use machine, only : kind_io8, kind_dbl_prec, kind_sngl_prec
+    use ccpp_kinds, only : kind_io8, kind_dbl_prec, kind_sngl_prec
     implicit none
     integer :: lgrib, n, lskip, jret, j, ndata, lugi, jdim, idim, lugb, &
         iret, me, kpds5, kdata, i
@@ -2203,7 +2203,7 @@ contains
   !>\ingroup mod_sfcsub
   !! This subroutine get area of the grib record.
   subroutine getarea(kgds, dlat, dlon, rslat, rnlat, wlon, elon, ijordr, me)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: j, me, kgds11
     real(kind=kind_io8) :: f0lon, f0lat, elon, dlon, dlat, rslat, wlon, rnlat
@@ -2339,7 +2339,7 @@ contains
 
   !>\ingroup mod_sfcsub
   subroutine subst(data, imax, jmax, dlon, dlat, ijordr)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, j, ii, jj, jmax, imax, iret
     real(kind=kind_io8) :: dlat, dlon
@@ -2405,7 +2405,7 @@ contains
   subroutine la2ga(regin, imxin, jmxin, rinlon, rinlat, rlon, rlat, inttyp, &
       gauout, len, lmask, rslmsk, slmask &
       , outlat, outlon, me)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     real(kind=kind_io8) :: wei4, wei3, wei2, sum2, sum1, sum3, wei1, sum4, &
         wsum, tem, wsumiv, sums, sumn, wi2j2, x, y, wi1j1, &
@@ -2850,7 +2850,7 @@ contains
       sihclm, sicclm, &
       vmnclm, vmxclm, slpclm, absclm, &
       len, lsoil)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, j, len, lsoil
     real(kind=kind_io8) :: tsfanl(len), tsfan2(len), wetanl(len), &
@@ -2940,7 +2940,7 @@ contains
       , irtvmn, irtvmx, irtslp, irtabs &
       , imsk, jmsk, slmskh, outlat, outlon &
       , gaus, blno, blto, me, lanom)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     logical :: lanom
     integer :: irtsmc, irtacn, irtstc, irtvet, irtveg, irtscv, irtzor, irtsno, &
@@ -3567,7 +3567,7 @@ contains
       sihanl, sicanl, &
       vmnanl, vmxanl, slpanl, absanl, &
       len, lsoil)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, j, len, lsoil
     real(kind=kind_io8) :: tsffcs(len), wetfcs(len), snofcs(len), &
@@ -3633,7 +3633,7 @@ contains
 
   !>\ingroup mod_sfcsub
   subroutine bktges(smcfcs, stcfcs, len, lsoil)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, j, len, lsoil, k
     real(kind=kind_io8) :: smcfcs(len, lsoil), stcfcs(len, lsoil)
@@ -3658,7 +3658,7 @@ contains
 
   !>\ingroup mod_sfcsub
   subroutine rof01(aisfld, len, op, crit)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, len
     real(kind=kind_io8) :: aisfld(len), crit
@@ -3705,7 +3705,7 @@ contains
 
   !>\ingroup mod_sfcsub
   subroutine rof01_len(aisfld, len, op, crit)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, len
     real(kind=kind_io8), intent(in) :: crit(len)
@@ -3752,7 +3752,7 @@ contains
   end subroutine rof01_len
   !>\ingroup mod_sfcsub
   subroutine tsfcor(tsfc, orog, slmask, umask, len, rlapse)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, len
     real(kind=kind_io8) :: rlapse, umask
@@ -3769,7 +3769,7 @@ contains
   !! This subroutine uses surface temperature to get snow depth estimate.
   subroutine snodpth(scvanl, slianl, tsfanl, snoclm, &
       glacir, snwmax, snwmin, landice, len, snoanl, me)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, me, len
     logical, intent(in) :: landice
@@ -3836,7 +3836,7 @@ contains
       irttg3, irtscv, irtacn, irtsmc, irtstc, irtveg, &
       irtvmn, irtvmx, irtslp, irtabs, &
       irtvet, irtsot, irtsoc, irtalf, landice, me)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: k, i, im, id, iy, len, lsoil, ih, irtacn, irtsmc, irtscv, irtais, &
         irttg3, irtstc, irtalf, me, irtsot, irtsoc, irtveg, irtvet, irtzor, &
@@ -4228,7 +4228,7 @@ contains
       albsea, snosea, zorsea, smcsea, smcice, &
       tsfmin, tsfice, albice, zorice, tgice, &
       rla, rlo, me)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     real(kind=kind_io8), parameter :: one = 1.0
     real(kind=kind_io8) :: tgice, albice, zorice, tsfice, albsea, snosea, &
@@ -4306,7 +4306,7 @@ contains
   !>\ingroup mod_sfcsub
   subroutine qcsnow(snoanl, slmask, aisanl, glacir, len, snoval, &
       landice, me)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: kount, i, len, me
     logical, intent(in) :: landice
@@ -4353,7 +4353,7 @@ contains
   !>\ingroup mod_sfcsub
   subroutine qcsice(ais, glacir, amxice, aicice, aicsea, sllnd, slmask, &
       rla, rlo, len, me)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: kount1, kount, i, me, len
     real(kind=kind_io8) :: per, aicsea, aicice, sllnd
@@ -4403,7 +4403,7 @@ contains
 
   !>\ingroup mod_sfcsub
   subroutine setlsi(slmask, aisfld, len, aicice, slifld)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, len
     real(kind=kind_io8) :: aicice
@@ -4418,7 +4418,7 @@ contains
   end subroutine setlsi
   !>\ingroup mod_sfcsub
   subroutine scale(fld, len, scl)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, len
     real(kind=kind_io8) :: fld(len), scl
@@ -4433,7 +4433,7 @@ contains
       fldlmx, fldlmn, fldomx, fldomn, fldimx, fldimn, &
       fldjmx, fldjmn, fldsmx, fldsmn, epsfld, &
       rla, rlo, len, mode, percrit, lgchek, me)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer, intent(in) :: len, mode, me
     real(kind=kind_io8), intent(in) :: fldimx, fldimn, fldjmx, fldomn, &
@@ -4805,7 +4805,7 @@ contains
 
   !>\ingroup mod_sfcsub
   subroutine setzro(fld, eps, len)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, len
     real(kind=kind_io8) :: fld(len), eps
@@ -4817,7 +4817,7 @@ contains
 
   !>\ingroup mod_sfcsub
   subroutine getscv(snofld, scvfld, len)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, len
     real(kind=kind_io8) :: snofld(len), scvfld(len)
@@ -4830,7 +4830,7 @@ contains
 
   !>\ingroup mod_sfcsub
   subroutine getstc(tsffld, tg3fld, slifld, len, lsoil, stcfld, tsfimx)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: k, i, len, lsoil
     real(kind=kind_io8) :: factor, tsfimx
@@ -4863,7 +4863,7 @@ contains
   !>\ingroup mod_sfcsub
   !! This subroutine calculates layer soil wetness.
   subroutine getsmc(wetfld, len, lsoil, smcfld, me)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: k, i, len, lsoil, me
     real(kind=kind_io8) :: wetfld(len), smcfld(len, lsoil)
@@ -4880,7 +4880,7 @@ contains
   !>\ingroup mod_sfcsub
   subroutine usesgt(sig1t, slianl, tg3anl, len, lsoil, tsfanl, stcanl, &
       tsfimx)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, len, lsoil
     real(kind=kind_io8) :: tsfimx
@@ -4900,7 +4900,7 @@ contains
 
   !>\ingroup mod_sfcsub
   subroutine snosfc(snoanl, tsfanl, tsfsmx, len, me)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: kount, i, len, me
     real(kind=kind_io8) :: per, tsfsmx
@@ -4925,7 +4925,7 @@ contains
 
   !>\ingroup mod_sfcsub
   subroutine albocn(albclm, slmask, albomx, len)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, len
     real(kind=kind_io8) :: albomx
@@ -4943,7 +4943,7 @@ contains
 
   !>\ingroup mod_sfcsub
   subroutine qcmxice(glacir, amxice, len, me)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, kount, len, me
     real(kind=kind_io8) :: glacir(len), amxice(len), per
@@ -4965,7 +4965,7 @@ contains
 
   !>\ingroup mod_sfcsub
   subroutine qcsli(slianl, slifcs, len, me)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, kount, len, me
     real(kind=kind_io8) :: slianl(len), slifcs(len), per
@@ -5007,7 +5007,7 @@ contains
   subroutine qcbyfc(tsffcs, snofcs, qctsfs, qcsnos, qctsfi, &
       len, lsoil, snoanl, aisanl, slianl, tsfanl, albanl, &
       zoranl, smcanl, smcclm, tsfsmx, albomx, zoromx, me)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: kount, me, k, i, lsoil, len
     real(kind=kind_io8) :: zoromx, per, albomx, qctsfi, qcsnos, qctsfs, tsfsmx
@@ -5063,7 +5063,7 @@ contains
   subroutine setrmsk(kpds5, slmask, igaul, jgaul, wlon, rnlat, &
       data, imax, jmax, rlnout, rltout, lmask, rslmsk &
       , gaus, blno, blto, kgds1, kpds4, lbms)
-    use machine, only : kind_io8, kind_io4, kind_dbl_prec
+    use ccpp_kinds, only : kind_io8, kind_io4, kind_dbl_prec
     implicit none
     real(kind=kind_io8) :: blno, blto, wlon, rnlat, crit, data_max
     integer :: i, j, ijmax, jgaul, igaul, kpds5, jmax, imax, kgds1, kspla
@@ -5416,7 +5416,7 @@ contains
   !! This subroutine interpolates from lat/lon grid to other lat/lon grid.
   subroutine ga2la(gauin, imxin, jmxin, regout, imxout, jmxout, &
       wlon, rnlat, rlnout, rltout, gaus, blno, blto)
-    use machine, only : kind_io8, kind_io4, kind_dbl_prec
+    use ccpp_kinds, only : kind_io8, kind_io4, kind_dbl_prec
     implicit none
     integer :: i1, i2, j2, ishft, i, jj, j1, jtem, jmxout, imxin, jmxin, imxout, &
         j, iret
@@ -5614,7 +5614,7 @@ contains
 
   !>\ingroup mod_sfcsub
   subroutine landtyp(vegtype, soiltype, colortype, slptype, slmask, len)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, len
     real(kind=kind_io8) :: vegtype(len), soiltype(len), slmask(len) &
@@ -5634,7 +5634,7 @@ contains
 
   !>\ingroup mod_sfcsub
   subroutine gaulat(gaul, k)
-    use machine, only : kind_io8, kind_io4, kind_dbl_prec
+    use ccpp_kinds, only : kind_io8, kind_io4, kind_dbl_prec
     implicit none
     integer :: n, k
     real(kind=kind_io8) :: radi
@@ -5655,7 +5655,7 @@ contains
   !! The subroutine conducts time interpolation of anomalies,
   !! and add initial anomaly to date interpolated climatology.
   subroutine anomint(tsfan0, tsfclm, tsfcl0, tsfanl, len)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, len
     real(kind=kind_io8) :: tsfanl(len), tsfan0(len), &
@@ -5688,7 +5688,7 @@ contains
       , imsk, jmsk, slmskh, outlat, outlon &
       , gaus, blno, blto, me, lprnt, iprnt, fnalbc2, ialb &
       , tile_num_ch, i_index, j_index)
-    use machine, only : kind_io8, kind_io4, kind_dbl_prec
+    use ccpp_kinds, only : kind_io8, kind_io4, kind_dbl_prec
     implicit none
     character(len=*), intent(in) :: tile_num_ch
     integer, intent(in) :: i_index(len), j_index(len)
@@ -6699,7 +6699,7 @@ contains
   subroutine fixrdc_tile(filename_raw, tile_num_ch, &
       i_index, j_index, kpds, var, mon, npts, me)
     use netcdf
-    use machine, only : kind_io8
+    use ccpp_kinds, only : kind_io8
     implicit none
     character(len=*), intent(in) :: filename_raw
     character(len=*), intent(in) :: tile_num_ch
@@ -6859,7 +6859,7 @@ contains
       gdata, len, iret &
       , imsk, jmsk, slmskh, gaus, blno, blto &
       , outlat, outlon, me)
-    use machine, only : kind_io8, kind_dbl_prec, kind_sngl_prec
+    use ccpp_kinds, only : kind_io8, kind_dbl_prec, kind_sngl_prec
     implicit none
     integer :: imax, jmax, ijmax, i, j, n, jret, inttyp, iret, imsk, &
         jmsk, len, lugb, kpds5, mon, lskip, lgrib, ndata, lugi, me, kmami &
@@ -6988,7 +6988,7 @@ contains
       iy, im, id, ih, fh, gdata, len, iret &
       , imsk, jmsk, slmskh, gaus, blno, blto &
       , outlat, outlon, me)
-    use machine, only : kind_io8, kind_dbl_prec, kind_sngl_prec
+    use ccpp_kinds, only : kind_io8, kind_dbl_prec, kind_sngl_prec
     implicit none
     integer :: nrepmx, nvalid, imo, iyr, idy, jret, ihr, nrept, lskip, lugi, &
         lgrib, j, ndata, i, inttyp, jmax, imax, ijmax, ij, jday, len, iret, &
@@ -7231,7 +7231,7 @@ contains
 
   !>\ingroup mod_sfcsub
   subroutine snodpth2(glacir, snwmax, snoanl, len, me)
-    use machine, only : kind_io8, kind_io4
+    use ccpp_kinds, only : kind_io8, kind_io4
     implicit none
     integer :: i, me, len
     real(kind=kind_io8) :: snwmax
