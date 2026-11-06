@@ -37,8 +37,9 @@ contains
   subroutine GFS_rrtmgp_cloud_mp_run(nCol, nLev, nTracers, ncnd, i_cldliq, i_cldice,     &
        i_cldrain, i_cldsnow, i_cldgrpl, i_cldtot, i_cldliq_nc, i_cldice_nc, i_twa, kdt,  &
        imfdeepcnv, imfdeepcnv_gf, imfdeepcnv_samf, doSWrad, doLWrad, effr_in, lmfshal,   &
-       ltaerosol,mraerosol, icloud, imp_physics, imp_physics_thompson, imp_physics_gfdl, &
+       ltaerosol, mraerosol, gtaerosol, icloud, imp_physics, imp_physics_thompson, imp_physics_gfdl, &
        lgfdlmprad, do_mynnedmf, uni_cld, lmfdeep2, p_lev, p_lay, t_lay, qs_lay, q_lay,   &
+       ntss1, ntss2,ntss3, ntss4,ntss5, ntsu,  ntocl,                                    & 
        relhum, lsmask, xlon, xlat, dx, tv_lay, effrin_cldliq, effrin_cldice,             &
        effrin_cldrain, effrin_cldsnow, tracer, cnv_mixratio, cld_cnv_frac, qci_conv,     &
        deltaZ, deltaZc, deltaP, qc_mynn, qi_mynn, cld_pbl_frac, con_g, con_rd, con_eps,  &
@@ -55,6 +56,8 @@ contains
          nLev,                      & !< Number of vertical layers
          ncnd,                      & !< Number of cloud condensation types.
          nTracers,                  & !< Number of tracers from model. 
+         ntss1, ntss2,ntss3,ntss4,  & ! gocart tracer number
+         ntss5, ntsu,ntocl,         & ! gocart tracer number
          i_cldliq,                  & !< Index into tracer array for cloud liquid. 
          i_cldice,                  & !< Index into tracer array for cloud ice.
          i_cldrain,                 & !< Index into tracer array for cloud rain.
@@ -79,6 +82,7 @@ contains
          lmfshal,                   & !< Flag for mass-flux shallow convection scheme used by Xu-Randall
          ltaerosol,                 & !< Flag for aerosol option
          mraerosol,                 & !< Flag for aerosol option
+         gtaerosol,                 & !< Flag for aerosol option
          lgfdlmprad,                & !< Flag for GFDLMP radiation interaction
          do_mynnedmf,               & !< Flag to activate MYNN-EDMF 
          uni_cld,                   & !< Flag for unified cloud scheme
@@ -251,7 +255,8 @@ contains
        ! Update particle size using modified mixing-ratios from Thompson.
        call cmp_reff_Thompson(nLev, nCol, i_cldliq, i_cldice, i_cldsnow, i_cldice_nc,   &
             i_cldliq_nc, i_twa, q_lay, p_lay, t_lay, tracer, con_eps, con_rd, ltaerosol,&
-            mraerosol, lsmask,  effrin_cldliq, effrin_cldice, effrin_cldsnow)
+            mraerosol, gtaerosol, lsmask,  effrin_cldliq, effrin_cldice, effrin_cldsnow,&
+            ntss1, ntss2,ntss3,ntss4, ntss5, ntsu,ntocl)
        cld_reliq  = effrin_cldliq
        cld_reice  = effrin_cldice
        cld_resnow = effrin_cldsnow
@@ -776,13 +781,15 @@ contains
   !! RRTMGP radiation scheme.
   subroutine cmp_reff_Thompson(nLev, nCol, i_cldliq, i_cldice, i_cldsnow, i_cldice_nc,   &
        i_cldliq_nc, i_twa, q_lay, p_lay, t_lay, tracer, con_eps, con_rd, ltaerosol,      &
-       mraerosol, lsmask, effrin_cldliq, effrin_cldice, effrin_cldsnow)
+       mraerosol, gtaerosol, lsmask, effrin_cldliq, effrin_cldice, effrin_cldsnow,       &
+       ntss1, ntss2,ntss3,ntss4, ntss5, ntsu,ntocl)
     implicit none
 
     ! Inputs
     integer, intent(in) :: nLev, nCol, i_cldliq, i_cldice, i_cldsnow, i_cldice_nc,       &
          i_cldliq_nc, i_twa
-    logical, intent(in) :: ltaerosol, mraerosol
+    integer, intent(in) :: ntss1, ntss2,ntss3,ntss4, ntss5, ntsu,ntocl
+    logical, intent(in) :: ltaerosol, mraerosol, gtaerosol
     real(kind_phys), intent(in) :: con_eps,con_rd
     real(kind_phys), dimension(:,:),intent(in) :: q_lay, p_lay, t_lay
     real(kind_phys), dimension(:,:,:),intent(in) :: tracer
@@ -796,7 +803,7 @@ contains
     integer :: iCol, iLay
     real(kind_phys) :: rho, orho
     real(kind_phys),dimension(nCol,nLev) :: qv_mp, qc_mp, qi_mp, qs_mp, ni_mp, nc_mp,    &
-         nwfa, re_cloud, re_ice, re_snow
+         nwfa,gtnwfa, re_cloud, re_ice, re_snow
     integer :: ilsmask 
 
     ! Prepare cloud mixing-ratios and number concentrations for calc_effectRa
@@ -809,9 +816,15 @@ contains
           qi_mp(iCol,iLay) = tracer(iCol,iLay,i_cldice)    / (1.-q_lay(iCol,iLay))
           qs_mp(iCol,iLay) = tracer(iCol,iLay,i_cldsnow)   / (1.-q_lay(iCol,iLay))
           ni_mp(iCol,iLay) = tracer(iCol,iLay,i_cldice_nc) / (1.-q_lay(iCol,iLay))
-          if (ltaerosol .or. mraerosol) then
+          if (ltaerosol .or. mraerosol .or. gtaerosol) then
              nc_mp(iCol,iLay) = tracer(iCol,iLay,i_cldliq_nc) / (1.-q_lay(iCol,iLay))
+            if (gtaerosol) then
+             nwfa(iCol,iLay) = max(1.e-15, ((tracer(iCol,iLay,ntss1)/0.0045435214+tracer(iCol,iLay,ntss2)/0.2907854+tracer(iCol,iLay,ntss3)/12.91224+ &
+             tracer(iCol,iLay,ntss4)/206.2216+tracer(iCol,iLay,ntss5)/4326.23)*9.+tracer(iCol,iLay,ntsu)/0.3053104*5+ &
+             tracer(iCol,iLay,ntocl)/0.3232698*8)*1.e6 )
+             else      
              nwfa(iCol,iLay)  = tracer(iCol,iLay,i_twa)
+            endif
              if (qc_mp(iCol,iLay) > 1.e-12 .and. nc_mp(iCol,iLay) < 100.) then
                nc_mp(iCol,iLay) = make_DropletNumber(qc_mp(iCol,iLay)*rho, nwfa(iCol,iLay)*rho) * orho
              endif

@@ -122,7 +122,7 @@ contains
       rain0, ice0, snow0, graupel0, prcp0, sr, oro,                                &
       dtp, hydrostatic, lradar, refl_10cm,                                         &
       reset, effr_in, rew, rei, rer, res, reg,                                     &
-      cplchm, pfi_lsan, pfl_lsan, con_one, con_p001, con_secinday, ten_t, ten_u,   &
+      cplchm, cplchp, pfi_lsan, pfl_lsan, con_one, con_p001, con_secinday, ten_t, ten_u,   &
       ten_v, ten_qv, ten_ql, ten_qr, ten_qi, ten_qs, ten_qg, ten_cldfrc, ten_q,    &
       errmsg, errflg)
 
@@ -161,7 +161,7 @@ contains
       real(kind=kind_phys), intent(inout), dimension(:,:) :: refl_10cm
       logical, intent (in) :: reset, effr_in                                  
       real(kind=kind_phys), intent(inout), dimension(:,:), optional :: rew, rei, rer, res, reg
-      logical, intent (in) :: cplchm
+      logical, intent (in) :: cplchm, cplchp
       ! ice and liquid water 3d precipitation fluxes - only allocated if cplchm is .true.
       real(kind=kind_phys), intent(inout), dimension(:,:), optional :: pfi_lsan, pfl_lsan
 
@@ -327,7 +327,7 @@ contains
       enddo
 
       ! output ice and liquid water 3d precipitation fluxes if requested
-      if (cplchm) then
+      if (cplchm .or. cplchp) then
         do k=1,levs
           kk = levs-k+1
           do i=1,im

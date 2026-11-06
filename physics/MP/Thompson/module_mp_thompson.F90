@@ -69,8 +69,20 @@ module module_mp_thompson
    logical, parameter, private :: iiwarm = .false.
    logical, private :: is_aerosol_aware = .false.
    logical, private :: merra2_aerosol_aware = .false.
+   logical, private :: gocart_aerosol_aware = .false.
+   logical, private :: cplchp = .false.
+   logical, private :: cplchm = .false.
    logical, parameter, private :: dustyIce = .true.
    logical, parameter, private :: homogIce = .true.
+
+   integer, private :: wetdep_ls_cpl
+   integer, parameter :: num_aero = 15
+   character(len=5), parameter, dimension(num_aero) :: aero_species =       &
+   ["dust1", "dust2", "dust3", "dust4", "dust5", "seas1", "seas2", "seas3", &
+    "seas4", "seas5", "sulf ", "bc1  ", "bc2  ", "oc1  ", "oc2  "]
+   real, parameter, dimension(num_aero) :: aero_diams =                     &
+   [0.73e-6, 1.4e-6, 2.4e-6, 4.5e-6, 8.0e-6, 0.079e-6, 0.316e-6, 1.119e-6,  &
+    2.818e-6, 7.772e-6, 0.0695e-6, 0.35e-6, 0.35e-6, 0.35e-6, 0.35e-6]
 
    integer, parameter, private :: IFDRY = 0
    real(wp)                     :: T_0 !set in mp_thompson_init from host model
@@ -444,6 +456,10 @@ module module_mp_thompson
 !> @{
       subroutine thompson_init(is_aerosol_aware_in,       &
                                merra2_aerosol_aware_in,   &
+                               gocart_aerosol_aware_in,   &
+                               cplchp_in,                 &
+                               cplchm_in,                 &
+                               wetdep_ls_cpl_in,          &
                                mpicomm, mpirank, mpiroot, &
                                threads, errmsg, errflg)
 
@@ -451,6 +467,10 @@ module module_mp_thompson
 
          logical, intent(in) :: is_aerosol_aware_in
          logical, intent(in) :: merra2_aerosol_aware_in
+         logical, intent(in) :: gocart_aerosol_aware_in
+         logical, intent(in) :: cplchp_in
+         logical, intent(in) :: cplchm_in
+         integer, intent(in) :: wetdep_ls_cpl_in
          type(MPI_Comm), intent(in) :: mpicomm
          integer, intent(in) :: mpirank, mpiroot
          integer, intent(In) :: threads
@@ -478,20 +498,48 @@ module module_mp_thompson
          lsub = lvap0 + lfus
          olfus = 1./lfus
 
-! Set module variable is_aerosol_aware/merra2_aerosol_aware
+! Set module variable is_aerosol_aware/merra2_aerosol_aware/gocart_aerosol_aware
          is_aerosol_aware = is_aerosol_aware_in
          merra2_aerosol_aware = merra2_aerosol_aware_in
-         if (is_aerosol_aware .and. merra2_aerosol_aware) then
-            errmsg = 'Logic error in thompson_init: only one of the two options can be true, ' // &
-                     'not both: is_aerosol_aware or merra2_aerosol_aware'
-            errflg = 1
+         gocart_aerosol_aware = gocart_aerosol_aware_in
+         cplchp = cplchp_in
+         cplchm = cplchm_in
+         wetdep_ls_cpl = wetdep_ls_cpl_in
+         if (is_aerosol_aware .and. merra2_aerosol_aware .and. gocart_aerosol_aware) then
+             errmsg = 'Logic error in thompson_init: only one of the two options can be true, ' // &
+                      'not both: is_aerosol_aware or merra2_aerosol_aware'
+             errflg = 1
+             return
+         end if
+         if (is_aerosol_aware .and. merra2_aerosol_aware ) then
+             errmsg = 'Logic error in thompson_init: only one of the two options can be true, ' // &
+                      'not both: is_aerosol_aware or merra2_aerosol_aware'
+             errflg = 1
             return
          end if
+         if (is_aerosol_aware .and. gocart_aerosol_aware) then
+             errmsg = 'Logic error in thompson_init: only one of the two options can be true, ' // &
+                       'not both: is_aerosol_aware or merra2_aerosol_aware'
+             errflg = 1
+            return
+         end if
+         if (merra2_aerosol_aware .and. gocart_aerosol_aware) then
+             errmsg = 'Logic error in thompson_init: only one of the two options can be true, ' // &
+                      'not both: is_aerosol_aware or merra2_aerosol_aware'
+             errflg = 1
+             return
+         end if
+
+          
+
+
          if (mpirank==mpiroot) then
             if (is_aerosol_aware) then
                write (*,'(a)') 'Using aerosol-aware version of Thompson microphysics'
             else if(merra2_aerosol_aware) then
                write (*,'(a)') 'Using merra2 aerosol-aware version of Thompson microphysics'
+            else if(gocart_aerosol_aware) then
+               write (*,'(a)') 'Using gocart aerosol-aware version of Thompson microphysics'
             else
                write (*,'(a)') 'Using non-aerosol-aware version of Thompson microphysics'
             end if
@@ -1002,6 +1050,7 @@ module module_mp_thompson
 !> @{
       subroutine mp_gt_driver(qv, qc, qr, qi, qs, qg, ni, nr, nc,     &
                               nwfa, nifa, nwfa2d, nifa2d,             &
+                              aero3d,aeroFF,                          &
                               tt, th, pii,                            &
                               p, w, dz, dt_in, dt_inner,              &
                               sedi_semi, decfl, lsm,                  &
@@ -1060,6 +1109,8 @@ module module_mp_thompson
                            pii
          real(wp), dimension(ims:ime, kms:kme, jms:jme), optional, intent(inout):: &
                            nc, nwfa, nifa
+         real(wp), dimension(ims:ime, kms:kme, jms:jme, 1:num_aero), optional, intent(inout):: &
+                           aero3d, aeroFF
          real(wp), dimension(ims:ime, jms:jme), optional, intent(in):: nwfa2d, nifa2d
          integer, dimension(ims:ime, jms:jme), intent(in):: lsm
          real(wp), dimension(ims:ime, kms:kme, jms:jme), optional, intent(inout):: &
@@ -1143,12 +1194,14 @@ module module_mp_thompson
       real(wp), dimension(kts:kte):: &
                         rainprod1d, evapprod1d
 #endif
+         real(wp), dimension(kts:kte,1:num_aero):: naero1d
+         real(wp), dimension(kts:kte,1:num_aero):: aeroRT
          real(wp), dimension(its:ite, jts:jte):: pcp_ra, pcp_sn, pcp_gr, pcp_ic
          real(wp) :: dt, pptrain, pptsnow, pptgraul, pptice
          real(wp) :: qc_max, qr_max, qs_max, qi_max, qg_max, ni_max, nr_max
          integer:: lsml
          real(wp) :: rand1, rand2, rand3, rand_pert_max
-         integer:: i, j, k, m
+         integer:: i, j, k, m, nv
          integer:: imax_qc,imax_qr,imax_qi,imax_qs,imax_qg,imax_ni,imax_nr
          integer:: jmax_qc,jmax_qr,jmax_qi,jmax_qs,jmax_qg,jmax_ni,jmax_nr
          integer:: kmax_qc,kmax_qr,kmax_qi,kmax_qs,kmax_qg,kmax_ni,kmax_nr
@@ -1210,11 +1263,28 @@ module module_mp_thompson
                                     ' for merra2 aerosol-aware version of Thompson microphysics'
                   stop
                end if
-            else if (.not.is_aerosol_aware .and. .not.merra2_aerosol_aware .and. &
-                     (present(nwfa) .or. present(nifa) .or. present(nwfa2d) .or. present(nifa2d))) then
-               write(*,*) 'WARNING, nc/nwfa/nifa/nwfa2d/nifa2d present but is_aerosol_aware/merra2_aerosol_aware are FALSE'
-            end if
-         end if test_only_once
+            else if (gocart_aerosol_aware .and. (.not. (cplchp .or. cplchm) ) .and. &
+                                              ( .not.present(nc) .or. &
+                                              .not.present(nwfa) .or. &
+                                              .not.present(nifa)      )) then
+             if (present(errmsg) .and. present(errflg)) then
+                  write(errmsg, '(*(a))') 'Logic error in mp_gt_driver: provide nc, nwfa, and nifa', &
+                                          ' for gocart aerosol-aware version of Thompson microphysics'
+                  errflg = 1
+                  return
+                else
+                  write(*, '(*(a))') 'Logic error in mp_gt_driver: provide nc, nwfa, and nifa', &
+                                     ' for merra2 aerosol-aware version of Thompson microphysics'
+                 stop
+             end if
+
+         else if (.not.is_aerosol_aware .and. .not.merra2_aerosol_aware .and. &
+                  .not.gocart_aerosol_aware .and. &
+                  (present(nwfa) .or. present(nifa) .or. present(nwfa2d) .or. present(nifa2d))) then
+            write(*,*) 'WARNING, nc/nwfa/nifa/nwfa2d/nifa2d present but is_aerosol_aware/merra2_aerosol_aware/ &
+                   gocart_aerosol_aware are FALSE'
+         end if
+      end if test_only_once
 
       ! These must be alwyas allocated
       !allocate (vtsk1(kts:kte))
@@ -1444,11 +1514,17 @@ module module_mp_thompson
                enddo
 
                lsml = lsm(i,j)
-               if (is_aerosol_aware .or. merra2_aerosol_aware) then
+               if (is_aerosol_aware .or. merra2_aerosol_aware .or. gocart_aerosol_aware) then
                   do k = kts, kte
                      nc1d(k) = nc(i,k,j)
                      nwfa1d(k) = nwfa(i,k,j)
                      nifa1d(k) = nifa(i,k,j)
+                     if ((cplchp .or. cplchm) .and. wetdep_ls_cpl==0) then
+                      do nv = 1, num_aero
+                      naero1d(k,nv)=aero3d(i,k,j,nv)
+                      aeroRT(k,nv)=aeroFF(i,k,j,nv)
+                      enddo
+                     endif
                   enddo
                else
                   do k = kts, kte
@@ -1459,13 +1535,20 @@ module module_mp_thompson
                      endif
                      nwfa1d(k) = 11.1E6
                      nifa1d(k) = naIN1*0.01
+                     if ((cplchp .or. cplchm) .and. wetdep_ls_cpl==0) then
+                      do nv = 1, num_aero
+                      naero1d(k,nv)=aero3d(i,k,j,nv)
+                      aeroRT(k,nv)=aeroFF(i,k,j,nv)
+                      enddo
+                     endif
                   enddo
                endif
 
 !> - Call mp_thompson()
                call mp_thompson(qv1d, qc1d, qi1d, qr1d, qs1d, qg1d, ni1d,     &
-                           nr1d, nc1d, nwfa1d, nifa1d, t1d, p1d, w1d, dz1d,  &
-                           lsml, pptrain, pptsnow, pptgraul, pptice, &
+                           nr1d, nc1d, nwfa1d, nifa1d, naero1d,aeroRT,        &
+                           t1d, p1d, w1d, dz1d,                               &
+                           lsml, pptrain, pptsnow, pptgraul, pptice,          &
 #if ( WRF_CHEM == 1 )
                      rainprod1d, evapprod1d, &
 #endif
@@ -1541,6 +1624,21 @@ module module_mp_thompson
                      nwfa(i,k,j) = nwfa1d(k)
                      nifa(i,k,j) = nifa1d(k)
                   enddo
+               endif
+
+               if ((cplchp .or. cplchm) .and. wetdep_ls_cpl==0) then
+                  do k = kts, kte
+                  do nv=1, num_aero
+                  aero3d(i,k,j,nv) = max(1.E-15, naero1d(k,nv))
+                  enddo
+                  enddo
+                 if (gocart_aerosol_aware) then
+                  do k = kts, kte
+                  nc(i,k,j) = nc1d(k)
+                  nwfa(i,k,j) = nwfa1d(k)
+                  nifa(i,k,j) = nifa1d(k)
+                  enddo
+                 endif
                endif
 
                do k = kts, kte
@@ -1882,7 +1980,8 @@ module module_mp_thompson
 !>\section gen_mp_thompson  mp_thompson General Algorithm
 !> @{
    subroutine mp_thompson (qv1d, qc1d, qi1d, qr1d, qs1d, qg1d, ni1d,     &
-                        nr1d, nc1d, nwfa1d, nifa1d, t1d, p1d, w1d, dzq,  &
+                        nr1d, nc1d, nwfa1d, nifa1d, naero1d, aeroRT,     &
+                        t1d, p1d, w1d, dzq,                              &
                         lsml, pptrain, pptsnow, pptgraul, pptice,        &
 #if ( WRF_CHEM == 1 )
                         rainprod, evapprod,                              &
@@ -1917,6 +2016,8 @@ module module_mp_thompson
       real(wp), dimension(kts:kte), intent(inout) :: &
                           qv1d, qc1d, qi1d, qr1d, qs1d, qg1d, ni1d, &
                           nr1d, nc1d, nwfa1d, nifa1d, t1d
+      real(wp), dimension(kts:kte,1:num_aero), intent(inout) :: naero1d
+      real(wp), dimension(kts:kte,1:num_aero), intent(in) :: aeroRT
       real(wp), dimension(kts:kte), intent(out) :: pfil1, pfll1
       real(wp), dimension(kts:kte), intent(in) :: p1d, w1d, dzq
       real(wp), intent(inout) :: pptrain, pptsnow, pptgraul, pptice
@@ -1961,6 +2062,11 @@ module module_mp_thompson
 
       real(dp), dimension(kts:kte) :: pna_rca, pna_sca, pna_gca, &
            pnd_rcd, pnd_scd, pnd_gcd
+      real(wp), dimension(kts:kte, num_aero) :: nchemten
+      real(dp), dimension(kts:kte, num_aero) :: pnx_rcx, &
+           pnx_scx, pnx_gcx
+
+      real(wp), dimension(kts:kte, num_aero) :: aero_comb
 
       real(dp), dimension(kts:kte) :: prr_wau, prr_rcw, prr_rcs, &
            prr_rcg, prr_sml, prr_gml, &
@@ -2027,7 +2133,7 @@ module module_mp_thompson
       real(wp) :: Ef_ra, Ef_sa, Ef_ga
       real(wp) :: dtsave, odts, odt, odzq, hgt_agl, SR
       real(wp) :: xslw1, ygra1, zans1, eva_factor
-      integer :: i, k, k2, n, nn, nstep, k_0, kbot, IT, iexfrq
+      integer :: i, k, k2, n, nn, nstep, k_0, kbot, IT, iexfrq, nv
       integer, dimension(5) :: ksed1
       integer :: nir, nis, nig, nii, nic, niin
       integer :: idx_tc, idx_t, idx_s, idx_g1, idx_g, idx_r1, idx_r,     &
@@ -2037,6 +2143,7 @@ module module_mp_thompson
       logical, dimension(kts:kte) :: L_qc, L_qi, L_qr, L_qs, L_qg
       logical :: debug_flag
       integer :: nu_c
+      real(wp):: evap_term
 
       real(wp) :: fallspeed_adjustment_factor
 !+---+
@@ -2142,6 +2249,16 @@ module module_mp_thompson
          prg_rcg(k) = 0.
          prg_ihm(k) = 0.
 
+      if ((cplchp .or. cplchm) .and. wetdep_ls_cpl==0) then
+         do nv = 1, num_aero
+            pnx_rcx(k,nv) = 0.
+            pnx_scx(k,nv) = 0.
+            pnx_gcx(k,nv) = 0.
+            nchemten(k,nv) = 0.
+            aero_comb(k,nv) = 0.
+         enddo
+      end if
+
          pna_rca(k) = 0.
          pna_sca(k) = 0.
          pna_gca(k) = 0.
@@ -2231,6 +2348,11 @@ module module_mp_thompson
          rho(k) = RoverRv*pres(k) / (R*temp(k)*(qv(k)+RoverRv))
          nwfa(k) = max(11.1E6*rho(k), min(9999.E6*rho(k), nwfa1d(k)*rho(k)))
          nifa(k) = max(naIN1*0.01*rho(k), min(9999.E6*rho(k), nifa1d(k)*rho(k)))
+        if ((cplchp .or. cplchm) .and. wetdep_ls_cpl==0) then
+         do nv=1, num_aero
+         aero_comb(k,nv) =  naero1d(k,nv)*rho(k)
+         enddo
+        end if
          mvd_r(k) = D0r
          mvd_c(k) = D0c
 
@@ -2256,7 +2378,7 @@ module module_mp_thompson
             endif
             nc(k) = min(real(Nt_c_max, kind=dp), ccg(1,nu_c)*ocg2(nu_c)*rc(k)   &
                   / am_r*lamc**bm_r)
-            if (.NOT. (is_aerosol_aware .or. merra2_aerosol_aware)) then
+            if (.NOT. (is_aerosol_aware .or. merra2_aerosol_aware .or. gocart_aerosol_aware)) then
                if (lsml == 1) then
                   nc(k) = Nt_c_l
                else
@@ -2573,6 +2695,17 @@ module module_mp_thompson
             pnd_rcd(k) = rhof(k)*t1_qr_qc*Ef_ra*nifa(k)*N0_r(k)           &
                            *((lamr+fv_r)**(-cre(9)))
             pnd_rcd(k) = min(real(nifa(k)*odts, kind=dp), pnd_rcd(k))
+
+          if ((cplchp .or. cplchm) .and. wetdep_ls_cpl==0) then
+            do nv=1, num_aero
+            Ef_ra = Eff_aero(mvd_r(k),aero_diams(nv),visco(k),rho(k),temp(k),'r')
+            lamr = 1./ilamr(k)
+            pnx_rcx(k,nv) = aeroRT(k,nv)*rhof(k)*t1_qr_qc*Ef_ra*aero_comb(k,nv)*N0_r(k) &
+                           *((lamr+fv_r)**(-cre(9)))
+            pnx_rcx(k,nv) = MIN(DBLE(aero_comb(k,nv)*odts),  pnx_rcx(k,nv))
+            enddo
+          endif
+ 
          endif
       
       enddo
@@ -2761,6 +2894,14 @@ module module_mp_thompson
                Ef_sa = Eff_aero(xDs,0.8E-6,visco(k),rho(k),temp(k),'s')
                pnd_scd(k) = rhof(k)*t1_qs_qc*Ef_sa*nifa(k)*smoe(k)
                pnd_scd(k) = min(real(nifa(k)*odts, kind=dp), pnd_scd(k))
+
+               if ((cplchp .or. cplchm) .and. wetdep_ls_cpl==0) then
+                do nv=1, num_aero
+                Ef_sa = Eff_aero(xDs,aero_diams(nv),visco(k),rho(k),temp(k),'s')
+                pnx_scx(k,nv) = aeroRT(k,nv)*rhof(k)*t1_qs_qc*Ef_sa*aero_comb(k,nv)*smoe(k)
+                pnx_scx(k,nv) = MIN(DBLE(aero_comb(k,nv)*odts), pnx_scx(k,nv))
+                enddo
+               endif
             endif
             if (rg(k) .gt. r_g(1)) then
                xDg = (bm_g + mu_g + 1.) * ilamg(k)
@@ -2773,6 +2914,16 @@ module module_mp_thompson
                pnd_gcd(k) = rhof(k)*t1_qg_qc*Ef_ga*nifa(k)*N0_g(k)           &
                               *ilamg(k)**cge(9)
                pnd_gcd(k) = min(real(nifa(k)*odts, kind=dp), pnd_gcd(k))
+
+              if ((cplchp .or. cplchm) .and. wetdep_ls_cpl==0) then
+               do nv=1, num_aero
+               Ef_ga = Eff_aero(xDg,aero_diams(nv),visco(k),rho(k),temp(k),'g')
+               pnx_gcx(k,nv) = aeroRT(k,nv)*rhof(k)*t1_qg_qc*Ef_ga*aero_comb(k,nv)*N0_g(k) &
+                             *ilamg(k)**cge(9)
+               pnx_gcx(k,nv) = MIN(DBLE(aero_comb(k,nv)*odts), pnx_gcx(k,nv))
+               enddo
+              endif
+
             endif
 
 !>  - Rain collecting snow.  Cannot assume Wisner (1972) approximation
@@ -2897,7 +3048,7 @@ module module_mp_thompson
 !! Implemented by T. Eidhammer and G. Thompson 2012Dec18
 !+---+-----------------------------------------------------------------+
 
-               if (dustyIce .AND. (is_aerosol_aware .or. merra2_aerosol_aware)) then
+               if (dustyIce .AND. (is_aerosol_aware .or. merra2_aerosol_aware .or. gocart_aerosol_aware)) then
                   xni = iceDeMott(tempc,qvs(k),qvs(k),qvsi(k),rho(k),nifa(k))
                else
                   xni = 1.0 *1000.                                               ! Default is 1.0 per Liter
@@ -2943,7 +3094,7 @@ module module_mp_thompson
 !! we may need to relax the temperature and ssati constraints.
                if ( (ssati(k).ge. ssati_min) .or. (ssatw(k).gt. eps &
                                     .and. temp(k).lt.253.15) ) then
-                  if (dustyIce .AND. (is_aerosol_aware .or. merra2_aerosol_aware)) then
+                  if (dustyIce .AND. (is_aerosol_aware .or. merra2_aerosol_aware .or. gocart_aerosol_aware)) then
                      xnc = iceDeMott(tempc,qv(k),qvs(k),qvsi(k),rho(k),nifa(k))
                      xnc = xnc*(1.0 + 50.*rand3)
                   else
@@ -2957,7 +3108,7 @@ module module_mp_thompson
 
 !>  - Freezing of aqueous aerosols based on Koop et al (2001, Nature)
                xni = smo0(k)+ni(k) + (pni_rfz(k)+pni_wfz(k)+pni_inu(k))*dtsave
-               if ((is_aerosol_aware .or. merra2_aerosol_aware) .AND. homogIce .AND. (xni.le.Nt_i_max)    & 
+               if ((is_aerosol_aware .or. merra2_aerosol_aware .or. gocart_aerosol_aware) .AND. homogIce .AND. (xni.le.Nt_i_max)    & 
                               .AND.(temp(k).lt.238).AND.(ssati(k).ge.0.4) ) then
                   xnc = iceKoop(temp(k),qv(k),qvs(k),nwfa(k), dtsave)
                   pni_iha(k) = xnc*odts
@@ -3209,7 +3360,7 @@ module module_mp_thompson
          lfus2 = lsub - lvap(k)
 
 !>  - Aerosol number tendency
-         if (is_aerosol_aware) then
+         if (is_aerosol_aware .or. gocart_aerosol_aware ) then
             nwfaten(k) = nwfaten(k) - (pna_rca(k) + pna_sca(k)          &
                        + pna_gca(k) + pni_iha(k)) * orho
             nifaten(k) = nifaten(k) - (pnd_rcd(k) + pnd_scd(k)          &
@@ -3219,6 +3370,12 @@ module module_mp_thompson
             else
                nifaten(k) = 0.
             endif
+         endif
+         if ( (cplchp .or. cplchm) .and. wetdep_ls_cpl==0) then
+            do nv=1,num_aero
+            nchemten(k,nv) = nchemten(k,nv) - (min(dble(aero_comb(k,nv)*odts),  pnx_rcx(k,nv) + pnx_scx(k,nv) &
+                       + pnx_gcx(k,nv) )) * orho
+            enddo
          endif
 
 !>  - Water vapor tendency
@@ -3400,7 +3557,7 @@ module module_mp_thompson
          tcond(k) = (5.69 + 0.0168*tempc)*1.0E-5 * 418.936
          ocp(k) = 1./(Cp*(1.+0.887*qv(k)))
          lvt2(k)=lvap(k)*lvap(k)*ocp(k)*oRv*otemp*otemp
-         if (is_aerosol_aware)                                                 &
+         if (is_aerosol_aware .or. gocart_aerosol_aware )                                                 &
            nwfa(k) = max(11.1E6*rho(k), (nwfa1d(k) + nwfaten(k)*DT)*rho(k))
       enddo
 
@@ -3408,7 +3565,7 @@ module module_mp_thompson
          if ((qc1d(k) + qcten(k)*DT) .gt. R1) then
             rc(k) = (qc1d(k) + qcten(k)*DT)*rho(k)
             nc(k) = max(2., min((nc1d(k)+ncten(k)*DT)*rho(k), Nt_c_max))
-            if (.NOT. (is_aerosol_aware .or. merra2_aerosol_aware)) then 
+            if (.NOT. (is_aerosol_aware .or. merra2_aerosol_aware .or. gocart_aerosol_aware)) then 
                if(lsml == 1) then
                   nc(k) = Nt_c_l
                else
@@ -3572,7 +3729,7 @@ module module_mp_thompson
                prw_vcd(k) = clap*odt
       !+---+-----------------------------------------------------------------+ !  DROPLET NUCLEATION
                if (clap .gt. eps) then
-                  if (is_aerosol_aware .or. merra2_aerosol_aware) then
+                  if (is_aerosol_aware .or. merra2_aerosol_aware .or. gocart_aerosol_aware) then
                      xnc = max(2., activ_ncloud(temp(k), w1d(k)+rand3, nwfa(k), lsml))
                   else
                      if(lsml == 1) then
@@ -3585,7 +3742,7 @@ module module_mp_thompson
 
    !+---+-----------------------------------------------------------------+ !  EVAPORATION
                elseif (clap .lt. -eps .AND. ssatw(k).lt.-1.E-6 .AND.     &
-                        is_aerosol_aware) then  
+                        (is_aerosol_aware .or. gocart_aerosol_aware)) then
                   tempc = temp(k) - 273.15
                   otemp = 1./temp(k)
                   rvs = rho(k)*qvs(k)
@@ -3595,9 +3752,23 @@ module module_mp_thompson
                                  + (-2.*lvap(k)*otemp*otemp*otemp*oRv) &
                                  + otemp*otemp)
                   gamsc = lvap(k)*diffu(k)/tcond(k) * rvs_p
-                  alphsc = 0.5*(gamsc/(1.+gamsc))*(gamsc/(1.+gamsc)) &
-                           * rvs_pp/rvs_p * rvs/rvs_p
-                  alphsc = max(1.E-9, alphsc)
+
+                  if (gocart_aerosol_aware) then
+                     ! GOCART: guarded alphsc
+                     if (abs(rvs_p) <= 1.e-6) then
+                        alphsc = 1.e-6
+                     else
+                        alphsc = 0.5*(gamsc/(1.+gamsc))*(gamsc/(1.+gamsc)) &
+                                 * rvs_pp/rvs_p * rvs/rvs_p
+                        alphsc = max(1.E-6, alphsc)
+                     endif
+                  else
+                     ! Original
+                     alphsc = 0.5*(gamsc/(1.+gamsc))*(gamsc/(1.+gamsc)) &
+                              * rvs_pp/rvs_p * rvs/rvs_p
+                     alphsc = max(1.E-9, alphsc)
+                  endif
+
                   xsat = ssatw(k)
                   if (abs(xsat).lt. 1.E-9) xsat=0.
                   t1_evap = 2.*PI*( 1.0 - alphsc*xsat  &
@@ -3605,8 +3776,14 @@ module module_mp_thompson
                         - 5.*alphsc*alphsc*alphsc*xsat*xsat*xsat ) &
                         / (1.+gamsc)
 
-                  Dc_star = sqrt(-2.0_dp*DT * t1_evap/(2.*PI) &
-                        * 4.*diffu(k)*ssatw(k)*rvs/rho_w)
+                  if (gocart_aerosol_aware) then
+                     Dc_star = sqrt(max(0.0_dp, -2.0_dp*DT * t1_evap/(2.*PI) &
+                               * 4.*diffu(k)*ssatw(k)*rvs/rho_w))
+                  else
+                     ! Original
+                     Dc_star = sqrt(-2.0_dp*DT * t1_evap/(2.*PI) &
+                               * 4.*diffu(k)*ssatw(k)*rvs/rho_w)
+                  endif
                   idx_d = max(1, min(int(1.E6*Dc_star), nbc))
 
                   idx_n = nint(1.0 + real(nbc, kind=wp) * log(real(nc(k)/t_Nc(1), kind=dp)) / nic1)
@@ -3625,11 +3802,19 @@ module module_mp_thompson
                      idx_c = 1
                   endif
 
-            !prw_vcd(k) = max(real(-rc(k)*orho*odt, kind=dp),                     &
-            !           -tpc_wev(idx_d, idx_c, idx_n)*orho*odt)
-                  prw_vcd(k) = max(real(-rc(k)*0.99*orho*odt, kind=dp), prw_vcd(k))
+                  if (gocart_aerosol_aware) then
+                     ! GOCART: table-based evaporation
+                     evap_term  = min(real(tpc_wev(idx_d, idx_c, idx_n), kind=wp), rc(k)/odt)
+                     prw_vcd(k) = max(real(-rc(k)*0.99*orho*odt, kind=dp), &
+                                      real(-evap_term*orho*odt, kind=dp))
+                  else
+                     ! Original
+                     prw_vcd(k) = max(real(-rc(k)*0.99*orho*odt, kind=dp), prw_vcd(k))
+                  endif
+
+                  ! Same in both (original formula)
                   pnc_wcd(k) = max(real(-nc(k)*0.99*orho*odt, kind=dp),                &
-                           -tnc_wev(idx_d, idx_c, idx_n)*orho*odt)
+                                   -tnc_wev(idx_d, idx_c, idx_n)*orho*odt)
 
                endif
             else
@@ -3642,13 +3827,13 @@ module module_mp_thompson
             qvten(k) = qvten(k) - prw_vcd(k)
             qcten(k) = qcten(k) + prw_vcd(k)
             ncten(k) = ncten(k) + pnc_wcd(k)
-            if (is_aerosol_aware)                                            &   
+            if (is_aerosol_aware .or. gocart_aerosol_aware)                                            &   
                nwfaten(k) = nwfaten(k) - pnc_wcd(k)
             tten(k) = tten(k) + lvap(k)*ocp(k)*prw_vcd(k)*(1-IFDRY)
             rc(k) = max(R1, (qc1d(k) + DT*qcten(k))*rho(k))
             if (rc(k).eq.R1) L_qc(k) = .false.
             nc(k) = max(2., min((nc1d(k)+ncten(k)*DT)*rho(k), Nt_c_max))
-            if (.NOT. (is_aerosol_aware .or. merra2_aerosol_aware)) then 
+            if (.NOT. (is_aerosol_aware .or. merra2_aerosol_aware .or. gocart_aerosol_aware)) then 
                if(lsml == 1) then
                   nc(k) = Nt_c_l
                else
@@ -3732,7 +3917,7 @@ module module_mp_thompson
             qrten(k) = qrten(k) - prv_rev(k)
             qvten(k) = qvten(k) + prv_rev(k)
             nrten(k) = nrten(k) - pnr_rev(k)
-            if (is_aerosol_aware)                                            &
+            if (is_aerosol_aware .or. gocart_aerosol_aware)                                            &
                nwfaten(k) = nwfaten(k) + pnr_rev(k)
             tten(k) = tten(k) - lvap(k)*ocp(k)*prv_rev(k)*(1-IFDRY)
 
@@ -4232,12 +4417,19 @@ module module_mp_thompson
          qv1d(k) = max(1.E-10, qv1d(k) + qvten(k)*DT)
          qc1d(k) = qc1d(k) + qcten(k)*DT
          nc1d(k) = max(2./rho(k), min(nc1d(k) + ncten(k)*DT, Nt_c_max))
-         if (is_aerosol_aware) then
+         if (is_aerosol_aware .or. gocart_aerosol_aware) then
             nwfa1d(k) = max(11.1E6, min(9999.E6,                           &
                            (nwfa1d(k)+nwfaten(k)*DT)))
             nifa1d(k) = max(naIN1*0.01, min(9999.E6,                       &
                            (nifa1d(k)+nifaten(k)*DT)))
          end if
+
+         if ((cplchp .or. cplchm) .and. wetdep_ls_cpl==0) then
+           do nv = 1, num_aero
+               naero1d(k,nv) = naero1d(k,nv)+nchemten(k,nv)*DT !MAX(11.1E6,MIN(9999.E6,(naero1d(k,nv)+nchemten(k,nv)*DT)))
+           enddo
+         endif
+
          if (qc1d(k) .le. R1) then
             qc1d(k) = 0.0
             nc1d(k) = 0.0
@@ -5821,7 +6013,7 @@ module module_mp_thompson
          rho(k) = RoverRv*p1d(k) / (R*t1d(k)*(qv1d(k)+RoverRv))
          rc(k) = max(R1, qc1d(k)*rho(k))
          nc(k) = max(2., min(nc1d(k)*rho(k), Nt_c_max))
-         if (.NOT. (is_aerosol_aware .or. merra2_aerosol_aware)) then 
+         if (.NOT. (is_aerosol_aware .or. merra2_aerosol_aware .or. gocart_aerosol_aware)) then 
              if( lsml == 1) then
                 nc(k) = Nt_c_l
              else

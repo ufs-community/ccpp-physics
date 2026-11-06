@@ -15,7 +15,7 @@
       ! in the CCPP version - they are defined in the interstitial_create routine
 !> \section arg_table_GFS_rrtmg_pre_run Argument Table
 !! \htmlinclude GFS_rrtmg_pre_run.html
-!!    
+!!
 !>\section rrtmg_pre_gen General Algorithm
       subroutine GFS_rrtmg_pre_run (im, levs, lm, lmk, lmp, n_var_lndp, lextop,&
         ltp, imfdeepcnv, imfdeepcnv_gf, imfdeepcnv_c3, me, ncnd, ntrac,        &
@@ -31,7 +31,7 @@
         imp_physics_fer_hires, iovr, iovr_rand, iovr_maxrand, iovr_max,        &
         iovr_dcorr, iovr_exp, iovr_exprand, idcor, idcor_con, idcor_hogan,     &
         idcor_oreopoulos, dcorr_con, julian, yearlen, lndp_var_list, lsswr,    &
-        lslwr, ltaerosol, mraerosol, lgfdlmprad, uni_cld, effr_in, do_mynnedmf,&
+        lslwr, ltaerosol, mraerosol, gtaerosol, lgfdlmprad, uni_cld, effr_in, do_mynnedmf,&
         lmfshal, lcnorm, lmfdeep2, lcrick, fhswr, fhlwr, solhr, sup, xr_con,   &
         xr_exp, con_eps,                                                       &
         epsm1, fvirt, rog, rocp, con_rd, xlat_d, xlat, xlon, coslat, sinlat,   &
@@ -136,7 +136,7 @@
       logical,              intent(in) :: lsswr, lslwr, ltaerosol, lgfdlmprad, &
                                           uni_cld, effr_in, do_mynnedmf,       &
                                           lmfshal, lmfdeep2, pert_clds, lcrick,&
-                                          lcnorm, top_at_1, lextop, mraerosol
+                                          lcnorm, top_at_1, lextop, mraerosol, gtaerosol
       logical,              intent(in) :: rrfs_sd, aero_dir_fdb, xr_cnvcld
 
       logical,              intent(in) :: nssl_ccn_on, nssl_invertccn
@@ -378,7 +378,7 @@
           prslk1(i,k1)  = prslk(i,k2)
           rho(i,k1)     = prsl(i,k2)/(con_rd*tlyr(i,k1))
           orho(i,k1)    = 1.0/rho(i,k1)
-          
+
 !> - Compute relative humidity.
           es  = min( prsl(i,k2),  fpvs( tgrs(i,k2) ) )  ! fpvs and prsl in pa
           qs  = max( QMIN, con_eps * es / (prsl(i,k2) + epsm1*es) )
@@ -716,7 +716,7 @@
 
 !      if (ntcw > 0) then                            ! prognostic cloud schemes
         ccnd = 0.0_kind_phys
-        if (ncnd == 1) then                          
+        if (ncnd == 1) then
           do k=1,LMK
             do i=1,IM
               ccnd(i,k,1) = tracer1(i,k,ntcw)        ! liquid water/ice
@@ -756,7 +756,7 @@
             enddo
           enddo
           ! for Thompson MP - prepare variables for calc_effr
-          if_thompson: if (imp_physics == imp_physics_thompson .and. (ltaerosol .or. mraerosol)) then
+          if_thompson: if (imp_physics == imp_physics_thompson .and. (ltaerosol .or. mraerosol .or. gtaerosol)) then
             do k=1,LMK
               do i=1,IM
                 qvs = qlyr(i,k)
@@ -768,7 +768,13 @@
                 qs_mp (i,k) = tracer1(i,k,ntsw)/(1.-qvs)
                 nc_mp (i,k) = tracer1(i,k,ntlnc)/(1.-qvs)
                 ni_mp (i,k) = tracer1(i,k,ntinc)/(1.-qvs)
+               if (gtaerosol) then
+                nwfa (i,k) = max(1.e-15,((tracer1(i,k,ntss1)/0.0045435214+tracer1(i,k,ntss2)/0.2907854+tracer1(i,k,ntss3)/12.91224+ &
+              tracer1(i,k,ntss4)/206.2216+tracer1(i,k,ntss5)/4326.23)*9.+tracer1(i,k,ntsu)/0.3053104*5+ &
+              tracer1(i,k,ntocl)/0.3232698*8)*1.e6)
+                else
                 nwfa  (i,k) = tracer1(i,k,ntwa)
+               endif
               enddo
             enddo
           elseif (imp_physics == imp_physics_thompson) then
@@ -802,7 +808,7 @@
                 qs_mp (i,k) = tracer1(i,k,ntsw)/(1.-qvs)
                 ni_mp (i,k) = tracer1(i,k,ntinc)/(1.-qvs)
                 if (ltaerosol) nc_mp (i,k) = tracer1(i,k,ntlnc)/(1.-qvs)
-                
+
                 qcten (i,k) = 0.
                 ncten (i,k) = 0.
                 qiten (i,k) = 0.
@@ -938,14 +944,12 @@
           ! Update number concentration, consistent with sub-grid clouds (GF, MYNN) or without (all others)
           do k=1,lm
             do i=1,im
-!               if (imp_physics == imp_physics_thompson) then
-               if ((ltaerosol .or. mraerosol) .and. qc_mp(i,k)>1.e-12 .and. nc_mp(i,k)<100.) then
+               if ((ltaerosol .or. mraerosol .or. gtaerosol) .and. qc_mp(i,k)>1.e-12 .and. nc_mp(i,k)<100.) then
                   nc_mp(i,k) = make_DropletNumber_thompson(qc_mp(i,k)*rho(i,k), nwfa(i,k)*rho(i,k)) * orho(i,k)
               endif
               if (qi_mp(i,k)>1.e-12 .and. ni_mp(i,k)<100.) then
                  ni_mp(i,k) = make_IceNumber_thompson(qi_mp(i,k)*rho(i,k), tlyr(i,k)) * orho(i,k)
               endif
-!              endif
             end do
           end do
           !> - Call Thompson's subroutine calc_effectRad() to compute effective radii
@@ -956,7 +960,6 @@
             !     calc_effectRad (4.99-125.0 for WRFv3.8.1; 2.49-125.0 for WRFv4+)
             !     it will raise the low limit from 5 to 10, but the high limit will remain 125.
 
- !           if (imp_physics == imp_physics_thompson) then
                call calc_effectRad_thompson(tlyr(i,:), plyr(i,:)*100., qv_mp(i,:), qc_mp(i,:),   &
                     nc_mp(i,:), qi_mp(i,:), ni_mp(i,:), qs_mp(i,:), &
                     effrl(i,:), effri(i,:), effrs(i,:), islmsk, 1, lm )
@@ -1007,8 +1010,8 @@
               effrs_inout(i,k) = effrs(i,k1)
             enddo
          enddo
-          
-         
+
+
         else                                                           ! all other cases
           cldcov = 0.0
         endif
@@ -1019,7 +1022,7 @@
 !      it is to enhance cloudiness due to suspended convec cloud water
 !      for ferrier's (imp_phys=5) microphysics schemes
 
-        if ((num_p3d == 4) .and. (npdf3d == 3)) then     
+        if ((num_p3d == 4) .and. (npdf3d == 3)) then
           do k=1,lm
             k1 = k + kd
             do i=1,im
