@@ -116,7 +116,6 @@ module mp_thompson
                                     ntss4, ntss5, ntsu, ntbcb, ntbcl, ntocb, ntocl
 
          ! Local variables
-!         real(kind_phys) :: aero3d(1:ncol,1:nlev,1:num_aero)         
          !
          real(kind_phys) :: qv(1:ncol,1:nlev)       ! kg kg-1 (water vapor mixing ratio)
          real(kind_phys) :: hgt(1:ncol,1:nlev)      ! m
