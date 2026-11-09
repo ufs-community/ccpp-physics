@@ -1286,7 +1286,7 @@ module lsm_ruc
 !    xlai    - leaf area index (dimensionless)
 !    soilw   - available soil moisture in root zone (unitless fraction
 !              between smcwlt and smcmax)
-!    soilm   - total soil column moisture content (frozen+unfrozen) (m)
+!    soilm   - total soil column moisture content (frozen+unfrozen) (kg/m2)
 !    nroot   - number of root layers, a function of veg type, determined
 !              in subroutine redprm.
 
@@ -1303,7 +1303,7 @@ module lsm_ruc
         qsurf_lnd(i)   = qsfc_lnd(i,j)
         tsurf_lnd(i)   = soilt_lnd(i,j)
         tsnow_lnd(i)   = soilt1_lnd(i,j)
-        stm(i)         = soilm(i,j) * 1.e-3_kind_phys    ! convert to [m]
+        stm(i)         = soilm(i,j)
 
         runof (i)  = runoff1(i,j) * rhoh2o ! surface kg m-2 s-1
         drain (i)  = runoff2(i,j) * rhoh2o ! kg m-2 s-1
