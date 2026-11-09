@@ -3759,7 +3759,6 @@ module module_mp_thompson
                         alphsc = max(1.E-6, alphsc)
                      endif
                   else
-                     ! Original
                      alphsc = 0.5*(gamsc/(1.+gamsc))*(gamsc/(1.+gamsc)) &
                               * rvs_pp/rvs_p * rvs/rvs_p
                      alphsc = max(1.E-9, alphsc)
