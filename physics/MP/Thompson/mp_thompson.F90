@@ -682,7 +682,9 @@ module mp_thompson
          new_tgrs = tgrs
 
          if (is_aerosol_aware .or. merra2_aerosol_aware) then
-           dnc = 0.0 ; dnwfa = 0.0 ; dnifa = 0.0
+           dnc = 0.0
+           dnwfa = 0.0
+           dnifa = 0.0
            allocate(new_nc(ncol,nlev), new_nwfa(ncol,nlev), new_nifa(ncol,nlev))
            new_nc   = nc
            new_nwfa = nwfa
@@ -765,7 +767,9 @@ module mp_thompson
          end if
 
          if (gocart_aerosol_aware) then
-           dnc = 0.0 ; dnwfa = 0.0 ; dnifa = 0.0
+           dnc = 0.0
+           dnwfa = 0.0
+           dnifa = 0.0
            allocate(new_nc(ncol,nlev), new_nwfa(ncol,nlev), new_nifa(ncol,nlev))
            new_nc   = nc
            new_nwfa = nwfa    ! host values (old); GOCART values if gocart_aerosol_aware 

@@ -80,7 +80,7 @@ module module_mp_thompson
    character(len=5), parameter, dimension(num_aero) :: aero_species =       &
    ["dust1", "dust2", "dust3", "dust4", "dust5", "seas1", "seas2", "seas3", &
     "seas4", "seas5", "sulf ", "bc1  ", "bc2  ", "oc1  ", "oc2  "]
-   real, parameter, dimension(num_aero) :: aero_diams =                     &
+   real(wp), parameter, dimension(num_aero) :: aero_diams =                     &
    [0.73e-6, 1.4e-6, 2.4e-6, 4.5e-6, 8.0e-6, 0.079e-6, 0.316e-6, 1.119e-6,  &
     2.818e-6, 7.772e-6, 0.0695e-6, 0.35e-6, 0.35e-6, 0.35e-6, 0.35e-6]
 
@@ -2698,7 +2698,7 @@ module module_mp_thompson
             lamr = 1./ilamr(k)
             pnx_rcx(k,nv) = aeroRT(k,nv)*rhof(k)*t1_qr_qc*Ef_ra*aero_comb(k,nv)*N0_r(k) &
                            *((lamr+fv_r)**(-cre(9)))
-            pnx_rcx(k,nv) = MIN(DBLE(aero_comb(k,nv)*odts),  pnx_rcx(k,nv))
+            pnx_rcx(k,nv) = MIN(real(aero_comb(k,nv)*odts, kind=dp),  pnx_rcx(k,nv))
             enddo
           endif
  
@@ -2895,7 +2895,7 @@ module module_mp_thompson
                 do nv=1, num_aero
                 Ef_sa = Eff_aero(xDs,aero_diams(nv),visco(k),rho(k),temp(k),'s')
                 pnx_scx(k,nv) = aeroRT(k,nv)*rhof(k)*t1_qs_qc*Ef_sa*aero_comb(k,nv)*smoe(k)
-                pnx_scx(k,nv) = MIN(DBLE(aero_comb(k,nv)*odts), pnx_scx(k,nv))
+                pnx_scx(k,nv) = MIN(real(aero_comb(k,nv)*odts, kind=dp), pnx_scx(k,nv))
                 enddo
                endif
             endif
@@ -2916,7 +2916,7 @@ module module_mp_thompson
                Ef_ga = Eff_aero(xDg,aero_diams(nv),visco(k),rho(k),temp(k),'g')
                pnx_gcx(k,nv) = aeroRT(k,nv)*rhof(k)*t1_qg_qc*Ef_ga*aero_comb(k,nv)*N0_g(k) &
                              *ilamg(k)**cge(9)
-               pnx_gcx(k,nv) = MIN(DBLE(aero_comb(k,nv)*odts), pnx_gcx(k,nv))
+               pnx_gcx(k,nv) = MIN(real(aero_comb(k,nv)*odts, kind=dp), pnx_gcx(k,nv))
                enddo
               endif
 
@@ -3369,7 +3369,7 @@ module module_mp_thompson
          endif
          if ( (cplchp .or. cplchm) .and. wetdep_ls_cpl==0) then
             do nv=1,num_aero
-            nchemten(k,nv) = nchemten(k,nv) - (min(dble(aero_comb(k,nv)*odts),  pnx_rcx(k,nv) + pnx_scx(k,nv) &
+            nchemten(k,nv) = nchemten(k,nv) - (min(real(aero_comb(k,nv)*odts, kind=dp),  pnx_rcx(k,nv) + pnx_scx(k,nv) &
                        + pnx_gcx(k,nv) )) * orho
             enddo
          endif
@@ -3756,7 +3756,7 @@ module module_mp_thompson
                      else
                         alphsc = 0.5*(gamsc/(1.+gamsc))*(gamsc/(1.+gamsc)) &
                                  * rvs_pp/rvs_p * rvs/rvs_p
-                        alphsc = max(1.E-6, alphsc)
+                        alphsc = max(1.0E-6_wp, alphsc)
                      endif
                   else
                      alphsc = 0.5*(gamsc/(1.+gamsc))*(gamsc/(1.+gamsc)) &
