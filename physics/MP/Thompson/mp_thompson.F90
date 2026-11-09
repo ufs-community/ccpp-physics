@@ -1267,8 +1267,6 @@ module mp_thompson
               aerfld(:,:,15)/0.3232698*8)*1.e15
       end subroutine get_niwfa
 
-!lzhang
-
       subroutine get_aero_int(aerfld, nifa, nwfa, ncol, nlev, &
                  ntdu1, ntdu2, ntdu3, ntdu4, ntdu5, ntss1, ntss2,&
                  ntss3, ntss4, ntss5, ntsu, ntbcb, ntbcl, ntocb, ntocl)
