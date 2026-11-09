@@ -3804,7 +3804,6 @@ module module_mp_thompson
                      prw_vcd(k) = max(real(-rc(k)*0.99*orho*odt, kind=dp), &
                                       real(-evap_term*orho*odt, kind=dp))
                   else
-                     ! Original
                      prw_vcd(k) = max(real(-rc(k)*0.99*orho*odt, kind=dp), prw_vcd(k))
                   endif
 
