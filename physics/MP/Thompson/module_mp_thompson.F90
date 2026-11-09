@@ -3776,7 +3776,6 @@ module module_mp_thompson
                      Dc_star = sqrt(max(0.0_dp, -2.0_dp*DT * t1_evap/(2.*PI) &
                                * 4.*diffu(k)*ssatw(k)*rvs/rho_w))
                   else
-                     ! Original
                      Dc_star = sqrt(-2.0_dp*DT * t1_evap/(2.*PI) &
                                * 4.*diffu(k)*ssatw(k)*rvs/rho_w)
                   endif
