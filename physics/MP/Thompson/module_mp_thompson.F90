@@ -1046,7 +1046,7 @@ module module_mp_thompson
 !> @{
       subroutine mp_gt_driver(qv, qc, qr, qi, qs, qg, ni, nr, nc,     &
                               nwfa, nifa, nwfa2d, nifa2d,             &
-                              aero3d,aeroFF,                          &
+                              aero3d, aeroFF,                         &
                               tt, th, pii,                            &
                               p, w, dz, dt_in, dt_inner,              &
                               sedi_semi, decfl, lsm,                  &
