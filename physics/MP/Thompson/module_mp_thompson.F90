@@ -529,10 +529,6 @@ module module_mp_thompson
              errflg = 1
              return
          end if
-
-          
-
-
          if (mpirank==mpiroot) then
             if (is_aerosol_aware) then
                write (*,'(a)') 'Using aerosol-aware version of Thompson microphysics'
