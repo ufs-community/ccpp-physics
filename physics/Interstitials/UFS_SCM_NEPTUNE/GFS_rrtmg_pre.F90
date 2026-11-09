@@ -1010,8 +1010,6 @@
               effrs_inout(i,k) = effrs(i,k1)
             enddo
          enddo
-
-
         else                                                           ! all other cases
           cldcov = 0.0
         endif
