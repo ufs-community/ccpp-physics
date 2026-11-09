@@ -199,6 +199,13 @@
   dimensions = ()
   type = logical
   intent = in
+[gtaerosol]
+  standard_name = do_gocart_aerosol_awareness
+  long_name = flag for gocart aerosol-aware physics for example the thompson microphysics
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
 [imfdeepcnv]
   standard_name = control_for_deep_convection_scheme
   long_name = flag for mass-flux deep convection scheme
@@ -313,6 +320,55 @@
   kind = kind_phys
   intent = in
   optional = True
+[ntss1]
+  standard_name = index_for_seasalt_bin1
+  long_name = index for seasalt bin1
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+[ntss2]
+  standard_name = index_for_seasalt_bin2
+  long_name = index for seasalt bin2
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+[ntss3]
+  standard_name = index_for_seasalt_bin3
+  long_name = index for seasalt bin3
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+[ntss4]
+  standard_name = index_for_seasalt_bin4
+  long_name = index for seasalt bin4
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+[ntss5]
+  standard_name = index_for_seasalt_bin5
+  long_name = index for seasalt bin5
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+[ntsu]
+  standard_name = index_for_sulfate
+  long_name = index for sulfate
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
+[ntocl]
+  standard_name = index_for_ocphilic
+  long_name = index for ocphilic
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
 [relhum]
   standard_name = relative_humidity
   long_name = layer relative humidity

@@ -45,8 +45,8 @@
 !> \section arg_table_GFS_surface_generic_post_run Argument Table
 !! \htmlinclude GFS_surface_generic_post_run.html
 !!
-      subroutine GFS_surface_generic_post_run (im, cplflx, cplaqm, cplchm, cplcat, cplwav, cpllnd, cpl_fire, lssav, dry, icy, wet,          &
-        lsm, lsm_noahmp, dtf, ep1d, gflx, tgrs_1, qgrs_1, ugrs_1, vgrs_1,                                                           &
+      subroutine GFS_surface_generic_post_run (im, cplflx, cplaqm, cplchm, cplchp, cplcat, cplwav, cpllnd, cpl_fire, lssav, dry,    &
+        icy, wet, lsm, lsm_noahmp, dtf, ep1d, gflx, tgrs_1, qgrs_1, ugrs_1, vgrs_1,                                                 &
         adjsfcdlw, adjsfcdsw, adjnirbmd, adjnirdfd, adjvisbmd, adjvisdfd, adjsfculw, adjsfculw_wat, adjnirbmu, adjnirdfu,           &
         adjvisbmu, adjvisdfu, t2m, q2m, u10m, v10m, tsfc, tsfc_wat, pgr, xcosz, evbs, evcw, trans, sbsno, snowc, snohf, pah, pahi,  &
         epi, gfluxi, t1, q1, u1, v1, dlwsfci_cpl, dswsfci_cpl, dlwsfc_cpl, dswsfc_cpl, dnirbmi_cpl, dnirdfi_cpl, dvisbmi_cpl,       &
@@ -59,7 +59,7 @@
         implicit none
 
         integer,                                intent(in) :: im
-        logical,                                intent(in) :: cplflx, cplaqm, cplchm, cplcat, cplwav, cpllnd, cpl_fire, lssav
+        logical,                                intent(in) :: cplflx, cplaqm, cplchm, cplchp, cplcat, cplwav, cpllnd, cpl_fire, lssav
         logical, dimension(:),                  intent(in) :: dry, icy, wet
         integer,                                intent(in) :: lsm, lsm_noahmp
         real(kind=kind_phys),                   intent(in) :: dtf
@@ -117,14 +117,14 @@
           v1(i)     = vgrs_1(i)
         enddo
 
-        if (cplflx .or. cplchm .or. cplwav .or. cpl_fire) then
+        if (cplflx .or. cplchm .or. cplchp .or. cplwav .or. cpl_fire) then
           do i=1,im
             u10mi_cpl(i) = u10m(i)
             v10mi_cpl(i) = v10m(i)
           enddo
         endif
 
-        if (cplflx .or. cplchm .or. cpllnd) then
+        if (cplflx .or. cplchm .or. cplchp .or. cpllnd) then
           do i=1,im
             tsfci_cpl(i) = tsfc(i)
           enddo

@@ -161,8 +161,8 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &  chem3d, frp, mix_chem, rrfs_sd, enh_mix,           &
      &  nchem, ndvel, vdep, smoke_dbg,                     &
      &  imp_physics_nssl, nssl_ccn_on,                     &
-     &  ltaerosol, mraerosol, spp_wts_pbl, spp_pbl,        &
-     &  lprnt, huge, errmsg, errflg                        )
+     &  ltaerosol, mraerosol, gtaerosol, spp_wts_pbl,      &
+     &  spp_pbl, lprnt, huge, errmsg, errflg     )
 
 ! should be moved to inside the mynn:
      use machine,        only: kind_phys
@@ -191,6 +191,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &       bl_mynn_tkeadvect,                             &
      &       ltaerosol,                                     &
      &       mraerosol,                                     &
+     &       gtaerosol,                                     &
      &       lprnt,                                         &
      &       do_mynnsfclay,                                 &
      &       flag_for_pbl_generic_tend,                     &
@@ -477,7 +478,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
                 qnbca(i,k) = 0.
               enddo
             enddo
-          else if(mraerosol .and. imp_physics == imp_physics_thompson) then
+          else if((mraerosol .or.gtaerosol) .and. imp_physics == imp_physics_thompson) then
             FLAG_QI = .true.
             FLAG_QNI= .true.
             FLAG_QC = .true.
@@ -899,7 +900,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
              !    !qgrs_ice_aer_num_conc(i,k)       = qgrs_ice_aer_num_conc(i,k)       + RQNIFABLTEN(i,k)*delt
              !  enddo
              !enddo
-           else if(mraerosol .and. imp_physics == imp_physics_thompson) then
+           else if((mraerosol .or. gtaerosol) .and. imp_physics == imp_physics_thompson) then
              do k=1,levs
                do i=1,im
                  dqdt_water_vapor(i,k)             = RQVBLTEN(i,k) !/(1.0 + qv(i,k))

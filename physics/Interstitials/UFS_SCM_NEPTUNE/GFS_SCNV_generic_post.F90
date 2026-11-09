@@ -17,7 +17,7 @@
         index_of_process_scnv, ntqv, flag_for_scnv_generic_tend,                   &
         ntcw,ntiw,ntclamt,ntrw,ntsw,ntrnc,ntsnc,ntgl,ntgnc,ntsigma,                &
         imfshalcnv, imfshalcnv_sas, imfshalcnv_samf, ntrac,                        &
-        cscnv, satmedmf, trans_trac, errmsg, errflg)
+        cscnv, satmedmf, trans_trac, cplchp, errmsg, errflg)
 
       use machine,               only: kind_phys
 
@@ -40,7 +40,7 @@
 
       ! Post code for SAS/SAMF
       integer, intent(in) :: npdf3d, num_p3d, ncnvcld3d
-      logical, intent(in) :: shcnvcw
+      logical, intent(in) :: shcnvcw, cplchp
       real(kind=kind_phys), dimension(:), intent(in) :: rain1
       real(kind=kind_phys), dimension(:, :), intent(in) :: cnvw, cnvc
       real(kind=kind_phys), dimension(:), intent(inout) :: rainc, cnvprcp

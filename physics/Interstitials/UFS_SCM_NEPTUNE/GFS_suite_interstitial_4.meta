@@ -370,6 +370,13 @@
   dimensions = (number_of_tracers)
   type = logical
   intent = in
+[cplchp]
+  standard_name = flag_for_chemistry_package_coupling
+  long_name = flag controlling cplchp collection (default off)
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
 [errmsg]
   standard_name = ccpp_error_message
   long_name = error message for error handling in CCPP

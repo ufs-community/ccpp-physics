@@ -13,7 +13,7 @@
       imp_physics_nssl, imp_physics_tempo, nssl_invertccn, nssl_ccn_on,                                                  &
       convert_dry_rho, dtf, save_qc, save_qi, con_pi, dtidx, dtend,                        &
       index_of_process_conv_trans, index_of_process_dcnv, index_of_process_scnv, gq0, clw, prsl, save_tcp, con_rd, con_eps, nssl_cccn, nwfa, spechum, ldiag3d,&
-      qdiag3d, ntk, ntke, otsptflag, errmsg, errflg)
+      qdiag3d, ntk, ntke, otsptflag, cplchp, errmsg, errflg)
 
       use machine,               only: kind_phys
       use module_mp_thompson_make_number_concentrations, only: &
@@ -35,6 +35,7 @@
 
       logical,                                  intent(in) :: ltaerosol, convert_dry_rho
       logical,                                  intent(in) :: nssl_ccn_on, nssl_invertccn
+      logical,                                  intent(in) :: cplchp
 
       real(kind=kind_phys), intent(in   )                   :: con_pi, dtf
       real(kind=kind_phys), intent(in   ), dimension(:,:)   :: save_qc
