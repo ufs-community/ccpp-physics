@@ -2,7 +2,7 @@
 [ccpp-table-properties]
   name = GFS_photochemistry
   type = scheme
-  dependencies = ../../hooks/machine.F,../../photochem/module_ozphys.F90
+  dependencies = ../../photochem/module_ozphys.F90
   dependencies = ../../photochem/module_h2ophys.F90
 
 ########################################################################

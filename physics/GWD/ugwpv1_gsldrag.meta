@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = ugwpv1_gsldrag
   type = scheme
-  dependencies = ../hooks/machine.F,drag_suite.F90
+  dependencies = drag_suite.F90
   dependencies = cires_ugwpv1_module.F90,cires_ugwpv1_triggers.F90,cires_ugwpv1_initialize.F90,cires_ugwpv1_solv2.F90,ecmwf_ngw.F90
   dependencies = cires_ugwpv1_sporo.F90,cires_ugwpv1_oro.F90
 ########################################################################

@@ -21,7 +21,7 @@ contains
          du3dt_mtb,du3dt_ogw, du3dt_tms, du3dt_ngw, dv3dt_ngw,      &
          errmsg, errflg)
 
-        use machine,                only: kind_phys
+        use ccpp_kinds,                only: kind_phys
 
         implicit none
 

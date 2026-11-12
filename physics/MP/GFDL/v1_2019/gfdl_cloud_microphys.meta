@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = gfdl_cloud_microphys
   type = scheme
-  dependencies = ../../../hooks/machine.F
+  dependencies =
   dependencies = ../../module_mp_radar.F90
   dependencies = gfdl_cloud_microphys_mod.F90
   dependencies = ../module_gfdlmp_param.F90

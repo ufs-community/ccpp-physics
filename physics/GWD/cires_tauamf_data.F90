@@ -3,7 +3,7 @@
 
 module cires_tauamf_data
 
-  use machine, only: kind_phys
+  use ccpp_kinds, only: kind_phys
   use mpi_f08
 !...........................................................................................
 ! tabulated GW-sources: GRACILE/Ern et al., 2018 and/or Resolved GWs from C384-Annual run
@@ -87,7 +87,7 @@ contains
 !>
     subroutine cires_indx_ugwp (npts, me, master, dlat,j1_tau,j2_tau, w1_j1tau, w2_j2tau)
      
-    use machine, only: kind_phys
+    use ccpp_kinds, only: kind_phys
     		 
     implicit none
     
@@ -127,7 +127,7 @@ contains
     
 !>
     subroutine tau_amf_interp(me, master, im, idate, fhour, j1_tau,j2_tau, ddy_j1, ddy_j2, tau_ddd)    
-    use machine, only: kind_phys
+    use ccpp_kinds, only: kind_phys
     implicit none
     
 !input    
@@ -182,7 +182,7 @@ contains
 !>
     subroutine gfs_idate_calendar(idate, fhour, ddd, fddd) 
     
-    use machine, only: kind_phys
+    use ccpp_kinds, only: kind_phys
     implicit none  
 ! input     
     integer, intent(in)                 :: idate(4)

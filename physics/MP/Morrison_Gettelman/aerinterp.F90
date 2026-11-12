@@ -38,7 +38,7 @@ contains
       END function netcdf_check
 !!!!!!!
       SUBROUTINE read_aerdata_dl (mpicomm, mpirank, mpiroot, iflip, idate, fhour, errmsg, errflg)
-      use machine, only: kind_phys, kind_dbl_prec
+      use ccpp_kinds, only: kind_phys, kind_dbl_prec
       use mpiutil, only: ccpp_bcast
       use aerclm_def
       use netcdf
@@ -197,7 +197,7 @@ contains
 !
 !**********************************************************************
       SUBROUTINE read_aerdataf_dl (mpicomm, mpirank, mpiroot, iflip, idate, fhour, errmsg, errflg)
-      use machine, only: kind_phys, kind_dbl_prec
+      use ccpp_kinds, only: kind_phys, kind_dbl_prec
       use aerclm_def
 
 !--- in/out
@@ -273,7 +273,7 @@ contains
       SUBROUTINE aerinterpol_dl(mpicomm, mpirank, mpiroot,nthrds,npts,IDATE,FHOUR,iflip, jindx1,jindx2, &
                              ddy,iindx1,iindx2,ddx,lev,prsl,aerout, errmsg,errflg)
 !
-      use machine, only: kind_phys, kind_dbl_prec
+      use ccpp_kinds, only: kind_phys, kind_dbl_prec
       use aerclm_def
 
       implicit none
@@ -440,7 +440,7 @@ contains
       END SUBROUTINE aerinterpol_dl
 
       SUBROUTINE read_aerdata (mpicomm, mpirank, mpiroot, iflip, idate, errmsg, errflg)
-      use machine, only: kind_phys
+      use ccpp_kinds, only: kind_phys
       use mpiutil, only: ccpp_bcast
       use aerclm_def
       use netcdf
@@ -566,7 +566,7 @@ contains
 !
 !**********************************************************************
       SUBROUTINE read_aerdataf (mpicomm, mpirank, mpiroot, iflip, idate, FHOUR, errmsg, errflg)
-      use machine, only: kind_phys, kind_dbl_prec
+      use ccpp_kinds, only: kind_phys, kind_dbl_prec
       use aerclm_def
 
 !--- in/out
@@ -631,7 +631,7 @@ contains
       SUBROUTINE setindxaer(npts,dlat,jindx1,jindx2,ddy,dlon,           &
                             iindx1,iindx2,ddx)
 !
-      USE MACHINE,  ONLY: kind_phys
+      USE CCPP_KINDS,  ONLY: kind_phys
       use aerclm_def, only: aer_lat, jaero=>latsaer,                    &
                             aer_lon, iaero=>lonsaer
 !
@@ -689,7 +689,7 @@ contains
                              IDATE,FHOUR,iflip, jindx1,jindx2, &
                              ddy,iindx1,iindx2,ddx,lev,prsl,aerout, errmsg,errflg)
 !
-      use machine, only: kind_phys, kind_dbl_prec
+      use ccpp_kinds, only: kind_phys, kind_dbl_prec
       use aerclm_def
 
       implicit none
@@ -884,7 +884,7 @@ contains
       END SUBROUTINE fdnx_fname
 
       subroutine read_netfaer_dl(mpicomm, mpirank, mpiroot, fname, nf, iflip, nt, errmsg, errflg)
-      use machine, only: kind_phys, kind_io4
+      use ccpp_kinds, only: kind_phys, kind_io4
       use mpiutil, only: ccpp_bcast
       use aerclm_def
       use netcdf
@@ -998,7 +998,7 @@ contains
       END SUBROUTINE read_netfaer_dl
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       subroutine read_netfaer(mpicomm, mpirank, mpiroot, nf, iflip, nt, errmsg, errflg)
-      use machine, only: kind_phys, kind_io4
+      use ccpp_kinds, only: kind_phys, kind_io4
       use mpiutil, only: ccpp_bcast
       use aerclm_def
       use netcdf

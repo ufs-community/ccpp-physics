@@ -71,7 +71,7 @@
      &     index_of_process_pbl,ntqv,ntoz,dtend,dtidx,                  &
      &     gen_tend,ten_t,ten_u,ten_v,ldiag3d,errmsg,errflg)
 !
-      use machine  , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       use funcphys , only : fpvs
 !
       implicit none

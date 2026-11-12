@@ -6,7 +6,7 @@
 !> This module contains the CCPP-compliant GFS surface layer scheme.
       module sfc_diff
 
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
 
       implicit none
 
@@ -644,7 +644,7 @@
 !> add fitted z0,zt curves for hurricane application (used in HWRF/HMON)
 !! Weiguo Wang, 2019-0425
       SUBROUTINE znot_m_v6(uref, znotm)
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       IMPLICIT NONE
 ! Calculate areodynamical roughness over water with input 10-m wind
 ! For low-to-moderate winds, try to match the Cd-U10 relationship from COARE V3.5 (Edson et al. 2013)
@@ -698,7 +698,7 @@
 !! uref(m/s)   :   wind speed at 10-m height
 !! znott(meter):   scalar roughness scale over water
       SUBROUTINE znot_t_v6(uref, znott)
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       IMPLICIT NONE
 
 
@@ -765,7 +765,7 @@
 !! uref(m/s)   :   wind speed at 10-m height
 !! znotm(meter):   areodynamical roughness scale over water
       SUBROUTINE znot_m_v7(uref, znotm)
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       IMPLICIT NONE
 
 
@@ -813,7 +813,7 @@
 !! uref(m/s)   :   wind speed at 10-m height
 !! znott(meter):   scalar roughness scale over water
       SUBROUTINE znot_t_v7(uref, znott)
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       IMPLICIT NONE
 
 !

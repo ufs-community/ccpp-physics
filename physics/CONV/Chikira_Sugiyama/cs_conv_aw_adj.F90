@@ -24,7 +24,7 @@ module cs_conv_aw_adj
                 ntcw, nncl, con_g, sigmafrac, ten_t, ten_q, prsi, subcldfrac, &
                 prcp, imp_physics, imp_physics_mg, errmsg, errflg)
 
-      use machine, only: kind_phys
+      use ccpp_kinds, only: kind_phys
 
       implicit none
 

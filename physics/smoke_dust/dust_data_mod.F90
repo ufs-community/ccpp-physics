@@ -3,7 +3,7 @@
 
 module dust_data_mod
 
-  use machine ,        only : kind_phys
+  use ccpp_kinds,        only : kind_phys
   use rrfs_smoke_config, only : p_dust_1, p_dust_2, p_dust_3, p_dust_4, p_dust_5, &
                               p_edust1, p_edust2, p_edust3, p_edust4, p_edust5
 

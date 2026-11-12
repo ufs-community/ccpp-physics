@@ -15,7 +15,7 @@
 !! -# define vertical tapering for CA global
       subroutine GFS_stochastics_init (si,vfact_ca,km,do_ca,ca_global, errmsg, errflg)
 
-      use machine,               only: kind_phys
+      use ccpp_kinds,               only: kind_phys
 
       implicit none
       real(kind_phys), dimension(:),         intent(in)    :: si
@@ -70,7 +70,7 @@
                                       ntcw,ntrw,ntsw,ntiw,ntgl,                          &
                                       errmsg, errflg)
 
-         use machine,               only: kind_phys
+         use ccpp_kinds,               only: kind_phys
 
          implicit none
 

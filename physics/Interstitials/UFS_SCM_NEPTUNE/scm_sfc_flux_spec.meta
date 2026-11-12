@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = scm_sfc_flux_spec
   type = scheme
-  dependencies = ../../hooks/machine.F
+  dependencies =
 
 ########################################################################
 [ccpp-arg-table]

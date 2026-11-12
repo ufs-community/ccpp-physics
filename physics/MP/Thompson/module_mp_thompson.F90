@@ -59,7 +59,7 @@
 
 module module_mp_thompson
 
-   use machine, only: wp => kind_phys, sp => kind_sngl_prec, dp => kind_dbl_prec
+   use ccpp_kinds, only: wp => kind_phys, sp => kind_sngl_prec, dp => kind_dbl_prec
    use module_mp_radar
 
    use mpi_f08

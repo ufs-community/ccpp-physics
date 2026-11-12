@@ -47,8 +47,8 @@ module micro_mg_utils
 !--------------------------------------------------------------------------
 
 ! 8 byte real and integer
-use machine,       only : r8 => kind_phys
-use machine,       only : i8 => kind_phys
+use ccpp_kinds,       only : r8 => kind_phys
+use ccpp_kinds,       only : i8 => kind_phys
 implicit none
 private
 save

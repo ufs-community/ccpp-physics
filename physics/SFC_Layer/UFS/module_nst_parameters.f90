@@ -11,7 +11,7 @@ module module_nst_parameters
 ! history:
 !  20210305: X.Li, reduce z_w_max from 30 m to 20 m
 
-  use machine, only :  kind_phys
+  use ccpp_kinds, only :  kind_phys
   !
   ! air constants and coefficients from the atmospehric model
   use physcons, only:        &

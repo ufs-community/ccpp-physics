@@ -3,7 +3,7 @@
 
 !> This module contains the Grell_Freitas deep convection scheme
 module cu_gf_deep
-     use machine , only : kind_phys
+     use ccpp_kinds, only : kind_phys
      use physcons, only : qamin
      real(kind=kind_phys), parameter::g=9.81
      real(kind=kind_phys), parameter:: cp=1004.

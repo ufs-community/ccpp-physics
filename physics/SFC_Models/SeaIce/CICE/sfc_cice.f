@@ -76,7 +76,7 @@
 !  ====================    end of description    =====================  !
 !
 !
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       implicit none
 
       real(kind=kind_phys), parameter  :: one = 1.0_kind_phys

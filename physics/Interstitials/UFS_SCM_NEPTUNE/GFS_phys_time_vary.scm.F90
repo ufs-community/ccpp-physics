@@ -7,7 +7,7 @@
    module GFS_phys_time_vary
       use mpi_f08
      
-      use machine, only : kind_phys, kind_dbl_prec, kind_sngl_prec
+      use ccpp_kinds, only : kind_phys, kind_dbl_prec, kind_sngl_prec
 
       use mersenne_twister, only: random_setseed, random_number
 

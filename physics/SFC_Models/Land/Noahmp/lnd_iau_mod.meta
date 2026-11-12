@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = land_iau_external_data_type
   type = ddt
-  dependencies = ../../../hooks/machine.F
+  dependencies =
   module_name = land_iau_mod
 
 [ccpp-arg-table]
@@ -13,7 +13,7 @@
 [ccpp-table-properties]
   name = land_iau_state_type
   type = ddt
-  dependencies = ../../../hooks/machine.F
+  dependencies =
   module_name = land_iau_mod
 
 [ccpp-arg-table]
@@ -25,7 +25,7 @@
 [ccpp-table-properties]
   name = land_iau_control_type
   type = ddt
-  dependencies = ../../../hooks/machine.F
+  dependencies =
   module_name = land_iau_mod
 
 [ccpp-arg-table]

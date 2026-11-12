@@ -22,7 +22,7 @@
 !              DTEND_CAN,                           &
               errmsg, errflg )                       !out
 
-   use machine , only : kind_phys
+   use ccpp_kinds, only : kind_phys
 
    IMPLICIT NONE
 
@@ -216,7 +216,7 @@
               Q1_CAN, Q1_2M,                        &  !out
               errmsg,errflg)
 
-   use machine , only : kind_phys
+   use ccpp_kinds, only : kind_phys
 
    IMPLICIT NONE
 

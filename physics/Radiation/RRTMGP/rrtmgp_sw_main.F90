@@ -4,7 +4,7 @@
 !> This module contain the RRTMGP-SW radiation scheme
 module rrtmgp_sw_main
   use mpi_f08
-  use machine,                only: kind_phys, kind_dbl_prec
+  use ccpp_kinds,                only: kind_phys, kind_dbl_prec
   use mo_optical_props,       only: ty_optical_props_2str
   use module_radsw_parameters, only: cmpfsw_type
   use mo_rte_sw,              only: rte_sw

@@ -4,13 +4,19 @@
   branch = v1.9.3
 [submodule "physics/MP/TEMPO/tempo_v3"]
   path = physics/MP/TEMPO/tempo_v3
-  url = https://github.com/NCAR/TEMPO
-  branch = main
+  #url = https://github.com/NCAR/TEMPO
+  #branch = main
+  url = https://github.com/climbfuji/TEMPO
+  branch = feature/ccpp_kinds
 [submodule "physics/SFC_Layer/MYNN/MYNN"]
   path = physics/SFC_Layer/MYNN/MYNN
-  url = https://github.com/NCAR/MYNN-SFC
-  branch = ccpp/dev
+  #url = https://github.com/NCAR/MYNN-SFC
+  #branch = ccpp/dev
+  url = https://github.com/climbfuji/MYNN-SFC
+  branch = feature/ccpp_kinds
 [submodule "physics/CONV/C3"]
   path = physics/CONV/C3
-  url = https://github.com/ufs-community/c3
-  branch = main
+  #url = https://github.com/ufs-community/c3
+  #branch = main
+  url = https://github.com/climbfuji/c3
+  branch = feature/ccpp_kinds

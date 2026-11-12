@@ -9,7 +9,7 @@ module cs_conv_post
 !!
   subroutine cs_conv_post_run(im, kmax, do_aw, sigmatot, sigmafrac, errmsg, errflg)
 
-  use machine ,   only : kind_phys
+  use ccpp_kinds,   only : kind_phys
 
   implicit none
 

@@ -8,7 +8,7 @@
 module mp_thompson
 
       use mpi_f08
-      use machine, only : kind_phys
+      use ccpp_kinds, only : kind_phys
 
       use module_mp_thompson, only : thompson_init, mp_gt_driver, thompson_final, calc_effectRad
       use module_mp_thompson, only : naIN0, naIN1, naCCN0, naCCN1, eps

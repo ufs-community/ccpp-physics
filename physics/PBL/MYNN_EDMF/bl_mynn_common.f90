@@ -19,7 +19,7 @@
 ! For MPAS:
 ! use mpas_kind_types,only: kind_phys => RKIND
 ! For CCPP:
-  use machine,  only : kind_phys
+  use ccpp_kinds,  only : kind_phys
 
  implicit none
  save

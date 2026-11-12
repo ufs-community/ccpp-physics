@@ -15,7 +15,7 @@
 !> This module contains common constants, limiters and "critical" values in      
     module ugwp_common
 !
-     use machine,  only : kind_phys
+     use ccpp_kinds,  only : kind_phys
 
      implicit none
      
@@ -64,7 +64,7 @@
 
       subroutine init_nazdir(naz,  xaz,  yaz)
       
-      use machine,     only : kind_phys
+      use ccpp_kinds,     only : kind_phys
       
       implicit none
       
@@ -101,7 +101,7 @@
 !===================================================
      subroutine init_global_gwdis(levs, zkm, pmb, kvg, ktg, krad, kion, me, master)
 !				      
-     use machine ,      only : kind_phys 
+     use ccpp_kinds,      only : kind_phys 
      
      implicit none
      integer , intent(in)                 :: me, master
@@ -195,7 +195,7 @@
 !
 !=========================================================================
      module ugwp_oro_init
-     use machine ,    only : kind_phys
+     use ccpp_kinds,    only : kind_phys
      use ugwp_common, only : bnv2min, grav, grcp, fv, grav, cpd, grcp, pi
      use ugwp_common, only : mkzmin, mkz2min
      implicit none
@@ -328,7 +328,7 @@
 !=========================================================================
     module ugwp_conv_init
     
-     use machine ,              only : kind_phys
+     use ccpp_kinds,              only : kind_phys
 
      
      implicit none
@@ -411,7 +411,7 @@
 !=========================================================================
 
    module ugwp_fjet_init
-   use machine ,              only : kind_phys   
+   use ccpp_kinds,              only : kind_phys   
 
    
    
@@ -470,7 +470,7 @@
 !
      module ugwp_okw_init
 !=========================================================================
-       use machine ,              only : kind_phys      
+       use ccpp_kinds,              only : kind_phys      
      
        implicit none
 
@@ -533,7 +533,7 @@
 !===============================
 
   module ugwp_lsatdis_init
-     use machine ,              only : kind_phys    
+     use ccpp_kinds,              only : kind_phys    
      implicit none
 
       integer  :: nwav, nazd
@@ -580,7 +580,7 @@
 !
   module ugwp_wmsdis_init
   
-     use machine ,    only : kind_phys    
+     use ccpp_kinds,    only : kind_phys    
      use ugwp_common, only : arad, pi, pi2, hpscale, rhp, rhp2, rh4, omega2 
      use ugwp_common, only : bnv2max,  bnv2min, minvel 
      use ugwp_common, only : mkzmin,  mkz2min, mkzmax, mkz2max, ucrit => cdmin

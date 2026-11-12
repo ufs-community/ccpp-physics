@@ -27,7 +27,7 @@ contains
 !      oct 2020  Diagnostics of "tauabs, wrms, trms" is taken out
 ! --------------------------------------------------------------------------------
 !
-      use machine,          only : kind_phys
+      use ccpp_kinds,          only : kind_phys
 
       use cires_ugwpv1_module,only :  krad, kvg, kion, ktg, iPr_ktgw, Pr_kdis, Pr_kvkt
 

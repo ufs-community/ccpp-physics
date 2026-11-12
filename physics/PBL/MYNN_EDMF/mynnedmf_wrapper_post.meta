@@ -2,7 +2,7 @@
 [ccpp-table-properties]
   name = mynnedmf_wrapper_post
   type = scheme
-  dependencies = ../../hooks/machine.F,
+  dependencies =
   
 ########################################################################
 [ccpp-arg-table]
