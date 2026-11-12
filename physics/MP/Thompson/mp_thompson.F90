@@ -945,6 +945,7 @@ module mp_thompson
          ! was using these arrays, but it is somewhat dangerous.
 
          !> - Convert water vapor mixing ratio back to specific humidity
+         ! input spechum: FV3 turns q back into mass with the input layer mass (prsi), so q stays per that mass
          new_spechum = qv*(1.0_kind_phys-spechum)
 
          if (convert_dry_rho) then
