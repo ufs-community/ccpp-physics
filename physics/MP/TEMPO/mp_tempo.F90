@@ -11,7 +11,7 @@ module mp_tempo
 
       !physical constants that are set from the host
       use module_mp_tempo_params, only : pi, lvap0, lfus, lsub, rv, rdry, cp, t0, r_uni, rho_w
-      use module_mp_tempo_params, only : roverrv, eps, naccn0, naccn1, nain0, nain1
+      use module_mp_tempo_params, only : roverrv, eps, naccn0, naccn1, nain0, nain1, min_qv
       use module_mp_tempo_params, only : initialize_parameters
       use module_mp_tempo_cfgs, only : ty_tempo_cfgs
       use module_mp_tempo_driver, only : tempo_init, tempo_run, ty_tempo_driver_diags, tempo_aerosol_surface_emissions
@@ -314,7 +314,7 @@ module mp_tempo
         spechum, qc, qr, qi, qs, qg, ni, nr, &
         nc, nwfa, nifa, nwfa2d, nifa2d, ng, volg, aerfld, &
         con_g, first_time_step, &
-        tgrs, prsl, phii, omega, &
+        tgrs, prsl, prsi, phii, omega, &
         is_aerosol_aware, is_hail_aware, merra2_aerosol_aware, &
         prcp, rain, graupel, ice, snow, sr, refl_10cm, &
         do_radar_ref, &
@@ -362,6 +362,7 @@ module mp_tempo
          ! State variables and timestep information
          real(kind_phys),           intent(in   ) :: tgrs(:,:)
          real(kind_phys),           intent(in   ) :: prsl(:,:)
+         real(kind_phys),           intent(in   ) :: prsi(:,:)
          real(kind_phys),           intent(in   ) :: phii(:,:)
          real(kind_phys),           intent(in   ) :: omega(:,:)
          real(kind_phys),           intent(in   ) :: dtp
@@ -523,9 +524,6 @@ module mp_tempo
            end if
          end if
 
-         !> - Layer width in m from geopotential in m2 s-2
-         dz = (phii(:,2:nlev+1) - phii(:,1:nlev)) / con_g
-
          ! Set internal dimensions
          ids = 1
          ims = 1
@@ -548,6 +546,10 @@ module mp_tempo
 
          ! handle dt_inner < dtp
          do it = 1, ndt
+
+            !> - Layer width in m: dry-air mass over TEMPO's entry density, every inner step
+            dz = (prsi(:,1:nlev) - prsi(:,2:nlev+1)) * (1.0_kind_phys - spechum) * rdry * new_tgrs &
+                 * (max(min_qv, qv) + roverrv) / (con_g * roverrv * prsl)
 
             !> - Density of air in kg m-3
             rho = roverrv*prsl/(rdry*new_tgrs*(qv+roverrv))
