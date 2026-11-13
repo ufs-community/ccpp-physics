@@ -276,7 +276,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &        lwp_bl,iwp_bl,swp_bl
      !These 5 arrays are only allocated when bl_mynn_diags2d >=2
       real(kind_phys), dimension(:), intent(out), optional ::            &
-     &        cldceil,wspd10,wspd80,wspd160,maxcldfra,maxcldfra_bl
+     &        wspd10,wspd80,wspd160,maxcldfra,maxcldfra_bl,cldceil
       real(kind_phys), dimension(:,:), intent(in) ::                     &
      &        t3d,qgrs_water_vapor, qgrs_liquid_cloud, qgrs_ice,         &
      &        qgrs_snow
@@ -362,6 +362,16 @@ SUBROUTINE mynnedmf_wrapper_run(        &
       real(kind_phys), allocatable :: save_qke_adv(:,:)
       real(kind_phys), dimension(nlev) :: kzero
 
+     ! local variables to accomodate compiler intel-classic 19.1.3.304
+      real(kind_phys), allocatable, dimension(:,:) ::                    &
+               edmf_a_loc, edmf_w_loc, edmf_qt_loc, edmf_thl_loc,        &
+               edmf_ent_loc,edmf_qc_loc,sub_thl_loc,sub_sqv_loc,         &
+               det_thl_loc,det_sqv_loc,dqke_loc,qWT_loc,qSHEAR_loc,      &
+               qBUOY_loc,qDISS_loc,spp_wts_pbl_loc
+      real(kind_phys), allocatable, dimension(:) ::                      &
+               lwp_bl_loc,iwp_bl_loc,swp_bl_loc,cldceil_loc,wspd10_loc,  &
+               wspd80_loc,wspd160_loc,maxcldfra_loc,maxcldfra_bl_loc
+
       ! Initialize CCPP error handling variables
       errmsg = ''
       errflg = 0
@@ -391,8 +401,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
         if (nssl_ccn_on) dqdt_cccn = 0.0
       end if
       adj_t = t3d 
-      
-      
+
       if (lprnt) then
          write(0,*)"=============================================="
          write(0,*)"in mynn wrapper..."
@@ -730,6 +739,36 @@ SUBROUTINE mynnedmf_wrapper_run(        &
       allocate(wij(ncol,nlev+1,1))
       wij(:,:,1)=wi(:,:)
 
+      ! copy optional arrays to locals to fix copy_out issues for compiler intel-classic 19.1.3.304
+      if (present(spp_wts_pbl)) then
+        allocate(spp_wts_pbl_loc(ncol,nlev))
+        spp_wts_pbl_loc(1:ncol,1:nlev) = spp_wts_pbl(1:ncol,1:nlev)
+      end if
+      if (present(edmf_a))        allocate(edmf_a_loc(ncol,nlev),  source=zero)
+      if (present(edmf_w))        allocate(edmf_w_loc(ncol,nlev),  source=zero)
+      if (present(edmf_qt))       allocate(edmf_qt_loc(ncol,nlev), source=zero)
+      if (present(edmf_thl))      allocate(edmf_thl_loc(ncol,nlev),source=zero)
+      if (present(edmf_ent))      allocate(edmf_ent_loc(ncol,nlev),source=zero)
+      if (present(edmf_qc))       allocate(edmf_qc_loc(ncol,nlev), source=zero)
+      if (present(sub_thl))       allocate(sub_thl_loc(ncol,nlev), source=zero)
+      if (present(sub_sqv))       allocate(sub_sqv_loc(ncol,nlev), source=zero)
+      if (present(det_thl))       allocate(det_thl_loc(ncol,nlev), source=zero)
+      if (present(det_sqv))       allocate(det_sqv_loc(ncol,nlev), source=zero)
+      if (present(dqke))          allocate(dqke_loc(ncol,nlev),    source=zero)
+      if (present(qWT))           allocate(qWT_loc(ncol,nlev),     source=zero)
+      if (present(qSHEAR))        allocate(qSHEAR_loc(ncol,nlev),  source=zero)
+      if (present(qBUOY))         allocate(qBUOY_loc(ncol,nlev),   source=zero)
+      if (present(qDISS))         allocate(qDISS_loc(ncol,nlev),   source=zero)
+      if (present(cldceil))       allocate(cldceil_loc(ncol),      source=zero)
+      if (present(lwp_bl))        allocate(lwp_bl_loc(ncol),       source=zero)
+      if (present(iwp_bl))        allocate(iwp_bl_loc(ncol),       source=zero)
+      if (present(swp_bl))        allocate(swp_bl_loc(ncol),       source=zero)
+      if (present(wspd10))        allocate(wspd10_loc(ncol),       source=zero)
+      if (present(wspd80))        allocate(wspd80_loc(ncol),       source=zero)
+      if (present(wspd160))       allocate(wspd160_loc(ncol),      source=zero)
+      if (present(maxcldfra))     allocate(maxcldfra_loc(ncol),    source=zero)
+      if (present(maxcldfra_bl))  allocate(maxcldfra_bl_loc(ncol), source=zero)
+
       if (lprnt) then
          print*
          write(0,*)"===CALLING mynn_bl_driver; input:"
@@ -800,8 +839,8 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &             EXCH_H=exch_h,EXCH_M=exch_m,                        & !output
      &             pblh=pblh,KPBL=KPBL,                                & !output
      &             el_pbl=el_pbl,                                      & !output
-     &             dqke=dqke,                                          & !output
-     &             qWT=qWT,qSHEAR=qSHEAR,qBUOY=qBUOY,qDISS=qDISS,      & !output
+     &             dqke=dqke_loc,qWT=qWT_loc,                          & !output
+     &             qSHEAR=qSHEAR_loc,qBUOY=qBUOY_loc,qDISS=qDISS_loc,  & !output
      &             bl_mynn_tkeadvect=bl_mynn_tkeadvect,                &
      &             tke_budget=tke_budget,                              & !input parameter
      &             bl_mynn_cloudpdf=bl_mynn_cloudpdf,                  & !input parameter
@@ -820,19 +859,22 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &             bl_mynn_ess=bl_mynn_ess,                            & !input parameter
      &             bl_mynn_diags2d=bl_mynn_diags2d,                    & !input parameter
      &             bl_mynn_diags3d=bl_mynn_diags3d,                    & !input parameter
-     &             edmf_a=edmf_a,edmf_w=edmf_w,edmf_qt=edmf_qt,        & !output
-     &             edmf_thl=edmf_thl,edmf_ent=edmf_ent,edmf_qc=edmf_qc,& !output
-     &             sub_thl=sub_thl,sub_sqv=sub_sqv,                    &
-     &             det_thl=det_thl,det_sqv=det_sqv,                    &
-     &             lwp=lwp_bl,iwp=iwp_bl,swp=swp_bl,cldceil=cldceil,   &
-     &             wspd10=wspd10,wspd80=wspd80,wspd160=wspd160,        &
-     &             maxcldfra=maxcldfra,maxcldfra_pbl=maxcldfra_bl,     &
+     &             edmf_a=edmf_a_loc,edmf_w=edmf_w_loc,                & !output
+     &             edmf_qt=edmf_qt_loc, edmf_qc=edmf_qc_loc,           & !output
+     &             edmf_thl=edmf_thl_loc,edmf_ent=edmf_ent_loc,        & !output
+     &             sub_thl=sub_thl_loc,sub_sqv=sub_sqv_loc,            &
+     &             det_thl=det_thl_loc,det_sqv=det_sqv_loc,            &
+     &             lwp=lwp_bl_loc,iwp=iwp_bl_loc,swp=swp_bl_loc,       &
+     &             cldceil=cldceil_loc,wspd10=wspd10_loc,              &
+     &             wspd80=wspd80_loc,wspd160=wspd160_loc,              &
+     &             maxcldfra=maxcldfra_loc,                            &
+     &             maxcldfra_pbl=maxcldfra_bl_loc,                     &
      &             maxwidth=maxwidth,maxMF=maxMF,ztop_plume=ztop_plume,& !output
      &             excess_h=excess_h,excess_q=excess_q,                &
      &             maxwidth_dd=maxwidth_dd,maxmf_dd=maxmf_dd,          &
      &             maxtkeprod=maxtkeprod,cldtop_cooling=cldtop_cooling,&
      &             ent_eff=ent_eff,                                    &
-     &             spp_pbl=spp_pbl,pattern_spp=spp_wts_pbl,            & !input
+     &             spp_pbl=spp_pbl,pattern_spp=spp_wts_pbl_loc,        & !input
      &             RTHRATEN=htrlw,                                     & !input
      &             f_qi=flag_qi,f_qni=flag_qni,                        & !input
      &             f_qc=flag_qc,f_qnc=flag_qnc,f_qs=flag_qs,           & !input
@@ -843,6 +885,31 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &             ITS=1,ITE=ncol,JTS=1,JTE=1,KTS=1,KTE=nlev,          & !input
      &             errmsg=errmsg,errflg=errflg                         )
 
+        ! copy results back to the optional arrays
+        if (present(edmf_a))       edmf_a(1:ncol,1:nlev)=edmf_a_loc(1:ncol,1:nlev)
+        if (present(edmf_w))       edmf_w(1:ncol,1:nlev)=edmf_w_loc(1:ncol,1:nlev)
+        if (present(edmf_qt))      edmf_qt(1:ncol,1:nlev)=edmf_qt_loc(1:ncol,1:nlev)
+        if (present(edmf_thl))     edmf_thl(1:ncol,1:nlev)=edmf_thl_loc(1:ncol,1:nlev)
+        if (present(edmf_ent))     edmf_ent(1:ncol,1:nlev)=edmf_ent_loc(1:ncol,1:nlev)
+        if (present(edmf_qc))      edmf_qc(1:ncol,1:nlev)=edmf_qc_loc(1:ncol,1:nlev)
+        if (present(sub_thl))      sub_thl(1:ncol,1:nlev)=sub_thl_loc(1:ncol,1:nlev)
+        if (present(sub_sqv))      sub_sqv(1:ncol,1:nlev)=sub_sqv_loc(1:ncol,1:nlev)
+        if (present(det_thl))      det_thl(1:ncol,1:nlev)=det_thl_loc(1:ncol,1:nlev)
+        if (present(det_sqv))      det_sqv(1:ncol,1:nlev)=det_sqv_loc(1:ncol,1:nlev)
+        if (present(dqke))         dqke(1:ncol,1:nlev)=dqke_loc(1:ncol,1:nlev)
+        if (present(qWT))          qWT(1:ncol,1:nlev)=qWT_loc(1:ncol,1:nlev)
+        if (present(qSHEAR))       qSHEAR(1:ncol,1:nlev)=qSHEAR_loc(1:ncol,1:nlev)
+        if (present(qBUOY))        qBUOY(1:ncol,1:nlev)=qBUOY_loc(1:ncol,1:nlev)
+        if (present(qDISS))        qDISS(1:ncol,1:nlev)=qDISS_loc(1:ncol,1:nlev)
+        if (present(lwp_bl))       lwp_bl(1:ncol)=lwp_bl_loc(1:ncol)
+        if (present(iwp_bl))       iwp_bl(1:ncol)=iwp_bl_loc(1:ncol)
+        if (present(swp_bl))       swp_bl(1:ncol)=swp_bl_loc(1:ncol)
+        if (present(cldceil))      cldceil(1:ncol)=cldceil_loc(1:ncol)
+        if (present(wspd10))       wspd10(1:ncol)=wspd10_loc(1:ncol)
+        if (present(wspd80))       wspd80(1:ncol)=wspd80_loc(1:ncol)
+        if (present(wspd160))      wspd160(1:ncol)=wspd160_loc(1:ncol)
+        if (present(maxcldfra))    maxcldfra(1:ncol)=maxcldfra_loc(1:ncol)
+        if (present(maxcldfra_bl)) maxcldfra_bl(1:ncol)=maxcldfra_bl_loc(1:ncol)
 
      ! POST MYNN (INTERSTITIAL) WORK:
         !update/save MYNN-only variables
@@ -1047,7 +1114,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
              call dtend_helper(100+ntiw,RQIBLTEN)
            endif
        endif
-       
+
        if (lprnt) then
           print*
           print*,"===Finished with mynn_bl_driver; output:"
