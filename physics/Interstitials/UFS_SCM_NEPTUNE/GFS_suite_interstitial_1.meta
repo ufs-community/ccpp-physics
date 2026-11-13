@@ -259,14 +259,6 @@
   type = real
   kind = kind_phys
   intent = inout
-[dzgrid]
-  standard_name = layer_thickness
-  long_name = layer thickness
-  units = m
-  dimensions = (horizontal_dimension,vertical_layer_dimension)
-  type = real
-  kind = kind_phys
-  intent = inout
 [dp]
   standard_name = air_pressure_difference_between_levels
   long_name = layer air pressure thickness

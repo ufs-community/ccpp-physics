@@ -11,7 +11,7 @@
 !!
     subroutine GFS_suite_interstitial_1_run (im, levs, ntrac, dtf, dtp, slmsk, area, dxmin, dxinv, pgr, &
          islmsk, work1, work2, psurf, dudt, dvdt, dtdt, dqdt, ten_u, ten_v, ten_t, ten_q, kpbl, dusfcg, &
-         dvsfcg, oc, oa4, clx, theta, gamma, sigma, elvmax, dp, dzgrid, varss, ocss, oa4ss, clxss,      &
+         dvsfcg, oc, oa4, clx, theta, gamma, sigma, elvmax, dp, varss, ocss, oa4ss, clxss,              &
          dycore_active, dycore_fv3, errmsg, errflg)
 
       use machine, only: kind_phys
@@ -36,7 +36,7 @@
       real(kind=kind_phys), intent(inout) :: oc(:), oa4(:,:), clx(:,:)
       real(kind=kind_phys), intent(inout) :: theta(:), gamma(:), sigma(:), elvmax(:)
       ! Layer pressure and height thickness (formerly Interstitial%del and %deltaZ)
-      real(kind=kind_phys), intent(inout) :: dp(:,:), dzgrid(:,:)
+      real(kind=kind_phys), intent(inout) :: dp(:,:)
       ! Small-scale orography statistics (allocated only for gwd_opt = 2, 3, 22, 33)
       real(kind=kind_phys), intent(inout), optional :: varss(:), ocss(:), oa4ss(:,:), clxss(:,:)
 
@@ -97,7 +97,6 @@
      dusfcg = zero
      dvsfcg = zero
      dp     = zero
-     dzgrid = zero
 
      ! DJS2026:
      ! For UFS-FV3, these fields below were defined as physics interstitials
