@@ -11,7 +11,7 @@ module mp_tempo
 
       !physical constants that are set from the host
       use module_mp_tempo_params, only : pi, lvap0, lfus, lsub, rv, rdry, cp, t0, r_uni, rho_w
-      use module_mp_tempo_params, only : roverrv, eps, naccn0, naccn1, nain0, nain1
+      use module_mp_tempo_params, only : roverrv, eps, naccn0, naccn1, nain0, nain1, min_qv
       use module_mp_tempo_params, only : initialize_parameters
       use module_mp_tempo_cfgs, only : ty_tempo_cfgs
       use module_mp_tempo_driver, only : tempo_init, tempo_run, ty_tempo_driver_diags, tempo_aerosol_surface_emissions
@@ -314,7 +314,7 @@ module mp_tempo
         spechum, qc, qr, qi, qs, qg, ni, nr, &
         nc, nwfa, nifa, nwfa2d, nifa2d, ng, volg, aerfld, &
         con_g, first_time_step, &
-        tgrs, prsl, phii, omega, &
+        tgrs, prsl, prsi, phii, omega, &
         is_aerosol_aware, is_hail_aware, merra2_aerosol_aware, &
         prcp, rain, graupel, ice, snow, sr, refl_10cm, &
         do_radar_ref, &
@@ -362,6 +362,7 @@ module mp_tempo
          ! State variables and timestep information
          real(kind_phys),           intent(in   ) :: tgrs(:,:)
          real(kind_phys),           intent(in   ) :: prsl(:,:)
+         real(kind_phys),           intent(in   ) :: prsi(:,:)
          real(kind_phys),           intent(in   ) :: phii(:,:)
          real(kind_phys),           intent(in   ) :: omega(:,:)
          real(kind_phys),           intent(in   ) :: dtp
@@ -501,29 +502,27 @@ module mp_tempo
          !> - Convert specific humidity to water vapor mixing ratio.
          !> - Also, hydrometeor variables are mass or number mixing ratio
          !> - either kg of species per kg of dry air, or per kg of (dry + vapor).
-         qv = new_spechum/(1.0_kind_phys-new_spechum)
+         ! both conversions (here and back below) use the input spechum
+         qv = spechum/(1.0_kind_phys-spechum)
 
          if (convert_dry_rho) then
-           new_qc = new_qc/(1.0_kind_phys-new_spechum)
-           new_qr = new_qr/(1.0_kind_phys-new_spechum)
-           new_qi = new_qi/(1.0_kind_phys-new_spechum)
-           new_qs = new_qs/(1.0_kind_phys-new_spechum)
-           new_qg = new_qg/(1.0_kind_phys-new_spechum)
-           new_ni = new_ni/(1.0_kind_phys-new_spechum)
-           new_nr = new_nr/(1.0_kind_phys-new_spechum)
+           new_qc = new_qc/(1.0_kind_phys-spechum)
+           new_qr = new_qr/(1.0_kind_phys-spechum)
+           new_qi = new_qi/(1.0_kind_phys-spechum)
+           new_qs = new_qs/(1.0_kind_phys-spechum)
+           new_qg = new_qg/(1.0_kind_phys-spechum)
+           new_ni = new_ni/(1.0_kind_phys-spechum)
+           new_nr = new_nr/(1.0_kind_phys-spechum)
            if (is_hail_aware) then
-              new_ng = new_ng/(1.0_kind_phys-new_spechum)
-              new_volg = new_volg/(1.0_kind_phys-new_spechum)
+              new_ng = new_ng/(1.0_kind_phys-spechum)
+              new_volg = new_volg/(1.0_kind_phys-spechum)
            endif
            if (is_aerosol_aware .or. merra2_aerosol_aware) then
-              new_nc = new_nc/(1.0_kind_phys-new_spechum)
-              new_nwfa = new_nwfa/(1.0_kind_phys-new_spechum)
-              new_nifa = new_nifa/(1.0_kind_phys-new_spechum)
+              new_nc = new_nc/(1.0_kind_phys-spechum)
+              new_nwfa = new_nwfa/(1.0_kind_phys-spechum)
+              new_nifa = new_nifa/(1.0_kind_phys-spechum)
            end if
          end if
-
-         !> - Layer width in m from geopotential in m2 s-2
-         dz = (phii(:,2:nlev+1) - phii(:,1:nlev)) / con_g
 
          ! Set internal dimensions
          ids = 1
@@ -547,6 +546,10 @@ module mp_tempo
 
          ! handle dt_inner < dtp
          do it = 1, ndt
+
+            !> - Layer width in m: dry-air mass over TEMPO's entry density, every inner step
+            dz = (prsi(:,1:nlev) - prsi(:,2:nlev+1)) * (1.0_kind_phys - spechum) * rdry * new_tgrs &
+                 * (max(min_qv, qv) + roverrv) / (con_g * roverrv * prsl)
 
             !> - Density of air in kg m-3
             rho = roverrv*prsl/(rdry*new_tgrs*(qv+roverrv))
@@ -595,24 +598,24 @@ module mp_tempo
          if (errflg/=0) return
 
          !> - Convert water vapor mixing ratio back to specific humidity
-         new_spechum = qv/(1.0_kind_phys+qv)
+         new_spechum = qv*(1.0_kind_phys-spechum)
 
          if (convert_dry_rho) then
-           new_qc = new_qc/(1.0_kind_phys+qv)
-           new_qr = new_qr/(1.0_kind_phys+qv)
-           new_qi = new_qi/(1.0_kind_phys+qv)
-           new_qs = new_qs/(1.0_kind_phys+qv)
-           new_qg = new_qg/(1.0_kind_phys+qv)
-           new_ni = new_ni/(1.0_kind_phys+qv)
-           new_nr = new_nr/(1.0_kind_phys+qv)
+           new_qc = new_qc*(1.0_kind_phys-spechum)
+           new_qr = new_qr*(1.0_kind_phys-spechum)
+           new_qi = new_qi*(1.0_kind_phys-spechum)
+           new_qs = new_qs*(1.0_kind_phys-spechum)
+           new_qg = new_qg*(1.0_kind_phys-spechum)
+           new_ni = new_ni*(1.0_kind_phys-spechum)
+           new_nr = new_nr*(1.0_kind_phys-spechum)
            if (is_hail_aware) then
-              new_ng = new_ng/(1.0_kind_phys+qv)
-              new_volg = new_volg/(1.0_kind_phys+qv)
+              new_ng = new_ng*(1.0_kind_phys-spechum)
+              new_volg = new_volg*(1.0_kind_phys-spechum)
            endif
            if (is_aerosol_aware) then
-              new_nc = new_nc/(1.0_kind_phys+qv)
-              new_nwfa = new_nwfa/(1.0_kind_phys+qv)
-              new_nifa = new_nifa/(1.0_kind_phys+qv)
+              new_nc = new_nc*(1.0_kind_phys-spechum)
+              new_nwfa = new_nwfa*(1.0_kind_phys-spechum)
+              new_nifa = new_nifa*(1.0_kind_phys-spechum)
            end if
          end if
 
