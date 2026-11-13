@@ -324,6 +324,7 @@
      &                     elmh(im,km),ele_les(im,km),pftke(im),
      &                     dkq_les(im,km),pfl(im),pfdx(im),
      &                     dku_h(im,km),dkq_h(im,km),
+     &                     hdt(im,km),hdq(im,km,ntrac),
      &                     elmhfac,elmhmx,elm_les,
      &                     cpl1,cpl2,cpl3,cpl4,cpl5,cpl6,
      &                     cptke1,cptke2,cptke3
@@ -530,6 +531,21 @@
       do i=1,im
         gdx(i) = sqrt(garea(i))
       enddo
+!
+      if(sa3dtke .and. hdiffq) then
+        do k=1,km
+          do i=1,im
+            hdt(i,k) = def_3(i,k) / del(i,k)
+          enddo
+        enddo
+        do n=1,ntrac
+        do k=1,km
+          do i=1,im
+            hdq(i,k,n) = def4q(i,k,n) / del(i,k)
+          enddo
+        enddo
+        enddo
+      endif
 !
 ! cold pool
       if(coldpool)then
@@ -2273,7 +2289,7 @@
            tem1 = prod(i,k) + te(i,k) / dtn
            disste=max(min(disste, tem1), 0.)
            if(.not. tte_edmf) diss(i,k) = disste
-           tem=def4q(i,k,ntke)
+           tem=hdq(i,k,ntke)
            te(i,k) = te(i,k) + dtn * (prod(i,k)-disste+tem)
            te(i,k) = max(te(i,k), tkmnz(i,k))
         enddo
@@ -2943,8 +2959,8 @@ c
       do i=1,im
         ad(i,1) = 1.
         if(sa3dtke .and. hdiffq) then
-          f1(i,1)=t1(i,1)  +dtdz1(i)*heat(i)+def_3(i,1)*dt2
-          f2(i,1)=q1(i,1,1)+dtdz1(i)*evap(i)+def4q(i,1,1)*dt2
+          f1(i,1)=t1(i,1)  +dtdz1(i)*heat(i)+hdt(i,1)*dt2
+          f2(i,1)=q1(i,1,1)+dtdz1(i)*evap(i)+hdq(i,1,1)*dt2
         else
           f1(i,1)=t1(i,1)  +dtdz1(i)*heat(i)
           f2(i,1)=q1(i,1,1)+dtdz1(i)*evap(i)
@@ -2955,7 +2971,7 @@ c
           is = (n-1) * km
           do i = 1, im
             if(sa3dtke .and. hdiffq) then
-              f2(i,1+is) = q1(i,1,n) + def4q(i,1,n)*dt2
+              f2(i,1+is) = q1(i,1,n) + hdq(i,1,n)*dt2
             else
               f2(i,1+is) = q1(i,1,n)
             endif
@@ -2991,19 +3007,19 @@ c
              f1(i,k)   = f1(i,k)+dtodsd*dsdzt-(ptem-tem)*ptem1
              f1(i,k+1) = t1(i,k+1)-dtodsu*dsdzt+(ptem-tem)*ptem2
              if(sa3dtke .and. hdiffq) then
-               f1(i,k+1) = f1(i,k+1) + def_3(i,k+1)*dt2
+               f1(i,k+1) = f1(i,k+1) + hdt(i,k+1)*dt2
              endif
              ptem      = qcko(i,k,1) + qcko(i,k+1,1)
              f2(i,k)   = f2(i,k) - ptem * ptem1
              f2(i,k+1) = q1(i,k+1,1) + ptem * ptem2
              if(sa3dtke .and. hdiffq) then
-               f2(i,k+1) = f2(i,k+1) + def4q(i,k+1,1)*dt2
+               f2(i,k+1) = f2(i,k+1) + hdq(i,k+1,1)*dt2
              endif
           else
              f1(i,k)   = f1(i,k)+dtodsd*dsdzt
              if(sa3dtke .and. hdiffq) then
-               f1(i,k+1)=t1(i,k+1)+def_3(i,k+1)*dt2-dtodsu*dsdzt
-               f2(i,k+1)=q1(i,k+1,1)+def4q(i,k+1,1)*dt2
+               f1(i,k+1)=t1(i,k+1)+hdt(i,k+1)*dt2-dtodsu*dsdzt
+               f2(i,k+1)=q1(i,k+1,1)+hdq(i,k+1,1)*dt2
              else
                f1(i,k+1)=t1(i,k+1)-dtodsu*dsdzt
                f2(i,k+1)=q1(i,k+1,1)
@@ -3055,11 +3071,11 @@ c
                 f2(i,k+is) = f2(i,k+is) - ptem * ptem1
                 f2(i,k+1+is)= q1(i,k+1,n) + ptem * ptem2
                 if(sa3dtke .and. hdiffq) then
-                  f2(i,k+1+is)=f2(i,k+1+is)+def4q(i,k+1,n)*dt2
+                  f2(i,k+1+is)=f2(i,k+1+is)+hdq(i,k+1,n)*dt2
                 endif
               else
                 if(sa3dtke .and. hdiffq) then
-                  f2(i,k+1+is)=q1(i,k+1,n)+def4q(i,k+1,n)*dt2
+                  f2(i,k+1+is)=q1(i,k+1,n)+hdq(i,k+1,n)*dt2
                 else
                   f2(i,k+1+is)=q1(i,k+1,n)
                 endif
