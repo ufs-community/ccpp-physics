@@ -2289,7 +2289,8 @@
            tem1 = prod(i,k) + te(i,k) / dtn
            disste=max(min(disste, tem1), 0.)
            if(.not. tte_edmf) diss(i,k) = disste
-           tem=hdq(i,k,ntke)
+           tem = 0.
+           if(hdiffq) tem=hdq(i,k,ntke)
            te(i,k) = te(i,k) + dtn * (prod(i,k)-disste+tem)
            te(i,k) = max(te(i,k), tkmnz(i,k))
         enddo
