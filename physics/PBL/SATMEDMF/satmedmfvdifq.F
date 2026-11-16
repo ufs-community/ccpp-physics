@@ -532,19 +532,27 @@
         gdx(i) = sqrt(garea(i))
       enddo
 !
-      if(sa3dtke .and. hdiffq) then
-        do k=1,km
-          do i=1,im
-            hdt(i,k) = def_3(i,k) / del(i,k)
+      if(sa3dtke) then
+        if(hdiffq) then
+          do k=1,km
+            do i=1,im
+              hdt(i,k) = def_3(i,k) / del(i,k)
+            enddo
           enddo
-        enddo
-        do n=1,ntrac
-        do k=1,km
-          do i=1,im
-            hdq(i,k,n) = def4q(i,k,n) / del(i,k)
+          do n=1,ntrac
+          do k=1,km
+            do i=1,im
+              hdq(i,k,n) = def4q(i,k,n) / del(i,k)
+            enddo
           enddo
-        enddo
-        enddo
+          enddo
+        else
+          do k=1,km
+            do i=1,im
+              hdq(i,k,ntke) = def4q(i,k,ntke) / del(i,k)
+            enddo
+          enddo
+        endif
       endif
 !
 ! cold pool
@@ -2289,8 +2297,7 @@
            tem1 = prod(i,k) + te(i,k) / dtn
            disste=max(min(disste, tem1), 0.)
            if(.not. tte_edmf) diss(i,k) = disste
-           tem = 0.
-           if(hdiffq) tem=hdq(i,k,ntke)
+           tem=hdq(i,k,ntke)
            te(i,k) = te(i,k) + dtn * (prod(i,k)-disste+tem)
            te(i,k) = max(te(i,k), tkmnz(i,k))
         enddo
