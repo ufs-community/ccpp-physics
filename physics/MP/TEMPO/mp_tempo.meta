@@ -581,6 +581,14 @@
   type = real
   kind = kind_phys
   intent = in
+[slmsk]
+  standard_name = area_type
+  long_name = landmask: sea/land/ice=0/1/2
+  units = flag
+  dimensions = (horizontal_loop_extent)
+  type = real
+  kind = kind_phys
+  intent = in
 [is_aerosol_aware]
   standard_name = flag_for_aerosol_physics
   long_name = flag for aerosol-aware physics

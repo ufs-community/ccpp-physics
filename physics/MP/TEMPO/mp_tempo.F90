@@ -7,13 +7,14 @@
 module mp_tempo
 
       use mpi_f08
+      use, intrinsic :: ieee_arithmetic, only : ieee_is_finite
       use machine, only : kind_phys
 
       !physical constants that are set from the host
       use module_mp_tempo_params, only : pi, lvap0, lfus, lsub, rv, rdry, cp, t0, r_uni, rho_w
       use module_mp_tempo_params, only : roverrv, eps, naccn0, naccn1, nain0, nain1
       use module_mp_tempo_params, only : initialize_parameters
-      use module_mp_tempo_cfgs, only : ty_tempo_cfgs
+      use module_mp_tempo_cfgs, only : ty_tempo_cfgs, ty_tempo_table_cfgs
       use module_mp_tempo_driver, only : tempo_init, tempo_run, ty_tempo_driver_diags, tempo_aerosol_surface_emissions
       use module_get_aerosols_for_mp, only : get_niwfa
       use module_mp_tempo_utils, only : calc_ice_number, calc_cloud_number, calc_rain_number
@@ -94,6 +95,9 @@ module mp_tempo
          
          real (kind=kind_phys) :: h_01, z1, niIN3, niCCN3
          integer :: i, k
+         type(ty_tempo_table_cfgs) :: tempo_tables
+         character(len=100) :: table_names(4)
+         logical :: table_exists
          
          ! Initialize the CCPP error handling variables
          errmsg = ''
@@ -126,12 +130,24 @@ module mp_tempo
          if (mpirank==mpiroot) write(*,*) 'Calling tempo_init() with ltaerosol= ', is_aerosol_aware, &
               ' lthailaware= ', is_hail_aware, ' sedi_semi= ', semi_sedi, ' do_sat_adj= ', do_sat_adj
 
+         ! tempo_init() reads its lookup tables without returning an error status;
+         ! check here so that a missing table is reported through CCPP
+         table_names = [character(len=100) :: tempo_tables%ccn_table_name, tempo_tables%qrqg_table_name, &
+                        tempo_tables%qrqs_table_name, tempo_tables%freezewater_table_name]
+         do i = 1, size(table_names)
+            inquire(file=trim(table_names(i)), exist=table_exists)
+            if (.not. table_exists) then
+               write(errmsg,'(*(a))') 'mp_tempo_init: TEMPO lookup table "', trim(table_names(i)), &
+                    '" not found in the run directory'
+               errflg = 1
+               return
+            end if
+         end do
+
          ! Main call to tempo_init()
          call tempo_init(aerosolaware_flag=is_aerosol_aware, hailaware_flag=is_hail_aware, &
               semi_sedi_flag=semi_sedi, cloud_condensation_flag=(.not. do_sat_adj), &
               diagnostic_aerosols_flag=merra2_aerosol_aware, tempo_cfgs=tempo_cfgs)
-
-         if (errflg /= 0) return
 
          ! Set local TEMPO MP module constants from host model and overwrite derived constants calculated in module_mp_tempo_params/initialize_parameters()
          pi = con_pi
@@ -148,6 +164,13 @@ module mp_tempo
          ! Although initialize_parameters() is already called during the call to tempo_init() above, it needs to be called again with the host-set constants to recalculate dependent parameters
          call initialize_parameters()
 
+         ! For restart runs, the init is done here. Return before modifying the
+         ! state so that restarted runs reproduce continuous runs.
+         if (restart) then
+           is_initialized = .true.
+           return
+         end if
+
          ! Ensure non-negative mass mixing ratios of all water variables
          where(spechum<0) spechum = 1.0e-10     ! gthompsn, spechum should *never* be identically zero.
          where(qc<0)      qc = 0.0
@@ -160,12 +183,6 @@ module mp_tempo
          !> - Also, hydrometeor variables are mass or number mixing ratio
          !> - either kg of species per kg of dry air, or per kg of (dry + vapor).
          if (merra2_aerosol_aware) call get_niwfa(aerfld, nifa, nwfa, ncol, nlev) 
-
-         ! For restart runs, the init is done here
-         if (restart) then
-           is_initialized = .true.
-           return
-         end if
 
          qv = spechum/(1.0_kind_phys-spechum)
          
@@ -314,7 +331,7 @@ module mp_tempo
         spechum, qc, qr, qi, qs, qg, ni, nr, &
         nc, nwfa, nifa, nwfa2d, nifa2d, ng, volg, aerfld, &
         con_g, first_time_step, &
-        tgrs, prsl, phii, omega, &
+        tgrs, prsl, phii, omega, slmsk, &
         is_aerosol_aware, is_hail_aware, merra2_aerosol_aware, &
         prcp, rain, graupel, ice, snow, sr, refl_10cm, &
         do_radar_ref, &
@@ -364,6 +381,7 @@ module mp_tempo
          real(kind_phys),           intent(in   ) :: prsl(:,:)
          real(kind_phys),           intent(in   ) :: phii(:,:)
          real(kind_phys),           intent(in   ) :: omega(:,:)
+         real(kind_phys),           intent(in   ) :: slmsk(:)
          real(kind_phys),           intent(in   ) :: dtp
          real(kind=kind_phys),      intent(in   ) :: dt_inner
          logical,                   intent(in   ) :: first_time_step
@@ -405,6 +423,8 @@ module mp_tempo
          real(kind_phys) :: dz(1:ncol,1:nlev)               !< m
          real(kind_phys) :: xnwfa(1:ncol,1:nlev,1)
          real(kind_phys) :: xnwfa2d(1:ncol,1)
+         ! Land mask (sea/land/ice=0/1/2) for single-moment cloud number
+         integer :: land(1:ncol,1)
          
          !temporary new states used to calculate tendencies
          real(kind_phys) :: new_spechum(1:ncol,1:nlev)
@@ -427,7 +447,7 @@ module mp_tempo
          integer         :: ids,ide, jds,jde, kds,kde, &
                             ims,ime, jms,jme, kms,kme, &
                             its,ite, jts,jte, kts,kte
-         integer :: itimestep = 1
+         integer :: itimestep
          
          ! Initialize the CCPP error handling variables
          errmsg = ''
@@ -494,7 +514,6 @@ module mp_tempo
          
          ndt = max(nint(dtp/dt_inner), 1)
          dt = dtp/ndt
-         if (dt <= dt_inner) dt = dt_inner
 
         if (merra2_aerosol_aware) call get_niwfa(aerfld, new_nifa, new_nwfa, ncol, nlev)
 
@@ -521,6 +540,8 @@ module mp_tempo
               new_nifa = new_nifa/(1.0_kind_phys-new_spechum)
            end if
          end if
+
+         land(:,1) = nint(slmsk(:))
 
          !> - Layer width in m from geopotential in m2 s-2
          dz = (phii(:,2:nlev+1) - phii(:,1:nlev)) / con_g
@@ -566,12 +587,21 @@ module mp_tempo
               endif
             endif
 
+            ! TEMPO treats itimestep == 1 as the first model step (used for one-time
+            ! aerosol and graupel initialization); only the first inner iteration
+            ! of the first physics step qualifies
+            if (first_time_step .and. it == 1) then
+               itimestep = 1
+            else
+               itimestep = 2
+            end if
+
             call tempo_run(tempo_cfgs=tempo_cfgs, &
                  dt=dt, itimestep=itimestep , &
                  qv=qv, qc=new_qc, qr=new_qr, qi=new_qi, qs=new_qs, qg=new_qg, ni=new_ni, nr=new_nr, &
                  nc=new_nc, nwfa=new_nwfa, nifa=new_nifa, &
                  ng=new_ng, qb=new_volg, &
-                 w=w, t=new_tgrs, p=prsl, dz=dz, &
+                 w=w, t=new_tgrs, p=prsl, dz=dz, land_input=land, &
                  ids = ids , ide = ide , jds = jds , jde = jde , kds = kds , kde = kde , &
                  ims = ims , ime = ime , jms = jms , jme = jme , kms = kms , kme = kme , &
                  its = its , ite = ite , jts = jts , jte = jte , kts = kts , kte = kte , &
@@ -592,9 +622,12 @@ module mp_tempo
 
          if (do_radar_ref) refl_10cm = tempo_driver_diags%refl10cm(:,:,1)
 
-         itimestep = itimestep + 1
-         
-         if (errflg/=0) return
+         ! tempo_run() does not return an error status; catch a corrupted state here
+         if (any(.not. ieee_is_finite(new_tgrs)) .or. any(.not. ieee_is_finite(qv))) then
+            write(errmsg,'(*(a))') 'mp_tempo_run: non-finite temperature or water vapor returned by tempo_run'
+            errflg = 1
+            return
+         end if
 
          !> - Convert water vapor mixing ratio back to specific humidity
          new_spechum = qv/(1.0_kind_phys+qv)
