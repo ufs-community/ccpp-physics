@@ -489,6 +489,29 @@
   type = real
   kind = kind_phys
   intent = out
+[use_oceanuv]
+  standard_name = do_air_sea_flux_computation_over_water
+  long_name = air-sea flux option
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
+[usfco]
+  standard_name = x_ocean_current
+  long_name = zonal current at ocean surface
+  units = m s-1
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
+[vsfco]
+  standard_name = y_ocean_current
+  long_name = meridional current at ocean surface
+  units = m s-1
+  dimensions = (horizontal_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
 [dusfc1]
   standard_name = instantaneous_surface_x_momentum_flux
   long_name = surface momentum flux in the x-direction valid for current call
