@@ -232,6 +232,13 @@
                 enddo
              enddo
              n = 13
+          elseif (mraerosol) then
+             do k=1,levs
+                do i=1,im
+                   ten_q(i,k,ntlnc) = dvdftra(i,k,n)
+                enddo
+             enddo
+             n = 11
           endif
 
           if (lthailaware) then

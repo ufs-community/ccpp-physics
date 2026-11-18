@@ -611,7 +611,7 @@ module mp_tempo
               new_ng = new_ng/(1.0_kind_phys+qv)
               new_volg = new_volg/(1.0_kind_phys+qv)
            endif
-           if (is_aerosol_aware) then
+           if (is_aerosol_aware .or. merra2_aerosol_aware) then
               new_nc = new_nc/(1.0_kind_phys+qv)
               new_nwfa = new_nwfa/(1.0_kind_phys+qv)
               new_nifa = new_nifa/(1.0_kind_phys+qv)
@@ -633,7 +633,7 @@ module mp_tempo
            
            deallocate (new_ng, new_volg)
          end if
-         if (is_aerosol_aware) then
+         if (is_aerosol_aware .or. merra2_aerosol_aware) then
            dnc = (new_nc - nc)/dtp
            dnwfa = (new_nwfa - nwfa)/dtp
            dnifa = (new_nifa - nifa)/dtp

@@ -801,7 +801,7 @@
                 qi_mp (i,k) = tracer1(i,k,ntiw)/(1.-qvs)
                 qs_mp (i,k) = tracer1(i,k,ntsw)/(1.-qvs)
                 ni_mp (i,k) = tracer1(i,k,ntinc)/(1.-qvs)
-                if (ltaerosol) nc_mp (i,k) = tracer1(i,k,ntlnc)/(1.-qvs)
+                if (ltaerosol .or. mraerosol) nc_mp (i,k) = tracer1(i,k,ntlnc)/(1.-qvs)
                 
                 qcten (i,k) = 0.
                 ncten (i,k) = 0.
@@ -812,7 +812,7 @@
             enddo
             do i=1,IM
 
-               if (.not. ltaerosol) call get_constant_cloud_number(land=nint(slmsk(i)), nc=nc_mp(i,:))
+               if (.not. (ltaerosol .or. mraerosol)) call get_constant_cloud_number(land=nint(slmsk(i)), nc=nc_mp(i,:))
 
                call cloud_check_and_update(rho=rho(i,:), l_qc=l_qc(i,:), qc1d=qc_mp(i,:), &
                     nc1d=nc_mp(i,:), rc=rc(i,:), nc=nc(i,:), qcten=qcten(i,:), ncten=ncten(i,:), &
