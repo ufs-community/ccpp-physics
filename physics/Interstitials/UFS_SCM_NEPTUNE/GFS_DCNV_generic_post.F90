@@ -9,7 +9,8 @@
 !! \htmlinclude GFS_DCNV_generic_post_run.html
 !!
     subroutine GFS_DCNV_generic_post_run (im, levs, tracers_total, otsptflag,     &
-      imp_physics, imp_physics_gfdl, imp_physics_thompson, imp_physics_nssl,      &
+      imp_physics, imp_physics_gfdl, imp_physics_thompson, imp_physics_tempo,     &
+      imp_physics_nssl,                                                           &
       imp_physics_wsm6, imp_physics_mg, imp_physics_fer_hires, tend_opt_dcnv,     &
       lssav, ldiag3d, qdiag3d, cscnv, frain, rain1, dtf, cld1d, gu0, gv0,         &
       gt0, ten_t, ten_u, ten_v, ten_q, dudt, dvdt, dtdt, dqdt,                    &
@@ -27,7 +28,7 @@
       implicit none
 
       integer, intent(in) :: im, levs, nsamftrac, tracers_total, tend_opt_dcnv
-      integer, intent(in) :: imp_physics, imp_physics_gfdl, imp_physics_thompson, imp_physics_nssl, imp_physics_wsm6, imp_physics_mg, imp_physics_fer_hires
+      integer, intent(in) :: imp_physics, imp_physics_gfdl, imp_physics_thompson, imp_physics_tempo, imp_physics_nssl, imp_physics_wsm6, imp_physics_mg, imp_physics_fer_hires
       logical, intent(in) :: lssav, ldiag3d, qdiag3d, cscnv
       logical, intent(in) :: flag_for_dcnv_generic_tend
       logical, dimension(:), intent(in) :: otsptflag
@@ -168,7 +169,7 @@
 
       if (imp_physics == imp_physics_gfdl) then
         clw(1:im,:,1) = gq0(1:im,:,ntcw)
-      elseif (imp_physics == imp_physics_thompson) then
+      elseif (imp_physics == imp_physics_thompson .or. imp_physics == imp_physics_tempo) then
         do k=1,levs
           do i=1,im
             clw(i,k,1)    = gq0(i,k,ntiw)                    ! ice
