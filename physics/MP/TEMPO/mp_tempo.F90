@@ -186,7 +186,7 @@ module mp_tempo
          end if
 
          ! Density of moist air in kg m-3 and inverse density of air
-         rho = eps*prsl/(con_rd*tgrs*(qv+eps))
+         rho = roverrv*prsl/(con_rd*tgrs*(qv+roverrv))
 
          ! Ensure we have 1st guess ice number where mass non-zero but no number.
          where(qi == 0.0) ni = 0.0
@@ -556,7 +556,9 @@ module mp_tempo
 
             if (is_aerosol_aware) then
               if (present(nwfa) .and. present(nwfa2d)) then
-                xnwfa(:,:,1) = nwfa(:,:)
+                ! use the current state (updated by previous inner iterations and
+                ! converted to dry if convert_dry_rho), not the original input
+                xnwfa(:,:,1) = new_nwfa(:,:)
                 xnwfa2d(:,1) = nwfa2d(:)
                 call tempo_aerosol_surface_emissions(dt=dt, nwfa=xnwfa, nwfa2d=xnwfa2d, ims=ims, ime=ime, &
                       jms=jms, jme=jme, kms=kms, kme=kme, kts=kts)
