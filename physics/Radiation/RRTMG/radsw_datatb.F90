@@ -73,7 +73,7 @@
 module module_radsw_ref   !
 !........................................!
 !
-use machine,               only : kind_phys
+use ccpp_kinds,               only : kind_phys
 !
 implicit none
 !
@@ -217,7 +217,7 @@ module module_radsw_cldprtb   !
 !                                                                      !
 ! *************************  end description  ************************ !
 
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radsw_parameters, only : nblow, nbhgh
 !
 implicit none
@@ -2504,7 +2504,7 @@ module module_radsw_sflux   !
 !                                                                      !
 ! *************************  end description  ************************ !
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radsw_parameters, only : NGMAX, NG16, NG17, NG18, NG19, &
                                     NG20, NG21, NG22, NG23, NG24, &
                                     NG25, NG26, NG27, NG28, NG29, &
@@ -2839,7 +2839,7 @@ module module_radsw_kgb16   !
 !                                                                     !
 ! ************************  end description  ************************ !
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radsw_parameters, only : NG16
 
 !
@@ -4031,7 +4031,7 @@ module module_radsw_kgb17   !
 !                                                                     !
 ! *********    *********    end description    *********    ********* !
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radsw_parameters, only : NG17
 
 !
@@ -8639,7 +8639,7 @@ module module_radsw_kgb18   !
 !                                                                     !
 ! *********    *********    end description    *********    ********* !
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radsw_parameters, only : NG18
 
 !
@@ -10156,7 +10156,7 @@ module module_radsw_kgb19   !
 !                                                                     !
 ! *********    *********    end description    *********    ********* !
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radsw_parameters, only : NG19
 
 !
@@ -11674,7 +11674,7 @@ module module_radsw_kgb20   !
 !                                                                     !
 ! *********    *********    end description    *********    ********* !
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radsw_parameters, only : NG20
 
 !
@@ -12457,7 +12457,7 @@ module module_radsw_kgb21   !
 !                                                                     !
 ! *********    *********    end description    *********    ********* !
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radsw_parameters, only : NG21
 
 !
@@ -16314,7 +16314,7 @@ module module_radsw_kgb22   !
 !                                                                     !
 ! *********    *********    end description    *********    ********* !
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radsw_parameters, only : NG22
 
 !
@@ -16760,7 +16760,7 @@ module module_radsw_kgb23   !
 !                                                                     !
 ! *********    *********    end description    *********    ********* !
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radsw_parameters, only : NG23
 
 !
@@ -17016,7 +17016,7 @@ module module_radsw_kgb24   !
 !                                                                     !
 ! *********    *********    end description    *********    ********* !
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radsw_parameters, only : NG24
 
 !
@@ -18579,7 +18579,7 @@ module module_radsw_kgb25   !
 !                                                                     !
 ! *********    *********    end description    *********    ********* !
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radsw_parameters, only : NG25
 
 !
@@ -18738,7 +18738,7 @@ module module_radsw_kgb26   !
 !                                                                     !
 ! *********    *********    end description    *********    ********* !
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radsw_parameters, only : NG26
 
 !
@@ -18774,7 +18774,7 @@ module module_radsw_kgb27   !
 !                                                                     !
 ! *********    *********    end description    *********    ********* !
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radsw_parameters, only : NG27
 
 !
@@ -19376,7 +19376,7 @@ module module_radsw_kgb28   !
 !                                                                     !
 ! *********    *********    end description    *********    ********* !
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radsw_parameters, only : NG28
 
 !
@@ -21689,7 +21689,7 @@ module module_radsw_kgb29   !
 !                                                                     !
 ! *********    *********    end description    *********    ********* !
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radsw_parameters, only : NG29
 
 !

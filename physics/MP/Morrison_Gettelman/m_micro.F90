@@ -7,7 +7,7 @@
 !> This module contains the CCPP-compliant Morrison-Gettelman microphysics (MG1, MG2 and MG3) scheme.
 module m_micro
 
-  use machine, only: kind_phys
+  use ccpp_kinds, only: kind_phys
 
   implicit none
   public :: m_micro_init, m_micro_run
@@ -42,7 +42,7 @@ subroutine m_micro_init(imp_physics, imp_physics_mg, fprcp, gravit, rair, rh2o, 
                         mg_nicons, mg_ngcons, mg_ncnst, mg_ninst, mg_ngnst,           &
                         mg_do_ice_gmao, mg_do_liq_liu, errmsg, errflg)
 
-    use machine,            only: kind_phys
+    use ccpp_kinds,            only: kind_phys
     use cldwat2m_micro,     only: ini_micro
     use micro_mg2_0,        only: micro_mg_init2_0 => micro_mg_init
     use micro_mg3_0,        only: micro_mg_init3_0 => micro_mg_init
@@ -1926,7 +1926,7 @@ end subroutine m_micro_init
 !> @{
        subroutine gw_prof (pcols, pver, ncol, t, pm, pi, rhoi, ni, ti,  &
                            nm, sph)
-       use machine , only : kind_phys
+       use ccpp_kinds, only : kind_phys
        use physcons, grav => con_g, cp => con_cp, rgas => con_rd,       &
                      fv   => con_fvirt
        implicit none

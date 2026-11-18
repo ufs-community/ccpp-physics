@@ -22,7 +22,7 @@
 !
 !=============================================================================
 
-   use machine , only : kind_phys
+   use ccpp_kinds, only : kind_phys
 
    IMPLICIT NONE
 
@@ -110,7 +110,7 @@
 !
 !=============================================================================
 
-   use machine , only : kind_phys
+   use ccpp_kinds, only : kind_phys
 
    IMPLICIT NONE
 

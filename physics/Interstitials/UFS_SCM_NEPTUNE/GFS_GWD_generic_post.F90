@@ -15,7 +15,7 @@ contains
       &  dugwd, dvgwd, gt0, gq0, gu0, gv0, flag_for_gwd_generic_tend, dtend, dtidx, index_of_temperature, index_of_x_wind,  &
       &  index_of_y_wind, index_of_process_orographic_gwd, errmsg, errflg)
 
-      use machine, only : kind_phys
+      use ccpp_kinds, only : kind_phys
       implicit none
       
       integer, intent(in) :: im, levs, ntrac, tend_opt_gwd

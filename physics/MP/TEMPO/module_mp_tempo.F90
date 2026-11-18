@@ -2,7 +2,7 @@
 !=================================================================================================================
 module module_mp_tempo
 
-    use machine, only: wp => kind_phys, sp => kind_sngl_prec, dp => kind_dbl_prec
+    use ccpp_kinds, only: wp => kind_phys, sp => kind_sngl_prec, dp => kind_dbl_prec
     use module_mp_tempo_params
     use module_mp_tempo_utils, only : create_bins, table_Efrw, table_Efsw, table_dropEvap, &
         table_ccnAct, qi_aut_qs, qr_acr_qg_par, qr_acr_qs_par, freezeH2O_par, calc_refl10cm, calc_effectRad

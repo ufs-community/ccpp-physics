@@ -4,7 +4,7 @@
 !! parameters for a given soild and land-use classification. 
       module set_soilveg_ruc_mod
 
-      use machine ,   only : kind_phys
+      use ccpp_kinds,   only : kind_phys
       use namelist_soilveg_ruc
 
       implicit none

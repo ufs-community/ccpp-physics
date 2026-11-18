@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = unified_ugwp_post
   type = scheme
-  dependencies = ../hooks/machine.F
+  dependencies =
 
 ########################################################################
 [ccpp-arg-table]

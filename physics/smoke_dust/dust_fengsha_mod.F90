@@ -9,7 +9,7 @@ module dust_fengsha_mod
 !  07/16/2019 - Adapted for NUOPC/GOCART, R. Montuoro
 !  02/01/2020 - Adapted for FV3/CCPP, Haiqin Li
 
-  use machine ,        only : kind_phys
+  use ccpp_kinds,        only : kind_phys
   use dust_data_mod
 
   implicit none

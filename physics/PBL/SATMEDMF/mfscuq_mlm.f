@@ -20,7 +20,7 @@
      &   uflux,vflux,tdt,du,dv,rtg,
      &   eflux,rflux,wflux,pflux)
 !
-      use machine,  only : kind_phys
+      use ccpp_kinds,  only : kind_phys
       use physcons, grav => con_g, cp => con_cp,
      &              hvap => con_hvap, hfus => con_hfus
 !

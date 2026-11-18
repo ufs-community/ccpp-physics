@@ -1,8 +1,7 @@
 [ccpp-table-properties]
   name = sfc_cice
   type = scheme
-  dependencies_path	= ../../../
-  dependencies = hooks/machine.F
+  dependencies =
 
 ########################################################################
 [ccpp-arg-table]

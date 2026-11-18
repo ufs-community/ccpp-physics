@@ -15,7 +15,7 @@
 !! \htmlinclude hedmf_init.html
 !!
       subroutine hedmf_init (hybedmf,moninq_fac,errmsg,errflg)
-         use machine, only : kind_phys
+         use ccpp_kinds, only : kind_phys
          implicit none
 
          logical,              intent(in) :: hybedmf
@@ -79,7 +79,7 @@
      &   index_of_y_wind,index_of_temperature,                          &
      &   flag_for_pbl_generic_tend,ten_t,ten_u,ten_v,errmsg,errflg)
 !
-      use machine  , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       use funcphys , only : fpvs
       !GJF: Note that sending these constants through the argument list
       !results in regression test failures with "PROD" mode compilation

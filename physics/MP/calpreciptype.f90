@@ -26,7 +26,7 @@ contains
 !  --------------------------------------------------------------------
       use funcphys, only : fpvs,ftdp,fpkap,ftlcl,stma,fthe
       use physcons
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
 !- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       implicit none
 !
@@ -220,7 +220,7 @@ contains
 !! temperature (Baldwin et al. 1994 \cite baldwin_et_al_1994)
       subroutine calwxt(lm,lp1,t,q,pmid,pint,              &
                         d608,rog,epsq,zint,iwx,twet)
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
 ! 
 !     file: calwxt.f
 !     written: 11 november 1993, michael baldwin
@@ -487,7 +487,7 @@ contains
 !      use params_mod
 !      use ctlblk_mod 
 !- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       implicit none
 !
       real(kind=kind_phys),parameter :: twice=266.55,rhprcp=0.80,deltag=1.02,             &
@@ -760,7 +760,7 @@ contains
 !--------------------------------------------------------------------------
       function xmytw(t,td,p)
 !
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       implicit none
 !
       integer*4 cflag, l
@@ -884,7 +884,7 @@ contains
 !! \cite bourgouin_2000.
 !of aes (canada) 1992
       subroutine calwxt_bourg(lm,lp1,rn,g,t,q,pmid,pint,zint,ptype)
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       implicit none
 !
 !    input:
@@ -1083,7 +1083,7 @@ contains
 !     use params_mod
 !     use ctlblk_mod
 !- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       implicit none
 !
 !  list of variables needed
@@ -1327,7 +1327,7 @@ contains
 !       algorithms and sums them up to give a dominant type
 !
 !- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       implicit none
 !
 !    input:

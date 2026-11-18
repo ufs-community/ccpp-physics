@@ -15,7 +15,7 @@
       index_of_process_conv_trans, index_of_process_dcnv, index_of_process_scnv, gq0, clw, prsl, save_tcp, con_rd, con_eps, nssl_cccn, nwfa, spechum, ldiag3d,&
       qdiag3d, ntk, ntke, otsptflag, errmsg, errflg)
 
-      use machine,               only: kind_phys
+      use ccpp_kinds,               only: kind_phys
       use module_mp_thompson_make_number_concentrations, only: &
            make_IceNumber_thompson => make_IceNumber, &
            make_DropletNumber_thompson => make_DropletNumber

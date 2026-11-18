@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = mp_tempo
   type = scheme
-  dependencies = ../../hooks/machine.F
+  dependencies =
   dependencies = ../module_get_aerosols_for_mp.F90
   dependencies = tempo_v3/src/module_mp_tempo_params.F90
   dependencies = tempo_v3/src/module_mp_tempo_cfgs.F90
