@@ -7,7 +7,7 @@
 module mp_tempo_condensation
 
       use mpi_f08
-      use machine, only : kind_phys, kind_dyn, kind_dbl_prec
+      use ccpp_kinds, only : kind_phys, kind_dyn, kind_dbl_prec
 
       use module_mp_tempo_params, only : roverrv, rv, rdry, eps, r1, t0, cp, initialize_parameters
       use module_mp_tempo_cfgs, only : ty_tempo_cfgs

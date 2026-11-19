@@ -3,7 +3,7 @@
 
 module GFS_rrtmgp_setup
   use mpi_f08
-  use machine,                    only : kind_phys
+  use ccpp_kinds,                    only : kind_phys
   use module_radiation_astronomy, only : sol_init, sol_update
   use module_radiation_aerosols,  only : aer_init, aer_update
   use module_radiation_gases,     only : gas_init, gas_update

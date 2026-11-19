@@ -192,7 +192,7 @@
      &       gu0, gv0, gt0, gq0, dudt, dvdt, dtdt, dqdt, ten_t, ten_u,  &
      &       ten_v, ten_q, errmsg,errflg)
 !
-      use machine,         only : kind_phys
+      use ccpp_kinds,         only : kind_phys
 
       implicit none
 !

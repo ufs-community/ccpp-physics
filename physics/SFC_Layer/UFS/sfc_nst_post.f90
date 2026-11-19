@@ -4,7 +4,7 @@
 !> This module contains code to be executed after the near-surface sea temperature scheme
 module sfc_nst_post
 
-  use machine               , only : kind_phys, kp => kind_phys
+  use ccpp_kinds            , only : kind_phys, kp => kind_phys
   use module_nst_water_prop , only : get_dtzm_2d
 
   implicit none

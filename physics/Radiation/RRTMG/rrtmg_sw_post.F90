@@ -17,7 +17,7 @@
                  visdfui, sfcdsw, sfcnsw, htrsw, swhc, scmpsw, sfcfsw, topfsw, &
                  sfcdswc, errmsg, errflg)
 
-      use machine,                   only: kind_phys
+      use ccpp_kinds,                   only: kind_phys
       use module_radsw_parameters,   only: topfsw_type, sfcfsw_type,   &
                                            cmpfsw_type
 

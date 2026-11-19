@@ -2,7 +2,6 @@
   name = GFS_phys_time_vary
   type = scheme
   dependencies_path = ../../
-  dependencies = hooks/machine.F
   dependencies = Interstitials/UFS_SCM_NEPTUNE/iccn_def.F,Interstitials/UFS_SCM_NEPTUNE/iccninterp.F90
   dependencies = Interstitials/UFS_SCM_NEPTUNE/sfcsub.F90,Radiation/mersenne_twister.F90
   dependencies = MP/Morrison_Gettelman/aerclm_def.F,MP/Morrison_Gettelman/aerinterp.F90

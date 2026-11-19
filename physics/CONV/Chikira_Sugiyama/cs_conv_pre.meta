@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = cs_conv_pre
   type = scheme
-  dependencies = ../../hooks/machine.F
+  dependencies =
 
 ########################################################################
 [ccpp-arg-table]

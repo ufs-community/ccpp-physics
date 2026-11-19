@@ -60,7 +60,7 @@ module fv_sat_adj
                          hlf => con_hfus_dyn, &
                          cp_air => con_cp_dyn
     ! *DH
-    use machine,                  only: kind_grid, kind_dyn
+    use ccpp_kinds,                  only: kind_grid, kind_dyn
     use module_gfdlmp_param, only: ql_gen, qi_gen, qi0_max, ql_mlt, ql0_max, qi_lim, qs_mlt
     use module_gfdlmp_param, only: icloud_f, sat_adj0, t_sub, cld_min
     use module_gfdlmp_param, only: tau_r2g, tau_smlt, tau_i2s, tau_v2l, tau_l2v, tau_imlt, tau_l2r

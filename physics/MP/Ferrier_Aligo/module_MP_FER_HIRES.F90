@@ -109,7 +109,7 @@
 !-----------------------------------------------------------------------------
 
       USE mpi_f08
-      USE machine
+      USE ccpp_kinds
 !MZ
 !MZ     USE MODULE_CONSTANTS,ONLY : PI, CP, EPSQ, GRAV=>G, RHOL=>RHOWATER, &
 !MZ        RD=>R_D, RV=>R_V, T0C=>TIW, EPS=>EP_2, EPS1=>EP_1, CLIQ, CICE,  &
@@ -2247,7 +2247,7 @@ ENDIF
 !--- Also uses the Asai (1965) algorithm, but uses a different target
 !      vapor pressure for the adjustment
 !
-        use machine, only: HIGH_PRES => kind_dbl_prec
+        use ccpp_kinds, only: HIGH_PRES => kind_dbl_prec
       IMPLICIT NONE      
 !
       !INTEGER, PARAMETER :: HIGH_PRES=Selected_Real_Kind(15)

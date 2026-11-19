@@ -4,7 +4,7 @@
 
  module rrfs_smoke_postpbl
 
-   use machine ,        only : kind_phys
+   use ccpp_kinds,        only : kind_phys
 
    implicit none
 

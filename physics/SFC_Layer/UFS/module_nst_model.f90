@@ -13,7 +13,7 @@ module nst_module
   !
   ! the module of diurnal thermocline layer model
   !
-  use machine , only : kind_phys
+  use ccpp_kinds, only : kind_phys
   use module_nst_parameters , only : z_w_max, z_w_min, z_w_ini, eps_z_w, eps_conv
   use module_nst_parameters , only : eps_sfs, niter_z_w, niter_conv, niter_sfs, ri_c
   use module_nst_parameters , only : ri_g, omg_m, omg_sh,  kw => tc_w, visw, t0k, cp_w

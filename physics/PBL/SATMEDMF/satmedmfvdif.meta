@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = satmedmfvdif
   type = scheme
-  dependencies = ../../tools/funcphys.f90,../../hooks/machine.F,../mfpblt.f,mfscu.f,../tridi.f
+  dependencies = ../../tools/funcphys.f90,../mfpblt.f,mfscu.f,../tridi.f
 
 ########################################################################
 [ccpp-arg-table]

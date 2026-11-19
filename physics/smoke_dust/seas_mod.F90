@@ -3,7 +3,7 @@
 
 module seas_mod
 
-  use machine ,         only : kind_phys
+  use ccpp_kinds,         only : kind_phys
 ! use chem_rc_mod,      only : chem_rc_test
 !  use chem_tracers_mod, only : p_seas_1, p_seas_2, p_seas_3, p_seas_4, p_seas_5, &
 !                               p_eseas1, p_eseas2, p_eseas3, p_eseas4, p_eseas5, &

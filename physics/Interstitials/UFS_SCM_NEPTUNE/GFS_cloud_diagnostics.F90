@@ -2,7 +2,7 @@
 !!
 
 module GFS_cloud_diagnostics
-  use machine,                 only: kind_phys
+  use ccpp_kinds,                 only: kind_phys
   use module_radiation_clouds, only: gethml
 
   ! Module parameters (imported directly from radiation_cloud.f)

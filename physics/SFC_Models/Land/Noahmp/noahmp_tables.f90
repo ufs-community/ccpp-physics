@@ -9,7 +9,7 @@
 !! only the data in the noah_mp_modis_parameters section of MPTABLE.TBL and the STAS section of
 !! SOILPARM.TBL are included in this module.
 module noahmp_tables
-use machine ,   only : kind_phys
+use ccpp_kinds,   only : kind_phys
     implicit none
 
     integer, private, parameter :: mvt   = 30 ! use 30 instead of 27

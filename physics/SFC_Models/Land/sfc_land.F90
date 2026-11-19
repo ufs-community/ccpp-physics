@@ -9,7 +9,7 @@
 !> This module contains the CCPP-compliant GFS land scheme.
    module sfc_land
 
-   use machine, only : kind_phys
+   use ccpp_kinds, only : kind_phys
    use funcphys, only : fpvs
 
    contains

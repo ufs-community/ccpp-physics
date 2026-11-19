@@ -13,7 +13,7 @@
       subroutine GFS_surface_loop_control_part1_run (im, iter,       &
                                    wind, flag_guess, errmsg, errflg)
 
-      use machine,           only: kind_phys
+      use ccpp_kinds,           only: kind_phys
 
       implicit none
 

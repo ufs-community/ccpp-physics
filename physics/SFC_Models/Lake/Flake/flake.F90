@@ -37,7 +37,7 @@ MODULE data_parameters
 !  Global parameters for the program are defined.
 !  Actually, scratch that. We'll import them from machine.F instead.
 !
-  use machine, only: ireals=>kind_phys, iintegers=>kind_INTEGER
+  use ccpp_kinds, only: ireals=>kind_phys, iintegers=>kind_INTEGER
 
 !=======================================================================
 
@@ -61,7 +61,7 @@ USE data_parameters, ONLY :      &
   ireals                       , & ! KIND-type parameter for real variables 
   iintegers                        ! KIND-type parameter for "normal" integer variables
 
-use machine,               only: kind_phys
+use ccpp_kinds,               only: kind_phys
 !==============================================================================
 
 IMPLICIT NONE
@@ -117,7 +117,7 @@ USE data_parameters , ONLY : &
   ireals                   , & ! KIND-type parameter for real variables 
   iintegers                    ! KIND-type parameter for "normal" integer variables
 
-use machine,               only: kind_phys
+use ccpp_kinds,               only: kind_phys
 !==============================================================================
 
 IMPLICIT NONE
@@ -316,7 +316,7 @@ USE data_parameters , ONLY : &
   ireals                   , & ! KIND-type parameter for real variables 
   iintegers                    ! KIND-type parameter for "normal" integer variables
 
-use machine,               only: kind_phys
+use ccpp_kinds,               only: kind_phys
 
 !==============================================================================
 
@@ -488,7 +488,7 @@ USE data_parameters , ONLY : &
   ireals                   , & ! KIND-type parameter for real variables
   iintegers                    ! KIND-type parameter for "normal" integer variables
 
-use machine,               only: kind_phys
+use ccpp_kinds,               only: kind_phys
 !==============================================================================
 
 IMPLICIT NONE
@@ -615,7 +615,7 @@ USE flake_parameters , ONLY : &
   h_Ice_min_flk             , & ! Minimum ice thickness [m]
   h_ML_min_flk                  ! Minimum mixed-layer depth [m]
 
-use machine,               only: kind_phys
+use ccpp_kinds,               only: kind_phys
 !==============================================================================
 
 IMPLICIT NONE
@@ -788,7 +788,7 @@ USE flake_parameters            ! Thermodynamic parameters and dimensionless con
 
 USE flake_configure             ! Switches and parameters that configure FLake
 
-use machine,               only: kind_phys
+use ccpp_kinds,               only: kind_phys
 ! ADDED by Shaobo Zhang
 ! USE mod_dynparam, only : lake_depth_max 
 
@@ -1645,7 +1645,7 @@ USE flake_parameters , ONLY : &
   tpl_T_r                   , & ! Temperature of maximum density of fresh water [K]
   tpl_a_T                       ! Constant in the fresh-water equation of state [K^{-2}]
 
-use machine,               only: kind_phys
+use ccpp_kinds,               only: kind_phys
 !==============================================================================
 
 IMPLICIT NONE
@@ -1703,7 +1703,7 @@ USE flake_parameters , ONLY : &
   tpl_Gamma_rho_S           , & ! Empirical parameter [kg m^{-4}] in the expression for the snow density
   c_small_flk                   ! A small number
 
-use machine,               only: kind_phys
+use ccpp_kinds,               only: kind_phys
 !==============================================================================
 
 IMPLICIT NONE
@@ -1762,7 +1762,7 @@ USE flake_parameters , ONLY : &
   tpl_kappa_S_max           , & ! Maximum molecular heat conductivity of snow [J m^{-1} s^{-1} K^{-1}]
   tpl_Gamma_kappa_S             ! Empirical parameter [J m^{-2} s^{-1} K^{-1}] in the expression for kappa_S
 
-use machine,               only: kind_phys
+use ccpp_kinds,               only: kind_phys
 !==============================================================================
 
 IMPLICIT NONE
@@ -1846,7 +1846,7 @@ USE flake_parameters , ONLY :   &
   tpl_L_f                     , & ! Latent heat of fusion [J kg^{-1}]
   h_Ice_min_flk                   ! Minimum ice thickness [m]
 
-use machine,               only: kind_phys
+use ccpp_kinds,               only: kind_phys
 
 !==============================================================================
 
@@ -2198,7 +2198,7 @@ SUBROUTINE SfcFlx_momsenlat ( height_u, height_tq, fetch,                &
 !_nu     ireals,                  & ! KIND-type parameter for real variables
 !_nu     iintegers                  ! KIND-type parameter for "normal" integer variables
 
-use machine,               only: kind_phys
+use ccpp_kinds,               only: kind_phys
 !==============================================================================
 
 IMPLICIT NONE
@@ -2600,7 +2600,7 @@ REAL (KIND = kind_phys) FUNCTION SfcFlx_rhoair (T, q, P)
 !_nu     ireals,                  & ! KIND-type parameter for real variables
 !_nu     iintegers                  ! KIND-type parameter for "normal" integer variables
 
-use machine,               only: kind_phys
+use ccpp_kinds,               only: kind_phys
 !==============================================================================
 
 IMPLICIT NONE
@@ -2667,7 +2667,7 @@ SUBROUTINE SfcFlx_roughness (fetch, U_a, u_star, h_ice,   &
 !_nu   ireals                     , & ! KIND-type parameter for real variables
 !_nu   iintegers                      ! KIND-type parameter for "normal" integer variables
 
-use machine,               only: kind_phys
+use ccpp_kinds,               only: kind_phys
 !==============================================================================
 
 IMPLICIT NONE
@@ -2790,7 +2790,7 @@ REAL (KIND = kind_phys) FUNCTION SfcFlx_satwvpres (T, h_ice)
 !_dm The variable is USEd in module "SfcFlx".
 !_nu USE flake_parameters , ONLY : &
 !_nu   h_Ice_min_flk                 ! Minimum ice thickness [m]
-use machine,               only: kind_phys
+use ccpp_kinds,               only: kind_phys
 
 !==============================================================================
 
@@ -2856,7 +2856,7 @@ REAL (KIND = kind_phys) FUNCTION SfcFlx_spechum (wvpres, P)
 !_nu     ireals,                  & ! KIND-type parameter for real variables
 !_nu     iintegers                  ! KIND-type parameter for "normal" integer variables
 
-use machine,               only: kind_phys
+use ccpp_kinds,               only: kind_phys
 !==============================================================================
 
 IMPLICIT NONE
@@ -2909,7 +2909,7 @@ REAL (KIND = ireals) FUNCTION SfcFlx_wvpreswetbulb (T_dry, T_wetbulb, satwvpres_
 !_nu     ireals,                  & ! KIND-type parameter for real variables
 !_nu     iintegers                  ! KIND-type parameter for "normal" integer variables
 
-use machine,               only: kind_phys
+use ccpp_kinds,               only: kind_phys
 !==============================================================================
 
 IMPLICIT NONE
@@ -2996,7 +2996,7 @@ SUBROUTINE flake_interface ( dMsnowdt_in, I_atm_in, Q_atm_lw_in, height_u_in, he
 !  Lines embraced/marked with "!_dm" are DM's comments
 !  that may be helpful to a user.
 !
-use machine,               only: kind_phys
+use ccpp_kinds,               only: kind_phys
 
 USE data_parameters , ONLY : &
     ireals,                  & ! KIND-type parameter for real variables

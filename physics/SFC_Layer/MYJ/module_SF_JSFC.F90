@@ -16,7 +16,7 @@
 !-----------------------------------------------------------------------
 !
 
-      USE machine, only: kfpt => kind_phys
+      USE ccpp_kinds, only: kfpt => kind_phys
 
       IMPLICIT NONE
 !

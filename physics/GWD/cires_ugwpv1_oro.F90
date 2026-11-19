@@ -42,7 +42,7 @@ contains
 !              scale-aware amplification of the momentum deposition for low-res runs
 !----------------------------------------    
 
-      use machine ,      only : kind_phys
+      use ccpp_kinds,      only : kind_phys
       use ugwp_common,   only : dw2min, velmin, grav, omega1, rd, cpd, rv, pi, arad, fv
       use ugwp_common,   only : rcpdt,   grav2,  rgrav,  rcpd,  rcpd2
       use ugwp_common,   only : rad_to_deg,  deg_to_rad, pi2, pih, rdi,  gor, grcp, gocp, gr2, bnv2min
@@ -1015,7 +1015,7 @@ contains
      subroutine ugwp_tofd1d(levs, con_cp, dtp, sigflt, zsurf, zpbl,  u, v, &
                             zmid, utofd, vtofd, epstofd, krf_tofd)
 
-      use machine ,       only : kind_phys 
+      use ccpp_kinds,       only : kind_phys 
       use ugwp_oro_init,  only : n_tofd, const_tofd, ze_tofd, a12_tofd, ztop_tofd
 !
 ! adding the implicit tendency estimate
