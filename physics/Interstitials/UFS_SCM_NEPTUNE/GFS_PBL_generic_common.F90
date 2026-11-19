@@ -48,10 +48,13 @@
 ! Tempo (Note: why are we setting tracer indices manually?)
 ! I'll assume that kk = 9 includes qv, qc, qr, qi, qs, qg, ni, nr
 ! when ltaerosol = true: nc, nwfa, and nifa are added (+3)
+! when mraerosol = true: nc is added (+1), as for Thompson
 ! when lthail = true: ng and volg are added (+2)
          kk = 9
          if(ltaerosol) then
             kk = kk + 3
+         else if(mraerosol) then
+            kk = kk + 1
          endif
          if(lthailaware) then
             kk = kk + 2

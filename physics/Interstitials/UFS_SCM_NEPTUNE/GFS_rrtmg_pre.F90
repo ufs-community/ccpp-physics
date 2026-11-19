@@ -801,7 +801,7 @@
                 qi_mp (i,k) = tracer1(i,k,ntiw)/(1.-qvs)
                 qs_mp (i,k) = tracer1(i,k,ntsw)/(1.-qvs)
                 ni_mp (i,k) = tracer1(i,k,ntinc)/(1.-qvs)
-                if (ltaerosol) nc_mp (i,k) = tracer1(i,k,ntlnc)/(1.-qvs)
+                if (ltaerosol .or. mraerosol) nc_mp (i,k) = tracer1(i,k,ntlnc)/(1.-qvs)
                 
                 qcten (i,k) = 0.
                 ncten (i,k) = 0.
@@ -812,7 +812,12 @@
             enddo
             do i=1,IM
 
-               if (.not. ltaerosol) call get_constant_cloud_number(land=nint(slmsk(i)), nc=nc_mp(i,:))
+               if (.not. (ltaerosol .or. mraerosol)) then
+                  ! constant number concentration [m-3] -> number mixing ratio [kg-1],
+                  ! since cloud_check_and_update multiplies nc1d by rho
+                  call get_constant_cloud_number(land=nint(slmsk(i)), nc=nc_mp(i,:))
+                  nc_mp(i,:) = nc_mp(i,:) * orho(i,:)
+               endif
 
                call cloud_check_and_update(rho=rho(i,:), l_qc=l_qc(i,:), qc1d=qc_mp(i,:), &
                     nc1d=nc_mp(i,:), rc=rc(i,:), nc=nc(i,:), qcten=qcten(i,:), ncten=ncten(i,:), &
@@ -984,7 +989,7 @@
         elseif (imp_physics == imp_physics_tempo) then       ! Tempo
           do i=1,im
             islmsk = nint(slmsk(i))
-               call effective_radius(temp=tlyr(i,:), l_qc=l_qc(i,:), nc=nc_mp(i,:), &
+               call effective_radius(temp=tlyr(i,:), l_qc=l_qc(i,:), nc=nc(i,:), &
                     ilamc=ilamc(i,:), l_qi=l_qi(i,:), ilami=ilami(i,:), l_qs=l_qs(i,:), rs=rs(i,:), &
                     re_qc=effrl(i,:), re_qi=effri(i,:), re_qs=effrs(i,:))
                ! use min/max values from Thompson for now

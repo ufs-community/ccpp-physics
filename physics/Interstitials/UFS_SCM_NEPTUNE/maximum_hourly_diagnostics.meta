@@ -70,6 +70,13 @@
   dimensions = ()
   type = integer
   intent = in
+[imp_physics_tempo]
+  standard_name = identifier_for_tempo_microphysics_scheme
+  long_name = choice of TEMPO microphysics scheme
+  units = flag
+  dimensions = ()
+  type = integer
+  intent = in
 [con_g]
   standard_name = gravitational_acceleration
   long_name = gravitational acceleration
