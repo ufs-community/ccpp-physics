@@ -14,7 +14,7 @@ module mp_tempo
       use module_mp_tempo_params, only : pi, lvap0, lfus, lsub, rv, rdry, cp, t0, r_uni, rho_w
       use module_mp_tempo_params, only : roverrv, eps, naccn0, naccn1, nain0, nain1
       use module_mp_tempo_params, only : initialize_parameters
-      use module_mp_tempo_cfgs, only : ty_tempo_cfgs, ty_tempo_table_cfgs
+      use module_mp_tempo_cfgs, only : ty_tempo_cfgs
       use module_mp_tempo_driver, only : tempo_init, tempo_run, ty_tempo_driver_diags, tempo_aerosol_surface_emissions
       use module_get_aerosols_for_mp, only : get_niwfa
       use module_mp_tempo_utils, only : calc_ice_number, calc_cloud_number, calc_rain_number
@@ -95,9 +95,6 @@ module mp_tempo
          
          real (kind=kind_phys) :: h_01, z1, niIN3, niCCN3
          integer :: i, k
-         type(ty_tempo_table_cfgs) :: tempo_tables
-         character(len=100) :: table_names(4)
-         logical :: table_exists
          
          ! Initialize the CCPP error handling variables
          errmsg = ''
@@ -130,24 +127,12 @@ module mp_tempo
          if (mpirank==mpiroot) write(*,*) 'Calling tempo_init() with ltaerosol= ', is_aerosol_aware, &
               ' lthailaware= ', is_hail_aware, ' sedi_semi= ', semi_sedi, ' do_sat_adj= ', do_sat_adj
 
-         ! tempo_init() reads its lookup tables without returning an error status;
-         ! check here so that a missing table is reported through CCPP
-         table_names = [character(len=100) :: tempo_tables%ccn_table_name, tempo_tables%qrqg_table_name, &
-                        tempo_tables%qrqs_table_name, tempo_tables%freezewater_table_name]
-         do i = 1, size(table_names)
-            inquire(file=trim(table_names(i)), exist=table_exists)
-            if (.not. table_exists) then
-               write(errmsg,'(*(a))') 'mp_tempo_init: TEMPO lookup table "', trim(table_names(i)), &
-                    '" not found in the run directory'
-               errflg = 1
-               return
-            end if
-         end do
-
          ! Main call to tempo_init()
          call tempo_init(aerosolaware_flag=is_aerosol_aware, hailaware_flag=is_hail_aware, &
               semi_sedi_flag=semi_sedi, cloud_condensation_flag=(.not. do_sat_adj), &
               diagnostic_aerosols_flag=merra2_aerosol_aware, tempo_cfgs=tempo_cfgs)
+
+         if (errflg /= 0) return
 
          ! Set local TEMPO MP module constants from host model and overwrite derived constants calculated in module_mp_tempo_params/initialize_parameters()
          pi = con_pi
@@ -330,7 +315,7 @@ module mp_tempo
         convert_dry_rho, dtp, dt_inner, &
         spechum, qc, qr, qi, qs, qg, ni, nr, &
         nc, nwfa, nifa, nwfa2d, nifa2d, ng, volg, aerfld, &
-        con_g, first_time_step, &
+        con_g, first_time_step, kdt, &
         tgrs, prsl, phii, omega, slmsk, &
         is_aerosol_aware, is_hail_aware, merra2_aerosol_aware, &
         prcp, rain, graupel, ice, snow, sr, refl_10cm, &
@@ -385,6 +370,7 @@ module mp_tempo
          real(kind_phys),           intent(in   ) :: dtp
          real(kind=kind_phys),      intent(in   ) :: dt_inner
          logical,                   intent(in   ) :: first_time_step
+         integer,                   intent(in   ) :: kdt
 
          real(kind_phys),           intent(  out) :: ten_q(:,:,:)
          real(kind_phys),           intent(  out) :: ten_t(:,:)
@@ -587,14 +573,12 @@ module mp_tempo
               endif
             endif
 
-            ! TEMPO treats itimestep == 1 as the first model step (used for one-time
-            ! aerosol and graupel initialization); only the first inner iteration
-            ! of the first physics step qualifies
-            if (first_time_step .and. it == 1) then
-               itimestep = 1
-            else
-               itimestep = 2
-            end if
+            ! Count of tempo_run calls (one per inner iteration), useful for debugging.
+            ! Derived from the model time step index rather than a saved counter so it is
+            ! thread safe and the same for every block. TEMPO treats itimestep == 1 as the
+            ! first model step (one-time aerosol and graupel initialization), which is only
+            ! the first inner iteration of the first physics step.
+            itimestep = (kdt - 1)*ndt + it
 
             call tempo_run(tempo_cfgs=tempo_cfgs, &
                  dt=dt, itimestep=itimestep , &
