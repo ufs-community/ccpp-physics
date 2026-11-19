@@ -1603,7 +1603,8 @@ end subroutine noahmpdrv_timestep_init
                    is_freeze_rain     , precip_freeze_frac_in, dqsdt                , &
                    emissivity_total   , snow_cover_fraction  )
 
-      ep(i) = potential_evaporation
+      ep(i) = potential_evaporation * con_hvap
+      if(ep(i) > 0 .and. ep(i) < latent_heat_total) ep(i) = latent_heat_total
 
     end if ! flag_iter(i) .and. dry(i)
 
