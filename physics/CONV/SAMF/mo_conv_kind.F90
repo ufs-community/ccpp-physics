@@ -1,7 +1,7 @@
 !> This module provides the Fortran KIND parameters for REAL variables 
 !! in the SAMF scheme, synchronized with the model's machine definitions.
 module mo_conv_kind
-  use machine, only : kind_phys, kind_sngl_prec, kind_dbl_prec
+  use ccpp_kinds, only : kind_phys, kind_sngl_prec, kind_dbl_prec
   implicit none
   public
 

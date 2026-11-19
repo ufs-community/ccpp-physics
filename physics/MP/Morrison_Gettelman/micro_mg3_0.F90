@@ -123,7 +123,7 @@
 
 module micro_mg3_0
 
-use machine,        only : r8    => kind_phys
+use ccpp_kinds,        only : r8    => kind_phys
 use funcphys,       only : fpvsl, fpvsi
 
 !use wv_sat_methods, only: &

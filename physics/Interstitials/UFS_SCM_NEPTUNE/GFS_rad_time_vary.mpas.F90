@@ -17,7 +17,7 @@ contains
   subroutine GFS_rad_time_vary_timestep_init (lrseeds, rseeds, lslwr, lsswr, isubc_lw, &
        isubc_sw, icsdsw, icsdlw, sec, kdt,  ipsd0, ipsdlim, errmsg, errflg)
     use mersenne_twister, only: random_setseed, random_index, random_stat
-    use machine,          only: kind_phys
+    use ccpp_kinds,          only: kind_phys
     use radcons,          only: con_100
     implicit none
 

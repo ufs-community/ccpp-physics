@@ -305,7 +305,7 @@
 !
       use physcons,         only : con_g, con_cp, con_avgd, con_amd,    &
      &                             con_amw, con_amo3
-      use machine,          only : rb => kind_phys, im => kind_io4,     &
+      use ccpp_kinds,          only : rb => kind_phys, im => kind_io4,     &
      &                             kind_phys, kind_dbl_prec
 
       use module_radsw_parameters

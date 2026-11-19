@@ -13,7 +13,7 @@
       subroutine m_micro_pre_run (im, levs, do_shoc, skip_macro, cld_shoc,     &
         cld_frc_MG, clcn, errmsg, errflg )
 
-      use machine, only : kind_phys
+      use ccpp_kinds, only : kind_phys
       implicit none
 
       integer, intent(in) :: im, levs

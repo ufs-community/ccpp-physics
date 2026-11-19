@@ -3,7 +3,7 @@
 
  module module_plumerise
 
-  use machine , only : kind_phys
+  use ccpp_kinds, only : kind_phys
 !  real(kind=kind_phys),parameter :: p1000mb = 100000.  ! p at 1000mb (pascals)
 !- Implementing the fire radiative power (FRP) methodology for biomass burning
 !- emissions and convective energy estimation.
