@@ -21,7 +21,7 @@
            con_cp, con_grav, con_rd, con_rv, con_rcp, con_xlv,   &
            con_xlf, con_ep2, con_karman, con_p608, errmsg, errflg)
 
-         use machine,  only : kind_phys
+         use ccpp_kinds,  only : kind_phys
          use module_sf_mynnsfc_common, only: cp, grav, r_d, r_v, &
             rcp, xlv, xlf, ep_2, ep_3, karman, p608, g_inv,      &
             rvovrd

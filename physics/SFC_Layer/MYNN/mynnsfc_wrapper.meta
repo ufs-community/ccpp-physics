@@ -1,7 +1,6 @@
 [ccpp-table-properties]
   name = mynnsfc_wrapper
   type = scheme
-  dependencies = ../../hooks/machine.F
   dependencies = MYNN/src/CCPP/module_sf_mynnsfc_common.F90
   dependencies = MYNN/src/module_sf_mynnsfc_land.F90
   dependencies = MYNN/src/module_sf_mynnsfc_water.F90
