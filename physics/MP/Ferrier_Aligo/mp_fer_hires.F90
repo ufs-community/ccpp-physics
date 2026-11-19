@@ -4,7 +4,7 @@
 !
 module mp_fer_hires
 
-      use machine, only : kind_phys
+      use ccpp_kinds, only : kind_phys
 
       use module_mp_fer_hires, only : ferrier_init_hr, FER_HIRES,       &
                                       ferhires_final
@@ -37,7 +37,7 @@ module mp_fer_hires
                                   threads, errmsg, errflg)
 
       USE mpi_f08
-      USE machine,             ONLY : kind_phys
+      USE ccpp_kinds,             ONLY : kind_phys
       USE MODULE_MP_FER_HIRES, ONLY : FERRIER_INIT_HR
       implicit none
 
@@ -116,7 +116,7 @@ module mp_fer_hires
                          ,ten_q,errmsg,errflg)
 
 !-----------------------------------------------------------------------
-      USE MACHINE,    ONLY: kind_phys
+      USE CCPP_KINDS,    ONLY: kind_phys
 !
       IMPLICIT NONE
 !

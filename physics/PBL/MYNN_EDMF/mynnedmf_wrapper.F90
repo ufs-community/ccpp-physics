@@ -20,7 +20,7 @@
         &  do_mynnedmf,                           &
         &  errmsg, errflg                         )
 
-        use machine,  only : kind_phys
+        use ccpp_kinds,  only : kind_phys
         use module_bl_mynnedmf_common
 
         implicit none
@@ -174,7 +174,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &  lprnt, huge, errmsg, errflg                        )
 
 ! should be moved to inside the mynn:
-     use machine,        only: kind_phys
+     use ccpp_kinds,        only: kind_phys
      use module_bl_mynnedmf_common, only: cp, r_d, grav, g_inv, zero, &
          xlv, xlvcp, xlscp, p608
      use module_bl_mynnedmf_driver, only: mynnedmf_driver

@@ -2,7 +2,7 @@
 !! This file contains the fire plume rise module.
 module module_smoke_plumerise
 
-  use machine , only : kind_phys
+  use ccpp_kinds, only : kind_phys
   USE module_zero_plumegen_coms
   USE rrfs_smoke_config, only : n_dbg_lines
 

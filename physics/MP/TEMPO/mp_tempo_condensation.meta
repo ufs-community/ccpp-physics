@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = mp_tempo_condensation
   type = scheme
-  dependencies = ../../hooks/machine.F
+  dependencies =
   dependencies = tempo_v3/src/module_mp_tempo_params.F90
   dependencies = tempo_v3/src/module_mp_tempo_cfgs.F90
   dependencies = tempo_v3/src/module_mp_tempo_ml.F90

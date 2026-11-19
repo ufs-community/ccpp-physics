@@ -18,7 +18,7 @@
      &   gdx,hpbl,kpbl,vpert,buo,wush,tkemean,vez0fun,xmf,
      &   tcko,qcko,ucko,vcko,xlamueq,a1)
 !
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       use funcphys , only : fpvs
       use physcons, grav => con_g, cp => con_cp
      &,             rv => con_rv, hvap => con_hvap

@@ -3,7 +3,7 @@
 
 !> This module contains aerosol optics properties for RRTMGP
 module rrtmgp_aerosol_optics
-  use machine,                   only: kind_phys
+  use ccpp_kinds,                   only: kind_phys
   use radiation_tools,           only: check_error_msg
   use rrtmgp_sw_gas_optics,      only: sw_gas_props
   use rrtmgp_lw_gas_optics,      only: lw_gas_props

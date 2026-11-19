@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = hedmf
   type = scheme
-  dependencies = ../../tools/funcphys.f90,../../hooks/machine.F,../../hooks/physcons.F90,../mfpbl.f,../tridi.f
+  dependencies = ../../tools/funcphys.f90,../../hooks/physcons.F90,../mfpbl.f,../tridi.f
 
 ########################################################################
 [ccpp-arg-table]

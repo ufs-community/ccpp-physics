@@ -2,7 +2,7 @@
 !! This file contains data for the dry deposition modules.
 module dep_data_mod
 
-  use machine , only : kind_phys
+  use ccpp_kinds, only : kind_phys
 
   integer, parameter :: nvegtype = 25
   real(kind_phys), dimension(nvegtype), parameter :: &

@@ -94,7 +94,7 @@ module micro_mg2_0
 ! 1) An implementation of the gamma function (if not intrinsic).
 ! 2) saturation vapor pressure and specific humidity over water
 ! 3) svp over ice
-use machine,        only : r8    => kind_phys
+use ccpp_kinds,        only : r8    => kind_phys
 use funcphys,       only : fpvsl, fpvsi
 
 !use wv_sat_methods, only: &

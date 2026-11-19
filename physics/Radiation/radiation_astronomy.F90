@@ -90,7 +90,7 @@ module module_radiation_astronomy
 !
 use mpi_f08
 use mpiutil,           only : ccpp_bcast
-use machine,           only : kind_phys
+use ccpp_kinds,           only : kind_phys
 use module_iounitdef,  only : NIRADSF
 !
 implicit   none

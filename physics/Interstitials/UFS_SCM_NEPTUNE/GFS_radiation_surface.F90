@@ -5,7 +5,7 @@
 
       module GFS_radiation_surface
 
-      use machine,                   only: kind_phys
+      use ccpp_kinds,                   only: kind_phys
       use mpi_f08
 
       contains
