@@ -7,7 +7,6 @@
 module mp_tempo
 
       use mpi_f08
-      use, intrinsic :: ieee_arithmetic, only : ieee_is_finite
       use ccpp_kinds, only : kind_phys
 
       !physical constants that are set from the host
@@ -606,12 +605,7 @@ module mp_tempo
 
          if (do_radar_ref) refl_10cm = tempo_driver_diags%refl10cm(:,:,1)
 
-         ! tempo_run() does not return an error status; catch a corrupted state here
-         if (any(.not. ieee_is_finite(new_tgrs)) .or. any(.not. ieee_is_finite(qv))) then
-            write(errmsg,'(*(a))') 'mp_tempo_run: non-finite temperature or water vapor returned by tempo_run'
-            errflg = 1
-            return
-         end if
+         if (errflg/=0) return
 
          !> - Convert water vapor mixing ratio back to specific humidity
          new_spechum = qv/(1.0_kind_phys+qv)
