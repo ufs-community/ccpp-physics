@@ -6290,14 +6290,6 @@ module module_mp_thompson
       do k=1,km
         zi(k+1) = zi(k)+dz(k)
       enddo
-!     n=1
-! plm is 2nd order, we can use 2nd order wi or 3rd order wi
-! 2nd order interpolation to get wi
-      wi(1) = ww(1)
-      wi(km+1) = ww(km)
-      do k=2,km
-        wi(k) = (ww(k)*dz(k-1)+ww(k-1)*dz(k))/(dz(k-1)+dz(k))
-      enddo
 ! 3rd order interpolation to get wi
       fa1 = 9./16.
       fa2 = 1./16.
