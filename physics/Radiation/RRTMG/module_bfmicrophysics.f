@@ -4,7 +4,7 @@
 !> This module contains some subroutines used in microphysics.
       MODULE module_microphysics
 !
-      USE MACHINE , ONLY : kind_phys
+      USE CCPP_KINDS, ONLY : kind_phys
       USE FUNCPHYS
       USE PHYSCONS, CP => con_CP, RD => con_RD, RV => con_RV            &
      &,             T0C => con_T0C, HVAP => con_HVAP, HFUS => con_HFUS  &

@@ -14,7 +14,7 @@
          dvsfcg, oc, oa4, clx, theta, gamma, sigma, elvmax, dp, varss, ocss, oa4ss, clxss,              &
          dycore_active, dycore_fv3, errmsg, errflg)
 
-      use machine, only: kind_phys
+      use ccpp_kinds, only: kind_phys
 
       implicit none
 

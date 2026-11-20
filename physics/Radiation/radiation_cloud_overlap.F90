@@ -3,7 +3,7 @@
 
 !> This module contains the calculation of cloud overlap parameters for both RRTMG and RRTMGP. 
 module module_radiation_cloud_overlap
-  use machine, only : kind_phys
+  use ccpp_kinds, only : kind_phys
   implicit none
   public :: cmp_dcorr_lgth
   

@@ -123,7 +123,7 @@
 module module_radiation_gases
 use mpi_f08
 use mpiutil, only: ccpp_bcast
-use machine,           only : kind_phys, kind_io4
+use ccpp_kinds,           only : kind_phys, kind_io4
 use funcphys,          only : fpkapx
 use module_iounitdef,  only : NIO3CLM, NICO2CN
 !

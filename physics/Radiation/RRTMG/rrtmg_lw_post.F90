@@ -15,7 +15,7 @@
                  tsfa, htlwc, htlw0, sfcflw, tsflw, sfcdlw, htrlw, lwhc, &
                  errmsg, errflg)
     
-      use machine,                   only: kind_phys
+      use ccpp_kinds,                   only: kind_phys
       use module_radlw_parameters,   only: sfcflw_type
       
       implicit none

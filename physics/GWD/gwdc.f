@@ -83,7 +83,7 @@
 !                            128 level runs with NEMS/GSM
 !***********************************************************************
 
-      USE MACHINE , ONLY : kind_phys
+      USE CCPP_KINDS, ONLY : kind_phys
       implicit none
 
 !---------------------------- Arguments --------------------------------

@@ -4,7 +4,7 @@
 !! and shortwave schemes.
 !!
 module GFS_rrtmgp_cloud_overlap
-  use machine,      only: kind_phys
+  use ccpp_kinds,      only: kind_phys
   use radiation_tools,   only: check_error_msg
   use module_radiation_cloud_overlap, only: cmp_dcorr_lgth, get_alpha_exper
 

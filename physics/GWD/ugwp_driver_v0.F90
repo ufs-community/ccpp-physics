@@ -40,7 +40,7 @@ module ugwp_driver_v0
 !   all constants/parameters inside cires_ugwp_initialize.F90
 !---------------------------------------- 
 
-      USE MACHINE ,      ONLY : kind_phys
+      USE CCPP_KINDS,      ONLY : kind_phys
       use ugwp_common_v0,only : rgrav,   grav,  cpd, rd, rv, rcpd, rcpd2, &
                                 pi,      rad_to_deg, deg_to_rad, pi2, &
                                 rdi,     gor,    grcp, gocp,  fv, gr2, &
@@ -925,7 +925,7 @@ module ugwp_driver_v0
 !      nov 2017 nh/rotational gw-modes for nh-fv3gfs
 ! ---------------------------------------------------------------------------------
 !
-      use machine,          only : kind_phys
+      use ccpp_kinds,          only : kind_phys
 
       use ugwp_common_v0 ,  only : rgrav,      grav,  cpd,    rd,  rv, &
                                    omega2,     rcpd2,  pi,    pi2, fv, &

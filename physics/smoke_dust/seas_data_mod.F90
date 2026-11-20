@@ -3,7 +3,7 @@
 
 module seas_data_mod
 
-  use machine , only : kind_phys
+  use ccpp_kinds, only : kind_phys
 
   ! -- parameters from NGAC v2.4.0 (rev. d48932c)
   integer,                             parameter :: number_ss_bins  = 5

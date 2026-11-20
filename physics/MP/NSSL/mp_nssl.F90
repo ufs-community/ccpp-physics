@@ -7,7 +7,7 @@
 !> This module contains the front end to NSSL microphysics scheme.
 module mp_nssl
 
-    use machine, only : kind_phys
+    use ccpp_kinds, only : kind_phys
     use module_mp_nssl_2mom, only : nssl_2mom_init, nssl_2mom_driver
 
     implicit none

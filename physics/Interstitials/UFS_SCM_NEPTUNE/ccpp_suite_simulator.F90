@@ -17,7 +17,7 @@
 !
 ! ########################################################################################
 module ccpp_suite_simulator
-  use machine, only: kind_phys
+  use ccpp_kinds, only: kind_phys
   use module_ccpp_suite_simulator, only: base_physics_process, sim_LWRAD, sim_SWRAD,    &
        sim_PBL, sim_GWD, sim_DCNV, sim_SCNV, sim_cldMP
   implicit none

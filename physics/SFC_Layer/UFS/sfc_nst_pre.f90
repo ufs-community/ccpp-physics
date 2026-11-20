@@ -4,7 +4,7 @@
 !> This module contain preparation for the near-surface sea temperature scheme 
 module sfc_nst_pre
 
-  use machine               , only : kind_phys
+  use ccpp_kinds            , only : kind_phys
   use module_nst_water_prop , only : get_dtzm_2d
   use module_nst_parameters , only : zero, one
 

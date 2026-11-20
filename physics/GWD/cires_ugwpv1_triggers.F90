@@ -2,7 +2,7 @@
 !!
 module cires_ugwpv1_triggers
 
-        use machine,            only: kind_phys
+        use ccpp_kinds,            only: kind_phys
 
 contains
 

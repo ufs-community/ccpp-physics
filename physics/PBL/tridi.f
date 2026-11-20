@@ -12,7 +12,7 @@
 !!process to calculate time tendencies due to vertical diffusion.
       subroutine tridi1(l,n,cl,cm,cu,r1,au,a1)
       !
-      use machine     , only : kind_phys
+      use ccpp_kinds  , only : kind_phys
       implicit none
       integer, parameter :: one = 1.0_kind_phys
       integer             k,n,l,i
@@ -51,7 +51,7 @@
 !> This subroutine ..
       subroutine tridi2(l,n,cl,cm,cu,r1,r2,au,a1,a2)
 !
-      use machine     , only : kind_phys
+      use ccpp_kinds  , only : kind_phys
       implicit none
       integer, parameter :: one = 1.0_kind_phys
       integer             k,n,l,i
@@ -96,7 +96,7 @@
 !!  calculate time tendencies due to vertical diffusion.
       subroutine tridin(l,n,nt,cl,cm,cu,r1,r2,au,a1,a2)
 !
-      use machine     , only : kind_phys
+      use ccpp_kinds  , only : kind_phys
       implicit none
       integer, parameter :: one = 1.0_kind_phys
       integer             is,k,kk,n,nt,l,i
@@ -166,7 +166,7 @@
       subroutine tridit(l,n,nt,cl,cm,cu,rt,au,at)
 !-----------------------------------------------------------------------
 !!
-      use machine     , only : kind_phys
+      use ccpp_kinds  , only : kind_phys
       implicit none
       integer, parameter :: one = 1.0_kind_phys
       integer             is,k,kk,n,nt,l,i

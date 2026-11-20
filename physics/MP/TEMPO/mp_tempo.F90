@@ -7,7 +7,7 @@
 module mp_tempo
 
       use mpi_f08
-      use machine, only : kind_phys
+      use ccpp_kinds, only : kind_phys
 
       !physical constants that are set from the host
       use module_mp_tempo_params, only : pi, lvap0, lfus, lsub, rv, rdry, cp, t0, r_uni, rho_w

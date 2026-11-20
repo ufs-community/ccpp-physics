@@ -23,7 +23,7 @@
 !!
 module land_iau_mod
   
-  use machine,                  only: kind_phys, kind_dyn
+  use ccpp_kinds,                  only: kind_phys, kind_dyn
   use netcdf
 
   implicit none
