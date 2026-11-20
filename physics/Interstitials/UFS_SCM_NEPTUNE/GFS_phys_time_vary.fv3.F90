@@ -87,7 +87,7 @@
               jindx1_ci, jindx2_ci, ddy_ci, iindx1_ci, iindx2_ci, ddx_ci, imap, jmap,              &
               do_ugwp_v1, jindx1_tau, jindx2_tau, ddy_j1tau, ddy_j2tau,                            &
               isot, ivegsrc, nlunit, sncovr, sncovr_ice, lsm, lsm_noahmp, lsm_ruc, min_seaice,     &
-              fice, landfrac, vtype, weasd, lsoil, zs, dzs, lsnow_lsm_lbound, lsnow_lsm_ubound,    &
+              fice, landfrac, vtype, weasd, weasdl, snodl, lsoil, zs, dzs, lsnow_lsm_lbound, lsnow_lsm_ubound,    &
               tvxy, tgxy, tahxy, canicexy, canliqxy, eahxy, cmxy, chxy, fwetxy, sneqvoxy, alboldxy,&
               qsnowxy, wslakexy, albdvis_lnd, albdnir_lnd, albivis_lnd, albinir_lnd, albdvis_ice,  &
               albdnir_ice, albivis_ice, albinir_ice, emiss_lnd, emiss_ice, taussxy, waxy, wtxy,    &
@@ -132,6 +132,7 @@
          real(kind_phys),      intent(in)    :: min_seaice, fice(:)
          real(kind_phys),      intent(in)    :: landfrac(:)
          real(kind_phys),      intent(inout) :: weasd(:)
+         real(kind_phys),      intent(inout) :: weasdl(:), snodl(:)
          type(ty_ozphys),      intent(in)    :: ozphys
          type(ty_h2ophys),     intent(in)    :: h2ophys
 
@@ -428,7 +429,7 @@
 !$OMP parallel do num_threads(nthrds) default(none)                     &
 !$OMP          shared(im,lsoil,con_t0c,landfrac,tsfcl,tvxy,tgxy,tahxy)  &
 !$OMP          shared(snowd,canicexy,canliqxy,canopy,eahxy,cmxy,chxy)   &
-!$OMP          shared(fwetxy,sneqvoxy,weasd,alboldxy,qsnowxy,wslakexy)  &
+!$OMP          shared(fwetxy,sneqvoxy,weasd,weasdl,snodl,alboldxy,qsnowxy,wslakexy)  &
 !$OMP          shared(taussxy)                                          &
 !$OMP          shared(waxy,wtxy,zwtxy,imn,vtype,xlaixy,xsaixy,lfmassxy) &
 !$OMP          shared(stmassxy,rtmassxy,woodxy,stblcpxy,fastcpxy)       &
@@ -447,7 +448,7 @@
                  tgxy(ix)     = tsfcl(ix)
                  tahxy(ix)    = tsfcl(ix)
 
-                 if (snowd(ix) > 0.01_kind_phys .and. tsfcl(ix) > con_t0c ) then
+                 if (snodl(ix) > 0.01_kind_phys .and. tsfcl(ix) > con_t0c ) then
                    tvxy(ix)  = con_t0c
                    tgxy(ix)  = con_t0c
                    tahxy(ix) = con_t0c
@@ -461,7 +462,7 @@
                  cmxy(ix)     = zero
                  chxy(ix)     = zero
                  fwetxy(ix)   = zero
-                 sneqvoxy(ix) = weasd(ix)     ! mm
+                 sneqvoxy(ix) = weasdl(ix)     ! mm
                  alboldxy(ix) = 0.65_kind_phys
                  qsnowxy(ix)  = zero
 
@@ -517,14 +518,16 @@
                    enddo
                  endif
 
-                 snd = snowd(ix)/1000.0_kind_phys  ! go to m from snwdph
+                 snd = snodl(ix)/1000.0_kind_phys  ! go to m from snwdph
 
-                 if (weasd(ix) /= zero .and. snd == zero ) then
-                   snd = weasd(ix)/1000.0
+                 if (weasdl(ix) /= zero .and. snd == zero ) then
+                   snd = weasdl(ix)/1000.0
                  endif
+                 ! no snow layers without snow water
+                 if (weasdl(ix) <= zero) snd = zero
 
                  if (vegtyp == 15) then                      ! land ice in MODIS/IGBP
-                   weasd(ix) = 600.0_kind_phys   ! 600mm SWE for glacier
+                   weasdl(ix) = 600.0_kind_phys   ! 600mm SWE for glacier
                    snd       = 2.0_kind_phys     ! 2m snow depth for glacier
                  endif
 
@@ -573,7 +576,7 @@
                  do is = isnow,0
                    tsnoxy(ix,is) =  tgxy(ix) + (( sum(dzsno(isnow:is)) -0.5*dzsno(is) )/snd)*(stc(ix,1)-tgxy(ix))
                    snliqxy(ix,is) = zero
-                   snicexy(ix,is) = one * dzsno(is) * weasd(ix)/snd
+                   snicexy(ix,is) = one * dzsno(is) * weasdl(ix)/snd
                  enddo
 !
 !zsnsoxy, all negative ?
