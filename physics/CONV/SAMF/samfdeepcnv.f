@@ -2569,17 +2569,25 @@ c
               flxtvd(i,k) = 0.0_conv_wp
             endif
 !
+! the flux at kb and jmin carries qo, as the updraft and downdraft do
+!
+            if(k == kb(i)) flxtvd(i,k) = flxtvd(i,k)
+     &         + eta(i,k) * (qo(i,k) - tem1)
+            if(k == jmin(i)) flxtvd(i,k) = flxtvd(i,k)
+     &         - edto(i) * etad(i,k) * (qo(i,k) - tem1)
+!
 ! subtract the double counting change rates at jmin+1 & kb beforehand
 !
             if(k == jmin(i)) then
               dp = 1000.0_conv_wp * del(i,k+1)
               dellaq(i,k+1) = dellaq(i,k+1) - edto(i)
-     &                 * etad(i,k) * tem1 * real(grav, kind=conv_wp)/dp
+     &                 * etad(i,k) * qo(i,k)
+     &                 * real(grav, kind=conv_wp)/dp
             endif
             if(k == kb(i)) then
               dp = 1000.0_conv_wp * del(i,k)
               dellaq(i,k) = dellaq(i,k) -
-     &            eta(i,k) * tem1 * real(grav, kind=conv_wp)/dp
+     &            eta(i,k) * qo(i,k) * real(grav, kind=conv_wp)/dp
             endif
 !
           endif
@@ -2653,17 +2661,25 @@ c
                 flxtvd(i,k) = 0.0_conv_wp
               endif
 !
+! the flux at kb and jmin carries ctro, as the updraft and downdraft do
+!
+              if(k == kb(i)) flxtvd(i,k) = flxtvd(i,k)
+     &           + eta(i,k) * (ctro(i,k,n) - tem1)
+              if(k == jmin(i)) flxtvd(i,k) = flxtvd(i,k)
+     &           - edto(i) * etad(i,k) * (ctro(i,k,n) - tem1)
+!
 ! subtract the double counting change rates at jmin+1 & kb beforehand
 !
               if(k == jmin(i)) then
                 dp = 1000.0_conv_wp * del(i,k+1)
                 dellae(i,k+1,n) = dellae(i,k+1,n) - edto(i)
-     &               *etad(i,k) * tem1 * real(grav, kind=conv_wp)/dp
+     &               *etad(i,k) * ctro(i,k,n)
+     &               * real(grav, kind=conv_wp)/dp
               endif
               if(k == kb(i)) then
                 dp = 1000.0_conv_wp * del(i,k)
                 dellae(i,k,n) = dellae(i,k,n) -
-     &              eta(i,k) * tem1 * real(grav, kind=conv_wp)/dp
+     &              eta(i,k) * ctro(i,k,n) * real(grav, kind=conv_wp)/dp
               endif
 !
             endif
