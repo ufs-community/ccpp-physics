@@ -812,7 +812,8 @@
       enddo
 !>  - Compute \f$\frac{\Delta t}{\Delta z}\f$ , \f$u_*\f$
       do i=1,im
-         dtdz1(i)  = dt2 / (zi(i,2)-zi(i,1))
+!  surface fluxes applied to the host layer mass del/g
+         dtdz1(i)  = dt2 * rho_a(i) * g / del(i,1)
       enddo
 !
       do i=1,im
