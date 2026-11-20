@@ -171,6 +171,14 @@
   type = real
   kind = kind_phys
   intent = in
+[hfus]
+  standard_name = latent_heat_of_fusion_of_water_at_0C
+  long_name = latent heat of fusion
+  units = J kg-1
+  dimensions = ()
+  type = real
+  kind = kind_phys
+  intent = in
 [rd]
   standard_name = gas_constant_of_dry_air
   long_name = ideal gas constant for dry air
@@ -370,6 +378,53 @@
   type = real
   kind = kind_phys
   intent = in
+[leo_u]
+  standard_name = leonard_term_for_u_velocity
+  long_name = leonard term for u velocity calculated from dynamics
+  units = m2 s-2
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
+[leo_v]
+  standard_name = leonard_term_for_v_velocity
+  long_name = leonard term for v velocity calculated from dynamics
+  units = m2 s-2
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
+[leo_t]
+  standard_name = leonard_term_for_temperature
+  long_name = leonard term for temperature calculated from dynamics
+  units = K m s-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
+[leo_q]
+  standard_name = leonard_term_for_tracers
+  long_name = leonard term for tracers calculated from dynamics
+  units = kg kg-1 m s-1
+  dimensions = (horizontal_loop_extent,vertical_layer_dimension,number_of_tracers)
+  type = real
+  kind = kind_phys
+  intent = in
+[leonard]
+  standard_name = flag_for_leonard_term
+  long_name = flag for adding leonard term
+  units = flag
+  dimensions = ()
+  type = logical
+  intent = in
+[leofac]
+  standard_name = parameter_for_leonard_term
+  long_name = constant parameter for leonard term
+  units = none
+  dimensions = ()
+  type = real
+  kind = kind_phys
+  intent = in
 [rn]
   standard_name = lwe_thickness_of_shallow_convective_precipitation_amount
   long_name = shallow convective rainfall amount on physics timestep
@@ -384,14 +439,14 @@
   units = index
   dimensions = (horizontal_loop_extent)
   type = integer
-  intent = out
+  intent = inout
 [ktop]
   standard_name = vertical_index_at_cloud_top
   long_name = index at cloud top
   units = index
   dimensions = (horizontal_loop_extent)
   type = integer
-  intent = out
+  intent = inout
 [kcnv]
   standard_name = flag_deep_convection
   long_name = deep convection: 0=no, 1=yes

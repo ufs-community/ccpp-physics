@@ -51,11 +51,13 @@
 !!  -# Calculate the tendencies of the state variables (per unit cloud base mass flux) and the cloud base mass flux.
 !!  -# For the "feedback control", calculate updated values of the state variables by multiplying the cloud base mass flux and the tendencies calculated per unit cloud base mass flux from the static control.
 !!  \section det_samfshalcnv GFS samfshalcnv Detailed Algorithm
-      subroutine samfshalcnv_run(im,km,nn,itc,ntc,cliq,cp,cvap,            &
-     &     eps,epsm1,fv,grav,hvap,rd,rv,                                &
+      subroutine samfshalcnv_run(im,km,nn,itc,ntc,cliq,cp,cvap,         &
+     &     eps,epsm1,fv,grav,hvap,hfus,rd,rv,                           &
      &     t0c,delt,ntk,ntr,delp,first_time_step,restart,               & 
      &     tmf,qmicro,progsigma,progomega,                              &
      &     prslp,psp,phil,tkeh,qtr,dqtr,prevsq,q,q1,t1,u1,v1,fscav,     &
+!The following variables are for Leonard term
+     &     leo_u,leo_v,leo_t,leo_q,leonard,leofac,                      &
      &     rn,kbot,ktop,kcnv,islimsk,garea,cscale,ten_t, ten_u, ten_v,  &
      &     ten_q, dot,ncloud,hpbl,ud_mf,dt_mf,cnvw,cnvc,                &
      &     clam,c0s,c1,evef,pgcon,asolfac,hwrf_samfshal,                & 
@@ -69,8 +71,8 @@
 !
       integer, intent(in)  :: im, km, nn, itc, ntc, ntk, ntr, ncloud
       integer, intent(in)  :: islimsk(:)
-      real(kind=kind_phys), intent(in) :: cliq, cp, cvap,               &
-     &   eps, epsm1, fv, grav, hvap, rd, rv, t0c, betascu, betadcu,     &
+      real(kind=kind_phys), intent(in) :: cliq, cp, cvap, eps,          &
+     &   epsm1, fv, grav, hvap, hfus, rd, rv, t0c, betascu, betadcu,    &
      &   betamcu, lbb1, lbb2, lbb3, dt_decay
       real(kind=kind_phys), intent(in) ::  delt, cscale
       real(kind=kind_phys), intent(in) :: psp(:), delp(:,:),            &
@@ -82,19 +84,28 @@
      &     omegain(:,:)
 !
       real(kind=kind_phys), dimension(:), intent(in) :: fscav
-      integer, intent(inout)  :: kcnv(:)
       ! DH* TODO - check dimensions of qtr, ntr+2 correct?  *DH
       real(kind=kind_phys), intent(inout) :: tkeh(:,:)
-      real(kind=kind_phys), intent(in) ::   qtr(:,:,:),                 &
-     &   q1(:,:)
+      real(kind=kind_phys), intent(in) ::   qtr(:,:,:), q1(:,:)
 
       real(kind=kind_phys), intent(in) :: t1(:,:), u1(:,:), v1(:,:)
+
+      real(kind=kind_phys), intent(out) :: ten_t(:,:), ten_u(:,:),
+     & ten_v(:,:), ten_q(:,:,:), dqtr(:,:,:)
+
 !
-      integer, intent(out) :: kbot(:), ktop(:)
+! for Leonard term
+      logical, intent(in)  :: leonard !flag for leonard term
+      real(kind=kind_phys), intent(in) :: leofac  !parameter for Leonard term
+      real(kind=kind_phys), intent(in) ::
+     &                     leo_u(:,:),  leo_v(:,:),                     &
+     &                     leo_t(:,:),  leo_q(:,:,:)
+!
+      integer, intent(inout) :: kbot(:), ktop(:), kcnv(:)
       real(kind=kind_phys), intent(out) :: rn(:)
-      
-      real(kind=kind_phys), intent(inout) :: ud_mf(:,:), dt_mf(:,:),    &
-     &   cnvw(:,:), cnvc(:,:)   
+      real(kind=kind_phys), intent(inout) :: cnvw(:,:), cnvc(:,:),      &
+     &               ud_mf(:,:), dt_mf(:,:)
+!
       real(kind=kind_phys), intent(inout), optional :: sigmaout(:,:),   &
      &   omegaout(:,:)
 
@@ -154,7 +165,7 @@
 !    &                     rntot(im),   vshear(im),
      &                     rntot(im),
      &                     xlamud(im),  xmb(im),    xmbmax(im),
-     &                     delebar(im,ntr),
+     &                     xlamx(im),   delebar(im,ntr),
      &                     delubar(im), delvbar(im)
 !
       real(kind=conv_wp) c0(im), sfcpbl(im)
@@ -219,7 +230,7 @@ c  local variables and arrays
      &                     uo(im,km),      vo(im,km),     qeso(im,km),
      &                     ctr(im,km,ntr), ctro(im,km,ntr)
 !  for aerosol transport
-!     real(kind=kind_phys) qaero(im,km,ntc)
+!     real(kind=conv_wp) qaero(im,km,ntc)
 c  variables for tracer wet deposition,
       real(kind=conv_wp), dimension(im,km,ntc) :: chem_c, chem_pw,
      &  wet_dep
@@ -234,7 +245,7 @@ c  variables for tracer wet deposition,
       real(kind=conv_wp) scaldfunc(im), sigmagfm(im)
 !
 c  cloud water
-!     real(kind=kind_phys) qlko_ktcon(im), dellal(im,km), tvo(im,km),
+!     real(kind=conv_wp) qlko_ktcon(im), dellal(im,km), tvo(im,km),
       real(kind=conv_wp) qlko_ktcon(im), dellal(im,km),
      &                     dbyo(im,km),    zo(im,km),    xlamue(im,km),
      &                     rh(im,km),
@@ -249,6 +260,13 @@ c  cloud water
      &                     sumx(im),      tx1(im),        cnvwt(im,km),
      &                     rhbar(im)
 !
+!    parameters for leonard term
+      real(kind=conv_wp) leodx1,leodx2,leodx3,leodx4
+      real(kind=conv_wp) saleofac(im)
+      parameter(leodx1=15000._conv_wp,leodx2=1500._conv_wp)
+      parameter(leodx3=500._conv_wp,leodx4=50._conv_wp)
+
+!
 !  variables for Total Variation Diminishing (TVD) flux-limiter scheme
 !      on environmental subsidence and uplifting
 !
@@ -257,14 +275,11 @@ c  cloud water
       real(kind=conv_wp) rrkp, phkp
       real(kind=conv_wp) tsumn(im), tsump(im), rtnp(im)
 !
-      logical do_aerosols, totflg, cnvflg(im), flg(im)
+      logical do_aerosols, cnvflg(im), flg(im)
 !
       real(kind=conv_wp) tf, tcr, tcrf
       parameter (tf=233.16_conv_wp, tcr=263.16_conv_wp,
      &           tcrf=1.0_conv_wp/(tcr-tf))
-
-      real(kind=kind_phys), intent(out) :: ten_t(:,:), ten_u(:,:),
-     & ten_v(:,:), ten_q(:,:,:), dqtr(:,:,:)
 
       real(kind=conv_wp) :: new_t1(im,km),new_u1(im,km),new_v1(im,km),
      & new_q1(im,km), new_qtr(im,km,nn)
@@ -366,13 +381,14 @@ c
         kb(i)=km
         pdot(i) = 0.0_conv_wp
         qlko_ktcon(i) = 0.0_conv_wp
-!        edt(i)  = 0.
+!        edt(i)  = 0._conv_wp
         aa1(i)  = 0.0_conv_wp
         cina(i) = 0.0_conv_wp
-!        vshear(i) = 0.
+!        vshear(i) = 0._conv_wp
         advfac(i) = 0.0_conv_wp
         gdx(i) = sqrt(real(garea(i), kind=conv_wp))
         xmb(i) = 0.0_conv_wp
+        saleofac(i) = 0._conv_wp
           scaldfunc(i)=-1.0_conv_wp  ! wang initialized
           sigmagfm(i)=-1.0_conv_wp
        enddo
@@ -392,23 +408,37 @@ c
         kb(i)=km
         pdot(i) = 0.0_conv_wp
         qlko_ktcon(i) = 0.0_conv_wp
-!        edt(i)  = 0.0
+!        edt(i)  = 0.0_conv_wp
         aa1(i)  = 0.0_conv_wp
         cina(i) = 0.0_conv_wp
-!        vshear(i) = 0.
+!        vshear(i) = 0._conv_wp
         gdx(i) = sqrt(real(garea(i), kind=conv_wp))
         xmb(i) = 0.0_conv_wp
+        saleofac(i) = 0._conv_wp
        enddo
       endif
-!>  - Return to the calling routine if deep convection is present or the surface buoyancy flux is negative.
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
+!
+!>  - Compute scale dependent leonard factor (\p saleofac)
+!
+      if(leonard) then
+        do i=1,im
+          if(gdx(i) >= leodx1 .or. gdx(i) <= leodx4) then
+            saleofac(i) = 0._conv_wp
+          else if(gdx(i) < leodx1 .and. gdx(i) > leodx2) then
+            tem = leodx2 / gdx(i)
+!           tem = (leodx2 / gdx(i))**2
+            saleofac(i) = real(leofac, kind=conv_wp) * tem
+          else if(gdx(i) < leodx3 .and. gdx(i) > leodx4) then
+            tem = gdx(i) / leodx3
+!           tem = (gdx(i) / leodx3)**2
+            saleofac(i) = real(leofac, kind=conv_wp) * tem
+          else if(gdx(i) < leodx2 .and. gdx(i) > leodx3) then
+            saleofac(i) = real(leofac, kind=conv_wp)
+          endif
+        enddo
       endif
-!!
+!      
+!>  - Return to the calling routine if deep convection is present or the surface buoyancy flux is negative.
 !>  - determine aerosol-aware rain conversion parameter over land
       do i=1,im
         if(islimsk(i) == 1) then
@@ -458,8 +488,8 @@ c
 !
 c  model tunable parameters are all here
       aafac   = .1_conv_wp
-!      evfact  = 0.3
-!      evfactl = 0.3
+!      evfact  = 0.3_conv_wp
+!      evfactl = 0.3_conv_wp
 !
       crtlame = 1.0e-4_conv_wp
       crtlamd = 3.0e-4_conv_wp
@@ -766,16 +796,7 @@ c
           if(kbcon(i) == kmax(i)) cnvflg(i) = .false.
         endif
       enddo
-!!
-!> - If no LFC, return to the calling routine without modifying state variables.
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
+!
 !> - Determine the vertical pressure velocity at the LFC. After Han and Pan (2011) \cite han_and_pan_2011 , determine the maximum pressure thickness between a parcel's starting level and the LFC. If a parcel doesn't reach the LFC within the critical thickness, then the convective inhibition is deemed too great for convection to be triggered, and the subroutine returns to the calling routine without modifying the state variables.
       do i=1,im
         if(cnvflg(i)) then
@@ -822,14 +843,6 @@ c
           endif
         endif
       enddo
-!!
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
 !
 ! re-define kb & kbcon
 !
@@ -870,15 +883,7 @@ c
           if(kbcon(i) == kmax(i)) cnvflg(i) = .false.
         endif
       enddo
-!!
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
+!
       do i=1,im
         if(cnvflg(i)) then
 !          pdot(i)  = 10.* dot(i,kbcon(i))
@@ -911,16 +916,6 @@ c
           endif
         endif
       enddo
-!!
-
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
 !
 ! turbulent entrainment rate assumed to be proportional
 !    to subcloud mean TKE
@@ -996,12 +991,21 @@ c
 !  assume updraft entrainment rate
 !      is an inverse function of height
 !
+      do i=1,im
+       if(cnvflg(i)) then
+         xlamx(i) = 0.001_conv_wp * clamt(i)
+       endif
+      enddo
       do k = 1, km1
         do i=1,im
           if(cnvflg(i)) then
             dz = zo(i,k+1) - zo(i,k)
             xlamue(i,k) = clamt(i) / (zi(i,k) + dz)
-            xlamue(i,k) = max(xlamue(i,k), crtlame)
+            if(k <= kbcon(i)) then
+              xlamue(i,k) = max(xlamue(i,k), xlamx(i))
+            else
+              xlamue(i,k) = min(xlamue(i,k), xlamx(i))
+            endif
           endif
         enddo
       enddo
@@ -1020,7 +1024,7 @@ c
         if(cnvflg(i)) then
 !          xlamud(i) = xlamue(i,kbcon(i))
 !          xlamud(i) = crtlamd
-          xlamud(i) = 0.001_conv_wp * clamt(i)
+          xlamud(i) = xlamx(i)
         endif
       enddo
       endif    ! hwrf_samfshal
@@ -1107,7 +1111,7 @@ c
      &                   *0.5_conv_wp*(heo(i,k)+heo(i,k-1)))/factor
               dbyo(i,k) = hcko(i,k) - heso(i,k)
 !
-              tem  = 0.5_conv_wp * real(cm,kind=conv_wp) * tem
+              tem  = 0.5_conv_wp * cm * tem
               factor = 1.0_conv_wp + tem
               ptem = tem + real(pgcon, kind=conv_wp)
               ptem1= tem - real(pgcon, kind=conv_wp)
@@ -1160,7 +1164,7 @@ c
                    chem_c(i,k,n) = escav * real(fscav(n), kind=conv_wp)
      &                            * ecko(i,k,kk)
                    tem = chem_c(i,k,n) / (1.0_conv_wp + c0t(i,k) * dz)
-                   chem_pw(i,k,n) = c0t(i,k) * dz * tem * eta(i,k-1)
+                   chem_pw(i,k,n) = c0t(i,k) * dz * tem * eta(i,k)
                    ecko(i,k,kk) = tem + ecko(i,k,kk) - chem_c(i,k,n)
                  endif
                endif
@@ -1219,15 +1223,6 @@ c
           endif
         endif
       enddo
-!!
-      if (.not. progomega) then
-         totflg = .true.
-         do i = 1, im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
 c
 c  calculate convective inhibition
 c
@@ -1297,15 +1292,6 @@ c
          endif
        enddo
       endif
-!!
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
 c
 c  determine first guess cloud top as the level of zero buoyancy
 c    limited to the level of P/Ps=0.7
@@ -1481,17 +1467,6 @@ c
       do i = 1, im
         if(cnvflg(i) .and. aa1(i) <= 0.0_conv_wp) cnvflg(i) = .false.
       enddo
-!!
-!     > - If the updraft cloud work function is negative, convection does not occur, and the scheme returns to the calling routine.
-
-      if (.not. progomega) then
-         totflg = .true.
-         do i=1,im
-            totflg = totflg .and. (.not. cnvflg(i))
-         enddo
-         if(totflg) return
-      endif
-!!
 c
 c  estimate the onvective overshooting as the level
 c    where the [aafac * cloud work function] becomes zero,
@@ -2000,6 +1975,7 @@ c
               tem1 = real(q1(i,k+1), kind=conv_wp) + phkp
      &             * (qo(i,k) - real(q1(i,k+1), kind=conv_wp))
               flxtvd(i,k) = eta(i,k) * tem1
+              if(k == kb(i)) flxtvd(i,k) = eta(i,k) * qo(i,k)
             endif
           endif
         enddo
@@ -2056,6 +2032,7 @@ c
                 tem1 = ctr(i,k+1,n) +
      &                     phkp*(ctro(i,k,n)-ctr(i,k+1,n))
                 flxtvd(i,k) = eta(i,k) * tem1
+                if(k == kb(i)) flxtvd(i,k) = eta(i,k) * ctro(i,k,n)
               endif
             endif
           enddo
@@ -2319,6 +2296,56 @@ c
         enddo
       enddo
 !
+!  compute change due to leonard term
+!
+      if(leonard) then
+!
+        do i = 1, im
+          if(cnvflg(i)) then
+            if(gdx(i) < dxcrt) then
+              tem = 1._conv_wp - scaldfunc(i) * advfac(i)
+              tem1 = min(max(tem, 0._conv_wp), 1._conv_wp)
+              saleofac(i) = saleofac(i) * tem1
+            else
+              saleofac(i) = 0._conv_wp
+            endif
+          endif
+        enddo
+!
+        do k = 2, km
+          do i = 1, im
+            if(cnvflg(i) .and. gdx(i) < dxcrt) then
+              if(zo(i,k) >= real(hpbl(i), kind=conv_wp) .and.
+     &         (k > kbcon(i) .and. k <= ktcon(i))) then
+!    &           (k > kb(i) .and. k <= ktcon(i))) then
+!             if(zo(i,k) > real(hpbl(i), kind=conv_wp) .and.
+!    &           (k > kb(i) .and. k < ktcon(i))) then
+!             if(k > kb(i) .and. k < ktcon(i)) then
+!             if(k >= kbcon(i) .and. k < ktcon(i)) then
+                dz = zo(i,k+1) - zo(i,k-1)
+                tem = real(leo_t(i,k+1), kind=conv_wp)-
+     &                real(leo_t(i,k-1), kind=conv_wp)
+                tem1 = saleofac(i) * tem / dz
+                new_t1(i,k) = new_t1(i,k) + tem1 * dt2
+                tem = real(leo_q(i,k+1,1), kind=conv_wp)-
+     &                real(leo_q(i,k-1,1), kind=conv_wp)
+                tem1 = saleofac(i) * tem / dz
+                new_q1(i,k) = new_q1(i,k) + tem1 * dt2
+!               tem = real(leo_u(i,k+1), kind=conv_wp)-
+!                     real(leo_u(i,k-1), kind=conv_wp)
+!               tem1 = saleofac(i) * tem / dz
+!               new_u1(i,k) = new_u1(i,k) + tem1 * dt2
+!               tem = real(leo_v(i,k+1), kind=conv_wp)-
+!                     real(leo_v(i,k-1), kind=conv_wp)
+!               tem1 = saleofac(i) * tem / dz
+!               new_v1(i,k) = new_v1(i,k) + tem1 * dt2
+              endif
+            endif
+          enddo
+        enddo
+!
+      endif
+!
 ! Negative moisture is set to zero after borrowing it from
 !    positive values within the mass-flux transport layers
 !
@@ -2496,9 +2523,9 @@ c
                       wet_dep(i,k,n) = wet_dep(i,k,n) - tem
                       new_qtr(i,k,kk) = 0.0_conv_wp
                     else
-                      wet_dep(i,k,n) = 0.0_conv_wp
                       new_qtr(i,k,kk) = new_qtr(i,k,kk) + wet_dep(i,k,n)
      &                                / dp
+                      wet_dep(i,k,n) = 0.0_conv_wp
                     endif
                   endif
                 endif
@@ -2617,7 +2644,8 @@ cj
 !        print *, ' shallow delhbar, delqbar, deltbar = ',
 !     &             delhbar(i),hvap*delqbar(i),cp*deltbar(i)
 !        print *, ' shallow delubar, delvbar = ',delubar(i),delvbar(i)
-!        print *, ' precip =', hvap*rn(i)*1000./dt2
+!       print *, ' precip =', real(hvap, kind=conv_wp)*
+!                     real(rn(i), kind=conv_wp)*1000._conv_wp/dt2
 !        print*,'pdif= ',pfld(i,kbcon(i))-pfld(i,ktcon(i))
 !      endif
 !      enddo
@@ -2647,13 +2675,8 @@ c      convective cloud water
                if (k >= kbcon(i) .and. k < ktcon(i)) then
                   cnvw(i,k) = real(cnvwt(i,k) * xmb(i) * dt2,
      &                        kind=kind_phys)
-                  if (progsigma) then
-                     cnvw(i,k) = real(real(cnvw(i,k), kind=conv_wp) *
+                  cnvw(i,k) = real(real(cnvw(i,k), kind=conv_wp) *
      &                    real(cscale, kind=conv_wp), kind=kind_phys)
-                  else
-                     cnvw(i,k) = real(real(cnvw(i,k), kind=conv_wp) *
-     &                    real(cscale, kind=conv_wp), kind=kind_phys)
-                  endif
                endif
             endif
          enddo
@@ -2694,6 +2717,9 @@ c
               if (new_qtr(i,k,2) > -999.0_conv_wp) then
                 ! Ice
                 new_qtr(i,k,1) = new_qtr(i,k,1) + tem * tem1
+!               heat of fusion of the frozen part
+                new_t1(i,k) = new_t1(i,k) + (real(hfus, kind=conv_wp)
+     &                      / real(cp, kind=conv_wp)) * tem * tem1
                 ! Water
                 new_qtr(i,k,2) = new_qtr(i,k,2) + tem * (1.0_conv_wp
      &                         - tem1)
@@ -2740,7 +2766,7 @@ c
       do i = 1, im
         if(cnvflg(i)) then
            k = ktop(i)-1
-           dt_mf(i,k) = real(ud_mf(i,k),kind=kind_phys)
+           dt_mf(i,k) = ud_mf(i,k)
         endif
       enddo
 !
