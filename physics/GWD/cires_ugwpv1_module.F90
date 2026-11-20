@@ -137,11 +137,11 @@ module  cires_ugwpv1_module
 ! non-ccpp ....
 !
 !  subroutine cires_ugwp_init_v1 (me, master, nlunit, logunit, jdat_gfs, fn_nml2,   &
-!              lonr, levs, ak, bk, pref, dtp)
+!              lonr, levs, ak, bk, p_ref, pref, dtp)
 !-----------------------------------------------------------------------------------
 
   subroutine cires_ugwpv1_init (me, master, nlunit, logunit, jdat_gfs, con_pi,  &
-              con_rerth, fn_nml2, input_nml_file, lonr, levs, ak, bk,           &
+              con_rerth, fn_nml2, input_nml_file, lonr, levs, ak, bk, p_ref,    &
               pref, dtp, errmsg, errflg)
 !
 !  input_nml_file ='input.nml'=fn_nml   ..... OLD_namelist and cdmvgwd(4) Corrected Bug Oct 4
@@ -167,8 +167,13 @@ module  cires_ugwpv1_module
     integer, intent (in) :: lonr
     integer, intent (in) :: levs
     integer, intent (in) :: jdat_gfs(8)
-    real(kind=kind_phys),    intent (in) :: ak(levs+1), bk(levs+1), pref
-    real(kind=kind_phys),    intent (in) :: dtp
+    real(kind=kind_phys),    intent (in), optional :: ak(levs+1), bk(levs+1)
+    ! p_ref: dycore-neutral reference (background) atmosphere pressure at layer
+    ! interfaces, Pa, computed once in GFS_typedefs.F90::control_initialize for
+    ! either dycore. pref: the same-purpose reference pressure scalar used below
+    ! to convert p_ref into a height, con_p0 in practice.
+    real(kind=kind_phys),    intent (in), optional :: p_ref(levs+1)
+    real(kind=kind_phys),    intent (in) :: dtp, pref
 !
 ! consider to retire them
 !
@@ -249,7 +254,11 @@ module  cires_ugwpv1_module
 !
 
     do k=1, levs
-       pmb(k) = ak(k) + pref*bk(k)    ! Pa -unit  Pref = 1.e5, pmb = Pa
+       if (present(p_ref)) then
+          pmb(k) = p_ref(k)
+       else
+          pmb(k) = ak(k) + pref*bk(k)
+       endif
        zkm(k) = -hpskm*alog(pmb(k)/pref)
     enddo
 

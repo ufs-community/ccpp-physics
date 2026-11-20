@@ -329,7 +329,8 @@ module lsm_ruc
       subroutine lsm_ruc_run                                            & ! inputs
      &     ( iter, me, master, delt, kdt, im, nlev, lsm_ruc, lsm,       &
      &       imp_physics, imp_physics_gfdl, imp_physics_thompson,       &
-     &       imp_physics_nssl, do_mynnsfclay, use_cdeps_data, mask_dat, &
+     &       imp_physics_nssl, imp_physics_tempo, do_mynnsfclay,        &
+     &       use_cdeps_data, mask_dat,                                  &
      &       exticeden, lsoil_ruc, lsoil, mosaic_lu, mosaic_soil,       &
      &       isncond_opt, isncovr_opt, nlcat, nscat,                    &
      &       rdlai, xlat_d, xlon_d,                                     &
@@ -382,7 +383,7 @@ module lsm_ruc
       integer, intent(in) :: nlcat, nscat
       integer, intent(in) :: lsm_ruc, lsm
       integer, intent(in) :: imp_physics, imp_physics_gfdl, imp_physics_thompson, &
-                             imp_physics_nssl
+                             imp_physics_nssl, imp_physics_tempo
       real (kind_phys), dimension(:), intent(in) :: xlat_d, xlon_d
       real (kind_phys), dimension(:), intent(in) :: oro, sigma
       real (kind_phys), dimension(:), intent(in) :: sfalb_lnd_bck
@@ -815,7 +816,7 @@ module lsm_ruc
       ! Set flag for mixed phase precipitation depending on microphysics scheme.
       ! For GFDL and Thompson, srflag is fraction of frozen precip for convective+explicit precip.
       if (imp_physics==imp_physics_gfdl .or. imp_physics==imp_physics_thompson .or. &
-          imp_physics == imp_physics_nssl) then
+          imp_physics == imp_physics_nssl .or. imp_physics==imp_physics_tempo) then
         frpcpn = .true.
       else
         frpcpn = .false.
@@ -844,7 +845,6 @@ module lsm_ruc
         else
           ffrozp(i,j) = real(nint(srflag(i)),kind_phys)
         endif
-
 
         conflx2(i,1,j)  = zf(i) * 2._kind_phys ! factor 2. is needed to get the height of
                                                ! atm. forcing inside RUC LSM (inherited
