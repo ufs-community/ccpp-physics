@@ -108,6 +108,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &  prsl,prsi,exner,                &
      &  slmsk,tsurf,qsfc,ps,            &
      &  ust,ch,hflx,qflx,wspd,rb,       &
+     &  usfco,vsfco,use_oceanuv,        &
      &  dtsfc1,dqsfc1,                  &
      &  dusfc1,dvsfc1,                  &
      &  dusfci_diag,dvsfci_diag,        &
@@ -188,6 +189,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
 
      logical, intent(in) :: lssav, ldiag3d, lsidea, qdiag3d
      logical, intent(in) :: cplflx
+     logical, intent(in) :: use_oceanuv
 
      !smoke/chem
      integer, intent(in) :: nchem, ndvel
@@ -250,7 +252,7 @@ SUBROUTINE mynnedmf_wrapper_run(        &
      &           IMS,IME,JMS,JME,KMS,KME,                                &
      &           ITS,ITE,JTS,JTE,KTS,KTE
 
-      REAL(kind_phys) :: tem
+      REAL(kind_phys) :: tem, wspd_rel ! wspd_rel: current-relative wind speed 
 
 !MYNN-3D
       real(kind_phys), dimension(:,:), intent(in)    :: phii
@@ -349,6 +351,8 @@ SUBROUTINE mynnedmf_wrapper_run(        &
       integer, dimension(:), intent(inout) ::                            &
      &        kpbl
 
+      real(kind_phys), dimension(:), intent(in)   , optional ::          &
+     &        usfco,vsfco
       real(kind_phys), dimension(:), intent(inout), optional ::          &
      &        dusfc_cpl,dvsfc_cpl,dtsfc_cpl,dqsfc_cpl
       real(kind_phys), dimension(:), intent(inout), optional ::          &
@@ -655,8 +659,21 @@ SUBROUTINE mynnedmf_wrapper_run(        &
 
          dtsfc1(i) = hfx(i)
          dqsfc1(i) = qfx(i)*XLV
-         dusfc1(i) = -1.*rho(i,1)*ust(i)*ust(i)*u(i,1)/wspd(i)
-         dvsfc1(i) = -1.*rho(i,1)*ust(i)*ust(i)*v(i,1)/wspd(i)
+
+         if (use_oceanuv) then
+            ! current-relative surface stress
+            wspd_rel = sqrt((u(i,1)-usfco(i))**2 + (v(i,1)-vsfco(i))**2)
+            if (wspd_rel > zero) then
+                dusfc1(i) = -1.*rho(i,1)*ust(i)*ust(i)*(u(i,1)-usfco(i))/wspd_rel
+                dvsfc1(i) = -1.*rho(i,1)*ust(i)*ust(i)*(v(i,1)-vsfco(i))/wspd_rel
+            else
+                dusfc1(i) = zero
+                dvsfc1(i) = zero
+            endif
+         else
+            dusfc1(i) = -1.*rho(i,1)*ust(i)*ust(i)*u(i,1)/wspd(i)
+            dvsfc1(i) = -1.*rho(i,1)*ust(i)*ust(i)*v(i,1)/wspd(i)
+         endif
 
          !BWG: diagnostic surface fluxes for scalars & momentum
          dtsfci_diag(i) = dtsfc1(i)
@@ -685,12 +702,17 @@ SUBROUTINE mynnedmf_wrapper_run(        &
               dtsfci_cpl(i) = dtsfc_cice(i)
               dqsfci_cpl(i) = dqsfc_cice(i)
             elseif (icy(i) .or. dry(i)) then ! use stress_ocean for opw component at mixed point
-              if (wspd(i) > zero) then
+              dusfci_cpl(i) = zero
+              dvsfci_cpl(i) = zero
+              if (use_oceanuv)  then
+                wspd_rel = sqrt((u(i,1)-usfco(i))**2 + (v(i,1)-vsfco(i))**2)
+                if (wspd_rel > zero) then
+                    dusfci_cpl(i) = -1.*rho(i,1)*stress_wat(i)*(u(i,1)-usfco(i))/wspd_rel
+                    dvsfci_cpl(i) = -1.*rho(i,1)*stress_wat(i)*(v(i,1)-vsfco(i))/wspd_rel
+                endif
+              elseif (wspd(i) > zero) then
                 dusfci_cpl(i) = -1.*rho(i,1)*stress_wat(i)*u(i,1)/wspd(i)   ! U-momentum flux
                 dvsfci_cpl(i) = -1.*rho(i,1)*stress_wat(i)*v(i,1)/wspd(i)   ! V-momentum flux
-              else
-                dusfci_cpl(i) = zero
-                dvsfci_cpl(i) = zero
               endif
               dtsfci_cpl(i) =  cp*rho(i,1)*hflx_wat(i) ! sensible heat flux over open ocean
               dqsfci_cpl(i) = XLV*rho(i,1)*qflx_wat(i) ! latent heat flux over open ocean
