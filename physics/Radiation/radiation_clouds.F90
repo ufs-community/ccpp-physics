@@ -352,7 +352,7 @@ subroutine radiation_clouds_prop &
        iovr_dcorr, iovr_exp, iovr_exprand, idcor, idcor_con, &
        idcor_hogan, idcor_oreopoulos, lcrick, lcnorm, &
        imfdeepcnv, imfdeepcnv_gf, imfdeepcnv_c3, &
-       do_mynnedmf, lgfdlmprad, xr_cnvcld, &
+       do_mynnedmf, lgfdlmprad, &
        uni_cld, lmfshal, lmfdeep2, cldcov, clouds1, &
        effrl, effri, effrr, effrs, effr_in, &
        effrl_inout, effri_inout, effrs_inout, &
@@ -537,8 +537,8 @@ integer,              intent(in)  :: &
 
 
 logical, intent(in)  :: uni_cld, lmfshal, lmfdeep2, effr_in, &
-     do_mynnedmf, lgfdlmprad, top_at_1, lcrick, lcnorm, &
-     xr_cnvcld
+     do_mynnedmf, lgfdlmprad, top_at_1, lcrick, lcnorm &
+   
 
 real (kind=kind_phys), dimension(:,:,:), intent(in) :: ccnd, &
                                                        tracer1
@@ -701,7 +701,7 @@ else if(imp_physics == imp_physics_fer_hires) then
         call progcld_thompson_wsm6 (plyr,plvl,tlyr,qlyr,qstl, &   !  --- inputs
                    rhly,tracer1,xlat,xlon,slmsk,dz,delp, &
                    ntrac-1, ntcw-1,ntiw-1,ntrw-1, &
-                   ntsw-1,ntgl-1,con_ttp,xr_cnvcld, &
+                   ntsw-1,ntgl-1,con_ttp, &
                    IX, NLAY, NLP1, xr_con, xr_exp, uni_cld, &
                    lmfshal, lmfdeep2, &
                    cldcov(:,1:NLAY), cnvw, effrl_inout, &
@@ -777,7 +777,7 @@ else if(imp_physics == imp_physics_fer_hires) then
         call progcld_thompson_wsm6 (plyr,plvl,tlyr,qlyr,qstl, &   !  --- inputs
                    rhly,tracer1,xlat,xlon,slmsk,dz,delp, &
                    ntrac-1, ntcw-1,ntiw-1,ntrw-1, &
-                   ntsw-1,ntgl-1,con_ttp,xr_cnvcld, &
+                   ntsw-1,ntgl-1,con_ttp, &
                    IX, NLAY, NLP1, xr_con, xr_exp, uni_cld, &
                    lmfshal, lmfdeep2, &
                    cldcov(:,1:NLAY), cnvw, effrl, effri, effrs, &
@@ -1354,7 +1354,7 @@ subroutine progcld_thompson_wsm6 &
      ( plyr,plvl,tlyr,qlyr,qstl,rhly,clw, &   !  ---  inputs:
        xlat,xlon,slmsk,dz,delp, &
        ntrac,ntcw,ntiw,ntrw,ntsw,ntgl,con_ttp, &
-       xr_cnvcld, IX, NLAY, NLP1, xr_con, xr_exp, &
+       IX, NLAY, NLP1, xr_con, xr_exp, &
        uni_cld, lmfshal, lmfdeep2, cldcov, cnvw, &
        re_cloud,re_ice,re_snow, &
        lwp_ex, iwp_ex, lwp_fc, iwp_fc, &
@@ -1441,8 +1441,7 @@ implicit none
 integer,  intent(in) :: IX, NLAY, NLP1
 integer,  intent(in) :: ntrac, ntcw, ntiw, ntrw, ntsw, ntgl
 
-logical, intent(in)  :: uni_cld, lmfshal, lmfdeep2, lcnorm, &
-       xr_cnvcld
+logical, intent(in)  :: uni_cld, lmfshal, lmfdeep2, lcnorm &
 
 real (kind=kind_phys), dimension(:,:), intent(in) :: plvl, plyr, &
        tlyr, qlyr, qstl, rhly, cldcov, delp, dz, dzlay, &
@@ -1517,56 +1516,38 @@ end do
 !      endif
 
 !> - Include grid-mean suspended cloud condensate in Xu-Randall cloud fraction
-!>   if xr_cnvcld is true:
 
-if(xr_cnvcld)then
   do k = 1, NLAY
     do i = 1, IX
       clwf(i,k) = clw(i,k,ntcw) +  clw(i,k,ntiw) + clw(i,k,ntsw) &
       + clw(i,k,ntrw) + cnvw(i,k)
     end do
   end do
-else
-   do k = 1, NLAY
-    do i = 1, IX
-      clwf(i,k) = clw(i,k,ntcw) +  clw(i,k,ntiw) + clw(i,k,ntsw) &
-      + clw(i,k,ntrw)
-    end do
-  end do
-end if
 
 !> - Compute total-cloud liquid/ice condensate path in \f$ g/m^2 \f$.
 !>   The total condensate includes convective condensate.
   do k = 1, NLAY-1
-    do i = 1, IX
-      if(xr_cnvcld)then
-         tem1 = cnvw(i,k)*(1.-tem2d(i,k))
-      else
-         tem1 = 0.
-      end if
-      cwp(i,k) = max(0.0, (clw(i,k,ntcw)+tem1) * &
-                 gfac * delp(i,k))
-      if(tem1 > 1.e-12 .and.  clw(i,k,ntcw) < 1.e-12) &
-                 rew(i,k)=reliq_def
-      if(xr_cnvcld)then
-         tem2 = cnvw(i,k)*tem2d(i,k)
-      else
-         tem2 = 0.
-      end if
-      cip(i,k) = max(0.0, (clw(i,k,ntiw) + &
+     do i = 1, IX
+        tem1 = cnvw(i,k)*(1.-tem2d(i,k))
+        cwp(i,k) = max(0.0, (clw(i,k,ntcw)+tem1) * &
+             gfac * delp(i,k))
+        if(tem1 > 1.e-12 .and.  clw(i,k,ntcw) < 1.e-12) &
+             rew(i,k)=reliq_def
+        tem2 = cnvw(i,k)*tem2d(i,k)
+        cip(i,k) = max(0.0, (clw(i,k,ntiw) + &
              snow2ice*clw(i,k,ntsw) + tem2) * &
              gfac * delp(i,k))
-      if(tem2 > 1.e-12 .and.  clw(i,k,ntiw) < 1.e-12) then
+        if(tem2 > 1.e-12 .and.  clw(i,k,ntiw) < 1.e-12) then
            if(nint(slmsk(i))==1) then
-             rei(i,k)=creice_def
+              rei(i,k)=creice_def
            else
-             rei(i,k)=reice_def
+              rei(i,k)=reice_def
            end if
-      end if
-      crp(i,k) = max(0.0, clw(i,k,ntrw) * gfac * delp(i,k))
-      csp(i,k) = max(0.0, (1.-snow2ice)*clw(i,k,ntsw) * &
+        end if
+        crp(i,k) = max(0.0, clw(i,k,ntrw) * gfac * delp(i,k))
+        csp(i,k) = max(0.0, (1.-snow2ice)*clw(i,k,ntsw) * &
              gfac * delp(i,k))
-    end do
+     end do
   end do
 
 !> - Sum the liquid water and ice paths that come from explicit micro

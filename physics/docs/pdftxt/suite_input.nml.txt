@@ -428,7 +428,6 @@ show some variables in the namelist that must match the SDF.
 <tr><td>decfl           <td>mp_thompson               <td>deformed CFL factor                                             <td>8
 <tr><td>effr_in         <td>gfdl_cloud_microphys, mp_thompson          <td>flag for using input cloud effective radii calculation    <td>.false.
 <tr><td>cnvcld          <td>see \a GFS_typedefs.F90          <td>flag for convective cloud                      <td>.false.
-<tr><td>xr_cnvcld       <td>GFS_rrtmg_pre              <td>flag for including suspended convective clouds in Xu-Randall cloud fraction  <td>.true.
 <tr><td>lgfdlmprad      <td>gfs_rrtmg_pre          <td>flag for GFDL mp scheme and radiation consistency     <td>.false.
 <tr><td>nssl_cccn       <td>mp_nssl          <td>CCN concentration (m^-3)                  <td>0.6e9
 <tr><td>nssl_alphah     <td>mp_nssl          <td>graupel PSD shape parameter                         <td>0.0
