@@ -169,7 +169,7 @@ contains
 
        integer :: j, jj, k, kk, inc, jk, jkp, jl, iaz
        integer ::  ksrc, km2, km1, kp1, ktop
-       integer ::  ilaunch_col   ! per-column launch level (thread-safe; do not write module ilaunch)
+       integer ::  ilaunch_col   ! per-column launch level
 !
 ! Kturb-part
 !
