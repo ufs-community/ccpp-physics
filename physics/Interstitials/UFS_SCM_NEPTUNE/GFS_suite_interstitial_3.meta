@@ -2,7 +2,7 @@
 [ccpp-table-properties]
   name = GFS_suite_interstitial_3
   type = scheme
-  dependencies = ../../hooks/machine.F
+  dependencies =
   
 ########################################################################
 [ccpp-arg-table]

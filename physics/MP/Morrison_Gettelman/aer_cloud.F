@@ -17,7 +17,7 @@
 #endif
 #ifdef NEMS_GSM
        use physcons, only : MAPL_PI => con_pi
-       use machine,  only : r8      => kind_phys
+       use ccpp_kinds,  only : r8      => kind_phys
 #endif
 
 ! according to the models of Nenes & Seinfeld (2003), Fountoukis and Nenes (2005) and Barahona and Nenes (2008, 2009).

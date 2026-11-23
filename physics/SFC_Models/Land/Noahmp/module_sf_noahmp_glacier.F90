@@ -9,7 +9,7 @@
 !> This module contains the NoahMP Glacier scheme
 module noahmp_glacier_globals
 
-  use machine ,   only : kind_phys
+  use ccpp_kinds,   only : kind_phys
   use sfc_diff, only   : stability
   use module_sf_noahmplsm, only : sfcdif4
 

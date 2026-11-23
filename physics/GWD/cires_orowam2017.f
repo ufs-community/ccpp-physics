@@ -14,7 +14,7 @@
      &   del, sigma, hprime, gamma, theta,
      &   sinlat, xlatd, taup, taud, pkdis)
 ! 
-      USE MACHINE ,      ONLY : kind_phys
+      USE CCPP_KINDS,      ONLY : kind_phys
       use ugwp_common_v0 ,  only : grav,  omega2
 !      
       implicit none
@@ -350,7 +350,7 @@
 !> This subroutine calculates TOFD as in BELJAARS-2004.
       subroutine ugwpv0_tofd1d(levs, sigflt, elvmax, zsurf, 
      &   zpbl, u, v,  zmid, utofd, vtofd, epstofd, krf_tofd)
-       use machine ,      only : kind_phys 
+       use ccpp_kinds,      only : kind_phys 
        use ugwp_common_v0  , only :  rcpd2         
        use ugwpv0_oro_init, only : n_tofd, const_tofd, ze_tofd
        use ugwpv0_oro_init, only : a12_tofd, ztop_tofd

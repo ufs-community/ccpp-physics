@@ -66,7 +66,7 @@
 module module_radlw_avplank   !
 !........................................!
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radlw_parameters, only : NPLNK, NBANDS
 !
 implicit none
@@ -747,7 +747,7 @@ end module module_radlw_avplank   !
 module module_radlw_ref   !
 !........................................!
 !
-use machine,               only : kind_phys
+use ccpp_kinds,               only : kind_phys
 !
 implicit none
 !
@@ -924,7 +924,7 @@ end module module_radlw_ref   !
 module module_radlw_cldprlw   !
 !........................................!
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radlw_parameters, only : NBANDS
 !
 implicit none
@@ -1610,7 +1610,7 @@ end module module_radlw_cldprlw   !
 module module_radlw_kgb01   !
 !........................................!
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radlw_parameters, only : NG01
 !
 implicit none
@@ -2423,7 +2423,7 @@ end module module_radlw_kgb01   !
 module module_radlw_kgb02   !
 !........................................!
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radlw_parameters, only : NG02
 !
 implicit none
@@ -3279,7 +3279,7 @@ end module module_radlw_kgb02   !
 module module_radlw_kgb03   !
 !........................................!
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radlw_parameters, only : NG03
 !
 implicit none
@@ -10150,7 +10150,7 @@ end module module_radlw_kgb03   !
 module module_radlw_kgb04   !
 !........................................!
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radlw_parameters, only : NG04
 !
 implicit none
@@ -15348,7 +15348,7 @@ end module module_radlw_kgb04   !
 module module_radlw_kgb05   !
 !........................................!
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radlw_parameters, only : NG05
 !
 implicit none
@@ -21843,7 +21843,7 @@ end module module_radlw_kgb05   !
 module module_radlw_kgb06   !
 !........................................!
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radlw_parameters, only : NG06
 !
 implicit none
@@ -22102,7 +22102,7 @@ end module module_radlw_kgb06   !
 module module_radlw_kgb07   !
 !........................................!
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radlw_parameters, only : NG07
 !
 implicit none
@@ -24747,7 +24747,7 @@ end module module_radlw_kgb07   !
 module module_radlw_kgb08   !
 !........................................!
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radlw_parameters, only : NG08
 !
 implicit none
@@ -25543,7 +25543,7 @@ end module module_radlw_kgb08   !
 module module_radlw_kgb09   !
 !........................................!
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radlw_parameters, only : NG09
 !
 implicit none
@@ -28219,7 +28219,7 @@ end module module_radlw_kgb09   !
 module module_radlw_kgb10   !
 !........................................!
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radlw_parameters, only : NG10
 !
 implicit none
@@ -28692,7 +28692,7 @@ end module module_radlw_kgb10   !
 module module_radlw_kgb11   !
 !........................................!
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radlw_parameters, only : NG11
 !
 implicit none
@@ -29390,7 +29390,7 @@ end module module_radlw_kgb11   !
 module module_radlw_kgb12   !
 !........................................!
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radlw_parameters, only : NG12
 !
 implicit none
@@ -30460,7 +30460,7 @@ end module module_radlw_kgb12   !
 module module_radlw_kgb13   !
 !........................................!
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radlw_parameters, only : NG13
 !
 implicit none
@@ -31365,7 +31365,7 @@ end module module_radlw_kgb13   !
 module module_radlw_kgb14   !
 !........................................!
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radlw_parameters, only : NG14
 !
 implicit none
@@ -31588,7 +31588,7 @@ end module module_radlw_kgb14   !
 module module_radlw_kgb15   !
 !........................................!
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radlw_parameters, only : NG15
 !
 implicit none
@@ -31992,7 +31992,7 @@ end module module_radlw_kgb15   !
 module module_radlw_kgb16   !
 !........................................!
 !
-use machine,                 only : kind_phys
+use ccpp_kinds,                 only : kind_phys
 use module_radlw_parameters, only : NG16
 !
 implicit none

@@ -23,7 +23,7 @@
         hflx_wat, evap_wat, ugrs1, vgrs1, hffac, ugrs, vgrs, tgrs, qgrs, huge,                                                 &
         gt0, gq0, gu0, gv0, errmsg, errflg)
 
-      use machine,                only : kind_phys
+      use ccpp_kinds,                only : kind_phys
       use GFS_PBL_generic_common, only : set_aerosol_tracer_index
 
       implicit none

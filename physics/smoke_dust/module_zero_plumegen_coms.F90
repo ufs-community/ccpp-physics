@@ -3,7 +3,7 @@
 
 module module_zero_plumegen_coms
 
-  use machine , only : kind_phys
+  use ccpp_kinds, only : kind_phys
 
   implicit none
   integer, parameter :: nkp = 200, ntime = 200

@@ -3,7 +3,7 @@
   name = GFS_surface_composites_post
   type = scheme
   dependencies_path = ../../
-  dependencies = hooks/machine.F,SFC_Layer/UFS/sfc_diff.f
+  dependencies = SFC_Layer/UFS/sfc_diff.f
 
 ########################################################################
 [ccpp-arg-table]

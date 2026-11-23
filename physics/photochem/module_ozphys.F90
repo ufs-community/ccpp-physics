@@ -35,7 +35,7 @@
 !!
 ! #########################################################################################
 module module_ozphys
-  use machine,  only : kind_phys
+  use ccpp_kinds,  only : kind_phys
   use funcphys, only : fpkapx
   implicit none
 

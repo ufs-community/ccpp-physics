@@ -22,7 +22,7 @@
      &                    f10m,u10m,v10m,t2m,q2m,dpt2m,errmsg,errflg    &
      &                   )
 !
-      use machine , only : kind_phys, kind_dbl_prec
+      use ccpp_kinds, only : kind_phys, kind_dbl_prec
       use funcphys, only : fpvs
       use physcons, only : con_t0c
       implicit none

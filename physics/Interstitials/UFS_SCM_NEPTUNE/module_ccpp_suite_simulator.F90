@@ -4,7 +4,7 @@
 
 module module_ccpp_suite_simulator
 
-  use machine, only : kind_phys
+  use ccpp_kinds, only : kind_phys
   implicit none
   
   public base_physics_process

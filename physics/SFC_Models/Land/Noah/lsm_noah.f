@@ -4,7 +4,7 @@
 !> This module contains the CCPP-compliant Noah land surface scheme driver.
       module lsm_noah
 
-      use machine,          only: kind_phys
+      use ccpp_kinds,          only: kind_phys
       use set_soilveg_mod,  only: set_soilveg
       use namelist_soilveg
       use sflx

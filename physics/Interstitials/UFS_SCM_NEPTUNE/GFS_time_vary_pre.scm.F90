@@ -70,7 +70,7 @@
         julian, yearlen, ipt, lprnt, lssav, lsswr, lslwr, solhr, tgrs, ugrs, vgrs, qgrs, &
         gt0 , gu0 , gv0 , gq0 , errmsg, errflg)
 
-        use machine,               only: kind_phys, kind_dbl_prec, kind_sngl_prec
+        use ccpp_kinds,               only: kind_phys, kind_dbl_prec, kind_sngl_prec
 
         implicit none
 

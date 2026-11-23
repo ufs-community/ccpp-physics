@@ -165,7 +165,7 @@ module module_radiation_clouds
 use module_iounitdef,    only : NICLTUN
 use module_radiation_cloud_overlap, only: cmp_dcorr_lgth, &
                                           get_alpha_exper
-use machine,             only : kind_phys
+use ccpp_kinds,             only : kind_phys
 !
 implicit   none
 !

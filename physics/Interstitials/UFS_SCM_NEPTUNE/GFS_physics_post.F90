@@ -7,7 +7,7 @@
 !!
 ! ###########################################################################################
 module GFS_physics_post
-  use machine, only : kind_phys, kind_dbl_prec, kind_sngl_prec
+  use ccpp_kinds, only : kind_phys, kind_dbl_prec, kind_sngl_prec
   implicit none
   public GFS_physics_post_run
 contains
