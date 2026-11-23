@@ -169,6 +169,7 @@ contains
 
        integer :: j, jj, k, kk, inc, jk, jkp, jl, iaz
        integer ::  ksrc, km2, km1, kp1, ktop
+       integer ::  ilaunch_col   ! per-column launch level
 !
 ! Kturb-part
 !
@@ -259,8 +260,8 @@ contains
         do k=1, levs
              if (aprsl(k) .lt. psrc ) exit
            enddo
-           ilaunch = max(k-1, 3)
-           ksrc= max(ilaunch, 3)
+           ilaunch_col = max(k-1, 3)
+           ksrc= max(ilaunch_col, 3)
 
        zngw(j) = zmet(j, ksrc)
 
