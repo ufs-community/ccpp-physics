@@ -13,6 +13,7 @@ module mp_tempo
       use module_mp_tempo_params, only : pi, lvap0, lfus, lsub, rv, rdry, cp, t0, r_uni, rho_w
       use module_mp_tempo_params, only : roverrv, eps, naccn0, naccn1, nain0, nain1
       use module_mp_tempo_params, only : initialize_parameters
+      use module_mp_tempo_params, only : demott_nuc_ssati
       use module_mp_tempo_cfgs, only : ty_tempo_cfgs
       use module_mp_tempo_driver, only : tempo_init, tempo_run, ty_tempo_driver_diags, tempo_aerosol_surface_emissions
       use module_get_aerosols_for_mp, only : get_niwfa
@@ -32,7 +33,7 @@ module mp_tempo
 !!
       subroutine mp_tempo_init(ncol, nlev, &
            imp_physics, imp_physics_tempo, &
-           mpirank, mpiroot, &
+           mpirank, mpiroot, input_nml_file, &
            tgrs, prsl, phil, con_pi, con_hvap, con_hfus, &
            con_rv, con_g, con_rd, con_cp, &
            con_t0c, con_rgas, rhowater, &
@@ -83,6 +84,8 @@ module mp_tempo
          ! MPI information
          integer,                   intent(in   ) :: mpirank
          integer,                   intent(in   ) :: mpiroot
+         ! Namelist contents, for the optional &tempo_nml group
+         character(len=*),          intent(in   ) :: input_nml_file(:)
          ! CCPP error handling
          character(len=*),          intent(  out) :: errmsg
          integer,                   intent(  out) :: errflg
@@ -121,6 +124,10 @@ module mp_tempo
             errflg = 1
             return
          end if
+
+         ! Optional user overrides of TEMPO parameters from &tempo_nml
+         call read_tempo_namelist(input_nml_file, mpirank, mpiroot, errmsg, errflg)
+         if (errflg /= 0) return
 
          ! Call tempo init (also sets initial default values of physical constants)
          if (mpirank==mpiroot) write(*,*) 'Calling tempo_init() with ltaerosol= ', is_aerosol_aware, &
@@ -304,6 +311,76 @@ module mp_tempo
 
       end subroutine mp_tempo_init
 
+
+!> Reads the optional &tempo_nml namelist group and overrides the corresponding
+!! TEMPO parameters. Parameters not listed in the group keep their TEMPO defaults,
+!! and the group itself is optional. Example (input.nml):
+!!
+!!   &tempo_nml
+!!     demott_nuc_ssati = 0.25
+!!   /
+      subroutine read_tempo_namelist(input_nml_file, mpirank, mpiroot, errmsg, errflg)
+
+         character(len=*),          intent(in   ) :: input_nml_file(:)
+         integer,                   intent(in   ) :: mpirank, mpiroot
+         character(len=*),          intent(  out) :: errmsg
+         integer,                   intent(  out) :: errflg
+
+         integer :: ios, n
+         logical :: found
+         character(len=256) :: iomsg
+
+         ! The group reads directly into the TEMPO module variables, which hold
+         ! the TEMPO defaults; entries not given in the namelist are unchanged
+         namelist /tempo_nml/ demott_nuc_ssati
+
+         errmsg = ''
+         errflg = 0
+
+         ! Look for the group first: compilers differ in the status returned when a
+         ! namelist group is missing from an internal file
+         found = .false.
+         do n = 1, size(input_nml_file)
+            if (index(lowercase(adjustl(input_nml_file(n))), '&tempo_nml') == 1) then
+               found = .true.
+               exit
+            end if
+         end do
+         if (.not. found) then
+            if (mpirank == mpiroot) write(*,*) 'mp_tempo_init: no &tempo_nml found, using TEMPO default parameters'
+            return
+         end if
+
+         read(input_nml_file, nml=tempo_nml, iostat=ios, iomsg=iomsg)
+         if (ios /= 0) then
+            write(errmsg,'(*(a))') 'mp_tempo_init: error reading &tempo_nml: ', trim(iomsg)
+            errflg = 1
+            return
+         end if
+
+         ! Sanity checks
+         if (demott_nuc_ssati < 0.0_kind_phys) then
+            write(errmsg,'(a,es12.4)') 'mp_tempo_init: &tempo_nml demott_nuc_ssati must be >= 0, got ', demott_nuc_ssati
+            errflg = 1
+            return
+         end if
+
+         if (mpirank == mpiroot) then
+            write(*,*) 'mp_tempo_init: TEMPO parameters after &tempo_nml:'
+            write(*,*) '  demott_nuc_ssati = ', demott_nuc_ssati
+         end if
+      end subroutine read_tempo_namelist
+
+      pure function lowercase(str) result(lower)
+         character(len=*), intent(in) :: str
+         character(len=len(str)) :: lower
+         integer :: i, ic
+         lower = str
+         do i = 1, len(str)
+            ic = iachar(str(i:i))
+            if (ic >= iachar('A') .and. ic <= iachar('Z')) lower(i:i) = achar(ic + 32)
+         end do
+      end function lowercase
 
 !> \section arg_table_mp_tempo_run Argument Table
 !! \htmlinclude mp_tempo_run.html
