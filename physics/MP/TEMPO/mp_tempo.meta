@@ -80,6 +80,14 @@
   dimensions = ()
   type = integer
   intent = in
+[input_nml_file]
+  standard_name = filename_of_internal_namelist
+  long_name = character string to store full namelist contents
+  units = none
+  dimensions = (number_of_lines_in_internal_namelist)
+  type = character
+  kind = len=*
+  intent = in
 [con_pi]
   standard_name = pi
   long_name = ratio of a circle's circumference to its diameter
@@ -549,6 +557,13 @@
   dimensions = ()
   type = logical
   intent = in
+[kdt]
+  standard_name = index_of_timestep
+  long_name = current forecast iteration
+  units = index
+  dimensions = ()
+  type = integer
+  intent = in
 [tgrs]
   standard_name = air_temperature
   long_name = model layer mean temperature
@@ -578,6 +593,14 @@
   long_name = layer mean vertical velocity
   units = Pa s-1
   dimensions = (horizontal_loop_extent,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = in
+[slmsk]
+  standard_name = area_type
+  long_name = landmask: sea/land/ice=0/1/2
+  units = flag
+  dimensions = (horizontal_loop_extent)
   type = real
   kind = kind_phys
   intent = in

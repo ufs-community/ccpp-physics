@@ -13,7 +13,8 @@
                imfshalcnv_samf, imfdeepcnv_samf, imfdeepcnv_c3,         &
                imfshalcnv_c3,progsigma,progomega,                       &
                first_time_step, restart,                                &
-               satmedmf, trans_trac, do_shoc, ltaerosol, ntrac, ntcw,   &
+               satmedmf, trans_trac, do_shoc, ltaerosol, mraerosol,     &
+               ntrac, ntcw,                                             &
                ntiw, ntclamt, ntrw, ntsw, ntrnc, ntsnc, ntgl, ntgnc,    &
                xlon, xlat, gt0, gq0, sigmain,sigmaout,qmicro,           &
                omegain,omegaout,imp_physics, imp_physics_mg,            &
@@ -35,7 +36,7 @@
         imp_physics_gfdl, imp_physics_thompson, imp_physics_wsm6,imp_physics_fer_hires,  &
         imp_physics_nssl, imp_physics_tempo, me
       integer,              intent(in   ), dimension(:)     :: islmsk, kpbl, kinver
-      logical,              intent(in   )                   :: cscnv, satmedmf, trans_trac, do_shoc, ltaerosol, progsigma
+      logical,              intent(in   )                   :: cscnv, satmedmf, trans_trac, do_shoc, ltaerosol, mraerosol, progsigma
       logical,              intent(in   )                   :: first_time_step, restart, progomega
       integer,              intent(in   )                   :: imfshalcnv, imfdeepcnv, imfshalcnv_samf,imfdeepcnv_samf
       integer,              intent(in   )                   :: imfshalcnv_c3,imfdeepcnv_c3
@@ -196,7 +197,7 @@
             save_tcp(i,k) = gt0(i,k)
           enddo
         enddo
-        if(ltaerosol) then
+        if(ltaerosol .or. mraerosol) then
           save_qi(:,:) = clw(:,:,1)
           save_qc(:,:) = clw(:,:,2)
         else

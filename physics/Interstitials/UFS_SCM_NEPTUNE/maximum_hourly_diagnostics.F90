@@ -28,6 +28,7 @@ contains
    subroutine maximum_hourly_diagnostics_run(im, levs, reset, lradar, imp_physics,                 &
                                              imp_physics_gfdl, imp_physics_thompson,               &
                                              imp_physics_fer_hires, imp_physics_nssl,              &
+                                             imp_physics_tempo,                                    &
                                              con_g, phil,                                          &
                                              gt0, refl_10cm, refdmax, refdmax263k, u10m, v10m,     &
                                              u10max, v10max, spd10max, pgr, t2m, q2m, t02max,      &
@@ -40,7 +41,7 @@ contains
        integer, intent(in) :: im, levs, kdt
        logical, intent(in) :: reset, lradar, lightning_threat
        integer, intent(in) :: imp_physics, imp_physics_gfdl, imp_physics_thompson, imp_physics_fer_hires, &
-                              imp_physics_nssl
+                              imp_physics_nssl, imp_physics_tempo
        real(kind_phys), intent(in   ) :: con_g
        real(kind_phys), intent(in   ) :: con_rd
        real(kind_phys), intent(in   ) :: phil(:,:)
@@ -89,6 +90,7 @@ contains
 !Calculate hourly max 1-km agl and -10C reflectivity
        if (lradar .and. (imp_physics == imp_physics_gfdl .or. &
           imp_physics == imp_physics_thompson .or.    &
+          imp_physics == imp_physics_tempo .or.       &
           imp_physics == imp_physics_fer_hires .or.   &
           imp_physics == imp_physics_nssl )) then
           allocate(refd(im))

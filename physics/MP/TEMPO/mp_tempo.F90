@@ -13,6 +13,7 @@ module mp_tempo
       use module_mp_tempo_params, only : pi, lvap0, lfus, lsub, rv, rdry, cp, t0, r_uni, rho_w
       use module_mp_tempo_params, only : roverrv, eps, naccn0, naccn1, nain0, nain1
       use module_mp_tempo_params, only : initialize_parameters
+      use module_mp_tempo_params, only : demott_nuc_ssati
       use module_mp_tempo_cfgs, only : ty_tempo_cfgs
       use module_mp_tempo_driver, only : tempo_init, tempo_run, ty_tempo_driver_diags, tempo_aerosol_surface_emissions
       use module_get_aerosols_for_mp, only : get_niwfa
@@ -32,7 +33,7 @@ module mp_tempo
 !!
       subroutine mp_tempo_init(ncol, nlev, &
            imp_physics, imp_physics_tempo, &
-           mpirank, mpiroot, &
+           mpirank, mpiroot, input_nml_file, &
            tgrs, prsl, phil, con_pi, con_hvap, con_hfus, &
            con_rv, con_g, con_rd, con_cp, &
            con_t0c, con_rgas, rhowater, &
@@ -83,6 +84,8 @@ module mp_tempo
          ! MPI information
          integer,                   intent(in   ) :: mpirank
          integer,                   intent(in   ) :: mpiroot
+         ! Namelist contents, for the optional &tempo_nml group
+         character(len=*),          intent(in   ) :: input_nml_file(:)
          ! CCPP error handling
          character(len=*),          intent(  out) :: errmsg
          integer,                   intent(  out) :: errflg
@@ -122,6 +125,10 @@ module mp_tempo
             return
          end if
 
+         ! Optional user overrides of TEMPO parameters from &tempo_nml
+         call read_tempo_namelist(input_nml_file, mpirank, mpiroot, errmsg, errflg)
+         if (errflg /= 0) return
+
          ! Call tempo init (also sets initial default values of physical constants)
          if (mpirank==mpiroot) write(*,*) 'Calling tempo_init() with ltaerosol= ', is_aerosol_aware, &
               ' lthailaware= ', is_hail_aware, ' sedi_semi= ', semi_sedi, ' do_sat_adj= ', do_sat_adj
@@ -148,6 +155,13 @@ module mp_tempo
          ! Although initialize_parameters() is already called during the call to tempo_init() above, it needs to be called again with the host-set constants to recalculate dependent parameters
          call initialize_parameters()
 
+         ! For restart runs, the init is done here. Return before modifying the
+         ! state so that restarted runs reproduce continuous runs.
+         if (restart) then
+           is_initialized = .true.
+           return
+         end if
+
          ! Ensure non-negative mass mixing ratios of all water variables
          where(spechum<0) spechum = 1.0e-10     ! gthompsn, spechum should *never* be identically zero.
          where(qc<0)      qc = 0.0
@@ -160,12 +174,6 @@ module mp_tempo
          !> - Also, hydrometeor variables are mass or number mixing ratio
          !> - either kg of species per kg of dry air, or per kg of (dry + vapor).
          if (merra2_aerosol_aware) call get_niwfa(aerfld, nifa, nwfa, ncol, nlev) 
-
-         ! For restart runs, the init is done here
-         if (restart) then
-           is_initialized = .true.
-           return
-         end if
 
          qv = spechum/(1.0_kind_phys-spechum)
          
@@ -186,7 +194,7 @@ module mp_tempo
          end if
 
          ! Density of moist air in kg m-3 and inverse density of air
-         rho = eps*prsl/(con_rd*tgrs*(qv+eps))
+         rho = roverrv*prsl/(con_rd*tgrs*(qv+roverrv))
 
          ! Ensure we have 1st guess ice number where mass non-zero but no number.
          where(qi == 0.0) ni = 0.0
@@ -304,6 +312,76 @@ module mp_tempo
       end subroutine mp_tempo_init
 
 
+!> Reads the optional &tempo_nml namelist group and overrides the corresponding
+!! TEMPO parameters. Parameters not listed in the group keep their TEMPO defaults,
+!! and the group itself is optional. Example (input.nml):
+!!
+!!   &tempo_nml
+!!     demott_nuc_ssati = 0.25
+!!   /
+      subroutine read_tempo_namelist(input_nml_file, mpirank, mpiroot, errmsg, errflg)
+
+         character(len=*),          intent(in   ) :: input_nml_file(:)
+         integer,                   intent(in   ) :: mpirank, mpiroot
+         character(len=*),          intent(  out) :: errmsg
+         integer,                   intent(  out) :: errflg
+
+         integer :: ios, n
+         logical :: found
+         character(len=256) :: iomsg
+
+         ! The group reads directly into the TEMPO module variables, which hold
+         ! the TEMPO defaults; entries not given in the namelist are unchanged
+         namelist /tempo_nml/ demott_nuc_ssati
+
+         errmsg = ''
+         errflg = 0
+
+         ! Look for the group first: compilers differ in the status returned when a
+         ! namelist group is missing from an internal file
+         found = .false.
+         do n = 1, size(input_nml_file)
+            if (index(lowercase(adjustl(input_nml_file(n))), '&tempo_nml') == 1) then
+               found = .true.
+               exit
+            end if
+         end do
+         if (.not. found) then
+            if (mpirank == mpiroot) write(*,*) 'mp_tempo_init: no &tempo_nml found, using TEMPO default parameters'
+            return
+         end if
+
+         read(input_nml_file, nml=tempo_nml, iostat=ios, iomsg=iomsg)
+         if (ios /= 0) then
+            write(errmsg,'(*(a))') 'mp_tempo_init: error reading &tempo_nml: ', trim(iomsg)
+            errflg = 1
+            return
+         end if
+
+         ! Sanity checks
+         if (demott_nuc_ssati < 0.0_kind_phys) then
+            write(errmsg,'(a,es12.4)') 'mp_tempo_init: &tempo_nml demott_nuc_ssati must be >= 0, got ', demott_nuc_ssati
+            errflg = 1
+            return
+         end if
+
+         if (mpirank == mpiroot) then
+            write(*,*) 'mp_tempo_init: TEMPO parameters after &tempo_nml:'
+            write(*,*) '  demott_nuc_ssati = ', demott_nuc_ssati
+         end if
+      end subroutine read_tempo_namelist
+
+      pure function lowercase(str) result(lower)
+         character(len=*), intent(in) :: str
+         character(len=len(str)) :: lower
+         integer :: i, ic
+         lower = str
+         do i = 1, len(str)
+            ic = iachar(str(i:i))
+            if (ic >= iachar('A') .and. ic <= iachar('Z')) lower(i:i) = achar(ic + 32)
+         end do
+      end function lowercase
+
 !> \section arg_table_mp_tempo_run Argument Table
 !! \htmlinclude mp_tempo_run.html
 !!
@@ -313,8 +391,8 @@ module mp_tempo
         convert_dry_rho, dtp, dt_inner, &
         spechum, qc, qr, qi, qs, qg, ni, nr, &
         nc, nwfa, nifa, nwfa2d, nifa2d, ng, volg, aerfld, &
-        con_g, first_time_step, &
-        tgrs, prsl, phii, omega, &
+        con_g, first_time_step, kdt, &
+        tgrs, prsl, phii, omega, slmsk, &
         is_aerosol_aware, is_hail_aware, merra2_aerosol_aware, &
         prcp, rain, graupel, ice, snow, sr, refl_10cm, &
         do_radar_ref, &
@@ -364,9 +442,11 @@ module mp_tempo
          real(kind_phys),           intent(in   ) :: prsl(:,:)
          real(kind_phys),           intent(in   ) :: phii(:,:)
          real(kind_phys),           intent(in   ) :: omega(:,:)
+         real(kind_phys),           intent(in   ) :: slmsk(:)
          real(kind_phys),           intent(in   ) :: dtp
          real(kind=kind_phys),      intent(in   ) :: dt_inner
          logical,                   intent(in   ) :: first_time_step
+         integer,                   intent(in   ) :: kdt
 
          real(kind_phys),           intent(  out) :: ten_q(:,:,:)
          real(kind_phys),           intent(  out) :: ten_t(:,:)
@@ -405,6 +485,8 @@ module mp_tempo
          real(kind_phys) :: dz(1:ncol,1:nlev)               !< m
          real(kind_phys) :: xnwfa(1:ncol,1:nlev,1)
          real(kind_phys) :: xnwfa2d(1:ncol,1)
+         ! Land mask (sea/land/ice=0/1/2) for single-moment cloud number
+         integer :: land(1:ncol,1)
          
          !temporary new states used to calculate tendencies
          real(kind_phys) :: new_spechum(1:ncol,1:nlev)
@@ -427,7 +509,7 @@ module mp_tempo
          integer         :: ids,ide, jds,jde, kds,kde, &
                             ims,ime, jms,jme, kms,kme, &
                             its,ite, jts,jte, kts,kte
-         integer :: itimestep = 1
+         integer :: itimestep
          
          ! Initialize the CCPP error handling variables
          errmsg = ''
@@ -494,7 +576,6 @@ module mp_tempo
          
          ndt = max(nint(dtp/dt_inner), 1)
          dt = dtp/ndt
-         if (dt <= dt_inner) dt = dt_inner
 
         if (merra2_aerosol_aware) call get_niwfa(aerfld, new_nifa, new_nwfa, ncol, nlev)
 
@@ -521,6 +602,8 @@ module mp_tempo
               new_nifa = new_nifa/(1.0_kind_phys-new_spechum)
            end if
          end if
+
+         land(:,1) = nint(slmsk(:))
 
          !> - Layer width in m from geopotential in m2 s-2
          dz = (phii(:,2:nlev+1) - phii(:,1:nlev)) / con_g
@@ -556,7 +639,9 @@ module mp_tempo
 
             if (is_aerosol_aware) then
               if (present(nwfa) .and. present(nwfa2d)) then
-                xnwfa(:,:,1) = nwfa(:,:)
+                ! use the current state (updated by previous inner iterations and
+                ! converted to dry if convert_dry_rho), not the original input
+                xnwfa(:,:,1) = new_nwfa(:,:)
                 xnwfa2d(:,1) = nwfa2d(:)
                 call tempo_aerosol_surface_emissions(dt=dt, nwfa=xnwfa, nwfa2d=xnwfa2d, ims=ims, ime=ime, &
                       jms=jms, jme=jme, kms=kms, kme=kme, kts=kts)
@@ -564,12 +649,19 @@ module mp_tempo
               endif
             endif
 
+            ! Count of tempo_run calls (one per inner iteration), useful for debugging.
+            ! Derived from the model time step index rather than a saved counter so it is
+            ! thread safe and the same for every block. TEMPO treats itimestep == 1 as the
+            ! first model step (one-time aerosol and graupel initialization), which is only
+            ! the first inner iteration of the first physics step.
+            itimestep = (kdt - 1)*ndt + it
+
             call tempo_run(tempo_cfgs=tempo_cfgs, &
                  dt=dt, itimestep=itimestep , &
                  qv=qv, qc=new_qc, qr=new_qr, qi=new_qi, qs=new_qs, qg=new_qg, ni=new_ni, nr=new_nr, &
                  nc=new_nc, nwfa=new_nwfa, nifa=new_nifa, &
                  ng=new_ng, qb=new_volg, &
-                 w=w, t=new_tgrs, p=prsl, dz=dz, &
+                 w=w, t=new_tgrs, p=prsl, dz=dz, land_input=land, &
                  ids = ids , ide = ide , jds = jds , jde = jde , kds = kds , kde = kde , &
                  ims = ims , ime = ime , jms = jms , jme = jme , kms = kms , kme = kme , &
                  its = its , ite = ite , jts = jts , jte = jte , kts = kts , kte = kte , &
@@ -590,8 +682,6 @@ module mp_tempo
 
          if (do_radar_ref) refl_10cm = tempo_driver_diags%refl10cm(:,:,1)
 
-         itimestep = itimestep + 1
-         
          if (errflg/=0) return
 
          !> - Convert water vapor mixing ratio back to specific humidity
@@ -609,7 +699,7 @@ module mp_tempo
               new_ng = new_ng/(1.0_kind_phys+qv)
               new_volg = new_volg/(1.0_kind_phys+qv)
            endif
-           if (is_aerosol_aware) then
+           if (is_aerosol_aware .or. merra2_aerosol_aware) then
               new_nc = new_nc/(1.0_kind_phys+qv)
               new_nwfa = new_nwfa/(1.0_kind_phys+qv)
               new_nifa = new_nifa/(1.0_kind_phys+qv)
@@ -631,7 +721,7 @@ module mp_tempo
            
            deallocate (new_ng, new_volg)
          end if
-         if (is_aerosol_aware) then
+         if (is_aerosol_aware .or. merra2_aerosol_aware) then
            dnc = (new_nc - nc)/dtp
            dnwfa = (new_nwfa - nwfa)/dtp
            dnifa = (new_nifa - nifa)/dtp
