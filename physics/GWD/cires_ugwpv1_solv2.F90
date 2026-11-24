@@ -96,7 +96,7 @@ contains
       real(kind=kind_phys)              :: tauabs(im,levs)    !
       real(kind=kind_phys)              :: wrms(im,levs)      !
       real(kind=kind_phys)              :: trms(im,levs)      !
-                                          
+
       real(kind=kind_phys)              :: zwrms(nwav,nazd), wrk1(levs), wrk2(levs)
       real(kind=kind_phys)              :: atrms(nazd, levs),awrms(nazd, levs), akzw(nwav,nazd, levs+1)
 !
@@ -107,8 +107,8 @@ contains
       real(kind=kind_phys)              :: ui(nazd, levs+1)     ! azimuthal wind
 
       real(kind=kind_phys)              :: fden_bn(levs+1)         ! density/brent
-      real(kind=kind_phys)              :: flux  (nwav, nazd) ,   flux_m  (nwav, nazd)                
-!   
+      real(kind=kind_phys)              :: flux  (nwav, nazd) ,   flux_m  (nwav, nazd)
+!
        real(kind=kind_phys)  :: bn(levs+1)                    ! interface BV-frequency
        real(kind=kind_phys)  :: bn2(levs+1)                   ! interface BV*BV-frequency
        real(kind=kind_phys)  :: rhoint(levs+1)                ! interface density
@@ -169,6 +169,7 @@ contains
 
        integer :: j, jj, k, kk, inc, jk, jkp, jl, iaz
        integer ::  ksrc, km2, km1, kp1, ktop
+       integer ::  ilaunch_col   ! per-column launch level
 !
 ! Kturb-part
 !
@@ -206,10 +207,10 @@ contains
 !          print *,  minval(prsl), maxval(prsl), ' min-max-Pmid '
 !          print *,  minval(prsi), maxval(prsi), ' min-max-Pint '
 !          print *,  minval(zmet), maxval(zmet), ' min-max-Zmid '
-!          print *,  minval(zmeti), maxval(zmeti), ' min-max-Zint ' 
+!          print *,  minval(zmeti), maxval(zmeti), ' min-max-Zint '
 !          print *,  minval(prslk), maxval(prslk), ' min-max-Exner '
 !          print *,  minval(tau_ngw), maxval(tau_ngw), ' min-max-taungw '
-!          print *,      tau_min,  ' tau_min ',   tamp_mpa, ' tamp_mpa '                                
+!          print *,      tau_min,  ' tau_min ',   tamp_mpa, ' tamp_mpa '
 !
 !    endif
 
@@ -251,7 +252,7 @@ contains
      ucrit3 = ucrit_max*ucrit_max*ucrit_max
 !
 ! ngw-fluxes at all gridpoints (with tau_min at least)
-!          
+!
      aprsl(1:levs) = prsl(jl,1:levs)
 !
 ! ksrc-define "aprsi(1:levs+1)   redefine "ilaunch"
@@ -259,8 +260,8 @@ contains
         do k=1, levs
              if (aprsl(k) .lt. psrc ) exit
            enddo
-           ilaunch = max(k-1, 3)
-           ksrc= max(ilaunch, 3)
+           ilaunch_col = max(k-1, 3)
+           ksrc= max(ilaunch_col, 3)
 
        zngw(j) = zmet(j, ksrc)
 
@@ -280,7 +281,7 @@ contains
 
      rho_src = aprsl(ksrc)*rdi/atm(ksrc)
          taub_ch = max(tau_ngw(jl), tau_min)
-         taub_src = taub_ch            
+         taub_src = taub_ch
 
 
        sigu2  = taub_src/rho_src/v_kxw * zms
@@ -322,7 +323,7 @@ contains
 
        wrk3(jk)= 1./zdelp/rhomid(jk)                     ! 1/rho_mid(k)/[Z_int(k+1)-Z_int(k)]
            irhodz_mid(jk) = rdtp*zdelp*rhomid(jk)/rho_src
-! 
+!
 !
 ! diagnostics -Kzz above PBL
 !
@@ -375,18 +376,18 @@ contains
        bvi3 = bvi2*bvi; bvi4 = bvi2 * bvi2; rcms = zms/bvi
 !
 ! project winds at ksrc
-!               
+!
         do iaz=1, nazd
            ul(iaz) = zcosang(iaz) *uint(ksrc) + zsinang(iaz) *vint(ksrc)
         enddo
 !
 
-          do jk=ksrc, ktop    
+          do jk=ksrc, ktop
         cstar(jk) = bn(jk)/zms
         cstar2(jk) = cstar(jk)*cstar(jk)
 
         fden_lsat(jk) = rhoint(jk)/bn(jk)*v_kxw*Linsat2
-       
+
            do iaz=1, nazd
                zu = zcosang(iaz)*uint(jk) + zsinang(iaz)*vint(jk)
                ui(iaz, jk) =  zu                                     !- ul(iaz)*0.
@@ -413,8 +414,8 @@ contains
 ! fsat  = rstar*(zcin*zcin) * taub_src / SN * [rho/rho_src *N_src/N]
 !
        fpu(1,ksrc) = fpu(1,ksrc) + flux(inc,1)*zdci(inc)    ! dc/cstar = dim-less
-             
-           do iaz=1,nazd   
+
+           do iaz=1,nazd
              akzw(inc, iaz, ksrc) = bvi*rci(inc)
        enddo
 
@@ -437,22 +438,22 @@ contains
      snorm_ener =  0.
        do inc=1,nwav
      zcin  = zci(inc)*rstar
-                
+
      ze2 = zcin /(1.+ zcin**nslope3)
 
      snorm_ener = snorm_ener + ze2*zdci(inc)*rstar  !dim-less
-         flux(inc,1) = ze2 * zcin           
+         flux(inc,1) = ze2 * zcin
        enddo
 
      ekin_norm = 1./snorm_ener
-     
+
 !   taub_src = sigu2 * rho_src * [v_kxw / zms ]
 !   sigu2  = taub_src*zms/(rho_src/v_kxw)
 !   ze1 = sigu2*ks*dens/Ns = taub*zms/Ns
 
         ze1 = taub_src*zms/bvi * ekin_norm
             taub_src = 0.
-            
+
         do inc=1,nwav
        flux(inc,1) = ze1* flux(inc,1)
        taub_src = taub_src + flux(inc,1)*zdci(inc)
@@ -461,7 +462,7 @@ contains
       do jk=ksrc, ktop
          fden_bnen(jk) = rhoint(jk) / bn(jk) *ze1    ! mult on => sigu2(z)*cdf2 => flux_sat
       enddo
-             
+
       endif
 !
       do iaz=1,nazd
@@ -487,7 +488,7 @@ contains
 
        if (idebug_gwrms == 1) then
       pwrms =0.
-      ptrms =0.      
+      ptrms =0.
       tx1 = real(nazd)/rhoint(ksrc)*rv_kxw
       ze2 = wrk2(ksrc)    !  (bvi*atm(ksrc)*rgrav)**2
      do inc=1, nwav
@@ -497,7 +498,7 @@ contains
       ptrms = ptrms + ze1 * ze2
      enddo
        wrms(jl, ksrc) = pwrms
-       trms(jl, ksrc) = ptrms 
+       trms(jl, ksrc) = ptrms
         endif
 
 !     --------------------------------
@@ -633,7 +634,7 @@ contains
        if (ener_norm == 1) then
 
 ! spectral saturation limit
-      
+
               if (ener_lsat == 0)  fluxs= fden_bnen(jk)*cdf2*wave_act(inc,iaz)*sig_u2az_m(iaz)
 
 ! single mode saturation limit: [rho(z)/bn(z)*kx *linsat2* cd^3] /dc
@@ -713,7 +714,7 @@ contains
 !
               dfdz_v(iaz, jk) = dfdz_v(iaz,jk)  +  zdelp    ! +cool  !heating & simple cooling  < 0
               dfdz_heat(iaz, jk) = dfdz_heat(iaz,jk) + zdelp      ! heating -only      > 0
-            endif !wave_act(inc,iaz) == 1) 
+            endif !wave_act(inc,iaz) == 1)
 !
           enddo      ! wave-inc-loop
 
@@ -724,17 +725,17 @@ contains
 !
         if (idebug_gwrms == 1) then
        pwrms =0.
-       ptrms =0.                
+       ptrms =0.
      do inc=1, nwav
       if (wave_act(inc,iaz) > 0.) then
            v_kzw =akzw(inc, iaz, jk)
            ze1 = flux(inc,iaz)*v_kzw*zdci(inc)*wrk1(jk)
        pwrms = pwrms + ze1
        ptrms = ptrms + ze1*wrk2(jk)
-      endif 
+      endif
      enddo
            Awrms(iaz, jk) = pwrms
-       Atrms(iaz, jk) = ptrms 
+       Atrms(iaz, jk) = ptrms
     endif
 
 ! --------------
@@ -818,7 +819,7 @@ contains
            ze2 = pdtdt(jl,jk)
            if (abs(ze2) >= max_eps ) pdtdt(jl,jk) = sign(max_eps, ze2)
 
-           dked(jl,jk) =  dked(jl,jk)/bn2(jk)         
+           dked(jl,jk) =  dked(jl,jk)/bn2(jk)
            ze1  = max(dked_min, dked(jl,jk))
            dked(jl,jk)  = min(dked_max, ze1)
        qmid(jk) = pdtdt(j,jk)
@@ -830,7 +831,7 @@ contains
 !               can check "stability" in the column and "add" ktur-estimation
 !               to suppress instability as needed so dked = dked_gw + ktur_ric
 !----------------------------------------------------------------------------------
-   
+
     dktur(1:levs) = dked(jl,1:levs)
 !
        do ist= 1, nstdif
@@ -901,7 +902,7 @@ contains
         dktur(jk) = ktur
 !
 ! update of dked = dked_gw  + k_turb_mf
-!                
+!
         dked(jl, jk) = dked(jl, jk) +ktur
 
       enddo
@@ -915,7 +916,7 @@ contains
           ze1 = min(.5*(dktur(jk) +dktur(jk-1)), dturb_max)
           kvint(jk) = kvint(jk) + ze1
 !          ktint(jk) = ktint(jk) + ze1*iPr_ktgw
-        enddo 
+        enddo
         kvint(km1) = kvint(ksrc)
         kvint(ktop) = kvint(levs)
 
@@ -930,7 +931,7 @@ contains
 
         ktur = kvint(jk)  *rhoint(jk)   * dzmetf
         kturp =Kvint(jk+1)*rhoint(jk+1) * dzmetf
-                
+
         Adif(jk) = ktur  * dzmetm
         Cdif(jk) = kturp * dzmetp
         ApC = adif(jk)+cdif(jk)
@@ -955,7 +956,7 @@ contains
           ze1 = 1./dtdif
 
         do ist= 1, nstab
-              do k=ksrc,levs-1  
+              do k=ksrc,levs-1
             Bdif   = ze1 - ACdif(k)
         Bt_dif = ze1 - ACdif(k)* iPr_ktgw                                  ! ipr_Ktgw = 1./Pr <1
             unew(k) = uold(k)*Bdif  + uold(k-1)*Adif(k) + uold(k+1)*Cdif(k)
@@ -977,7 +978,7 @@ contains
 ! compute "smoothed" tendencies by molecular + GW-eddy diffusions
 !
              do k=ksrc,levs-1
-!         
+!
 ! final updates of tendencies and diffusion
 !
           ze2 = rdtp*(uold(k) - aum(k))
@@ -1032,7 +1033,7 @@ contains
 !        print *, ' ugwp -heating rates '
        endif
 !=================================
-       return       
+       return
      end subroutine cires_ugwpv1_ngw_solv2
 
 
