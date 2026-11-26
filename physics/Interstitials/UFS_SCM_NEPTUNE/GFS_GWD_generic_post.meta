@@ -245,6 +245,30 @@
   dimensions = ()
   type = logical
   intent = in
+[dudt_gw]
+  standard_name = tendency_of_x_wind_due_to_gravity_wave_drag
+  long_name = zonal wind tendency due to all GWs
+  units = m s-2
+  dimensions = (horizontal_dimension,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = out
+[dvdt_gw]
+  standard_name = tendency_of_y_wind_due_to_gravity_wave_drag
+  long_name = meridional wind tendency due to all GWs
+  units = m s-2
+  dimensions = (horizontal_dimension,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = out
+[dtdt_gw]
+  standard_name = tendency_of_air_temperature_due_to_gravity_wave_drag
+  long_name = air temperature tendency due to all GWs
+  units = K s-1
+  dimensions = (horizontal_dimension,vertical_layer_dimension)
+  type = real
+  kind = kind_phys
+  intent = out
 [errmsg]
   standard_name = ccpp_error_message
   long_name = error message for error handling in CCPP
