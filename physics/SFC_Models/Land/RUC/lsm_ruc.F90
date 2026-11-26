@@ -4,7 +4,7 @@
 !> This module contain the RUC land surface model driver
 module lsm_ruc
 
-        use machine,           only: kind_phys, kind_dbl_prec
+        use ccpp_kinds,           only: kind_phys, kind_dbl_prec
 
         use namelist_soilveg_ruc
         use set_soilveg_ruc_mod,  only: set_soilveg_ruc

@@ -43,7 +43,7 @@
                                 errmsg, errflg,                     &
                                 Land_IAU_Control, Land_IAU_Data, Land_IAU_state)
 
-        use machine,          only: kind_phys
+        use ccpp_kinds,          only: kind_phys
         use set_soilveg_mod,  only: set_soilveg
         use namelist_soilveg
         use noahmp_tables
@@ -147,7 +147,7 @@ subroutine noahmpdrv_timestep_init (itime, fhour, delt, km,  ncols,         &
                                     stc, slc, smc, errmsg, errflg,   &      
                                     con_g, con_t0c, con_hfus)  
    
-  use machine,                 only: kind_phys  
+  use ccpp_kinds,                 only: kind_phys  
   use namelist_soilveg
   ! use set_soilveg_snippet_mod, only: set_soilveg_noahmp
   use noahmp_tables
@@ -339,7 +339,7 @@ end subroutine noahmpdrv_timestep_init
 !!
   subroutine noahmpdrv_final (Land_IAU_Control, Land_IAU_Data, Land_IAU_State, errmsg, errflg)          
    
-    use machine,          only: kind_phys 
+    use ccpp_kinds,          only: kind_phys 
     implicit none
     type(land_iau_control_type)            , intent(in   ) :: Land_IAU_Control
     type(land_iau_external_data_type)      , intent(inout) :: Land_IAU_Data
@@ -453,7 +453,7 @@ end subroutine noahmpdrv_timestep_init
       spec_humid_sfc_bare_ccpp                                   &
       )
 
-  use machine ,   only : kind_phys
+  use ccpp_kinds,   only : kind_phys
   use funcphys,   only : fpvs
 
   use module_sf_noahmplsm,   only : gfs_stability
@@ -1934,7 +1934,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
 ! ----------------------------------------------------------------------
 ! subroutine penman
 ! ----------------------------------------------------------------------
-      use machine, only: kind_phys
+      use ccpp_kinds, only: kind_phys
       implicit none
       logical, intent(in)     :: snowng, frzgra
       real(kind=kind_phys), intent(in)        :: ch, dqsdt2,fdown,prcp,ffrozp,          &

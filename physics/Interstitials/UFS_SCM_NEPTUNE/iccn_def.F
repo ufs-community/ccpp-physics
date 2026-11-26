@@ -4,7 +4,7 @@
 !>\ingroup mod_GFS_phys_time_vary
 !! This module defines IN and CCN arrays.
       module iccn_def
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       implicit none
       
       integer, parameter :: kcipl=32, latscip=192, lonscip=288

@@ -21,7 +21,7 @@
 !! and Gu et al. (2015) \cite Gu2015 . 
 MODULE clm_lake
   
-    use machine,               only: kind_phys, kind_dbl_prec
+    use ccpp_kinds,               only: kind_phys, kind_dbl_prec
 
     implicit none 
 

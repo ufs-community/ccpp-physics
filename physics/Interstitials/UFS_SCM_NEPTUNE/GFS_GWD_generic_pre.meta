@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = GFS_GWD_generic_pre
   type = scheme
-  dependencies = ../../hooks/machine.F
+  dependencies =
 
 ########################################################################
 [ccpp-arg-table]

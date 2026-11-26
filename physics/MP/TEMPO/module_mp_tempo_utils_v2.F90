@@ -2,7 +2,7 @@
 !=================================================================================================================
 module module_mp_tempo_utils_v2
 
-    use machine, only: wp => kind_phys, sp => kind_sngl_prec, dp => kind_dbl_prec
+    use ccpp_kinds, only: wp => kind_phys, sp => kind_sngl_prec, dp => kind_dbl_prec
     use module_mp_tempo_params, only: pi, rho_i, am_r
 
     implicit none

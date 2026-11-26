@@ -3,7 +3,7 @@
 
 module module_add_emiss_burn
 !RAR: significantly modified for the new BB emissions
-  use machine ,        only : kind_phys
+  use ccpp_kinds,        only : kind_phys
   use rrfs_smoke_config
 CONTAINS
   subroutine add_emis_burn(dtstep,dz8w,rho_phy,pi,ebb_min,          &

@@ -99,7 +99,7 @@
      &     mp_phys_mg,clam,c0,c1,betal,betas,evfact,evfactl,pgcon,      &
      &     errmsg,errflg)
 !
-      use machine , only : kind_phys
+      use ccpp_kinds, only : kind_phys
       use funcphys , only : fpvs
 !      use physcons, grav => con_g, cp => con_cp, hvap => con_hvap       &
 !     &,             rv => con_rv, fv => con_fvirt, t0c => con_t0c       &

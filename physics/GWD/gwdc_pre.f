@@ -13,7 +13,7 @@
      &  levs, kbot, ktop, dtp, gt0, gt0_init, del, cumabs,              &
      &  errmsg, errflg )
 
-      use machine, only : kind_phys
+      use ccpp_kinds, only : kind_phys
       implicit none
 
       integer, intent(in) :: im, levs

@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = GFS_surface_loop_control_part1
   type = scheme
-  dependencies = ../../hooks/machine.F
+  dependencies =
 
 ########################################################################
 [ccpp-arg-table]

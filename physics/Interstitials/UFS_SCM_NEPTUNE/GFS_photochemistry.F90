@@ -2,7 +2,7 @@
 !!
 
 module GFS_photochemistry
-  use machine,        only: kind_phys
+  use ccpp_kinds,        only: kind_phys
   use module_ozphys,  only: ty_ozphys
   use module_h2ophys, only: ty_h2ophys
   implicit none

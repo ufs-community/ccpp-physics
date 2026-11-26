@@ -13,7 +13,7 @@ module cs_conv
 !! Author: Minoru Chikira
 !---------------------------------------------------------------------------------
 !
-  use machine ,   only : kind_phys
+  use ccpp_kinds,   only : kind_phys
   use physcons,   only : cp    => con_cp,   grav   => con_g,                   &
      &                   rair  => con_rd,   rvap   => con_rv,                  &
      &                   cliq  => con_cliq, cvap   => con_cvap,                &

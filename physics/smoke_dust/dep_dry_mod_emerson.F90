@@ -7,7 +7,7 @@
 
 module dep_dry_emerson_mod
 
-  use machine ,        only : kind_phys
+  use ccpp_kinds,        only : kind_phys
   use dep_data_mod     ! JLS
   use rrfs_smoke_config, only : num_chem, p_smoke, p_dust_1, p_coarse_pm, n_dbg_lines
 
