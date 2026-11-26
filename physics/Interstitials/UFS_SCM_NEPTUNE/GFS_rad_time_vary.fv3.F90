@@ -21,7 +21,7 @@
               errmsg, errflg)
 
          use mersenne_twister,          only: random_setseed, random_index, random_stat
-         use ccpp_kinds,                   only: kind_phys
+         use machine,                   only: kind_phys
          use radcons,                   only: qmin, con_100
 
          implicit none

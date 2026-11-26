@@ -54,7 +54,7 @@
      &                          gen_tend,ldiag3d,ntqv,ten_t,ten_u,
      &                          ten_v,errmsg,errflg)
 !
-      use ccpp_kinds, only : kind_phys
+      use machine  , only : kind_phys
       use funcphys , only : fpvs
 
       implicit none

@@ -60,7 +60,7 @@
 !  OUTPUT
 !        A, B, C AS AUGMENTED BY TENDENCY DUE TO RAYLEIGH FRICTION
 !   ********************************************************************
-      USE CCPP_KINDS, ONLY : kind_phys
+      USE MACHINE , ONLY : kind_phys
       implicit none
 !
       logical,intent(in)                 :: lsidea,ldiag3d

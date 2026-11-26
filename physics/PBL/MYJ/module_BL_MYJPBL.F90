@@ -15,7 +15,7 @@
 !                                 ,G,P608,PI,PQ0,R_D,R_V,RHOWATER        &
 !                                 ,STBOLT,CAPPA
 
-      USE ccpp_kinds, only: kfpt => kind_phys,    &
+      USE machine, only: kfpt => kind_phys,    &
                          kint => kind_INTEGER, &
                          klog => kind_LOGICAL
 

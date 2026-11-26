@@ -4,7 +4,7 @@
 !> This module contains the CCPP-compliant GFDL surface layer scheme.
       module gfdl_sfc_layer
 
-      use ccpp_kinds, only : kind_phys
+      use machine , only : kind_phys
 
       implicit none
 

@@ -3,7 +3,7 @@
 
       module GFS_surface_generic_post
 
-      use ccpp_kinds, only: kind_phys
+      use machine, only: kind_phys
 
       implicit none
 

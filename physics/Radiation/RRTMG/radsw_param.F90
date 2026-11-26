@@ -66,7 +66,7 @@ module module_radsw_parameters   !
 !! \htmlinclude module_radsw_parameters.html
 !!
 
-use ccpp_kinds,                only : kind_phys
+use machine,                only : kind_phys
 
 implicit   none
 !

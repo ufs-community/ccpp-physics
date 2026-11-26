@@ -108,7 +108,7 @@
      &     errmsg,errflg)
 
 !
-      use ccpp_kinds, only : kind_phys
+      use machine  , only : kind_phys
       use funcphys , only : fpvs
 !
       implicit none

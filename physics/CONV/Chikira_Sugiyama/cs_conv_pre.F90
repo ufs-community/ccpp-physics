@@ -11,7 +11,7 @@ module cs_conv_pre
      &                       fswtr, fscav, errmsg, errflg)
 
 
-  use ccpp_kinds,   only : kind_phys
+  use machine ,   only : kind_phys
 
   implicit none
 

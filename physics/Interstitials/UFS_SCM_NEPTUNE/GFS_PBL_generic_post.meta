@@ -2,7 +2,7 @@
 [ccpp-table-properties]
   name = GFS_PBL_generic_post
   type = scheme
-  dependencies = GFS_PBL_generic_common.F90
+  dependencies = GFS_PBL_generic_common.F90,../../hooks/machine.F
 
 ########################################################################
 [ccpp-arg-table]

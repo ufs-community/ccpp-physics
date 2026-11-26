@@ -16,7 +16,7 @@
      &  index_of_process_nonorographic_gwd, gu0, gv0, gt0,              &
      &  errmsg, errflg)
 
-      use ccpp_kinds, only : kind_phys
+      use machine, only : kind_phys
       implicit none
 
       integer, intent(in) :: im, levs

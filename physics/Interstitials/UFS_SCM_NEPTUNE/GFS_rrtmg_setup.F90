@@ -6,7 +6,7 @@
 !> @{
 module GFS_rrtmg_setup
 
-   use ccpp_kinds, only:  kind_phys
+   use machine, only:  kind_phys
    use module_ozphys, only: ty_ozphys
    use mpi_f08
    implicit none

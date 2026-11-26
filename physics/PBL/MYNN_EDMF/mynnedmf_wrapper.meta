@@ -1,6 +1,7 @@
 [ccpp-table-properties]
   name = mynnedmf_wrapper
   type = scheme
+  dependencies = ../../hooks/machine.F
   dependencies = MYNN-EDMF/src/CCPP/module_bl_mynnedmf_common.F90
   dependencies = MYNN-EDMF/src/module_bl_mynnedmf.F90
   dependencies = MYNN-EDMF/src/module_bl_mynnedmf_diags.F90

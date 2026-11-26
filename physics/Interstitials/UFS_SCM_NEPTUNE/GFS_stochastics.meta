@@ -1,7 +1,7 @@
 [ccpp-table-properties]
   name = GFS_stochastics
   type = scheme
-  dependencies =
+  dependencies = ../../hooks/machine.F
 
 [ccpp-arg-table]
   name = GFS_stochastics_init

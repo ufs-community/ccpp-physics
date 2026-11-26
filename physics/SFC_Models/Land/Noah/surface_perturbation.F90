@@ -25,7 +25,7 @@ module surface_perturbation
 !> This subrtouine calculates the CDF of the standard normal distribution
 !! evaluated at z.
       subroutine cdfnor(z,cdfz)
-      use ccpp_kinds
+      use machine
 
       implicit none
       real(kind=kind_phys), intent(out) :: cdfz
@@ -63,7 +63,7 @@ module surface_perturbation
 
 !>\ingroup gfs_sfcpert
       subroutine cdfgam(x,alpha,eps,iflag,cdfx)
-      use ccpp_kinds
+      use machine
 
       implicit none
       real(kind=kind_phys), intent(out) :: cdfx
@@ -137,7 +137,7 @@ module surface_perturbation
 !>\ingroup gfs_sfcpert
       subroutine dgamln(x,dgamlnout)
 
-      use ccpp_kinds
+      use machine
       implicit none
       real(kind=kind_phys), intent(in) ::  x
       real(kind=kind_phys), intent(out) ::  dgamlnout
@@ -183,7 +183,7 @@ module surface_perturbation
 !> This subroutine computes the beta distribution value that
 !! matches the percentile from the random pattern.
       subroutine ppfbet(pr,p,q,iflag,x)
-      use ccpp_kinds
+      use machine
         implicit none
         real(kind=kind_phys), intent(in) :: pr, p, q
         real(kind=kind_phys), intent(out) :: x
@@ -300,7 +300,7 @@ module surface_perturbation
 !> This subroutine computes the value of the cumulative beta distribution
 !! at a single point x, given the distribution parameters p,q.
       subroutine cdfbet(x,p,q,eps,iflag,cdfx)
-      use ccpp_kinds
+      use machine
 
         ! Computes the value of the cumulative beta distribution at a
         ! single point x, given the distribution parameters p,q.
@@ -387,7 +387,7 @@ module surface_perturbation
 !> This subroutine computes the natural logarithm of the gamma distribution.
 !! Users can set the absolute accuracy and corresponding xmin.
       subroutine gmln(x,y)
-      use ccpp_kinds
+      use machine
       ! Computes the natural logarithm of the gamma distribution. Users
       ! can set the absolute accuracy and corresponding xmin.
 

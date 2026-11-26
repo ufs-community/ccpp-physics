@@ -2,7 +2,7 @@
 !!
 
 module module_h2ophys
-  use ccpp_kinds,  only : kind_phys
+  use machine,  only : kind_phys
   implicit none
 
   public ty_h2ophys

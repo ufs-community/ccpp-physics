@@ -58,7 +58,7 @@ contains
 
 
 !
-      use ccpp_kinds,          only : kind_phys
+      use machine,          only : kind_phys
 
 
       use cires_ugwpv1_module,only :  psrc => knob_ugwp_palaunch

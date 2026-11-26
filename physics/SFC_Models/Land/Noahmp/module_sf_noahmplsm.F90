@@ -9,7 +9,7 @@ module module_sf_noahmplsm
 #ifndef CCPP  
   use  module_wrf_utl
 #endif
-use ccpp_kinds,   only : kind_phys
+use machine ,   only : kind_phys
 
   implicit none
 

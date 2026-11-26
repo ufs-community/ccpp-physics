@@ -24,7 +24,7 @@
                work1, work2, kpbl, kinver, me,                     &
                clw, rhc, save_qc, save_qi, save_tcp, errmsg, errflg)
 
-      use ccpp_kinds, only: kind_phys
+      use machine, only: kind_phys
 
       implicit none
 

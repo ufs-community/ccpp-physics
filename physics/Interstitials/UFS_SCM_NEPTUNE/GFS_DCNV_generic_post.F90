@@ -22,7 +22,7 @@
       clw, dclw, satmedmf, trans_trac, errmsg, errflg)
 
 
-      use ccpp_kinds,               only: kind_phys
+      use machine,               only: kind_phys
 
       implicit none
 

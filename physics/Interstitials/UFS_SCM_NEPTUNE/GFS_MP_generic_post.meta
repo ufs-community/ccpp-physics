@@ -2,7 +2,7 @@
 [ccpp-table-properties]
   name = GFS_MP_generic_post
   type = scheme
-  dependencies = ../../MP/calpreciptype.f90
+  dependencies = ../../MP/calpreciptype.f90,../../hooks/machine.F
 
 ########################################################################
 [ccpp-arg-table]

@@ -3,7 +3,7 @@
 
 module get_phi_fv3
 
-   use ccpp_kinds,  only: kind_phys
+   use machine,  only: kind_phys
    use physcons, only: con_fvirt
 
 !--- public declarations

@@ -3,7 +3,7 @@
 
 !> This module contains tools for radiation
 module radiation_tools
-  use ccpp_kinds, only: &
+  use machine, only: &
        kind_phys                   ! Working type
   implicit none
 

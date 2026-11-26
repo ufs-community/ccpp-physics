@@ -3,7 +3,7 @@
 
   module GFS_suite_interstitial_2
 
-  use ccpp_kinds, only: kind_phys
+  use machine, only: kind_phys
   real(kind=kind_phys), parameter :: one = 1.0_kind_phys
   logical :: linit_mod  = .false. 
 

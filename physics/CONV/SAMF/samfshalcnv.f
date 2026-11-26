@@ -62,7 +62,7 @@
      &     sigmain,sigmaout,omegain,omegaout,betadcu,betamcu,betascu,   &
      &     lbb1,lbb2,lbb3,dt_decay,cat_adj_shal,errmsg,errflg)
 !
-      use ccpp_kinds, only : kind_phys
+      use machine , only : kind_phys
       use funcphys , only : fpvs
 
       implicit none

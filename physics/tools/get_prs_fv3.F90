@@ -4,7 +4,7 @@
 
 module get_prs_fv3
 
-   use ccpp_kinds,  only: kind_phys
+   use machine,  only: kind_phys
 
 !--- public declarations
    public get_prs_fv3_run

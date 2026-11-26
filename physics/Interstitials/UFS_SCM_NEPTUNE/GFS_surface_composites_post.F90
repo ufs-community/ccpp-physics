@@ -3,7 +3,7 @@
 
 module GFS_surface_composites_post
 
-   use ccpp_kinds, only: kind_phys
+   use machine, only: kind_phys
 
    ! For consistent calculations of composite surface properties
    use sfc_diff, only: stability

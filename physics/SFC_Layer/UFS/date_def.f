@@ -1,7 +1,7 @@
 !>\file date_def.f
 !!
       module date_def
-      use ccpp_kinds,   ONLY: kind_phys
+      use machine,   ONLY: kind_phys
       implicit none
       
 !jw      integer idate(4)
